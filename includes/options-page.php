@@ -1,9 +1,11 @@
 <?php
+
 /**
  * Define menu page.
  */
- 
-function wpct_forms_ce_add_admin_menu(){
+
+function wpct_forms_ce_add_admin_menu()
+{
 
     add_options_page(
         'wpct_forms_ce',
@@ -17,8 +19,30 @@ add_action('admin_menu', 'wpct_forms_ce_add_admin_menu');
 
 /**
  * Define settings.
+ * 
+ * 
  */
-function wpct_forms_ce_settings_init(){
+
+function wpct_forms_ce_register_init()
+{
+    register_setting('formsCeSettingsPage', 'odoo_forms_settings');
+    register_setting('formsCeSettingsPage', 'accions_energetiques_mapping_settings', array(
+        'default' => array(
+            'generacio' => 0,
+            'eficiencia' => 0,
+            'mobilitat' => 0,
+            'formacio' => 0,
+            'termica' => 0,
+            'compres' => 0,
+            'subministrament' => 0,
+            'agregacio' => 0
+        )
+    ));
+}
+add_action('init', 'wpct_forms_ce_register_init', 50);
+
+function wpct_forms_ce_settings_init()
+{
 
     register_setting('formsCeSettingsPage', 'wpct_forms_ce_settings');
     add_settings_section(
@@ -41,8 +65,8 @@ function wpct_forms_ce_settings_init(){
         'formsCeSettingsPage',
         'wpct_forms_ce_general_section'
     );
-    
-    register_setting('formsCeSettingsPage', 'odoo_forms_settings');
+
+
     add_settings_section(
         'Dropdown_formsCeSettingsPage_section',
         __('Map existing forms with the ERP endpoints'),
@@ -85,17 +109,20 @@ function wpct_forms_ce_settings_init(){
         'Dropdown_formsCeSettingsPage_section'
     );
 
-    register_setting('formsCeSettingsPage', 'accions_energetiques_mapping_settings');
-    add_settings_section('accionsEnergetiquesMapping_section',
-    'Accións Energétiques mapping',
-    'accionsEnergetiquesMapping_callback', 
-    'formsCeSettingsPage' );
+
+    add_settings_section(
+        'accionsEnergetiquesMapping_section',
+        'Accións Energétiques mapping',
+        'accionsEnergetiquesMapping_callback',
+        'formsCeSettingsPage'
+    );
     add_settings_field(
         'generacio',
         __('Generació renovable comunitaria id', 'text'),
         'generacioRenovableComunitariaMapping_render',
         'formsCeSettingsPage',
-        'accionsEnergetiquesMapping_section'
+        'accionsEnergetiquesMapping_section',
+
     );
     add_settings_field(
         'eficiencia',
@@ -146,15 +173,16 @@ function wpct_forms_ce_settings_init(){
         'formsCeSettingsPage',
         'accionsEnergetiquesMapping_section'
     );
-    
 }
+
 add_action('admin_init', 'wpct_forms_ce_settings_init');
 
 
 /**
  * Iterate Gravity Forms and extract the form IDs and names
  */
-function iterate_forms($option_name){
+function iterate_forms($option_name)
+{
     $options = get_option('odoo_forms_settings') ? get_option('odoo_forms_settings') : [];
     $selected = 'disabled ';
     if (!key_exists($option_name, $options) || !$options) {
@@ -174,96 +202,111 @@ function iterate_forms($option_name){
  * Render the forms
  */
 
-function New_community_select_field_render(){
+function New_community_select_field_render()
+{
     $option_name = 'ce_source_creation_ce_proposal';
     iterate_forms($option_name);
 }
 
-function Zone_interest_select_field_render(){
+function Zone_interest_select_field_render()
+{
     $option_name = 'ce_source_future_location_ce_info';
     iterate_forms($option_name);
 }
 
-function General_newsletter_select_field_render(){
+function General_newsletter_select_field_render()
+{
     $option_name = 'ce_source_general_info';
     iterate_forms($option_name);
 }
 
-function Single_newsletter_select_field_render(){
+function Single_newsletter_select_field_render()
+{
     $option_name = 'ce_source_existing_ce_info';
     iterate_forms($option_name);
 }
 
-function Single_contact_select_field_render(){
+function Single_contact_select_field_render()
+{
     $option_name = 'ce_source_existing_ce_contact';
     iterate_forms($option_name);
 }
 
 
-function wpct_odoo_connect_coord_id_render(){
+function wpct_odoo_connect_coord_id_render()
+{
 
     $options = get_option('wpct_forms_ce_settings') ? get_option('wpct_forms_ce_settings') : [];
     key_exists('wpct_odoo_connect_coord_id', $options) ? $coord_id = $options['wpct_odoo_connect_coord_id'] : $coord_id = '-1';
     echo "<input type='text' name='wpct_forms_ce_settings[wpct_odoo_connect_coord_id]' value='" . $coord_id . "'>";
 }
 
-function wpct_odoo_connect_notification_receiver_render(){
+function wpct_odoo_connect_notification_receiver_render()
+{
 
     $options = get_option('wpct_forms_ce_settings') ? get_option('wpct_forms_ce_settings') : [];
     key_exists('wpct_odoo_connect_notification_receiver', $options) ? $email_rec = $options['wpct_odoo_connect_notification_receiver'] : $email_rec = '';
     echo "<input type='text' name='wpct_forms_ce_settings[wpct_odoo_connect_notification_receiver]' value='" . $email_rec . "'>";
 }
 
-function generacioRenovableComunitariaMapping_render(){
+function generacioRenovableComunitariaMapping_render()
+{
 
     $options = get_option('accions_energetiques_mapping_settings') ? get_option('accions_energetiques_mapping_settings') : [];
     key_exists('generacio', $options) ? $generacioRenovableComunitariaMapping = $options['generacio'] : $generacioRenovableComunitariaMapping = '';
     echo "<input type='text' name='accions_energetiques_mapping_settings[generacio]' value='" . $generacioRenovableComunitariaMapping . "'>";
 }
 
-function eficienciaEnergeticaMapping_render(){
+function eficienciaEnergeticaMapping_render()
+{
 
     $options = get_option('accions_energetiques_mapping_settings') ? get_option('accions_energetiques_mapping_settings') : [];
     key_exists('eficiencia', $options) ? $eficienciaEnergeticaMapping = $options['eficiencia'] : $eficienciaEnergeticaMapping = '';
     echo "<input type='text' name='accions_energetiques_mapping_settings[eficiencia]' value='" . $eficienciaEnergeticaMapping . "'>";
 }
 
-function mobilitatSostenibleMapping_render(){
+function mobilitatSostenibleMapping_render()
+{
 
     $options = get_option('accions_energetiques_mapping_settings') ? get_option('accions_energetiques_mapping_settings') : [];
     key_exists('mobilitat', $options) ? $mobilitatSostenibleMapping = $options['mobilitat'] : $mobilitatSostenibleMapping = '';
     echo "<input type='text' name='accions_energetiques_mapping_settings[mobilitat]' value='" . $mobilitatSostenibleMapping . "'>";
 }
 
-function formacioCiutadanaMapping_render(){
+function formacioCiutadanaMapping_render()
+{
 
     $options = get_option('accions_energetiques_mapping_settings') ? get_option('accions_energetiques_mapping_settings') : [];
     key_exists('formacio', $options) ? $formacioCiutadanaMapping = $options['formacio'] : $formacioCiutadanaMapping = '';
     echo "<input type='text' name='accions_energetiques_mapping_settings[formacio]' value='" . $formacioCiutadanaMapping . "'>";
 }
 
-function energiaTermicaIClimatitzacioMapping_render(){
+function energiaTermicaIClimatitzacioMapping_render()
+{
 
     $options = get_option('accions_energetiques_mapping_settings') ? get_option('accions_energetiques_mapping_settings') : [];
     key_exists('termica', $options) ? $energiaTermicaIClimatitzacioMapping = $options['termica'] : $energiaTermicaIClimatitzacioMapping = '';
     echo "<input type='text' name='accions_energetiques_mapping_settings[termica]' value='" . $energiaTermicaIClimatitzacioMapping . "'>";
 }
 
-function compresCollectivesMapping_render(){
+function compresCollectivesMapping_render()
+{
 
     $options = get_option('accions_energetiques_mapping_settings') ? get_option('accions_energetiques_mapping_settings') : [];
     key_exists('compres', $options) ? $compresCollectivesMapping = $options['compres'] : $compresCollectivesMapping = '';
     echo "<input type='text' name='accions_energetiques_mapping_settings[compres]' value='" . $compresCollectivesMapping . "'>";
 }
 
-function subministramentEnergiaRenovableMapping_render(){
+function subministramentEnergiaRenovableMapping_render()
+{
 
     $options = get_option('accions_energetiques_mapping_settings') ? get_option('accions_energetiques_mapping_settings') : [];
     key_exists('subministrament', $options) ? $subministramentEnergiaRenovableMapping = $options['subministrament'] : $subministramentEnergiaRenovableMapping = '';
     echo "<input type='text' name='accions_energetiques_mapping_settings[subministrament]' value='" . $subministramentEnergiaRenovableMapping . "'>";
 }
 
-function agregacioIFlexibilitatDemandMapping_render(){
+function agregacioIFlexibilitatDemandMapping_render()
+{
 
     $options = get_option('accions_energetiques_mapping_settings') ? get_option('accions_energetiques_mapping_settings') : [];
     key_exists('agregacio', $options) ? $agregacioIFlexibilitatDemandMapping = $options['agregacio'] : $agregacioIFlexibilitatDemandMapping = '';
@@ -273,22 +316,26 @@ function agregacioIFlexibilitatDemandMapping_render(){
 /**
  * Callbacks for the settings sections
  */
-function wpct_ce_forms_general_section_callback(){
+function wpct_ce_forms_general_section_callback()
+{
     echo __('General settings');
 }
 
-function Odoo_forms_settings_section_callback(){
+function Odoo_forms_settings_section_callback()
+{
     echo __('Asign the utm.source field to each form');
 }
 
-function accionsEnergetiquesMapping_callback(){
+function accionsEnergetiquesMapping_callback()
+{
     echo __('Map values from Accions Energétiques select to backend settings', 'accionsEnergetiquesMapping');
 }
 
 /**
  * Paint the settings page
  */
-function wpct_forms_ce_options_page(){
+function wpct_forms_ce_options_page()
+{
     echo "<form action='options.php' method='post'>";
     echo "<h2>WPCT CE Forms</h2>";
     settings_fields('formsCeSettingsPage');
@@ -296,3 +343,17 @@ function wpct_forms_ce_options_page(){
     submit_button();
     echo "</form>";
 }
+/**
+ * Set default values fot the options 
+ */
+// register_setting('formsCeSettingsPage', 'wpct_forms_ce_settings', array(
+//     'type' => 'array',
+//     'description' => 'Map existing forms with the ERP endpoints',
+//     'default' => array(
+//         'ce_source_creation_ce_proposal' => 0,
+//         'ce_source_future_location_ce_info' => 0,
+//         'ce_source_general_info' => 0,
+//         'ce_source_existing_ce_info' => 0,
+//         'ce_source_existing_ce_contact' => 0
+//     )
+// ));
