@@ -16,6 +16,9 @@
 /* Options Page */
 require_once "includes/options-page.php";
 
+/* Options Page */
+require_once "includes/webhooks.php";
+
 /* Lang population */
 add_filter('gform_field_value_current_lang', 'wpct_forms_ce_populate_current_lang');
 function wpct_forms_ce_populate_current_lang($value)
@@ -24,19 +27,19 @@ function wpct_forms_ce_populate_current_lang($value)
 }
 
 /* Error Handling */
-add_action('gform_webhooks_post_request', 'wpct_forms_ce_control_error', 10, 4);
-function wpct_forms_ce_control_error($response, $feed, $entry, $form)
-{
-    if ($response['response']['code'] != 200) {
-        $ocSettings = get_option("wpct_forms_ce_settings");
-        if (isset($ocSettings['wpct_odoo_connect_notification_receiver'])) {
-            $to = $ocSettings['wpct_odoo_connect_notification_receiver'];
-            $subject = "somcomunitats Webhook " . $form['id'] . "_" . $entry['id'] . " failed!";
-            $body = "Webhook for entry: " . $entry['id'] . " failed.<br/>Form id: " . $form['id'] . "<br/>Form title: " . $form['title'];
-            wp_mail($to, $subject, $body);
-        }
-    }
-}
+/*add_action('gform_webhooks_post_request', 'wpct_forms_ce_control_error', 10, 4);*/
+/*function wpct_forms_ce_control_error($response, $feed, $entry, $form)*/
+/*{*/
+/*    if ($response['response']['code'] != 200) {*/
+/*        $ocSettings = get_option("wpct_forms_ce_settings");*/
+/*        if (isset($ocSettings['wpct_odoo_connect_notification_receiver'])) {*/
+/*            $to = $ocSettings['wpct_odoo_connect_notification_receiver'];*/
+/*            $subject = "somcomunitats Webhook " . $form['id'] . "_" . $entry['id'] . " failed!";*/
+/*            $body = "Webhook for entry: " . $entry['id'] . " failed.<br/>Form id: " . $form['id'] . "<br/>Form title: " . $form['title'];*/
+/*            wp_mail($to, $subject, $body);*/
+/*        }*/
+/*    }*/
+/*}*/
 
 add_action('admin_init', 'wpct_forms_ce_init', 10);
 function wpct_forms_ce_init()
