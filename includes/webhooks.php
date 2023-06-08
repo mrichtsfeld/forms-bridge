@@ -10,7 +10,7 @@ function wpct_forms_ce_api_submissions($entry, $form)
 			$response_json = json_decode($response['body']);
 		} else {
 			// Admin error email
-			$to = wpct_oc_get_admin_notification_receiver();
+			$to = wpct_forms_ce_option_getter('wpct_forms_ce_general', 'notification_receiver');
 			$subject = "Odoo subscription request submission error: Form(" . $form['id'] . ") Entry (" . $entry['id'] . ")";
 			$body = "Submission subscription request for entry: " . $entry['id'] . " failed.<br/>Form id: " . $form['id'] . "<br/>Form title: " . $form['title'];
 			wp_mail($to, $subject, $body);
@@ -55,7 +55,7 @@ function wpct_forms_ce_get_crmlead_apicall_body($form_vals)
 	);
 	foreach ($form_vals as $form_key => $form_val) {
 		if ($form_key == 'company_id') {
-			$body[$form_key] = (int)$form_val;
+			$body[$form_key] = (int) $form_val;
 		} elseif ($form_key == 'email_from') {
 			$body[$form_key] = $form_val;
 		}
