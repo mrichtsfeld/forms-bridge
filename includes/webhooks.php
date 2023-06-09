@@ -5,7 +5,7 @@ function wpct_forms_ce_api_submissions($entry, $form)
 	$form_vals = wpct_gform_after_submission_build_call_body($entry, $form);
 	if (isset($form_vals['source_xml_id'])) {
 		$crmlead_apicall_body = wpct_forms_ce_get_crmlead_apicall_body($form_vals);
-		$response = wpct_oc_post_odoo($crmlead_apicall_body, '/api/private/crm-lead');
+		$response = wpct_oc_post_odoo('/api/private/crm-lead', $crmlead_apicall_body);
 		if ($response) {
 			$response_json = json_decode($response['body']);
 		} else {
