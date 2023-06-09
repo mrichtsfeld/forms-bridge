@@ -10,20 +10,25 @@ function wpct_forms_ce_parse_form_entry($entry, $form)
     );
 
     foreach ($form['fields'] as $field) {
+        if ($field->type === 'consent') continue;
+
+        $input_name = $field->inputName ? $field->inputName : $field->label;
         $inputs = $field->get_entry_inputs();
         if (is_array($inputs)) {
             // composed fields
+            $values = [];
             foreach ($inputs as $input) {
-                $input_code = $field->inputName;
-                if ($input_code) {
-                    $form_vals[$input_code] = rgar($entry, (string) $input['id']);
+                $value = rgar($entry, (string) $input['id']);
+                if ($input_name && $value) {
+                    $values[] = $value;
                 }
             }
+
+            $form_vals[$input_name] = implode(',', $values);
         } else {
             // simple fields
-            $input_code = $field->inputName;
-            if ($input_code) {
-                $form_vals[$input_code] = rgar($entry, (string) $field->id);
+            if ($input_name) {
+                $form_vals[$input_name] = rgar($entry, (string) $field->id);
             }
         }
     }
@@ -33,7 +38,9 @@ function wpct_forms_ce_parse_form_entry($entry, $form)
 
 function wpct_forms_ce_add_cord_id($form_values)
 {
-    $form_values['odoo_company_id'] = wpct_forms_ce_option_getter('wpct_forms_ce_general', 'coord_id');
+    if (!isset($form_values['odoo_company_id']) || !$form_values['odoo_company_id']) {
+        $form_values['odoo_company_id'] = wpct_forms_ce_option_getter('wpct_forms_ce_general', 'coord_id');
+    }
     return $form_values;
 }
 
@@ -44,11 +51,11 @@ function wpct_forms_ce_actions_map($form_values)
 {
     if (isset($form_values['tag_ids'])) {
         $ids = [];
-        $actions = explode(", ", $form_values['tag_ids']);
+        $actions = explode(',', $form_values['tag_ids']);
         foreach ($actions as $action) {
             $ids[] = (int) wpct_forms_ce_option_getter('wpct_forms_ce_actions', $action);
         }
-        $form_values['tag_ids'] = $ids;
+        $form_values['tag_ids'] = implode(',', $ids);
     }
 
     return $form_values;
@@ -80,16 +87,18 @@ function wpct_forms_ce_get_submission_payload($form_vals)
     );
 
     foreach ($form_vals as $key => $val) {
-        if ($key == 'company_id') {
-            $payload[$key] = (int) $val;
+        if ($key == 'odoo_company_id') {
+            $payload['company_id'] = (int) $val;
         } elseif ($key == 'email_from') {
             $payload[$key] = $val;
+        } elseif ($key === 'source_xml_id') {
+            $payload['source_xml_id'] = $val;
+        } else {
+            $payload['metadata'][] = array(
+                'key' => $key,
+                'value' => $val
+            );
         }
-
-        $payload['metadata'][] = array(
-            'key' => $key,
-            'value' => $val
-        );
     }
 
     return $payload;
