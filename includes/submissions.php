@@ -116,4 +116,4 @@ function wpct_forms_ce_prepare_submission($form_vals)
     return wpct_forms_ce_get_submission_payload($form_vals);
 }
 
-add_filter('wpct_forms_ce_prepare_submission', 'wpct_forms_ce_prepare_submission', 2, 10);
+add_filter('wpct_forms_ce_prepare_submission', 'wpct_forms_ce_prepare_submission', 10, 2);
