@@ -20,11 +20,7 @@ require_once "includes/options-page.php";
 require_once "includes/webhooks.php";
 
 /* Lang population */
-add_filter('gform_field_value_current_lang', 'wpct_forms_ce_populate_current_lang');
-function wpct_forms_ce_populate_current_lang($value)
-{
-    return apply_filters('wpml_current_language', NULL);
-}
+require_once "includes/fields-population.php";
 
 add_action('admin_init', 'wpct_forms_ce_init', 10);
 function wpct_forms_ce_init()
