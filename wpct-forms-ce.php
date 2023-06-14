@@ -2,7 +2,7 @@
 
 /**
  * Plugin Name:     Wpct Forms CE
- * Plugin URI:      https://git.coopdevs.org/coopdevs/website/wp/wp-plugins
+ * Plugin URI:      https://git.coopdevs.org/coopdevs/website/wp/wp-plugins/wpct-forms-ce
  * Description:     Configuration options for CE forms
  * Author:          Coopdevs Treball SCCL
  * Author URI:      https://coopdevs.org
@@ -38,11 +38,8 @@ function wpct_forms_ce_control_error($response, $feed, $entry, $form)
     }
 }
 
-add_action('admin_init', 'wpct_forms_ce_init', 10);
-function wpct_forms_ce_init()
-{
-    add_filter('wpct_dependencies_check', function ($dependencies) {
-        $dependencies['gravityforms/gravityforms.php'] = '<a href="https://www.gravityforms.com/">Gravity Forms</a>';
-        return $dependencies;
-    });
-}
+/* Dependencies */
+add_filter('wpct_dependencies_check', function ($dependencies) {
+    $dependencies['Gravity Forms'] = '<a href="https://www.gravityforms.com/">Gravity Forms</a>';
+    return $dependencies;
+});
