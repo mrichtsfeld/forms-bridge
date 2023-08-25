@@ -11,8 +11,27 @@
 add_filter('gform_field_value_current_lang', 'wpct_forms_ce_populate_current_lang');
 function wpct_forms_ce_populate_current_lang($value)
 {
-    if ($value) return $value;
-    $current_lang = apply_filters("wpml_current_language", null);
-    if (!$current_lang) $current_lang = 'ca';
-    return $current_lang;
+    if ($value) {
+        $locale = wpct_forms_ce_format_current_lang($value);
+    } else {
+        $language = apply_filters('wpml_post_language_details', null);
+
+        if ($language) {
+            $locale = $language['locale'];
+        } else {
+            $locale = 'ca_ES';
+        }
+    }
+
+    return $locale;
+}
+
+function wpct_forms_ce_format_current_lang($code)
+{
+    $languages = apply_filters('wpml_active_languages', null);
+    if (isset($languages[$code])) {
+        return $languages[$code]['default_locale'];
+    }
+
+    return $code;
 }
