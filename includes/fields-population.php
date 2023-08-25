@@ -29,7 +29,7 @@ function wpct_forms_ce_populate_current_lang($value)
 function wpct_forms_ce_format_current_lang($code)
 {
     $languages = apply_filters('wpml_active_languages', null);
-    if (isset($languages[$code])) {
+    if ($languages && isset($languages[$code])) {
         return $languages[$code]['default_locale'];
     }
 
