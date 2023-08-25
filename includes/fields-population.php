@@ -16,7 +16,7 @@ function wpct_forms_ce_populate_current_lang($value)
     } else {
         $language = apply_filters('wpml_post_language_details', null);
 
-        if ($language) {
+        if (!is_wp_error($language) && $language) {
             $locale = $language['locale'];
         } else {
             $locale = 'ca_ES';
@@ -29,7 +29,7 @@ function wpct_forms_ce_populate_current_lang($value)
 function wpct_forms_ce_format_current_lang($code)
 {
     $languages = apply_filters('wpml_active_languages', null);
-    if ($languages && isset($languages[$code])) {
+    if ($languages && !is_wp_error($languages) && isset($languages[$code])) {
         return $languages[$code]['default_locale'];
     }
 
