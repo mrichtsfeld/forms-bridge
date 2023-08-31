@@ -3,28 +3,28 @@
 /**
  * Define menu page.
  */
-add_action('admin_menu', 'wpct_forms_ce_add_admin_menu');
-function wpct_forms_ce_add_admin_menu()
+add_action('admin_menu', 'wpct_crm_forms_add_admin_menu');
+function wpct_crm_forms_add_admin_menu()
 {
     add_options_page(
-        'WPCT Forms CE',
-        'WPCT Forms CE',
+        'WPCT CRM Forms',
+        'WPCT CRM Forms',
         'manage_options',
-        'wpct_forms_ce',
-        'wpct_forms_ce_render'
+        'wpct_crm_forms',
+        'wpct_crm_forms_render'
     );
 }
 
 /**
  * Paint the settings page
  */
-function wpct_forms_ce_render()
+function wpct_crm_forms_render()
 {
     echo '<div class="wrap">';
     echo '<h1>WPCT CE Forms</h1>';
     echo '<form action="options.php" method="post">';
-    settings_fields('wpct_forms_ce');
-    do_settings_sections('wpct_forms_ce');
+    settings_fields('wpct_crm_forms');
+    do_settings_sections('wpct_crm_forms');
     submit_button();
     echo '</form>';
     echo '</div>';
@@ -33,18 +33,18 @@ function wpct_forms_ce_render()
 /**
  * Define settings.
  */
-add_action('admin_init', 'wpct_forms_ce_init_settings', 50);
-function wpct_forms_ce_init_settings()
+add_action('admin_init', 'wpct_crm_forms_init_settings', 50);
+function wpct_crm_forms_init_settings()
 {
     register_setting(
-        'wpct_forms_ce',
-        'wpct_forms_ce_general',
+        'wpct_crm_forms',
+        'wpct_crm_forms_general',
         array(
             'type' => 'array',
-            'description' => __('Configuració global dels formularis', 'wpct-forms-ce'),
+            'description' => __('Configuració global dels formularis', 'wpct-crm-forms'),
             'show_in_rest' => false,
             'default' => array(
-                'coord_id' => 0,
+                'coord_id' => 1,
                 'notification_receiver' => 'admin@example.com'
             )
         )
@@ -52,42 +52,42 @@ function wpct_forms_ce_init_settings()
 
     // Secció general
     add_settings_section(
-        'wpct_forms_ce_general_section',
-        __('Global', 'wpct-forms-ce'),
-        'wpct_forms_ce_general_section_render',
-        'wpct_forms_ce'
+        'wpct_crm_forms_general_section',
+        __('Global', 'wpct-crm-forms'),
+        'wpct_crm_forms_general_section_render',
+        'wpct_crm_forms'
     );
     add_settings_field(
         'notification_receiver',
-        __('Error notification receiver', 'wpct-forms-ce'),
-        fn () => wpct_forms_ce_option_render('notification_receiver'),
-        'wpct_forms_ce',
-        'wpct_forms_ce_general_section'
+        __('Error notification receiver', 'wpct-crm-forms'),
+        fn () => wpct_crm_forms_option_render('notification_receiver'),
+        'wpct_crm_forms',
+        'wpct_crm_forms_general_section'
     );
     add_settings_field(
         'coord_id',
-        __('ID de la coordinadora', 'wpct-forms-ce'),
-        fn () => wpct_forms_ce_option_render('coord_id'),
-        'wpct_forms_ce',
-        'wpct_forms_ce_general_section'
+        __('ID de la coordinadora', 'wpct-crm-forms'),
+        fn () => wpct_crm_forms_option_render('coord_id'),
+        'wpct_crm_forms',
+        'wpct_crm_forms_general_section'
     );
 }
 
-function wpct_forms_ce_option_getter($group, $option)
+function wpct_crm_forms_option_getter($group, $option)
 {
     $options = get_option($group) ? get_option($group) : [];
     return key_exists($option, $options) ? $options[$option] : '';
 }
 
-function wpct_forms_ce_option_render($option)
+function wpct_crm_forms_option_render($option)
 {
-    echo '<input type="text" name="wpct_forms_ce_general[' . $option . ']" value="' . wpct_forms_ce_option_getter('wpct_forms_ce_general', $option) . '">';
+    echo '<input type="text" name="wpct_crm_forms_general[' . $option . ']" value="' . wpct_crm_forms_option_getter('wpct_crm_forms_general', $option) . '">';
 }
 
 /**
  * Callbacks for the settings sections
  */
-function wpct_forms_ce_general_section_render()
+function wpct_crm_forms_general_section_render()
 {
-    echo __('General settings', 'wpct-forms-ce');
+    echo __('General settings', 'wpct-crm-forms');
 }

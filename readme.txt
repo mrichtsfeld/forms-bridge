@@ -4,11 +4,11 @@ Tags: forms, odoo, crm
 Requires at least: 6.3.1
 Tested up to: 6.3.1
 Requires PHP: 8.0
-Stable tag: 0.1.0
+Stable tag: 1.0.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-GravityForm's submissions to the CRM Lead Odoo module
+Form submissions to the CRM Lead Odoo module
 
 == Description ==
 
