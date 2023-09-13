@@ -1,8 +1,8 @@
 <?php
 
 /* Placed on submissions.php to avoid overwritings of shortcodes params
-/* add_filter('gform_field_value_odoo_company_id', 'wpct_forms_ce_populate_odoo_company_id'); */
-/* function wpct_forms_ce_populate_odoo_company_id($value) */
+/* add_filter('gform_field_value_company_id', 'wpct_forms_ce_populate_company_id'); */
+/* function wpct_forms_ce_populate_company_id($value) */
 /* { */
 /*     if ($value) return $value; */
 /*     return wpct_forms_ce_option_getter('wpct_forms_ce_general', 'coord_id'); */
