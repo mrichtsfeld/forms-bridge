@@ -19,6 +19,7 @@ require_once "includes/options-page.php";
 /* Webhooks */
 require_once "includes/webhooks.php";
 require_once "includes/submissions.php";
+require_once "includes/attachments.php";
 
 /* Fields population */
 require_once "includes/fields-population.php";
