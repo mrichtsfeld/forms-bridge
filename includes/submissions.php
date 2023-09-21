@@ -115,13 +115,13 @@ add_filter('wpct_crm_forms_prepare_submission', 'wpct_crm_forms_prepare_submissi
 
 
 /**
- * Store uploads on a protected folder
+ * Store uploads on a custom folder
  */
 add_filter('gform_upload_path', 'wpct_forms_sm_upload_path', 90);
 function wpct_forms_sm_upload_path()
 {
     $upload_dir = wp_upload_dir();
-    $path = $upload_dir['basedir'] . '/protected';
+    $path = $upload_dir['basedir'] . '/forms';
     if (!is_dir($path)) mkdir($path);
     $path .= '/' . date('Y');
     if (!is_dir($path)) mkdir($path);
