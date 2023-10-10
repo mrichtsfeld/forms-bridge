@@ -4,11 +4,8 @@ function wpct_crm_forms_api_submissions($entry, $form)
 {
 	$form_vals = wpct_crm_forms_parse_form_entry($entry, $form);
 
-	if (!isset($form_vals['source_xml_id'])) {
-		$form_id = rgat($form, 'id');
-		$form_title = rgar($form, 'title');
-		$form_vals['source_xml_id'] = "{$form_id}_{$form_title}";
-	}
+	// Exit submission if form isn't bound to Odoo
+	if (!isset($form_vals['source_xml_id'])) return;
 
 	$submission_payload = apply_filters('wpct_crm_forms_prepare_submission', $form_vals);
 
