@@ -8,7 +8,7 @@
  * Author URI:      https://coopdevs.org
  * Text Domain:     wpct-forms-ce
  * Domain Path:     /languages
- * Version:         0.1.3
+ * Version:         0.1.9
  *
  * @package         Wpct_Forms_CE
  */
