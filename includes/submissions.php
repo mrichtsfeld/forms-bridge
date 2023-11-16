@@ -57,8 +57,12 @@ function wpct_crm_forms_parse_form_entry($entry, $form)
 
 function wpct_crm_forms_format_value($value, $field, $input = null)
 {
-    if ($field->type === 'fileupload') {
-        return implode(',', json_decode($value));
+    try {
+        if ($field->type === 'fileupload' && $value && is_string($value)) {
+            return implode(',', json_decode($value));
+        }
+    } catch (Exception $e) {
+        // do nothing
     }
 
     return $value;
