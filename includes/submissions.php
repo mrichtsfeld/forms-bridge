@@ -66,7 +66,6 @@ function wpct_crm_forms_format_value($value, $field, $input = null)
             return $value;
         }
     } catch (Exception $e) {
-        throw $e;
         // do nothing
     }
 
