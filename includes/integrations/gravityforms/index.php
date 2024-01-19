@@ -1,0 +1,109 @@
+<?php
+
+namespace WPCT_ERP_FORMS\Integrations;
+
+use WPCT_ERP_FORMS\Integrations\Integration;
+use Exception;
+
+/* Custom fields */
+
+require_once 'fields/iban/index.php';
+
+class GF extends Integration
+{
+
+    public function register()
+    {
+        parent::register();
+
+        add_action('gform_after_submission', function ($entry, $form) {
+            $this->do_submission($entry, $form);
+        }, 10, 2);
+    }
+
+    public function serialize_form($form)
+    {
+        return get_object_vars($form);
+    }
+
+
+    public function serialize_submission($entry, $form)
+    {
+        $entry_data = $this->get_entry_data($entry, $form);
+        $submission = $this->serialize_entry_data($entry_data);
+        $this->cleanup_empties($submission);
+        return $submission;
+    }
+
+    private function get_entry_data($entry, $form)
+    {
+        $submission = [
+            'entry_id' => $entry['id']
+        ];
+
+        foreach ($form['fields'] as $field) {
+            if ($field->type === 'section') continue;
+
+            $input_name = $field->inputName
+                ? $field->inputName
+                : ($field->adminLabel
+                    ? $field->adminLabel
+                    : $field->label);
+
+            $inputs = $field->get_entry_inputs();
+
+            if (is_array($inputs)) {
+                // composed fields
+                $names = array_map(function ($input) {
+                    return $input['name'];
+                }, $inputs);
+                if (sizeof(array_filter($names, fn ($name) => $name))) {
+                    // Composed with subfields
+                    for ($i = 0; $i < sizeof($inputs); $i++) {
+                        if (empty($names[$i])) continue;
+                        $submission[$names[$i]] = rgar($entry, (string) $inputs[$i]['id']);
+                    }
+                } else {
+                    // Plain composed
+                    $values = [];
+                    foreach ($inputs as $input) {
+                        $value = rgar($entry, (string) $input['id']);
+                        if ($input_name && $value) {
+                            $value = $this->format_value($value, $field, $input);
+                            if ($value !== null) $values[] = $value;
+                        }
+                    }
+
+                    $submission[$input_name] = implode(',', $values);
+                }
+            } else {
+                // simple fields
+                if ($input_name) {
+                    $raw_value = rgar($entry, (string) $field->id);
+                    $submission[$input_name] = $this->format_value($raw_value, $field);
+                }
+            }
+        }
+
+        return $submission;
+    }
+
+    private function format_value($value, $field, $input = null)
+    {
+        try {
+            if ($field->type === 'fileupload' && $value && is_string($value)) {
+                return implode(',', json_decode($value));
+            } else if ($field->type === 'consent') {
+                if (isset($input['isHidden']) && $input['isHidden']) return null;
+                return $value;
+            }
+        } catch (Exception $e) {
+            // do nothing
+        }
+
+        return $value;
+    }
+}
+
+$wpct_erp_forms_gf = new GF();
+$wpct_erp_forms_gf->register();

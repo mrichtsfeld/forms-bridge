@@ -14,22 +14,20 @@
  */
 
 /* Settings */
-require_once "includes/options/index.php";
+require_once 'includes/options/index.php';
 
 /* Webhooks */
-require_once "includes/webhooks.php";
-require_once "includes/submissions.php";
-require_once "includes/attachments.php";
+require_once 'includes/attachments.php';
 
 /* Fields population */
-require_once "includes/fields-population.php";
+require_once 'includes/fields-population.php';
 
-/* Custom fields */
-require_once "includes/fields/iban/index.php";
+/* Integrations */
+require_once 'includes/integrations/index.php';
 
 /* Dependencies */
 add_filter('wpct_dependencies_check', function ($dependencies) {
-    $dependencies['Gravity Forms'] = '<a href="https://www.gravityforms.com/">Gravity Forms</a>';
+    // $dependencies['Gravity Forms'] = '<a href="https://www.gravityforms.com/">Gravity Forms</a>';
     $dependencies['Wpct Odoo Connect'] = '<a href="https://git.coopdevs.org/coopdevs/website/wp/wp-plugins/wpct-odoo-connect">Wpct Odoo Connect</a>';
     return $dependencies;
 });
