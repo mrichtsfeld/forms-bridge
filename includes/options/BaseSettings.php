@@ -27,7 +27,6 @@ class BaseSettings
     public function register_setting($name, $default = [])
     {
         $default = $this->get_default($name, $default);
-        error_log(print_r($default, true));
         register_setting(
             $this->group_name,
             $name,
