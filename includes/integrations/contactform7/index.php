@@ -1,6 +1,6 @@
 <?php
 
-namespace WPCT_ERP_FORMS\Integrations\WPCF7;
+namespace WPCT_ERP_FORMS\Integrations;
 
 use WPCT_ERP_FORMS\Integrations\Integration;
 
@@ -9,8 +9,6 @@ class WPCF7 extends Integration
 
     public function register()
     {
-        parent::register();
-
         add_filter('wpcf7_before_send_mail', function ($form, &$abort, $submission) {
             $this->do_submission($submission, $form);
         }, 10, 3);
@@ -36,6 +34,3 @@ class WPCF7 extends Integration
         ];
     }
 }
-
-$wpct_erp_forms_wpct7 = new WPCF7();
-$wpct_erp_forms_wpct7->register();

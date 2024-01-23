@@ -6,8 +6,33 @@ use Exception;
 
 class Integration
 {
-    public function register()
+    private static $instances = [];
+
+    public function __construct()
     {
+        add_action('init', function () {
+            $integration = self::get_instance();
+            $integration->register();
+        });
+    }
+
+    protected function __clone()
+    {
+    }
+
+    public function __wakeup()
+    {
+        throw new \Exception("Cannot unserialize a singleton.");
+    }
+
+    public static function get_instance()
+    {
+        $cls = static::class;
+        if (!isset(self::$instances[$cls])) {
+            self::$instances[$cls] = new static();
+        }
+
+        return self::$instances[$cls];
     }
 
     public function submit($payload, $endpoints)
@@ -23,7 +48,7 @@ class Integration
                 if (!isset($settings['notification_receiver'])) return;
 
                 $to = $settings['notification_receiver'];
-                $subject = 'WPCT ERP Forms Error';
+                $subject = 'Wpct ERP Forms Error';
                 $body = "Form ID: {$form['id']}\n";
                 $body .= "Form title: {$form['title']}";
                 $body .= 'Submission: ' . print_r($payload, true);
@@ -73,7 +98,7 @@ class Integration
             ];
         }
 
-        return $payload;
+        return apply_filters('wpct_erp_forms_payload', $payload);
     }
 
     private function cleanup_empties(&$submission)
@@ -101,9 +126,14 @@ class Integration
             }
         );
 
-        return array_map(function ($map) {
+        return apply_filters('wpct_erp_forms_endpoints', array_map(function ($map) {
             return $map['endpoint'];
-        }, $maps);
+        }, $maps));
+    }
+
+    public function register()
+    {
+        throw new Exception('Method to overwrite by inheritance');
     }
 
     public function serialize_submission($submission, $form)

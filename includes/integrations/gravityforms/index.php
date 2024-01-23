@@ -14,8 +14,6 @@ class GF extends Integration
 
     public function register()
     {
-        parent::register();
-
         add_action('gform_after_submission', function ($entry, $form) {
             $this->do_submission($entry, $form);
         }, 10, 2);
@@ -114,6 +112,3 @@ class GF extends Integration
         }
     }
 }
-
-$wpct_erp_forms_gf = new GF();
-$wpct_erp_forms_gf->register();
