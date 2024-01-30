@@ -50,10 +50,10 @@ class Plugin
                 return $dependencies;
             });
 
-            if (apply_filters(false, 'wp-contact-form-7/wp-contact-form-7.php')) {
+            if (apply_filters('wpct_dc_is_plugin_active', false, 'contact-form-7/wp-contact-form-7.php')) {
                 require_once 'includes/integrations/wpcf7/class-integration.php';
                 $this->integrations['wpcf7'] = new Wpcf7Integration();
-            } else if (apply_filters(false, 'gravityforms/gravityforms.php')) {
+            } else if (apply_filters('wpct_dc_is_plugin_active', false, 'gravityforms/gravityforms.php')) {
                 require_once 'includes/integrations/gf/class-integration.php';
                 $this->integrations['gf'] = new GFIntegration();
             }

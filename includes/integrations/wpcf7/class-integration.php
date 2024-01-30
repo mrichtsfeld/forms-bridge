@@ -6,7 +6,7 @@ use WPCT_ERP_FORMS\Integration as BaseIntegration;
 use WPCT_ERP_FORMS\WPCF7\Fields\Iban\Field as IbanField;
 
 // Fields
-require_once dirname(__FILE__, 3) . '/fields/wpcf7/iban/index.php';
+require_once dirname(__FILE__, 3) . '/fields/wpcf7/iban/class-field.php';
 
 class Integration extends BaseIntegration
 {

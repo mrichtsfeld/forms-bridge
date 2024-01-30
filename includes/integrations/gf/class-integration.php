@@ -9,7 +9,7 @@ require_once 'attachments.php';
 require_once 'fields-population.php';
 
 // Fields
-require_once dirname(__FILE__, 3) . '/fields/gf/iban/index.php';
+require_once dirname(__FILE__, 3) . '/fields/gf/iban/class-field.php';
 
 class Integration extends BaseIntegration
 {
