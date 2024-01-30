@@ -2,6 +2,8 @@
 
 namespace WPCT_ERP_FORMS;
 
+use WPCT_HB\Http_Client as Wpct_Http_Client;
+
 class Integration
 {
     public static $fields = [];
@@ -40,7 +42,7 @@ class Integration
     {
         $success = true;
         foreach ($endpoints as $endpoint) {
-            $response = wpct_oc_post_odoo($endpoint, $payload);
+            $response = Wpct_Http_Client::get($endpoint, $payload);
 
             if (!$response) {
                 $success = false;
