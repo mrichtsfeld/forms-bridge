@@ -1,6 +1,9 @@
 <?php
 
-namespace WPCT_ERP_FORMS;
+namespace WPCT_ERP_FORMS\Abstract;
+
+use WPCT_ERP_FORMS\Menu;
+use WPCT_ERP_FORMS\Settings;
 
 
 abstract class Plugin extends Singleton

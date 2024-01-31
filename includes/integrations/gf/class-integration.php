@@ -2,8 +2,8 @@
 
 namespace WPCT_ERP_FORMS\GF;
 
+use WPCT_ERP_FORMS\Abstract\Integration as BaseIntegration;
 use WPCT_ERP_FORMS\GF\Fields\Iban\FieldAdapter as IbanField;
-use WPCT_ERP_FORMS\Integration as BaseIntegration;
 
 require_once 'attachments.php';
 require_once 'fields-population.php';
@@ -17,7 +17,7 @@ class Integration extends BaseIntegration
         IbanField::class
     ];
 
-    public function register()
+    protected function __construct()
     {
         add_action('gform_after_submission', function ($entry, $form) {
             $this->do_submission($entry, $form);
@@ -25,10 +25,10 @@ class Integration extends BaseIntegration
 
         add_action('admin_init', function () {
             global $wpct_erp_forms_admin_menu;
-            ($wpct_erp_forms_admin_menu->get_settings())->register_field('coord_id', 'wpct_erp_forms_general');
+            ($wpct_erp_forms_admin_menu->get_settings())->register_field('coord_id', 'wpct-erp-forms_general');
         }, 90);
 
-        add_filter('wpct_erp_forms_general_default', function ($defaults) {
+        add_filter('wpct-erp-forms_general_default', function ($defaults) {
             $defaults['coord_id'] = 1;
             return $defaults;
         });

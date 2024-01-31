@@ -1,6 +1,6 @@
 <?php
 
-namespace WPCT_ERP_FORMS;
+namespace WPCT_ERP_FORMS\Abstract;
 
 use WPCT_HB\Http_Client as Wpct_Http_Client;
 

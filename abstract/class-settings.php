@@ -1,12 +1,12 @@
 <?php
 
-namespace WPCT_ERP_FORMS;
+namespace WPCT_ERP_FORMS\Abstract;
 
 class Undefined
 {
 };
 
-abstract class BaseSettings extends Singleton
+abstract class Settings extends Singleton
 {
 
     protected $group_name;

@@ -2,7 +2,7 @@
 
 namespace WPCT_ERP_FORMS\WPCF7\Fields\Iban;
 
-use WPCT_ERP_FORMS\Field as BaseField;
+use WPCT_ERP_FORMS\Abstract\Field as BaseField;
 
 class Field extends BaseField
 {

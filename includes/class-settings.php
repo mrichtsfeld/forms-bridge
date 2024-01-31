@@ -2,9 +2,7 @@
 
 namespace WPCT_ERP_FORMS;
 
-require_once 'class-base-settings.php';
-
-class Settings extends BaseSettings
+class Settings extends Abstract\Settings
 {
     private $_default_endpoint = '/api/private/crm-lead';
 

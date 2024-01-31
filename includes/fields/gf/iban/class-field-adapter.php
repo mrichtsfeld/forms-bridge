@@ -2,7 +2,8 @@
 
 namespace WPCT_ERP_FORMS\GF\Fields\Iban;
 
-use WPCT_ERP_FORMS\Field as BaseField;
+use WPCT_ERP_FORMS\Abstract\Field as BaseField;
+
 use GFAddOn;
 
 require_once 'class-addon.php';

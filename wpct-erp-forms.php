@@ -22,14 +22,16 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-require_once 'includes/class-singleton.php';
-require_once 'includes/class-plugin.php';
+require_once 'abstract/class-singleton.php';
+require_once 'abstract/class-plugin.php';
+require_once 'abstract/class-settings.php';
+require_once 'abstract/class-field.php';
+require_once 'abstract/class-integration.php';
+
 require_once 'includes/class-menu.php';
 require_once 'includes/class-settings.php';
-require_once 'includes/class-integration.php';
-require_once 'includes/class-field.php';
 
-class Wpct_Erp_Forms extends Plugin
+class Wpct_Erp_Forms extends Abstract\Plugin
 {
 
     private $_integrations = [];

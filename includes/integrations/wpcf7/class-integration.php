@@ -2,7 +2,7 @@
 
 namespace WPCT_ERP_FORMS\WPCF7;
 
-use WPCT_ERP_FORMS\Integration as BaseIntegration;
+use WPCT_ERP_FORMS\Abstract\Integration as BaseIntegration;
 use WPCT_ERP_FORMS\WPCF7\Fields\Iban\Field as IbanField;
 
 // Fields
