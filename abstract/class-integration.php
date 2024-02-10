@@ -26,11 +26,15 @@ abstract class Integration extends Singleton
         }
     }
 
-    public function submit($payload, $endpoints)
+    public function submit($payload, $endpoints, $files = null)
     {
         $success = true;
         foreach ($endpoints as $endpoint) {
-            $response = Wpct_Http_Client::post($endpoint, $payload);
+            if (empty($files)) {
+                $response = Wpct_Http_Client::post($endpoint, $payload);
+            } else {
+                $response = Wpct_Http_Client::post_multipart($endpoint, $payload, $files);
+            }
 
             if (!$response) {
                 $success = false;
@@ -55,6 +59,7 @@ abstract class Integration extends Singleton
         $form = $this->serialize_form($form);
         if (!$this->has_endpoints($form['id'])) return;
 
+        $files = $this->get_files($submission, $form);
         $submission = $this->serialize_submission($submission, $form);
 
         $submission = apply_filters('wpct_erp_forms_before_submission', $submission, $form);
@@ -63,10 +68,15 @@ abstract class Integration extends Singleton
         $payload = $this->get_payload($submission);
         $endpoints = $this->get_endpoints($form['id']);
 
-        $success = $this->submit($payload, $endpoints);
+        $success = $this->submit($payload, $endpoints, $files);
 
         if ($success) do_action('wpct_erp_forms_after_submission', $submission, $form);
         else do_action('wpct_erp_forms_on_failure', $submission, $form);
+    }
+
+    public function get_files($submission, $form)
+    {
+        return null;
     }
 
     public function get_payload($submission)

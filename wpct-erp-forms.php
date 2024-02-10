@@ -22,6 +22,8 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
+define('WPCT_ERP_FORMS_VERSION', '1.0.0');
+
 require_once 'abstract/class-singleton.php';
 require_once 'abstract/class-plugin.php';
 require_once 'abstract/class-settings.php';
@@ -60,6 +62,8 @@ class Wpct_Erp_Forms extends Abstract\Plugin
         foreach ($this->_integrations as $integration) {
             $integration->init();
         }
+
+        add_action('wp_enqueue_scripts', [$this, 'enqueue_scripts']);
     }
 
     public static function activate()
@@ -69,8 +73,20 @@ class Wpct_Erp_Forms extends Abstract\Plugin
     public static function deactivate()
     {
     }
+
+    public function enqueue_scripts()
+    {
+    }
 }
 
 add_action('plugins_loaded', function () {
     $plugin = Wpct_Erp_Forms::get_instance();
 }, 10);
+
+add_filter('wpct_erp_forms_payload', function ($payload) {
+    foreach ($payload['metadata'] as $datum) {
+        $payload[$datum['key']] = $datum['value'];
+    }
+    unset($payload['metadata']);
+    return $payload;
+}, 90, 1);

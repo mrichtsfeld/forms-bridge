@@ -3,6 +3,7 @@
 namespace WPCT_ERP_FORMS\WPCF7\Fields\Iban;
 
 use WPCT_ERP_FORMS\Abstract\Field as BaseField;
+use Exception;
 
 class Field extends BaseField
 {
@@ -114,10 +115,13 @@ class Field extends BaseField
     {
         add_filter('wpcf7_validate_iban*', [$this, 'validate'], 20, 2);
         add_filter('wpcf7_validate_iban', [$this, 'validate'], 20, 2);
+        add_action('wpcf7_swv_create_schema', [$this, 'add_rules'], 20, 2);
     }
 
     public function init()
     {
+        if (!function_exists('wpcf7_add_form_tag')) return;
+
         wpcf7_add_form_tag(
             ['iban', 'iban*'],
             [$this, 'handler'],
@@ -127,27 +131,43 @@ class Field extends BaseField
 
     public function handler($tag)
     {
+        return Field::static_handler($tag);
+    }
+
+    static public function static_handler($tag)
+    {
         $atts = [
+            'class' => 'wpcf7-form-control',
+            'aria-required' => 'true',
+            'aria-invalid' => 'false',
             'type' => 'text',
             'name' => $tag->name,
         ];
 
-        $input = sprintf('<input %s />', wpcf7_format_atts($atts));
+        $input = sprintf('<span class="wpcf7-form-control-wrap" data-name="%s"><input %s />', $tag->name, wpcf7_format_atts($atts));
         return $input;
     }
 
-    public function validate($result, $tag)
+    public function validate_required($result, $tag)
     {
+        return $this->validate($result, $tag, true);
+    }
+
+    public function validate($result, $tag, $required = false)
+    {
+        $err_msg = 'Invalid IBAN format.';
         $value = $_POST[$tag->name];
         try {
-            if (strlen($value) < 5) throw new Exception();
+            if (strlen($value) === 0 && $required) throw new Exception('Please fill out this field.');
+
+            if (strlen($value) < 5) throw new Exception($err_msg);
             $value = strtolower(str_replace(' ', '', $value));
 
 
             $country_exists = array_key_exists(substr($value, 0, 2), $this->_countries);
             $country_conform = strlen($value) == $this->_countries[substr($value, 0, 2)];
 
-            if (!($country_exists && $country_conform)) throw new Exception();
+            if (!($country_exists && $country_conform)) throw new Exception($err_msg);
 
             $moved_char = substr($value, 4) . substr($value, 0, 4);
             $move_char_array = str_split($moved_char);
@@ -155,7 +175,7 @@ class Field extends BaseField
 
             foreach ($move_char_array as $key => $val) {
                 if (!is_numeric($move_char_array[$key])) {
-                    if (!isset($this->_chars[$val])) throw new Exception();
+                    if (!isset($this->_chars[$val])) throw new Exception($err_msg);
                     $move_char_array[$key] = $this->_chars[$val];
                 }
 
@@ -163,12 +183,36 @@ class Field extends BaseField
             }
 
             if (bcmod($new_string, '97') != 1) {
-                throw new Exception();
+                throw new Exception($err_msg);
             }
-        } catch (Exception) {
-            $result->invalidate($tag, __('Invalid IBAN format', 'wpct-erp-forms'));
+        } catch (Exception $e) {
+            $msg = $e->getMessage();
+            $result->invalidate($tag, __($msg, 'wpct-erp-forms'));
         }
 
         return $result;
     }
+
+    public function add_rules($schema, $form)
+    {
+        $tags = $form->scan_form_tags([
+            'basetype' => 'iban'
+        ]);
+
+        foreach ($tags as $tag) {
+            if ($tag->is_required()) {
+                $schema->add_rule(
+                    wpcf7_swv_create_rule('required', [
+                        'field' => $tag->name,
+                        'error' => wpcf7_get_message('invalid_required')
+                    ])
+                );
+            }
+        }
+    }
+}
+
+function wpcf7_iban_form_tag_handler($tag)
+{
+    return Field::static_handler($tag);
 }
