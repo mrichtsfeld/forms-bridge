@@ -25,6 +25,16 @@ class WCPT_WPCF7_Conditional_Rule extends WPCF7_SWV_Rule
         return true;
     }
 
+    public function to_array()
+    {
+        $array = parent::to_array();
+        $rule = $this->get_property('rule');
+        if (isset($rule::$rule_name)) {
+            $array['condition'] = $rule::rule_name;
+        }
+        return $array;
+    }
+
     public function validate($context)
     {
         $field = $this->get_property('field');

@@ -75,8 +75,8 @@ class Field extends BaseField
 
     protected function __construct()
     {
-        add_filter('wpcf7_validate_conditional', [$this, 'validate_tag'], 5, 2);
-        add_filter('wpcf7_validate_conditional*', [$this, 'validate_required'], 5, 2);
+        /* add_filter('wpcf7_validate_conditional', [$this, 'validate_tag'], 5, 2); */
+        /* add_filter('wpcf7_validate_conditional*', [$this, 'validate_required'], 5, 2); */
 
         add_action('wpcf7_swv_create_schema', [$this, 'add_rules'], 20, 2);
 
@@ -84,6 +84,8 @@ class Field extends BaseField
             $rules['conditional'] = 'WCPT_WPCF7_Conditional_Rule';
             return $rules;
         });
+
+        add_action('wp_enqueue_scripts', [$this, 'enqueue_script']);
     }
 
     public function init()
@@ -178,22 +180,34 @@ class Field extends BaseField
         return $type;
     }
 
-    public function validate_tag($result, $tag, $required = false)
-    {
-        $value = $_POST[$tag->name];
-        try {
-            if (strlen($value) === 0 && $required) throw new Exception('Please fill out this field.');
-        } catch (Exception $e) {
-            $msg = $e->getMessage();
-            $result->invalidate($tag, __($msg, 'wpct-erp-forms'));
-        }
+    /* public function validate_tag($result, $tag, $required = false) */
+    /* { */
+    /*     $value = $_POST[$tag->name]; */
+    /*     try { */
+    /*         if (strlen($value) === 0 && $required) throw new Exception('Please fill out this field.'); */
+    /*     } catch (Exception $e) { */
+    /*         $msg = $e->getMessage(); */
+    /*         $result->invalidate($tag, __($msg, 'wpct-erp-forms')); */
+    /*     } */
 
-        return $result;
-    }
+    /*     return $result; */
+    /* } */
 
-    public function validate_required($result, $tag)
+    /* public function validate_required($result, $tag) */
+    /* { */
+    /*     return $this->validate_tag($result, $tag, true); */
+    /* } */
+
+    public function enqueue_script()
     {
-        return $this->validate_tag($result, $tag, true);
+        $plugin = dirname(__FILE__, 5) . '/wpct-erp-forms.php';
+        wp_enqueue_script(
+            'wpct-swv-conditional',
+            plugin_dir_url($plugin) . 'assets/js/swv-conditional.js',
+            WPCT_ERP_FORMS_VERSION,
+            [],
+            true,
+        );
     }
 
     public function add_rules($schema, $form)
@@ -212,6 +226,7 @@ class Field extends BaseField
                         'error' => wpcf7_get_message('invalid_required'),
                         'type' => $base_type,
                         'rule' => $available_rules['required'],
+                        'condition' => 'required',
                     ])
                 );
             }
@@ -223,7 +238,7 @@ class Field extends BaseField
                         'error' => wpcf7_get_message('invalid_email'),
                         'type' => $base_type,
                         'rule' => $available_rules['email'],
-
+                        'condition' => 'email',
                     ])
                 );
             }
@@ -235,6 +250,7 @@ class Field extends BaseField
                         'error' => wpcf7_get_message('invalid_url'),
                         'type' => $base_type,
                         'rule' => $available_rules['url'],
+                        'condition' => 'url',
                     ])
                 );
             }
@@ -246,6 +262,7 @@ class Field extends BaseField
                         'error' => wpcf7_get_message('invalid_tel'),
                         'type' => $base_type,
                         'rule' => $available_rules['tel'],
+                        'condition' => 'tel',
                     ])
                 );
             }
@@ -258,6 +275,7 @@ class Field extends BaseField
                         'error' => wpcf7_get_message('invalid_too_short'),
                         'type' => $base_type,
                         'rule' => $available_rules['minlength'],
+                        'condition' => 'minlength',
                     ])
                 );
             }
@@ -270,6 +288,7 @@ class Field extends BaseField
                         'error' => wpcf7_get_message('invalid_too_long'),
                         'type' => $base_type,
                         'rule' => $available_rules['maxlength'],
+                        'condition' => 'maxlength',
                     ])
                 );
             }
@@ -281,6 +300,7 @@ class Field extends BaseField
                         'error' => wpcf7_get_message('invalid_date'),
                         'type' => $base_type,
                         'rule' => $available_rules['date'],
+                        'condition' => 'date',
                     ])
                 );
 
@@ -295,6 +315,7 @@ class Field extends BaseField
                             'error' => wpcf7_get_message('date_too_early'),
                             'type' => $base_type,
                             'rule' => $available_rules['mindate'],
+                            'condition' => 'mindate',
                         ])
                     );
                 }
@@ -306,7 +327,8 @@ class Field extends BaseField
                             'threshold' => $max,
                             'error' => wpcf7_get_message('date_too_late'),
                             'type' => $base_type,
-                            'rule' => $available_rules['maxdate']
+                            'rule' => $available_rules['maxdate'],
+                            'condition' => 'maxdate',
                         ])
                     );
                 }
@@ -323,6 +345,7 @@ class Field extends BaseField
                         'error' => wpcf7_get_message('upload_file_type_invalid'),
                         'type' => $base_type,
                         'rule' => $available_rules['file'],
+                        'condition' => 'file',
                     ])
                 );
 
@@ -333,6 +356,7 @@ class Field extends BaseField
                         'error' => wpcf7_get_message('upload_file_too_large'),
                         'type' => $base_type,
                         'rule' => $available_rules['maxfilesize'],
+                        'condition' => 'maxfilesize',
                     ])
                 );
             }
@@ -344,6 +368,7 @@ class Field extends BaseField
                         'error' => wpcf7_get_message('invalid_number'),
                         'type' => $base_type,
                         'rule' => $available_rules['number'],
+                        'condition' => 'number',
                     ])
                 );
 
@@ -368,6 +393,7 @@ class Field extends BaseField
                             'error' => wpcf7_get_message('number_too_small'),
                             'type' => $base_type,
                             'rule' => $available_rules['minnumber'],
+                            'condition' => 'minnumber',
                         ])
                     );
                 }
@@ -380,6 +406,7 @@ class Field extends BaseField
                             'error' => wpcf7_get_message('number_too_large'),
                             'type' => $base_type,
                             'rule' => $available_rules['maxnumber'],
+                            'condition' => 'maxnumber',
                         ])
                     );
                 }

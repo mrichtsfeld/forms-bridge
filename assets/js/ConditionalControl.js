@@ -69,11 +69,13 @@ ConditionalControl.prototype.updateVisibility = function (
 		this.conditionalWrap.classList.add("visible");
 		if (!this.controlWrap.contains(this.el)) {
 			this.controlWrap.appendChild(this.el);
+			this.controlWrap.setAttribute("data-name", this.fieldName);
 		}
 	} else {
 		this.conditionalWrap.classList.remove("visible");
 		if (this.controlWrap.contains(this.el)) {
 			this.controlWrap.removeChild(this.el);
+			this.controlWrap.removeAttribute("data-name");
 		}
 	}
 

@@ -125,7 +125,6 @@ Form.prototype.reset = function ({ detail }) {
 			behavior: "smooth",
 		});
 	}, 1e3);
-	console.log(detail);
 };
 
 export default Form;
