@@ -56,12 +56,33 @@ class Integration extends BaseIntegration
                 ? $field->adminLabel
                 : $field->label);
 
+        $inputs = $field->get_entry_inputs();
+        if (is_array($inputs)) {
+			$inputs = array_map(function ($input) {
+				return ['name' => $input['name'], 'label' => $input['label'], 'id' => $input['id']];
+			}, array_filter($inputs, function ($input) {
+				return $input['name'];
+			}));
+		} else {
+			$inputs = [];
+		}
+
+		$options = [];
+		if (is_array($field->choices)) {
+			$options = array_map(function ($opt) {
+				return ['value' => $opt['value'], 'label' => $opt['text']];
+			}, $field->choices);
+		}
+
         return [
+            'id' => $field->id,
             'type' => $type,
             'name' => $name,
             'label' => $field->label,
-            'id' => $field->id,
-            'inputs' => $field->get_entry_inputs(),
+            'required' => $field->isRequired,
+            'options' => $options,
+			'inputs' => $inputs,
+			'conditional' => is_array($field->conditionalLogic) && $field->conditionalLogic['enabled'],
         ];
     }
 
@@ -85,7 +106,7 @@ class Integration extends BaseIntegration
             $input_name = $field['name'];
             $inputs = $field['inputs'];
 
-            if (is_array($inputs)) {
+            if (!empty($inputs)) {
                 // composed fields
                 $names = array_map(function ($input) {
                     return $input['name'];

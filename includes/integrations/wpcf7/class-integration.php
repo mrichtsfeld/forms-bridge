@@ -50,12 +50,30 @@ class Integration extends BaseIntegration
 
 	public function serialize_field($field, $form)
 	{
+		$type = $field->basetype;
+		if ($type === 'conditional') {
+			$type = $field->get_option('type')[0];
+		}
+
+		$options = [];
+		if (is_array($field->values)) {
+			$values = $field->pipes->collect_afters();
+			for ($i = 0; $i < sizeof($field->raw_values); $i++) {
+				$options[] = [
+					'value' => $values[$i],
+					'label' => $field->labels[$i],
+				];
+			}
+		}
+
 		return [
-			'type' => $field->basetype,
-			'name' => $field->rawname,
-			'label' => $field->labels,
-			'values' => $field->values,
-			'id' => null,
+			'id' => $field->get_id_option(),
+			'type' => $type,
+			'name' => $field->raw_name,
+			'label' => $field->name,
+			'required' => $field->is_required(),
+			'options' => $options,
+			'conditional' => $field->basetype === 'conditional' || $field->basetype === 'fileconditional',
 		];
 	}
 
