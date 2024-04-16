@@ -14,12 +14,12 @@ abstract class Settings extends Singleton
             'notification_receiver' => 'admin@example.coop'
         ],
         'wpct-erp-forms_api' => [
-			'endpoints' => [
-				[
-					'form_id' => 0,
-					'endpoint' => '/api/private/crm-lead',
-				]
-			]
+            'endpoints' => [
+                [
+                    'form_id' => 0,
+                    'endpoint' => '/api/private/crm-lead',
+                ]
+            ]
         ]
     ];
 
@@ -82,7 +82,21 @@ abstract class Settings extends Singleton
         );
     }
 
-    public function field_render($setting, $field, $value = new Undefined())
+    public function field_render()
+    {
+        $args = func_get_args();
+        $setting = $args[0];
+        $field = $args[1];
+        if (count($args) >= 3) {
+            $value = $args[3];
+        } else {
+            $value = new Undefined();
+        }
+
+        return $this->_field_render($setting, $field, $value);
+    }
+
+    private function _field_render($setting, $field, $value)
     {
         $is_root = false;
         if ($value instanceof Undefined) {
@@ -107,14 +121,14 @@ abstract class Settings extends Singleton
     {
         $default_value = $this->get_defaults($setting, $field);
         $keys = explode('][', $field);
-		$is_list = is_list($default_value);
+        $is_list = is_list($default_value);
         for ($i = 0; $i < count($keys); $i++) {
-			$key = $keys[$i];
-			if ($is_list) {
-				$key = (int) $key;
-			}
+            $key = $keys[$i];
+            if ($is_list) {
+                $key = (int) $key;
+            }
             $default_value = isset($default_value[$key]) ? $default_value[$key] : $default_value[0];
-			$is_list = is_list($default_value);
+            $is_list = is_list($default_value);
         }
         $is_bool = is_bool($default_value);
         if ($is_bool) {
