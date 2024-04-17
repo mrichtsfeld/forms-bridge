@@ -13,7 +13,7 @@ use WPCT_ERP_FORMS\GF\Integration as GFIntegration;
  * Author URI:      https://www.codeccoop.org
  * Text Domain:     wpct-erp-forms
  * Domain Path:     languages
- * Version:         1.0.0
+ * Version:         1.0.1
  *
  * @package         wpct_erp_forms
  */
@@ -22,7 +22,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('WPCT_ERP_FORMS_VERSION', '1.0.0');
+define('WPCT_ERP_FORMS_VERSION', '1.0.1');
 
 require_once 'abstract/class-singleton.php';
 require_once 'abstract/class-plugin.php';
