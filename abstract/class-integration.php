@@ -41,7 +41,9 @@ abstract class Integration extends Singleton
                 $success = false;
 
                 $settings = get_option('wpct-erp-forms_general');
-                if (!isset($settings['notification_receiver'])) return;
+                if (!isset($settings['notification_receiver'])) {
+                    return;
+                }
 
                 $to = $settings['notification_receiver'];
                 $subject = 'Wpct ERP Forms Error';
@@ -49,9 +51,9 @@ abstract class Integration extends Singleton
                 $body .= "Form title: {$form_data['title']}";
                 $body .= 'Submission: ' . print_r($payload, true);
                 $success = wp_mail($to, $subject, $body);
-				if (!$success) {
-					throw new Exception('Error while submitting form ' . $form_data['id']);
-				}
+                if (!$success) {
+                    throw new Exception('Error while submitting form ' . $form_data['id']);
+                }
             }
         }
 
@@ -61,25 +63,30 @@ abstract class Integration extends Singleton
     public function do_submission($submission, $form)
     {
         $form_data = $this->serialize_form($form);
-        if (!$this->has_endpoints($form_data['id'])) return;
+        if (!$this->has_endpoints($form_data['id'])) {
+            return;
+        }
 
         $uploads = $this->get_uploads($submission, $form_data);
 
-		$data = $this->serialize_submission($submission, $form_data);
+        $data = $this->serialize_submission($submission, $form_data);
         $this->cleanup_empties($data);
 
         $payload = apply_filters('wpct_erp_forms_payload', $this->get_payload($data, $form_data), $uploads, $form_data);
-		$files = apply_filters('wpct_erp_forms_submission_files', array_reduce(array_keys($uploads), function ($carry, $name) use ($uploads) {
-			$paths = $uploads[$name]['is_multi'] ? $uploads[$name]['path'] : [$uploads[$name]['path']];
-			return array_merge($carry, $paths);
-		}, []), $uploads, $form_data);
+        $files = apply_filters('wpct_erp_forms_submission_files', array_reduce(array_keys($uploads), function ($carry, $name) use ($uploads) {
+            $paths = $uploads[$name]['is_multi'] ? $uploads[$name]['path'] : [$uploads[$name]['path']];
+            return array_merge($carry, $paths);
+        }, []), $uploads, $form_data);
         $endpoints = apply_filters('wpct_erp_forms_endpoints', $this->get_endpoints($form_data['id']), $payload, $files, $form_data);
 
-		do_action('wpct_erp_forms_before_submission', $payload, $files, $form_data);
+        do_action('wpct_erp_forms_before_submission', $payload, $files, $form_data);
         $success = $this->submit($payload, $endpoints, $files, $form_data);
 
-        if ($success) do_action('wpct_erp_forms_after_submission', $payload, $files, $form_data);
-        else do_action('wpct_erp_forms_on_failure', $payload, $files, $form_data);
+        if ($success) {
+            do_action('wpct_erp_forms_after_submission', $payload, $files, $form_data);
+        } else {
+            do_action('wpct_erp_forms_on_failure', $payload, $files, $form_data);
+        }
     }
 
     public function get_uploads($submission, $form_data)
@@ -91,7 +98,7 @@ abstract class Integration extends Singleton
     {
         $payload = [
             'name' => "'{$form_data['title']}' submission: {$data['submission_id']}",
-			'submission_id' => $data['submission_id'],
+            'submission_id' => $data['submission_id'],
             'metadata' => []
         ];
 
