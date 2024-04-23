@@ -36,6 +36,9 @@ require_once 'includes/class-settings.php';
 require_once 'custom-blocks/form/form.php';
 require_once 'custom-blocks/form-control/form-control.php';
 
+require_once 'includes/fields/gf/iban/class-field-adapter.php';
+require_once 'includes/fields/gf/vat-id/class-field-adapter.php';
+
 class Wpct_Erp_Forms extends Abstract\Plugin
 {
     private $_integrations = [];
@@ -61,10 +64,6 @@ class Wpct_Erp_Forms extends Abstract\Plugin
 
     public function init()
     {
-        foreach ($this->_integrations as $integration) {
-            $integration->init();
-        }
-
         add_action('wp_enqueue_scripts', [$this, 'enqueue_scripts']);
     }
 
@@ -106,4 +105,4 @@ class Wpct_Erp_Forms extends Abstract\Plugin
 
 add_action('plugins_loaded', function () {
     $plugin = Wpct_Erp_Forms::get_instance();
-}, 10);
+}, 5);

@@ -6,17 +6,20 @@ use Exception;
 use TypeError;
 use WPCT_ERP_FORMS\Abstract\Integration as BaseIntegration;
 use WPCT_ERP_FORMS\GF\Fields\Iban\FieldAdapter as IbanField;
+use WPCT_ERP_FORMS\GF\Fields\VatID\FieldAdapter as VatIDField;
 
 require_once 'attachments.php';
 require_once 'fields-population.php';
 
 // Fields
 require_once dirname(__FILE__, 3) . '/fields/gf/iban/class-field-adapter.php';
+require_once dirname(__FILE__, 3) . '/fields/gf/vat-id/class-field-adapter.php';
 
 class Integration extends BaseIntegration
 {
     public static $fields = [
-        IbanField::class
+        IbanField::class,
+        VatIDField::class,
     ];
 
     protected function __construct()
@@ -24,6 +27,8 @@ class Integration extends BaseIntegration
         add_action('gform_after_submission', function ($entry, $form) {
             $this->do_submission($entry, $form);
         }, 10, 2);
+
+		parent::__construct();
     }
 
     public function serialize_form($form)
@@ -58,21 +63,21 @@ class Integration extends BaseIntegration
 
         $inputs = $field->get_entry_inputs();
         if (is_array($inputs)) {
-			$inputs = array_map(function ($input) {
-				return ['name' => $input['name'], 'label' => $input['label'], 'id' => $input['id']];
-			}, array_filter($inputs, function ($input) {
-				return $input['name'];
-			}));
-		} else {
-			$inputs = [];
-		}
+            $inputs = array_map(function ($input) {
+                return ['name' => $input['name'], 'label' => $input['label'], 'id' => $input['id']];
+            }, array_filter($inputs, function ($input) {
+                return $input['name'];
+            }));
+        } else {
+            $inputs = [];
+        }
 
-		$options = [];
-		if (is_array($field->choices)) {
-			$options = array_map(function ($opt) {
-				return ['value' => $opt['value'], 'label' => $opt['text']];
-			}, $field->choices);
-		}
+        $options = [];
+        if (is_array($field->choices)) {
+            $options = array_map(function ($opt) {
+                return ['value' => $opt['value'], 'label' => $opt['text']];
+            }, $field->choices);
+        }
 
         return [
             'id' => $field->id,
@@ -81,8 +86,8 @@ class Integration extends BaseIntegration
             'label' => $field->label,
             'required' => $field->isRequired,
             'options' => $options,
-			'inputs' => $inputs,
-			'conditional' => is_array($field->conditionalLogic) && $field->conditionalLogic['enabled'],
+            'inputs' => $inputs,
+            'conditional' => is_array($field->conditionalLogic) && $field->conditionalLogic['enabled'],
         ];
     }
 

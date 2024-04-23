@@ -1,119 +1,20 @@
 <?php
 
-namespace WPCT_ERP_FORMS\GF\Fields\Iban;
+namespace WPCT_ERP_FORMS\GF\Fields\VatID;
 
-use GF_Field;
 use Exception;
+use GF_Field;
 
 class GFField extends GF_Field
 {
-    /**
-     * @var array @type Country codes
-     */
-    private $_countries = [
-        'al' => 28,
-        'ad' => 24,
-        'at' => 20,
-        'az' => 28,
-        'bh' => 22,
-        'be' => 16,
-        'ba' => 20,
-        'br' => 29,
-        'bg' => 22,
-        'cr' => 21,
-        'hr' => 21,
-        'cy' => 28,
-        'cz' => 24,
-        'dk' => 18,
-        'do' => 28,
-        'ee' => 20,
-        'fo' => 18,
-        'fi' => 18,
-        'fr' => 27,
-        'ge' => 22,
-        'de' => 22,
-        'gi' => 23,
-        'gr' => 27,
-        'gl' => 18,
-        'gt' => 28,
-        'hu' => 28,
-        'is' => 26,
-        'ie' => 22,
-        'il' => 23,
-        'it' => 27,
-        'jo' => 30,
-        'kz' => 20,
-        'kw' => 30,
-        'lv' => 21,
-        'lb' => 28,
-        'li' => 21,
-        'lt' => 20,
-        'lu' => 20,
-        'mk' => 19,
-        'mt' => 31,
-        'mr' => 27,
-        'mu' => 30,
-        'mc' => 27,
-        'md' => 24,
-        'me' => 22,
-        'nl' => 18,
-        'no' => 15,
-        'pk' => 24,
-        'ps' => 29,
-        'pl' => 28,
-        'pt' => 25,
-        'qa' => 29,
-        'ro' => 24,
-        'sm' => 27,
-        'sa' => 24,
-        'rs' => 22,
-        'sk' => 24,
-        'si' => 19,
-        'es' => 24,
-        'se' => 24,
-        'ch' => 21,
-        'tn' => 24,
-        'tr' => 26,
-        'ae' => 23,
-        'gb' => 22,
-        'vg' => 24,
-    ];
+    private static $_dni_regex = '/^(\d{8})([A-Z])$/';
+    private static $_cif_regex = '/^([ABCDEFGHJKLMNPQRSUVW])(\d{7})([0-9A-J])$/';
+    private static $_nie_regex = '/^[XYZ]\d{7,8}[A-Z]$/';
 
-    /**
-     * @var array $type Char codes
-     */
-    private $_chars = [
-        'a' => 10,
-        'b' => 11,
-        'c' => 12,
-        'd' => 13,
-        'e' => 14,
-        'f' => 15,
-        'g' => 16,
-        'h' => 17,
-        'i' => 18,
-        'j' => 19,
-        'k' => 20,
-        'l' => 21,
-        'm' => 22,
-        'n' => 23,
-        'o' => 24,
-        'p' => 25,
-        'q' => 26,
-        'r' => 27,
-        's' => 28,
-        't' => 29,
-        'u' => 30,
-        'v' => 31,
-        'w' => 32,
-        'x' => 33,
-        'y' => 34,
-        'z' => 35
-    ];
     /**
      * @var string $type The field type.
      */
-    public $type = 'iban-field';
+    public $type = 'vat-id-field';
 
     /**
      * Return the field title, for use in the form editor.
@@ -122,7 +23,7 @@ class GFField extends GF_Field
      */
     public function get_form_editor_field_title()
     {
-        return esc_attr__('IBAN');
+        return esc_attr__('VAT ID');
     }
 
     /**
@@ -223,55 +124,112 @@ class GFField extends GF_Field
             if (strlen($value) < 5) {
                 throw new Exception();
             }
+
             $value = strtolower(str_replace(' ', '', $value));
+            $value = preg_replace('/\s/', '', strtoupper($value));
 
-            $country_exists = array_key_exists(substr($value, 0, 2), $this->_countries);
-            $country_conform = strlen($value) == $this->_countries[substr($value, 0, 2)];
-
-            if (!($country_exists && $country_conform)) {
-                throw new Exception();
+			$valid = false;
+            $type = $this->id_type($value);
+            switch ($type) {
+                case 'dni':
+                    $valid = $this->validate_dni($value);
+                    break;
+                case 'nie':
+                    $valid = $this->validate_nie($value);
+                    break;
+                case 'cif':
+                    $valid = $this->validate_cif($value);
+                    break;
             }
 
-            $moved_char = substr($value, 4) . substr($value, 0, 4);
-            $move_char_array = str_split($moved_char);
-            $new_string = '';
-
-            foreach ($move_char_array as $key => $val) {
-                if (!is_numeric($move_char_array[$key])) {
-                    if (!isset($this->_chars[$val])) {
-                        throw new Exception();
-                    }
-                    $move_char_array[$key] = $this->_chars[$val];
-                }
-
-                $new_string .= $move_char_array[$key];
-            }
-
-            if (bcmod($new_string, '97') != 1) {
+            if (!$valid) {
                 throw new Exception();
             }
         } catch (Exception $e) {
             $this->failed_validation = true;
-            $this->validation_message = empty($this->errorMessage) ? __('The IBAN you\'ve inserted is not valid.', 'wpct-erp-forms') : $this->errorMessage;
+            $this->validation_message = empty($this->errorMessage) ? __('The VAT number you\'ve inserted is not valid.', 'wpct-erp-forms') : $this->errorMessage;
         }
     }
 
-    public function get_form_inline_script_on_page_render($form)
+    private function id_type($value)
     {
-        ob_start();
-        ?>
-		const input = document.querySelector('#input_<?= $form['id'] ?>_<?= $this->id ?>');
-		input.addEventListener("input", ({ target }) => {
-			const value = String(target.value);
-			const chars = value.split("").filter((c) => c !== " ");
-			target.value = chars.reduce((repr, char, i) => {
-				if (i % 4 === 0) {
-					char = " " + char;
-				}
-				return repr + char;
-			});
-		});
-		<?php
-        return ob_get_clean();
+        if (preg_match(GFField::$_dni_regex, $value)) {
+            return 'dni';
+        } elseif (preg_match(GFField::$_nie_regex, $value)) {
+            return 'nie';
+        } elseif (preg_match(GFField::$_cif_regex, $value)) {
+            return 'cif';
+        }
+    }
+
+    private function validate_dni($value)
+    {
+        $dni_letters = 'TRWAGMYFPDXBNJZSQVHLCKE';
+        $number = (int) substr($value, 0, 8);
+        $index = $number % 23;
+        $letter = substr($dni_letters, $index, 1);
+
+        return $letter == substr($value, 8, 9);
+    }
+
+    private function validate_nie($value)
+    {
+        $nie_prefix = substr($value, 0, 1);
+
+        switch ($nie_prefix) {
+            case  'X':
+                $nie_prefix = 0;
+                break;
+            case 'Y':
+                $nie_prefix = 1;
+                break;
+            case 'Z':
+                $nie_prefix = 2;
+                break;
+        }
+
+        return $this->validate_dni($nie_prefix . substr($value, 1, 9));
+    }
+
+    private function validate_cif($value)
+    {
+        preg_match(GFField::$_cif_regex, $value, $matches);
+        $letter = $matches[1];
+        $number = $matches[2];
+        $control = $matches[3];
+
+        $even_sum = 0;
+        $odd_sum = 0;
+        $n = null;
+
+        for ($i = 0; $i < strlen($number); $i++) {
+            $n = (int) $number[$i];
+
+            if ($i % 2 === 0) {
+                // Odd positions are multiplied first.
+                $n *= 2;
+                // If the multiplication is bigger than 10 we need to adjust
+                $odd_sum += $n < 10 ? $n : $n - 9;
+
+                // Even positions
+                // Just sum them
+            } else {
+                $even_sum += $n;
+            }
+        }
+
+        $control_digit = 10 - (int) substr(strval($even_sum +  $odd_sum), -1);
+        $control_letter = substr('JABCDEFGHI', $control_digit, 1);
+
+        if (preg_match('/[ABEH]/', $letter)) {
+            // Control must be a digit
+            return (int) $control === $control_digit;
+        } elseif (preg_match('/[KPQS]/', $letter)) {
+            // Control must be a letter
+            return (string) $control === $control_letter;
+        } else {
+            // Can be either
+            return (int) $control === $control_digit || (string) $control === $control_letter;
+        }
     }
 }

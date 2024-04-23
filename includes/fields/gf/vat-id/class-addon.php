@@ -1,6 +1,6 @@
 <?php
 
-namespace WPCT_ERP_FORMS\GF\Fields\Iban;
+namespace WPCT_ERP_FORMS\GF\Fields\VatID;
 
 use GFForms;
 use GFAddOn;
@@ -11,9 +11,10 @@ GFForms::include_addon_framework();
 class Addon extends GFAddOn
 {
     protected $_version = '1.0';
-    protected $_slug = 'wpct-erp-forms-iban-field';
-    protected $_title = 'Gravity Forms IBAN validated text field';
-    protected $_short_title = 'IBAN field';
+    protected $_slug = 'wpct-erp-forms-vat-id-field';
+    protected $_title = 'Gravity Forms VatID validated text field';
+    protected $_short_title = 'VatID field';
+	protected $_full_path;
 
     /**
      * @var object $_instance If available, contains an instance of this class.
@@ -34,11 +35,11 @@ class Addon extends GFAddOn
         return self::$_instance;
     }
 
-	function __construct()
-	{
-		$this->_full_path = __FILE__;
-		parent::__construct();
-	}
+    public function __construct()
+    {
+        $this->_full_path = __FILE__;
+        parent::__construct();
+    }
 
     /**
      * Include the field early so it is available when entry exports are being performed.

@@ -16,15 +16,16 @@ abstract class Integration extends Singleton
     {
         foreach (static::$fields as $Field) {
             $field = $Field::get_instance();
+            add_action('init', function () use ($field) {
+                $field->init();
+            });
         }
+
+        add_action('init', [$this, 'init']);
     }
 
     public function init()
     {
-        foreach (static::$fields as $Field) {
-            $field = $Field::get_instance();
-            $field->init();
-        }
     }
 
     public function submit($payload, $endpoints, $files, $form_data)
