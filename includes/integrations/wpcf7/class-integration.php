@@ -88,11 +88,13 @@ class Integration extends BaseIntegration
             $i = array_search($key, array_column($form_data['fields'], 'name'));
             $field = $form_data['fields'][$i];
 
-            if ($field['type'] === 'number') {
-                $number = (float) $val;
-                if ((string) $number === $val) {
-                    $data[$key] = $number;
+            if ($field['type'] === 'hidden') {
+                $number_val = (float) $val;
+                if ((string) $number_val === $val) {
+                    $data[$key] = $number_val;
                 }
+            } elseif ($field['type'] === 'number') {
+                $data[$key] = (float) $val;
             } elseif ($field['type'] === 'file' || $field['type'] === 'submit') {
                 unset($data[$key]);
             }
