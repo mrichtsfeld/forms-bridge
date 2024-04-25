@@ -73,7 +73,7 @@ abstract class Integration extends Singleton
         $data = $this->serialize_submission($submission, $form_data);
         $this->cleanup_empties($data);
 
-        $payload = apply_filters('wpct_erp_forms_payload', $this->get_payload($data, $form_data), $uploads, $form_data);
+        $payload = apply_filters('wpct_erp_forms_payload', $data, $uploads, $form_data);
         $files = apply_filters('wpct_erp_forms_submission_files', array_reduce(array_keys($uploads), function ($carry, $name) use ($uploads) {
             $paths = $uploads[$name]['is_multi'] ? $uploads[$name]['path'] : [$uploads[$name]['path']];
             return array_merge($carry, $paths);
@@ -93,24 +93,6 @@ abstract class Integration extends Singleton
     public function get_uploads($submission, $form_data)
     {
         return [];
-    }
-
-    public function get_payload($data, $form_data)
-    {
-        $payload = [
-            'name' => "'{$form_data['title']}' submission: {$data['submission_id']}",
-            'submission_id' => $data['submission_id'],
-            'metadata' => []
-        ];
-
-        foreach ($data as $key => $val) {
-            $payload['metadata'][] = [
-                'key' => $key,
-                'value' => $val
-            ];
-        }
-
-        return $payload;
     }
 
     private function cleanup_empties(&$submission)
