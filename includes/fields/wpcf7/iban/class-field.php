@@ -76,7 +76,7 @@ class Field extends BaseField
 			$validation_error,
 		);
 
-        return $html;
+        return $html . $this->add_script($tag);
     }
 
     public function add_rules($schema, $form)
@@ -103,4 +103,26 @@ class Field extends BaseField
             }
         }
     }
+
+	private function add_script($tag)
+	{
+		ob_start();
+        ?>
+		<script>
+		const input = document.currentScript.parentElement.querySelector('input[name="<?= $tag->name ?>"]');
+		input.addEventListener("input", ({ target }) => {
+			const value = String(target.value);
+			const chars = value.split("").filter((c) => c !== " ");
+			target.value = chars.reduce((repr, char, i) => {
+				if (i % 4 === 0) {
+					char = " " + char;
+				}
+				return repr + char;
+			});
+		});
+		</script>
+		<?php
+        return ob_get_clean();
+
+	}
 }
