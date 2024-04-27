@@ -183,7 +183,7 @@ class Integration extends BaseIntegration
                 if ($private_upload) {
                     $url = parse_url($path);
                     parse_str($url['query'], $query);
-                    $path = wpct_erp_forms_attachment_path($query['erp-forms-attachment']);
+                    $path = wpct_erp_forms_attachment_fullpath($query['erp-forms-attachment']);
                 }
 
                 return $path;

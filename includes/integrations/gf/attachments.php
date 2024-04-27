@@ -11,14 +11,9 @@ function wpct_erp_forms_upload_path($path_info, $form_id)
         return $path_info;
     }
 
-    $upload_dir = wp_upload_dir();
-    $base_path = apply_filters('wpct_erp_forms_upload_path', $upload_dir['basedir'] . '/erp-forms');
-    if (!($base_path && is_string($base_path))) {
-        throw new Exception('WPCT ERP Forms: Invalid upload path');
-    }
-    $base_path = preg_replace('/\/$/', '', $base_path);
+    $base_path = wpct_erp_forms_attachment_base_path();
+    $path = $base_path . '/' . implode('/', [$form_id, date('Y'), date('m')]) . '/';
 
-    $path = $base_path . '/' . implode('/', [$form_id, date('Y'), date('m')]);
     if (!is_dir($path)) {
         mkdir($path, 0700, true);
     }
@@ -33,12 +28,9 @@ deny from all',
         );
         fclose($fp);
     }
+
     $path_info['path'] = $path;
-
-    $url = get_site_url() . '/index.php?';
-    $url .= 'erp-forms-attachment=' . urlencode(str_replace($base_path, '', $path) . '/');
-    $path_info['url'] = $url;
-
+    $path_info['url'] = wpct_erp_forms_attachment_url($path);
     return $path_info;
 };
 
@@ -52,7 +44,7 @@ function wpct_erp_forms_download_file()
         return;
     }
 
-    $path = wpct_erp_forms_attachment_path($_GET['erp-forms-attachment']);
+    $path = wpct_erp_forms_attachment_fullpath($_GET['erp-forms-attachment']);
 
     if (!(is_user_logged_in() && file_exists($path))) {
         global $wp_query;
@@ -86,7 +78,7 @@ function wpct_erp_forms_download_file()
     die();
 }
 
-function wpct_erp_forms_attachment_path($attachment_path)
+function wpct_erp_forms_attachment_base_path()
 {
     $upload_dir = wp_upload_dir();
     $base_path = apply_filters('wpct_erp_forms_upload_path', $upload_dir['basedir'] . '/erp-forms');
@@ -94,11 +86,24 @@ function wpct_erp_forms_attachment_path($attachment_path)
         throw new Exception('WPCT ERP Forms: Invalid upload path');
     }
     $base_path = preg_replace('/\/$/', '', $base_path);
-    return $base_path . urldecode($attachment_path);
+    return $base_path;
+}
+
+function wpct_erp_forms_attachment_fullpath($filepath)
+{
+    $base_path = wpct_erp_forms_attachment_base_path();
+    return $base_path . urldecode($filepath);
+}
+
+function wpct_erp_forms_attachment_url($filepath)
+{
+    $base_path = wpct_erp_forms_attachment_base_path();
+    $url = get_site_url() . '/index.php?';
+    $url .= 'erp-forms-attachment=' . urlencode(str_replace($base_path, '', $filepath));
+    return $url;
 }
 
 function wpct_erp_forms_private_upload($form_id)
 {
     return apply_filters('wpct_erp_forms_private_upload', true, $form_id);
-
 }
