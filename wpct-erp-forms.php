@@ -53,10 +53,10 @@ class Wpct_Erp_Forms extends Abstract\Plugin
     {
         parent::__construct();
 
-        if (apply_filters('wpct_dc_is_plugin_active', false, 'contact-form-7/wp-contact-form-7.php')) {
+        if (apply_filters('wpct_dc_is_active', false, 'contact-form-7/wp-contact-form-7.php')) {
             require_once 'includes/integrations/wpcf7/class-integration.php';
             $this->_integrations['wpcf7'] = Wpcf7Integration::get_instance();
-        } elseif (apply_filters('wpct_dc_is_plugin_active', false, 'gravityforms/gravityforms.php')) {
+        } elseif (apply_filters('wpct_dc_is_active', false, 'gravityforms/gravityforms.php')) {
             require_once 'includes/integrations/gf/class-integration.php';
             $this->_integrations['gf'] = GFIntegration::get_instance();
         }
