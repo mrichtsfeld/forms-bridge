@@ -30,25 +30,6 @@ class Integration extends BaseIntegration
         add_filter('wpcf7_before_send_mail', function ($form, &$abort, $submission) {
             $this->do_submission($submission, $form);
         }, 10, 3);
-
-        add_filter('wpcf7_form_elements', function ($tags) {
-            $plugin_url = plugin_dir_url(dirname(__FILE__, 4) . '/wpct-erp-forms.php');
-            $script_url = $plugin_url . 'assets/js/wpcf7.js';
-            ob_start();
-            ?>
-            <script src="<?= $script_url ?>" type="module"></script>
-            <style>
-                .wpcf7-form-control-conditional-wrap {
-                    display: none
-                }
-                .wpcf7-form-control-conditional-wrap.visible {
-                    display: block;
-                }
-            </style>
-<?php
-                        $assets = ob_get_clean();
-            return $tags . $assets;
-        }, 90, 1);
     }
 
     public function serialize_field($field, $form)
