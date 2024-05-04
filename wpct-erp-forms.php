@@ -60,7 +60,6 @@ class Wpct_Erp_Forms extends Abstract\Plugin
 
     public function init()
     {
-        add_action('wp_enqueue_scripts', [$this, 'enqueue_scripts']);
     }
 
     public static function activate()
@@ -69,33 +68,6 @@ class Wpct_Erp_Forms extends Abstract\Plugin
 
     public static function deactivate()
     {
-    }
-
-    public function enqueue_scripts()
-    {
-        if (isset($this->_integrations['wpcf7'])) {
-            wp_enqueue_style(
-                'wpct-wpcf7-theme',
-                plugin_dir_url(__FILE__) . 'assets/css/wpct7-theme.css',
-                [],
-                WPCT_ERP_FORMS_VERSION,
-            );
-
-			wp_enqueue_script(
-				'wpct-wpcf7-swv-validators',
-				plugin_dir_url(__FILE__) . 'assets/js/wpcf7-swv-validators.js',
-				[],
-				WPCT_ERP_FORMS_VERSION,
-				true,
-			);
-        } elseif (isset($this->_integrations['gf'])) {
-            wp_register_script(
-                'wpct-gf-app',
-                plugin_dir_url(__FILE__) . 'assets/js/gf.js',
-                [],
-                WPCT_ERP_FORMS_VERSION
-            );
-        }
     }
 }
 
