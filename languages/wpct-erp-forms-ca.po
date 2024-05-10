@@ -55,6 +55,3 @@ msgstr "Configuració dels endpoints associats als formularsi"
 
 msgid "wpct-erp-forms_api__endpoints--label"
 msgstr "Endpoints"
-
-msgid "foo"
-msgstr "bar"

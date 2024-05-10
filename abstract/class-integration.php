@@ -19,15 +19,15 @@ abstract class Integration extends Singleton
     {
     }
 
-    public function submit($payload, $endpoints, $files, $form_data)
+    public function submit($payload, $endpoints, $uploads, $form_data)
     {
         $success = true;
         foreach ($endpoints as $endpoint) {
 
-            if (empty($files)) {
+            if (empty($uploads)) {
                 $response = Wpct_Http_Client::post($endpoint, $payload);
             } else {
-                $response = Wpct_Http_Client::post_multipart($endpoint, $payload, $files);
+                $response = Wpct_Http_Client::post_multipart($endpoint, $payload, $uploads);
             }
 
             if (!$response) {
@@ -61,24 +61,31 @@ abstract class Integration extends Singleton
         }
 
         $uploads = $this->get_uploads($submission, $form_data);
+        $uploads = apply_filters('wpct_erp_forms_uploads', array_reduce(array_keys($uploads), function ($carry, $name) use ($uploads) {
+			if ($uploads[$name]['is_multi']) {
+				for ($i = 1; $i <= count($uploads[$name]['path']); $i++) {
+					$carry[$name . '_' . $i] = $uploads[$name]['path'][$i - 1];
+				}
+			} else {
+				$carry[$name] = $uploads[$name]['path'];
+			}
+
+            return $carry;
+        }, []), $form_data);
 
         $data = $this->serialize_submission($submission, $form_data);
         $this->cleanup_empties($data);
-
         $payload = apply_filters('wpct_erp_forms_payload', $data, $uploads, $form_data);
-        $files = apply_filters('wpct_erp_forms_submission_files', array_reduce(array_keys($uploads), function ($carry, $name) use ($uploads) {
-            $paths = $uploads[$name]['is_multi'] ? $uploads[$name]['path'] : [$uploads[$name]['path']];
-            return array_merge($carry, $paths);
-        }, []), $uploads, $form_data);
-        $endpoints = apply_filters('wpct_erp_forms_endpoints', $this->get_endpoints($form_data['id']), $payload, $files, $form_data);
 
-        do_action('wpct_erp_forms_before_submission', $payload, $files, $form_data);
-        $success = $this->submit($payload, $endpoints, $files, $form_data);
+        $endpoints = apply_filters('wpct_erp_forms_endpoints', $this->get_endpoints($form_data['id']), $payload, $uploads, $form_data);
+
+        do_action('wpct_erp_forms_before_submission', $payload, $uploads, $form_data);
+        $success = $this->submit($payload, $endpoints, $uploads, $form_data);
 
         if ($success) {
-            do_action('wpct_erp_forms_after_submission', $payload, $files, $form_data);
+            do_action('wpct_erp_forms_after_submission', $payload, $uploads, $form_data);
         } else {
-            do_action('wpct_erp_forms_on_failure', $payload, $files, $form_data);
+            do_action('wpct_erp_forms_on_failure', $payload, $uploads, $form_data);
         }
     }
 
