@@ -18,6 +18,7 @@ abstract class Settings extends Singleton
                 [
                     'form_id' => 0,
                     'endpoint' => '/api/private/crm-lead',
+                    'ref' => 'ref',
                 ]
             ]
         ]
@@ -119,7 +120,7 @@ abstract class Settings extends Singleton
 
     public function input_render($setting, $field, $value)
     {
-        $default_value = $this->get_defaults($setting, $field);
+        $default_value = $this->get_defaults($setting); //, $field);
         $keys = explode('][', $field);
         $is_list = is_list($default_value);
         for ($i = 0; $i < count($keys); $i++) {
@@ -184,10 +185,18 @@ abstract class Settings extends Singleton
 
     public function option_getter($setting, $option)
     {
+        $defaults = $this->get_defaults($setting, $option);
         $setting = get_option($setting) ? get_option($setting) : [];
         if (!key_exists($option, $setting)) {
             return null;
         }
+
+        if (empty($setting[$option])) {
+            return $defaults;
+        } elseif (is_list($setting[$option])) {
+            // $setting[$option] = array_map($setting[$option])
+        }
+
         return $setting[$option];
     }
 
@@ -196,8 +205,8 @@ abstract class Settings extends Singleton
         $defaults = isset($this->_defaults[$setting_name]) ? $this->_defaults[$setting_name] : [];
         $defaults = apply_filters($setting_name . '_defaults', $defaults);
 
-        if ($field) {
-
+        if ($field && isset($defaults[$field])) {
+            return $defaults[$field];
         }
 
         return $defaults;

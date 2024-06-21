@@ -13,6 +13,10 @@ abstract class Integration extends Singleton
     protected function __construct()
     {
         add_action('init', [$this, 'init']);
+        // add_action('wpct_erp_forms_ref', function ($data) {
+        //     $ref = apply_filters('wpct_erp_forms_filter_ref', $data['ref'], $data['form_id']);
+        //     $this->set_form_ref($data['form_id'], $ref);
+        // }, 10);
     }
 
     public function init()
@@ -62,13 +66,13 @@ abstract class Integration extends Singleton
 
         $uploads = $this->get_uploads($submission, $form_data);
         $uploads = apply_filters('wpct_erp_forms_uploads', array_reduce(array_keys($uploads), function ($carry, $name) use ($uploads) {
-			if ($uploads[$name]['is_multi']) {
-				for ($i = 1; $i <= count($uploads[$name]['path']); $i++) {
-					$carry[$name . '_' . $i] = $uploads[$name]['path'][$i - 1];
-				}
-			} else {
-				$carry[$name] = $uploads[$name]['path'];
-			}
+            if ($uploads[$name]['is_multi']) {
+                for ($i = 1; $i <= count($uploads[$name]['path']); $i++) {
+                    $carry[$name . '_' . $i] = $uploads[$name]['path'][$i - 1];
+                }
+            } else {
+                $carry[$name] = $uploads[$name]['path'];
+            }
 
             return $carry;
         }, []), $form_data);
@@ -122,5 +126,28 @@ abstract class Integration extends Singleton
         return array_map(function ($map) {
             return $map['endpoint'];
         }, $maps);
+    }
+
+    public function get_form_ref($form_id)
+    {
+        $setting = get_option('wpct-erp-forms_api', ['endpoints' => []]);
+        foreach ($setting['endpoints'] as $endpoint) {
+            if ((string) $endpoint['form_id'] === (string) $form_id) {
+                return isset($endpoint['ref']) ? $endpoint['ref'] : null;
+            }
+        }
+
+        return null;
+    }
+
+    public function set_form_ref($form_id, $ref)
+    {
+        $setting = get_option('wpct-erp-forms_api', ['endpoints' => []]);
+        for ($i = 0; $i < count($setting['endpoints']); $i++) {
+            if ((string) $setting['endpoints'][$i]['form_id'] === (string) $form_id) {
+                $endpoints[$i]['ref'] = $ref;
+                break;
+            }
+        }
     }
 }

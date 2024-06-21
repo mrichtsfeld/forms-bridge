@@ -13,6 +13,22 @@ class Integration extends BaseIntegration
         add_filter('wpcf7_before_send_mail', function ($form, &$abort, $submission) {
             $this->do_submission($submission, $form);
         }, 10, 3);
+
+        // add_action('wpcf7_save_contact_form', function ($form, $args, $context) {
+        //     $field = array_filter($form->scan_form_tags(), function ($tag) {
+        //         $field = $this->serialize_field($tag, null);
+        //         return $field['name'] === 'erp_form_ref';
+        //     });
+
+        //     if (sizeof($field) === 0) {
+        //         return;
+        //     } else {
+        //         $field = $field[0];
+        //         $ref = $field->get_option('default')[0];
+        //     }
+
+        //     do_action('wpct_erp_forms_ref', ['form_id' => $form->id(), 'ref' => $ref]);
+        // }, 10, 3);
     }
 
     public function serialize_field($field, $form)
@@ -72,6 +88,7 @@ class Integration extends BaseIntegration
         return [
             'id' => $form->id(),
             'title' => $form->title(),
+            'ref' => $this->get_form_ref($form->id()),
             'fields' => array_map(function ($field) use ($form) {
                 return $this->serialize_field($field, $form);
             }, $form->scan_form_tags()),
