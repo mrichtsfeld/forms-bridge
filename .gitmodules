@@ -2,8 +2,8 @@
 	path = abstracts
 	url = git@git.coopdevs.org:codeccoop/wp/plugins/wpct-plugin-abstracts.git
 [submodule "http-bridge"]
-	path = http-bridge
+	path = wpct-http-bridge
 	url = git@git.coopdevs.org:codeccoop/wp/plugins/wpct-http-bridge.git
 [submodule "i18n"]
-	path = i18n
+	path = wpct-i18n
 	url = git@git.coopdevs.org:codeccoop/wp/plugins/wpct-i18n.git

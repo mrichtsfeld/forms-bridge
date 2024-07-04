@@ -4,7 +4,7 @@ namespace WPCT_ERP_FORMS\GF;
 
 use Exception;
 use TypeError;
-use WPCT_ERP_FORMS\Abstract\Integration as BaseIntegration;
+use WPCT_ERP_FORMS\Integration as BaseIntegration;
 
 require_once 'attachments.php';
 require_once 'fields-population.php';
@@ -19,6 +19,10 @@ class Integration extends BaseIntegration
 
         parent::__construct();
     }
+
+	public function init()
+	{
+	}
 
     public function serialize_form($form)
     {

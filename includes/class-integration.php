@@ -1,22 +1,21 @@
 <?php
 
-namespace WPCT_ABSTRACT;
+namespace WPCT_ERP_FORMS;
 
+use WPCT_ABSTRACT\Singleton;
 use WPCT_HTTP\Http_Client as Wpct_Http_Client;
 use Exception;
 
-abstract class Integration extends WPCT_ABSTRACT\Singleton
+abstract class Integration extends Singleton
 {
     abstract public function serialize_submission($submission, $form);
     abstract public function serialize_form($form);
+	abstract public function get_uploads($submission, $form_data);
+	abstract public function init();
 
     protected function __construct()
     {
         add_action('init', [$this, 'init']);
-    }
-
-    public function init()
-    {
     }
 
     public function submit($payload, $endpoints, $uploads, $form_data)
@@ -89,11 +88,6 @@ abstract class Integration extends WPCT_ABSTRACT\Singleton
         }
     }
 
-    public function get_uploads($submission, $form_data)
-    {
-        return [];
-    }
-
     private function cleanup_empties(&$submission)
     {
         foreach ($submission as $key => $val) {
@@ -145,5 +139,7 @@ abstract class Integration extends WPCT_ABSTRACT\Singleton
                 break;
             }
         }
+
+		update_option('wpct-erp-forms_api', $setting);
     }
 }

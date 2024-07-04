@@ -15,6 +15,7 @@ namespace WPCT_ERP_FORMS;
 
 use WPCT_ERP_FORMS\WPCF7\Integration as Wpcf7Integration;
 use WPCT_ERP_FORMS\GF\Integration as GFIntegration;
+use WPCT_ABSTRACT\Plugin as BasePlugin;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -24,22 +25,24 @@ define('WPCT_ERP_FORMS_VERSION', '1.3.0');
 
 require_once 'abstracts/class-singleton.php';
 require_once 'abstracts/class-plugin.php';
+require_once 'abstracts/class-menu.php';
 require_once 'abstracts/class-settings.php';
-require_once 'abstracts/class-integration.php';
 
-require_once 'http-bridge/wpct-http-bridge.php';
-require_once 'i18n/wpct-i18n.php';
+require_once 'wpct-http-bridge/wpct-http-bridge.php';
+require_once 'wpct-i18n/wpct-i18n.php';
 
-require_once 'includes/abstract-integration.php';
+require_once 'includes/class-integration.php';
 require_once 'includes/class-menu.php';
 require_once 'includes/class-settings.php';
 
-class Wpct_Erp_Forms extends \WPCT_ABSTRACT\Plugin
+class Wpct_Erp_Forms extends BasePlugin
 {
     private $_integrations = [];
 
-    protected $name = 'Wpct ERP Forms';
-    protected $textdomain = 'wpct-erp-forms';
+    public static $name = 'Wpct ERP Forms';
+    public static $textdomain = 'wpct-erp-forms';
+
+    protected static $menu_class = '\WPCT_ERP_FORMS\Menu';
 
     protected function __construct()
     {

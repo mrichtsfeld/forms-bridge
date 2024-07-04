@@ -31,7 +31,11 @@ class Integration extends BaseIntegration
         // }, 10, 3);
     }
 
-    public function serialize_field($field, $form)
+    public function init()
+    {
+    }
+
+    public function serialize_field($field, $form_data)
     {
         $type = $field->basetype;
         if ($type === 'conditional') {
@@ -95,7 +99,7 @@ class Integration extends BaseIntegration
         ];
     }
 
-    public function get_uploads($submission, $form)
+    public function get_uploads($submission, $form_data)
     {
         $uploads = [];
         $uploads = $submission->uploaded_files();
