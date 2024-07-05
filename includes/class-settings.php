@@ -20,20 +20,44 @@ class Settings extends BaseSettings
     {
         $setting_name = $this->group_name . '_general';
         $this->register_setting($setting_name, [
+            'notification_receiver' => [
+                'type' => 'string'
+            ],
+        ], [
             'notification_receiver' => 'admin@' . parse_url(get_bloginfo('url'))['host'],
-            'api_protocol' => 'JSON-RPC',
         ]);
 
         $setting_name = $this->group_name . '_api';
-        $this->register_setting($setting_name, [
-            'endpoints' => [
-                [
-                    'endpoint' => null,
-                    'form_id' => null,
-                    'ref' => null
+        $this->register_setting(
+            $setting_name,
+            [
+                'protocol' => [
+                    'type' => 'string',
+                    'enum' => [
+                        'JSON-RPC',
+                        'JSON-REST'
+                    ]
+                ],
+                'endpoints' => [
+                    'type' => 'array',
+                    'items' => [
+                        'form_id' => 'number',
+                        'endpoint' => 'string',
+                        'ref' => 'string',
+                    ]
+                ]
+            ],
+            [
+                'protocol' => 'JSON-RPC',
+                'endpoints' => [
+                    [
+                        'endpoint' => '/wp-json/wp/v2',
+                        'form_id' => 0,
+                        'ref' => ''
+                    ]
                 ]
             ]
-        ]);
+        );
     }
 
     protected function input_render($setting, $field, $value)
