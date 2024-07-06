@@ -115,11 +115,12 @@ class Settings extends BaseSettings
 
     private function render_forms_dropdown($setting, $field, $value)
     {
+		$setting_name = $this->setting_name($setting);
         $forms = self::get_forms();
         $options = array_merge(['<option value=""></option>'], array_map(function ($form) use ($value) {
             $selected = $form->id == $value ? 'selected' : '';
             return "<option value='{$form->id}' {$selected}>{$form->title}</option>";
         }, $forms));
-        return "<select name='{$setting}[{$field}]'>" . implode('', $options) . '</select>';
+        return "<select name='{$setting_name}[{$field}]'>" . implode('', $options) . '</select>';
     }
 }
