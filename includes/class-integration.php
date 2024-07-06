@@ -42,10 +42,10 @@ abstract class Integration extends Singleton
                 }
 
                 if ($proto === 'rpc') {
-                    $data = $this->rpc_payload($payload);
-				} else {
-					$data = $payload;
-				}
+                    $data = $this->rpc_payload($url, $payload);
+                } else {
+                    $data = $payload;
+                }
                 if (empty($uploads)) {
                     $response = Wpct_Http_Client::post($url, $data);
                 } else {
@@ -182,20 +182,47 @@ abstract class Integration extends Singleton
         return $setting;
     }
 
-    private function rpc_payload($payload)
+    private function rpc_payload($url, $payload)
     {
+        $session_id = time();
         $setting = Settings::get_setting('wpct-erp-forms', 'rpc-api');
+
+        $res = Wpct_Http_Client::post($url, [
+            'jsonrpc' => '2.0',
+            'method' => 'call',
+            'id' => $session_id,
+            'params' => [
+                'service' => 'common',
+                'method' => 'login',
+                'args' => [
+                    $setting['database'],
+                    $setting['user'],
+                    $setting['password']
+                ]
+            ]
+        ]);
+
+        if (!$res) {
+            throw new Exception('Error while establish RPC session');
+        }
+
+        $login = (array) json_decode($res['body'], true);
+        $user_id = $login['result'];
+
+        if (isset($payload['submission_id'])) {
+            unset($payload['submission_id']);
+        }
 
         return [
             'jsonrpc' => '2.0',
             'method' => 'call',
-            'id' => time(),
+            'id' => $session_id,
             'params' => [
                 'service' => 'object',
                 'method' => 'execute',
                 'args' => [
                     $setting['database'],
-                    $setting['user'],
+                    $user_id,
                     $setting['password'],
                     $setting['model'],
                     'create',
