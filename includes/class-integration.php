@@ -42,7 +42,7 @@ abstract class Integration extends Singleton
                 }
 
                 if ($proto === 'rpc') {
-                    $data = $this->rpc_payload($url, $payload);
+                    $data = apply_filters('wpct_erp_forms_rpc_payload', $this->rpc_payload($url, $payload), $uploads, $form_data);
                 } else {
                     $data = $payload;
                 }
@@ -187,7 +187,7 @@ abstract class Integration extends Singleton
         $session_id = time();
         $setting = Settings::get_setting('wpct-erp-forms', 'rpc-api');
 
-        $res = Wpct_Http_Client::post($url, [
+		$payload = apply_filters('wpct_erp_forms_rpc_login', [
             'jsonrpc' => '2.0',
             'method' => 'call',
             'id' => $session_id,
@@ -201,6 +201,7 @@ abstract class Integration extends Singleton
                 ]
             ]
         ]);
+        $res = Wpct_Http_Client::post($url, $payload);
 
         if (!$res) {
             throw new Exception('Error while establish RPC session');
@@ -208,10 +209,6 @@ abstract class Integration extends Singleton
 
         $login = (array) json_decode($res['body'], true);
         $user_id = $login['result'];
-
-        if (isset($payload['submission_id'])) {
-            unset($payload['submission_id']);
-        }
 
         return [
             'jsonrpc' => '2.0',
