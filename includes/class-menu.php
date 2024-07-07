@@ -10,20 +10,7 @@ class Menu extends BaseMenu
 
     protected function render_page()
     {
-        ob_start();
-        ?>
-        <div class="wrap">
-            <h1><?= $this->name ?></h1>
-            <form action="options.php" method="post">
-            <?php
-            settings_fields($this->settings->get_group_name());
-			do_settings_sections($this->settings->get_group_name());
-			submit_button();
-			?>
-            </form>
-        </div>
-<?php
-        $output = ob_get_clean();
-        echo apply_filters('wpct_epr_forms_menu_page_content', $output);
+        $output = parent::render_page();
+        echo apply_filters('wpct_erp_forms_menu_page_content', $output);
     }
 }
