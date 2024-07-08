@@ -4,7 +4,7 @@ namespace WPCT_ERP_FORMS\GF;
 
 use Exception;
 use TypeError;
-use WPCT_ERP_FORMS\Abstract\Integration as BaseIntegration;
+use WPCT_ERP_FORMS\Integration as BaseIntegration;
 
 require_once 'attachments.php';
 require_once 'fields-population.php';
@@ -17,22 +17,12 @@ class Integration extends BaseIntegration
             $this->do_submission($entry, $form);
         }, 10, 2);
 
-        // add_action('gform_after_save_form', function ($form) {
-        // 	$field = array_filter($form['fields'], function ($field) {
-        // 		return $field['inputName'] === 'erp_form_ref';
-        // 	});
-
-        // 	if (sizeof($field) === 0) {
-        // 		return;
-        // 	} else {
-        // 		$field = $field[0];
-        // 	}
-
-        // 	do_action('wpct_erp_forms_ref', ['form_id' => $form['id'], 'ref' => $field['defaultValue']]);
-        // }, 10);
-
         parent::__construct();
     }
+
+	public function init()
+	{
+	}
 
     public function serialize_form($form)
     {

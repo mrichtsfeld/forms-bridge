@@ -19,8 +19,8 @@ msgid "Wpct ERP Forms"
 msgstr "Wpct ERP Forms"
 
 #. Plugin URI of the plugin
-msgid "https://git.coopdevs.org/codeccoop/wp/wpct-erp-forms"
-msgstr "https://git.coopdevs.org/codeccoop/wp/wpct-erp-forms"
+msgid "https://git.coopdevs.org/codeccoop/wp/plugins/wpct-erp-forms"
+msgstr "https://git.coopdevs.org/codeccoop/wp/plugins/wpct-erp-forms"
 
 #. Description of the plugin
 msgid "Plugin to bridge WP forms submissions to a ERP backend"
@@ -35,22 +35,49 @@ msgid "https://www.codeccoop.org"
 msgstr "https://www.codeccoop.org"
 
 msgid "wpct-erp-forms_general--title"
-msgstr "General settings"
+msgstr "General"
 
 msgid "wpct-erp-forms_general--description"
-msgstr "Global configuration of the plugin"
+msgstr "Global configuration of the plugin EPR Forms"
 
 msgid "wpct-erp-forms_general__notification_receiver--label"
 msgstr "Email receiver for submission errors"
 
-msgid "wpct-erp-forms_general__coord_id--label"
-msgstr "Coord ID"
+msgid "wpct-erp-forms_general__base_url--label"
+msgstr "ERP base url"
 
-msgid "wpct-erp-forms_api--title"
-msgstr "API settings"
+msgid "wpct-erp-forms_general__api_key--label"
+msgstr "ERP API key"
 
-msgid "wpct-erp-forms_api--description"
-msgstr "Bridge forms to endpoints"
+msgid "wpct-erp-forms_rest-api--title"
+msgstr "REST API"
 
-msgid "wpct-erp-forms_api__endpoints--label"
-msgstr "Endpoints"
+msgid "wpct-erp-forms_rest-api--description"
+msgstr "Configure the connexion with the ERP's REST API"
+
+msgid "wpct-erp-forms_rest-api__forms--label"
+msgstr "Forms"
+
+msgid "wpct-erp-forms_rpc-api--title"
+msgstr "RPC API"
+
+msgid "wpct-erp-forms_rpc-api--description"
+msgstr "Configure the connexion with the ERP's JSON-RPC API"
+
+msgid "wpct-erp-forms_rpc-api__endpoint--label"
+msgstr "RPC API endpoint"
+
+msgid "wpct-erp-forms_rpc-api__user--label"
+msgstr "API user login"
+
+msgid "wpct-erp-forms_rpc-api__password--label"
+msgstr "User password"
+
+msgid "wpct-erp-forms_rpc-api__database--label"
+msgstr "Database name"
+
+msgid "wpct-erp-forms_rpc-api__model--label"
+msgstr "Model ID"
+
+msgid "wpct-erp-forms_rpc-api__forms--label"
+msgstr "Forms"

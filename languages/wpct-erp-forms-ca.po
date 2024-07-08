@@ -20,12 +20,12 @@ msgid "Wpct ERP Forms"
 msgstr "Wpct ERP Forms"
 
 #. Plugin URI of the plugin
-msgid "https://git.coopdevs.org/codeccoop/wp/wpct-erp-forms"
-msgstr "https://git.coopdevs.org/codeccoop/wp/wpct-erp-forms"
+msgid "https://git.coopdevs.org/codeccoop/wp/plugins/wpct-erp-forms"
+msgstr "https://git.coopdevs.org/codeccoop/wp/plugins/wpct-erp-forms"
 
 #. Description of the plugin
 msgid "Plugin to bridge WP forms submissions to a ERP backend"
-msgstr "Plugin per connectar formularis de WP amb el backend d'un ERP"
+msgstr "Plugin per connectar formularis de WP amb el backend tipus ERP"
 
 #. Author of the plugin
 msgid "Còdec Cooperativa"
@@ -39,19 +39,46 @@ msgid "wpct-erp-forms_general--title"
 msgstr "General"
 
 msgid "wpct-erp-forms_general--description"
-msgstr "Configuració general del plugin"
+msgstr "Configuració general del plugin EPR Forms"
 
 msgid "wpct-erp-forms_general__notification_receiver--label"
-msgstr "Receptor de notificacions"
+msgstr "Receptor de notificacions d'error"
 
-msgid "wpct-erp-forms_general__coord_id--label"
-msgstr "ID de la coordinadora"
+msgid "wpct-erp-forms_general__base_url--label"
+msgstr "URL base de l'ERP"
 
-msgid "wpct-erp-forms_api--title"
+msgid "wpct-erp-forms_general__api_key--label"
+msgstr "Clau API de l'ERP"
+
+msgid "wpct-erp-forms_rest-api--title"
 msgstr "REST API"
 
-msgid "wpct-erp-forms_api--description"
-msgstr "Configuració dels endpoints associats als formularsi"
+msgid "wpct-erp-forms_rest-api--description"
+msgstr "Configuració de la connexió amb la REST API de l'ERP"
 
-msgid "wpct-erp-forms_api__endpoints--label"
-msgstr "Endpoints"
+msgid "wpct-erp-forms_rest-api__forms--label"
+msgstr "Formularis"
+
+msgid "wpct-erp-forms_rpc-api--title"
+msgstr "RPC API"
+
+msgid "wpct-erp-forms_rpc-api--description"
+msgstr "Configuració de la connexió amb la JSON-RPC API de l'ERP"
+
+msgid "wpct-erp-forms_rpc-api__endpoint--label"
+msgstr "Endpoint de la API RPC"
+
+msgid "wpct-erp-forms_rpc-api__user--label"
+msgstr "Login de l'usuari de la API"
+
+msgid "wpct-erp-forms_rpc-api__password--label"
+msgstr "Contrasenya de l'usuari"
+
+msgid "wpct-erp-forms_rpc-api__database--label"
+msgstr "Nom de la base de dades"
+
+msgid "wpct-erp-forms_rpc-api__model--label"
+msgstr "Identificador del model"
+
+msgid "wpct-erp-forms_rpc-api__forms--label"
+msgstr "Formularis"
