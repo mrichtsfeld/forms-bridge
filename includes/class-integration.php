@@ -10,50 +10,43 @@ abstract class Integration extends Singleton
 {
     abstract public function serialize_submission($submission, $form);
     abstract public function serialize_form($form);
-    abstract public function get_uploads($submission, $form_data);
-    abstract public function init();
+    abstract protected function get_uploads($submission, $form_data);
+    abstract protected function init();
+
+    private $submission = null;
+    private $uploads = null;
 
     protected function __construct()
     {
-        add_action('init', [$this, 'init']);
+        add_action('init', function () {
+            $this->init();
+        });
 
-        add_filter('option_wpct-erp-forms_rest-api', function ($setting) {
-            return $this->populate_refs($setting);
-        }, 10, 1);
-        add_filter('option_wpct-erp-forms_rpc-api', function ($setting) {
-            return $this->populate_refs($setting);
-        }, 10, 1);
-        add_action('update_option', function ($option, $from, $to) {
-            if ($option === 'wpct-erp-forms_rest-api' || $option === 'wpct-erp-forms_rpc-api') {
-                foreach ($to['forms'] as $form) {
-                    $this->set_form_ref($form['form_id'], $form['ref']);
-                }
-            }
-        }, 10, 3);
+        add_filter('wpct_erp_forms_submission', function ($null) {
+            return $this->submission;
+        });
+
+        add_filter('wpct_erp_forms_uploads', function ($null) {
+            return $this->uploads;
+        });
     }
 
-    public function submit($payload, $endpoints, $uploads, $form_data)
+    private function submit($requests)
     {
         $success = true;
-        foreach ($endpoints as $proto => $urls) {
-            foreach ($urls as $url) {
-                if (!$success) {
-                    continue;
-                }
-
-                if ($proto === 'rpc') {
-                    $data = apply_filters('wpct_erp_forms_rpc_payload', $this->rpc_payload($url, $payload), $uploads, $form_data);
-                } else {
-                    $data = $payload;
-                }
-                if (empty($uploads)) {
-                    $response = Wpct_Http_Client::post($url, $data);
-                } else {
-                    $response = Wpct_Http_Client::post_multipart($url, $data, $uploads);
-                }
-
-                $success = $success && !is_wp_error($response);
+        foreach ($requests as $req) {
+            if (!$success) {
+                continue;
             }
+
+            extract($req);
+            if (empty($attachments)) {
+                $response = Wpct_Http_Client::post($endpoint, $payload);
+            } else {
+                $response = Wpct_Http_Client::post_multipart($endpoint, $payload, $attachments);
+            }
+
+            $success = $success && !is_wp_error($response);
         }
 
         if (!$success) {
@@ -67,7 +60,7 @@ abstract class Integration extends Singleton
             $body = "Form ID: {$form_data['id']}\n";
             $body .= "Form title: {$form_data['title']}\n";
             $body .= 'Submission: ' . print_r($payload, true) . "\n";
-			$body .= 'Error: ' . print_r($response->get_error_data(), true) . "\n";
+            $body .= 'Error: ' . print_r($response->get_error_data(), true) . "\n";
             $success = wp_mail($to, $subject, $body);
             if (!$success) {
                 throw new Exception('Error while submitting form ' . $form_data['id']);
@@ -77,6 +70,68 @@ abstract class Integration extends Singleton
         return $success;
     }
 
+    private function submit_rpc($models, $payload, $attachments, $form_data)
+    {
+        $setting = Settings::get_setting('wpct-erp-forms', 'rpc-api');
+
+        try {
+            [ $session_id, $user_id ] = $this->rpc_login($setting['endpoint']);
+        } catch (Exception) {
+            return false;
+        }
+
+        $requests = array_map(function ($model) use (
+            $setting,
+            $payload,
+            $attachments,
+            $form_data,
+            $session_id,
+            $user_id,
+        ) {
+            $payload = apply_filters(
+                'wpct_erp_forms_rpc_payload',
+                $this->rpc_payload(
+                    $session_id,
+                    'object',
+                    'execute',
+                    [
+                        $setting['database'],
+                        $user_id,
+                        $setting['password'],
+                        $model,
+                        'create',
+                        $payload
+                    ],
+                ),
+                $attachments,
+                $form_data,
+            );
+
+            return [
+                'endpoint' => $setting['endpoint'],
+                'payload' => $payload,
+                'attachments' => $attachments,
+                'form_data' => $form_data,
+            ];
+        }, $models);
+
+        return $this->submit($requests);
+    }
+
+    private function submit_rest($endpoints, $payload, $attachments, $form_data)
+    {
+        $requests = array_map(function ($endpoint) use ($payload, $attachments, $form_data) {
+            return [
+                'endpoint' => $endpoint,
+                'payload' => $payload,
+                'attachments' => $attachments,
+                'form_data' => $form_data,
+            ];
+        }, $endpoints);
+
+        return $this->submit($requests);
+    }
+
     public function do_submission($submission, $form)
     {
         $form_data = $this->serialize_form($form);
@@ -84,32 +139,35 @@ abstract class Integration extends Singleton
             return;
         }
 
-        $uploads = $this->get_uploads($submission, $form_data);
-        $uploads = apply_filters('wpct_erp_forms_uploads', array_reduce(array_keys($uploads), function ($carry, $name) use ($uploads) {
-            if ($uploads[$name]['is_multi']) {
-                for ($i = 1; $i <= count($uploads[$name]['path']); $i++) {
-                    $carry[$name . '_' . $i] = $uploads[$name]['path'][$i - 1];
+        $this->uploads = $this->get_uploads($submission, $form_data);
+        $attachments = apply_filters('wpct_erp_forms_attachments', array_reduce(array_keys($this->uploads), function ($carry, $name) {
+            if ($this->uploads[$name]['is_multi']) {
+                for ($i = 1; $i <= count($this->uploads[$name]['path']); $i++) {
+                    $carry[$name . '_' . $i] = $this->uploads[$name]['path'][$i - 1];
                 }
             } else {
-                $carry[$name] = $uploads[$name]['path'];
+                $carry[$name] = $this->uploads[$name]['path'];
             }
 
             return $carry;
         }, []), $form_data);
 
-        $data = $this->serialize_submission($submission, $form_data);
-        $this->cleanup_empties($data);
-        $payload = apply_filters('wpct_erp_forms_payload', $data, $uploads, $form_data);
+        $this->submission = $this->serialize_submission($submission, $form_data);
+        $this->cleanup_empties($submission);
+        $payload = apply_filters('wpct_erp_forms_payload', $this->submission, $attachments, $form_data);
 
-        $endpoints = apply_filters('wpct_erp_forms_endpoints', $this->get_form_endpoints($form_data['id']), $payload, $uploads, $form_data);
+        $endpoints = apply_filters('wpct_erp_forms_endpoints', $this->get_form_endpoints($form_data['id']), $payload, $attachments, $form_data);
+        $models = apply_filters('wpct_erp_forms_models', $this->get_form_models($form_data['id']), $payload, $attachments, $form_data);
 
-        do_action('wpct_erp_forms_before_submission', $payload, $uploads, $form_data);
-        $success = $this->submit($payload, $endpoints, $uploads, $form_data);
+        do_action('wpct_erp_forms_before_submission', $payload, $attachments, $form_data);
+
+        $success = $this->submit_rest($endpoints, $payload, $attachments, $form_data);
+        $success = $success && $this->submit_rpc($models, $payload, $attachments, $form_data);
 
         if ($success) {
-            do_action('wpct_erp_forms_after_submission', $payload, $uploads, $form_data);
+            do_action('wpct_erp_forms_after_submission', $payload, $attachments, $form_data);
         } else {
-            do_action('wpct_erp_forms_on_failure', $payload, $uploads, $form_data);
+            do_action('wpct_erp_forms_on_failure', $payload, $attachments, $form_data);
         }
     }
 
@@ -124,85 +182,43 @@ abstract class Integration extends Singleton
         return $submission;
     }
 
+    private function get_form_models($form_id)
+    {
+        $rpc_forms = Settings::get_setting('wpct-erp-forms', 'rpc-api', 'forms');
+        return array_unique(array_map(function ($form) {
+            return $form['model'];
+        }, array_filter($rpc_forms, function ($form) use ($form_id) {
+            return (string) $form['form_id'] === (string) $form_id && !empty($form['model']);
+        })));
+    }
+
     private function get_form_endpoints($form_id)
     {
         $rest_forms = Settings::get_setting('wpct-erp-forms', 'rest-api', 'forms');
-        $rpc_forms = Settings::get_setting('wpct-erp-forms', 'rpc-api', 'forms');
-        $rpc_endpoint = Settings::get_setting('wpct-erp-forms', 'rpc-api', 'endpoint');
-
-        $endpoints = [
-            'rpc' => $rpc_forms,
-            'rest' => $rest_forms,
-        ];
-
-        foreach ($endpoints as $proto => $forms) {
-            $endpoints[$proto] = array_map(function ($form) use ($rpc_endpoint) {
-                return isset($form['endpoint']) ? $form['endpoint'] : $rpc_endpoint;
-            }, array_filter(
-                $forms,
-                function ($form) use ($form_id) {
-                    return (string) $form['form_id'] === (string) $form_id;
-                }
-            ));
-        }
-
-        return $endpoints;
+        return array_unique(array_map(function ($form) {
+            return $form['endpoint'];
+        }, array_filter($rest_forms, function ($form) use ($form_id) {
+            return (string) $form['form_id'] === (string) $form_id && !empty($form['endpoint']);
+        })));
     }
 
-    public function get_form_ref($form_id)
-    {
-        $setting = get_option('wpct-erp-forms_refs', []);
-        foreach ($setting as $ref_id => $ref) {
-            if ((string) $ref_id === (string) $form_id) {
-                return $ref;
-            }
-        }
-
-        return null;
-    }
-
-    public function set_form_ref($form_id, $ref)
-    {
-        $setting = get_option('wpct-erp-forms_refs', []);
-        $setting[$form_id] = $ref;
-        update_option('wpct-erp-forms_refs', $setting);
-    }
-
-    private function populate_refs($setting)
-    {
-        $refs = get_option('wpct-erp-forms_refs', []);
-        for ($i = 0; $i < count($setting['forms']); $i++) {
-            $form = $setting['forms'][$i];
-            if (!isset($refs[$form['form_id']])) {
-                continue;
-            }
-            $form['ref'] = $refs[$form['form_id']];
-            $setting['forms'][$i] = $form;
-        }
-
-        return $setting;
-    }
-
-    private function rpc_payload($url, $payload)
+    private function rpc_login($endpoint)
     {
         $session_id = time();
         $setting = Settings::get_setting('wpct-erp-forms', 'rpc-api');
 
-		$payload = apply_filters('wpct_erp_forms_rpc_login', [
-            'jsonrpc' => '2.0',
-            'method' => 'call',
-            'id' => $session_id,
-            'params' => [
-                'service' => 'common',
-                'method' => 'login',
-                'args' => [
-                    $setting['database'],
-                    $setting['user'],
-                    $setting['password']
-                ]
-            ]
-        ]);
-        $res = Wpct_Http_Client::post($url, $payload);
+        $payload = apply_filters('wpct_erp_forms_rpc_login', $this->rpc_payload(
+            $session_id,
+            'common',
+            'login',
+            [
+                $setting['database'],
+                $setting['user'],
+                $setting['password'],
+            ],
+        ));
+
+        $res = Wpct_Http_Client::post($endpoint, $payload);
 
         if (is_wp_error($res)) {
             throw new Exception('Error while establish RPC session');
@@ -210,23 +226,20 @@ abstract class Integration extends Singleton
 
         $login = (array) json_decode($res['body'], true);
         $user_id = $login['result'];
+        return [$session_id, $user_id];
+    }
 
+    private function rpc_payload($session_id, $service, $method, $args)
+    {
         return [
             'jsonrpc' => '2.0',
             'method' => 'call',
             'id' => $session_id,
             'params' => [
-                'service' => 'object',
-                'method' => 'execute',
-                'args' => [
-                    $setting['database'],
-                    $user_id,
-                    $setting['password'],
-                    $setting['model'],
-                    'create',
-                    $payload
-                ]
-            ]
+                'service' => $service,
+                'method' => $method,
+                'args' => $args,
+            ],
         ];
     }
 }
