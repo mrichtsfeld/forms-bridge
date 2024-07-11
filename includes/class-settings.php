@@ -80,15 +80,13 @@ class Settings extends BaseSettings
                 'database' => [
                     'type' => 'string',
                 ],
-                'model' => [
-                    'type' => 'string',
-                ],
                 'forms' => [
                     'type' => 'array',
                     'items' => [
                         'type' => 'object',
                         'properties' => [
                             'form_id' => ['type' => 'string'],
+                            'model' => ['type' => 'string'],
                             'ref' => ['type' => 'string'],
                         ],
                     ],
@@ -99,10 +97,10 @@ class Settings extends BaseSettings
                 'user' => 'admin',
                 'password' => 'admin',
                 'database' => 'default',
-                'model' => 'crm.lead',
                 'forms' => [
                     [
                         'form_id' => 0,
+                        'model' => 'crm.lead',
                         'ref' => null,
                     ],
                 ],
@@ -114,7 +112,9 @@ class Settings extends BaseSettings
     {
         if (preg_match('/^forms.*form_id$/', $field)) {
             return $this->render_forms_dropdown($setting, $field, $value);
-        }
+		} elseif (preg_match('/password$/', $field)) {
+			return $this->password_input_render($setting, $field, $value);
+		}
 
         return parent::input_render($setting, $field, $value);
     }
@@ -129,4 +129,10 @@ class Settings extends BaseSettings
         }, $forms));
         return "<select name='{$setting_name}[{$field}]'>" . implode('', $options) . '</select>';
     }
+
+	private function password_input_render($setting, $field, $value)
+	{
+		$setting_name = $this->setting_name($setting);
+		return "<input type='password' name='{$setting_name}[{$field}]' value='{$value}' />";
+	}
 }
