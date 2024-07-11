@@ -57,8 +57,8 @@ class Settings extends BaseSettings
             [
                 'forms' => [
                     [
-                        'endpoint' => '/api/crm-lead',
                         'form_id' => null,
+                        'endpoint' => '/api/crm-lead',
                         'ref' => null
                     ]
                 ]
