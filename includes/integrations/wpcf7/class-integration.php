@@ -77,7 +77,7 @@ class Integration extends BaseIntegration
         return [
             'id' => $form_id,
             'title' => $form->title(),
-            'ref' => apply_filters('wpct_erp_forms_form_ref', null, $form_id),
+            'ref' => apply_filterss('wpct_erp_forms_form_ref', null, $form_id),
             'fields' => array_map(function ($field) use ($form) {
                 return $this->serialize_field($field, $form);
             }, $form->scan_form_tags()),
