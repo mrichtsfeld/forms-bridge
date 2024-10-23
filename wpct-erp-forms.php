@@ -84,7 +84,8 @@ class Wpct_Erp_Forms extends BasePlugin
             }
 
             $http_setting = Settings::get_setting('wpct-http-bridge', 'general');
-            foreach ($http_setting as $key => $val) {
+            $bridge_fields = ['base_url', 'api_key'];
+            foreach ($bridge_fields as $key) {
                 $http_setting[$key] = $to[$key];
             }
 
