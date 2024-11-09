@@ -13,13 +13,14 @@ import {
 
 // source
 import { useRpcApi } from "../providers/Settings";
-import Forms from "./Forms";
+import FormHooks from "./FormHooks";
 
 export default function RpcApiSettings() {
-  const [{ endpoint, user, password, database, forms }, save] = useRpcApi();
+  const [{ endpoint, user, password, database, form_hooks: hooks }, save] =
+    useRpcApi();
 
   const update = (field) =>
-    save({ endpoint, user, password, database, forms, ...field });
+    save({ endpoint, user, password, database, form_hooks: hooks, ...field });
 
   return (
     <Card size="large" style={{ height: "fit-content" }}>
@@ -61,7 +62,10 @@ export default function RpcApiSettings() {
         </PanelRow>
         <Spacer paddingY="calc(8px)" />
         <PanelRow>
-          <Forms forms={forms} setForms={(forms) => update({ forms })} />
+          <FormHooks
+            hooks={hooks}
+            setHooks={(form_hooks) => update({ form_hooks })}
+          />
         </PanelRow>
       </CardBody>
     </Card>

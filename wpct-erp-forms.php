@@ -21,6 +21,13 @@ if (!defined('ABSPATH')) {
     exit();
 }
 
+/**
+ * Handle plugin version
+ *
+ * @since 0.0.1
+ *
+ * @var string WPCT_ERP_FORMS_VERSION Current plugin versio.
+ */
 define('WPCT_ERP_FORMS_VERSION', '2.0.3');
 
 require_once 'abstracts/class-singleton.php';
@@ -38,18 +45,74 @@ require_once 'includes/class-rest-controller.php';
 
 class Wpct_Erp_Forms extends BasePlugin
 {
-    private $_integrations = [];
-    private $_refs = null;
+    /**
+     * Handle plugin active integrations.
+     *
+     * @since 1.0.0
+     *
+     * @var array $_integrations
+     */
+    private $_integrations = null;
 
+    /**
+     * Handle plugin name.
+     *
+     * @since 1.0.0
+     *
+     * @var string $name Plugin name.
+     */
     public static $name = 'Wpct ERP Forms';
+
+    /**
+     * Handle plugin textdomain.
+     *
+     * @since 1.0.0
+     *
+     * @var string $textdomain Plugin text domain.
+     */
     public static $textdomain = 'wpct-erp-forms';
 
+    /**
+     * Handle plugin menu class name.
+     *
+     * @since 1.0.0
+     *
+     * @var string $menu_class Plugin menu class name.
+     */
     protected static $menu_class = '\WPCT_ERP_FORMS\Menu';
 
+    /**
+     * Starts the plugin.
+     *
+     * @since 3.0.0
+     */
+    public static function start()
+    {
+        return self::get_instance();
+    }
+
+    /**
+     * Initialize integrations, REST Controller and setup plugin hooks.
+     *
+     * @since 1.0.0
+     */
     protected function __construct()
     {
         parent::__construct();
+        REST_Controller::setup();
 
+        $this->load_integrations();
+        $this->wp_hooks();
+        $this->custom_hooks();
+    }
+
+    /**
+     * Load plugin integrations.
+     *
+     * @since 3.0.0
+     */
+    private function load_integrations()
+    {
         if (
             apply_filters(
                 'wpct_is_plugin_active',
@@ -69,7 +132,16 @@ class Wpct_Erp_Forms extends BasePlugin
             require_once 'includes/integrations/gf/class-integration.php';
             $this->_integrations['gf'] = GFIntegration::get_instance();
         }
+    }
 
+    /**
+     * Bound plugin to wp hooks.
+     *
+     * @since 3.0.0
+     */
+    private function wp_hooks()
+    {
+        // Add link to submenu page on plugins page
         add_filter(
             'plugin_action_links',
             function ($links, $file) {
@@ -87,6 +159,7 @@ class Wpct_Erp_Forms extends BasePlugin
             2
         );
 
+        // Patch http bridge settings to erp forms settings
         add_filter('option_wpct-erp-forms_general', function ($value) {
             $http_setting = Settings::get_setting(
                 'wpct-http-bridge',
@@ -99,6 +172,7 @@ class Wpct_Erp_Forms extends BasePlugin
             return $value;
         });
 
+        // Syncronize erp form settings with http bridge settings
         add_action(
             'updated_option',
             function ($option, $from, $to) {
@@ -117,139 +191,151 @@ class Wpct_Erp_Forms extends BasePlugin
             3
         );
 
+        // Enqueue plugin admin client scripts
+        add_action('admin_enqueue_scripts', function ($admin_page) {
+            $this->admin_enqueue_scripts($admin_page);
+        });
+    }
+
+    /**
+     * Add plugin custom filters.
+     *
+     * @since 3.0.0
+     */
+    private function custom_hooks()
+    {
+        // Return registerd form hooks
         add_filter(
-            'wpct_erp_forms_form_ref',
+            'wpct_erp_forms_form_hooks',
             function ($null, $form_id) {
-                return $this->get_form_ref($form_id);
+                return $this->get_form_hooks($form_id);
             },
             10,
             2
         );
 
-        add_filter(
-            'option_wpct-erp-forms_rest-api',
-            function ($setting) {
-                return $this->populate_refs($setting);
-            },
-            10,
-            1
-        );
+        // Return pair plugin registered forms datums
+        add_filter('wpct_erp_forms_forms', function ($null) {
+            $integration = $this->get_integration();
+            if (!$integration) {
+                return $null;
+            }
 
-        add_filter(
-            'option_wpct-erp-forms_rpc-api',
-            function ($setting) {
-                return $this->populate_refs($setting);
-            },
-            10,
-            1
-        );
-
-        add_action(
-            'updated_option',
-            function ($option, $from, $to) {
-                $this->on_option_updated($option, $to);
-            },
-            90,
-            3
-        );
-
-        add_action(
-            'add_option',
-            function ($option, $value) {
-                $this->on_option_updated($option, $value);
-            },
-            90,
-            3
-        );
-
-        add_action('admin_enqueue_scripts', function ($admin_page) {
-            $this->enqueue_scripts($admin_page);
+            return $integration->get_forms();
         });
 
-        new REST_Controller();
+        // Return current pair plugin form representation
+        // If $form_id is passed, retrives form by ID.
+        add_filter('wpct_erp_forms_form', function ($null, $form_id = null) {
+            $integration = $this->get_integration();
+            if (!$integration) {
+                return $null;
+            }
+
+            if ($form_id) {
+                return $integration->get_form_by_id($form_id);
+            } else {
+                return $integration->get_form();
+            }
+        });
+
+        // Return the current submission data
+        add_filter('wpct_erp_forms_submission', function ($null) {
+            $integration = $this->get_integration();
+            if (!$integration) {
+                return $null;
+            }
+
+            return $integration->get_submission();
+        });
+
+        // Return the current submission uploaded files
+        add_filter('wpct_erp_forms_uploads', function ($null) {
+            $integration = $this->get_integration();
+            if (!$integration) {
+                return $null;
+            }
+
+            return $integration->get_uploads();
+        });
     }
 
+    /**
+     * Initialize the plugin on wp init.
+     *
+     * @since 1.0.0
+     */
     public function init()
     {
     }
 
+    /**
+     * Callback to activation hook.
+     *
+     * @since 1.0.0
+     */
     public static function activate()
     {
     }
 
+    /**
+     * Callback to deactivation hook.
+     *
+     * @since 1.0.0
+     */
     public static function deactivate()
     {
     }
 
-    private function get_form_refs()
+    /**
+     * Return the current integration.
+     *
+     * @since 3.0.0
+     *
+     * @return object $integration
+     */
+    private function get_integration()
     {
-        if (empty($this->_refs)) {
-            $this->_refs = get_option('wpct-erp-forms_refs', []);
-            if (!is_array($this->_refs)) {
-                $this->_refs = [];
+        foreach ($this->_integrations as $key => $integration) {
+            if ($integration) {
+                return $integration;
             }
         }
-
-        return $this->_refs;
     }
 
-    private function set_form_refs($refs)
+    /**
+     * Return form API hooks.
+     *
+     * @since 3.0.0
+     *
+     * @return array $hooks Array with hooks.
+     */
+    private function get_form_hooks($form_id)
     {
-        $this->_refs = $refs;
-        update_option('wpct-erp-forms_refs', $refs);
-    }
+        $rest_api = Settings::get_setting('wpct-erp-forms', 'rest-api');
+        $rpc_api = Settings::get_setting('wpct-erp-forms', 'rpc-api');
 
-    public function get_form_ref($form_id)
-    {
-        $refs = $this->get_form_refs();
-        foreach ($refs as $ref_id => $ref) {
-            if ((string) $ref_id === (string) $form_id) {
-                return $ref;
-            }
-        }
-
-        return null;
-    }
-
-    public function set_form_ref($form_id, $ref)
-    {
-        $refs = $this->get_form_refs();
-        $refs[$form_id] = $ref;
-        $this->set_form_refs($refs);
-    }
-
-    private function populate_refs($setting)
-    {
-        $refs = $this->get_form_refs();
-        for ($i = 0; $i < count($setting['forms']); $i++) {
-            $form = $setting['forms'][$i];
-            if (!isset($refs[$form['form_id']])) {
-                continue;
-            }
-            $form['ref'] = $refs[$form['form_id']];
-            $setting['forms'][$i] = $form;
-        }
-
-        return $setting;
-    }
-
-    private function on_option_updated($option, $value)
-    {
-        $settings = ['wpct-erp-forms_rest-api', 'wpct-erp-forms_rpc-api'];
-        if (in_array($option, $settings)) {
-            $refs = $this->get_form_refs();
-            foreach ($value['forms'] as $form) {
-                if (empty($form['form_id'])) {
-                    continue;
+        return array_reduce(
+            array_merge($rest_api['form_hooks'], $rpc_api['form_hooks']),
+            function ($hooks, $hook) use ($form_id) {
+                if ((int) $hook['form_id'] === (int) $form_id) {
+                    $hooks[$hook['name']] = $hook;
                 }
 
-                $refs[$form['form_id']] = $form['ref'];
-            }
-            $this->set_form_refs($refs);
-        }
+                return $hooks;
+            },
+            []
+        );
     }
 
-    private function enqueue_scripts($admin_page)
+    /**
+     * Enqueue admin client scripts
+     *
+     * @since 3.0.0
+     *
+     * @param string $admin_page Current admin page.
+     */
+    private function admin_enqueue_scripts($admin_page)
     {
         if ('settings_page_wpct-erp-forms' !== $admin_page) {
             return;
@@ -276,10 +362,5 @@ class Wpct_Erp_Forms extends BasePlugin
     }
 }
 
-add_action(
-    'plugins_loaded',
-    function () {
-        $plugin = Wpct_Erp_Forms::get_instance();
-    },
-    9
-);
+// Setup plugin on wp plugins_loaded hook
+add_action('plugins_loaded', ['\WPCT_ERP_FORMS\Wpct_Erp_Forms', 'start'], 9);

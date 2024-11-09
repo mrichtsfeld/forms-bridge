@@ -7,11 +7,48 @@ use WP_REST_Server;
 
 class REST_Controller
 {
+    /**
+     * @var string $namespace Handle wp rest api plugin namespace.
+     *
+     * @since 3.0.0
+     */
     private $namespace = 'wpct';
+
+    /**
+     * @var int $version Handle the API version.
+     *
+     * @since 3.0.0
+     */
     private $version = 1;
 
+    /**
+     * @var array $settings Handle the plugin settings names list.
+     *
+     * @since 3.0.0
+     */
     private static $settings = ['general', 'rest-api', 'rpc-api'];
 
+    /**
+     * Setup a new rest api controller.
+     *
+     * @since 3.0.0
+     *
+     * @return object $controller Instance of REST_Controller.
+     */
+    public static function setup()
+    {
+        return new REST_Controller();
+    }
+
+    /**
+     * Internal WP_Error proxy.
+     *
+     * @since 3.0.0
+     *
+     * @param string $code
+     * @param string $message
+     * @param int $status
+     */
     private static function error($code, $message, $status)
     {
         return new WP_Error($code, __($message, 'wpct-erp-forms'), [
@@ -19,6 +56,11 @@ class REST_Controller
         ]);
     }
 
+    /**
+     * Binds class initializer to the rest_api_init hook
+     *
+     * @since 3.0.0
+     */
     public function __construct()
     {
         add_action('rest_api_init', function () {
@@ -26,6 +68,11 @@ class REST_Controller
         });
     }
 
+    /**
+     * REST_Controller initializer.
+     *
+     * @since 3.0.0
+     */
     private function init()
     {
         register_rest_route(
@@ -35,20 +82,6 @@ class REST_Controller
                 'methods' => WP_REST_Server::READABLE,
                 'callback' => function () {
                     return $this->forms();
-                },
-                'permission_callback' => function () {
-                    return $this->permission_callback();
-                },
-            ]
-        );
-
-        register_rest_route(
-            "{$this->namespace}/v{$this->version}",
-            '/erp-forms/form/(?P<id>[\d]+)',
-            [
-                'methods' => WP_REST_Server::READABLE,
-                'callback' => function ($req) {
-                    return $this->form_fields($req);
                 },
                 'permission_callback' => function () {
                     return $this->permission_callback();
@@ -82,37 +115,25 @@ class REST_Controller
         );
     }
 
+    /**
+     * GET requests forms endpoint callback.
+     *
+     * @since 3.0.0
+     *
+     * @return array $forms Collection of array form representations.
+     */
     private function forms()
     {
-        $forms = Settings::get_forms();
-        $response = [];
-        foreach ($forms as $form) {
-            $response[] = $form;
-        }
-
-        return $response;
+        return apply_filters('wpct_erp_forms_forms', []);
     }
 
-    private function form_fields($req)
-    {
-        $target = null;
-        $form_id = $req->get_url_params()['id'];
-        $forms = Settings::get_forms();
-        foreach ($forms as $form) {
-            if ($form->id === $form_id) {
-                $target = $form;
-                break;
-            }
-        }
-
-        if (!$target) {
-            throw new Exception('Unkown form');
-        }
-
-        $fields = apply_filters('wpct_erp_forms_form_fields', [], $form_id);
-        return $fields;
-    }
-
+    /**
+     * GET requests settings endpoint callback.
+     *
+     * @since 3.0.0
+     *
+     * @return array $settings Associative array with settings data.
+     */
     private function get_settings()
     {
         $settings = [];
@@ -125,6 +146,13 @@ class REST_Controller
         return $settings;
     }
 
+    /**
+     * POST requests settings endpoint callback. Store settings on the options table.
+     *
+     * @since 3.0.0
+     *
+     * @return array $response New settings state.
+     */
     private function set_settings()
     {
         $data = (array) json_decode(file_get_contents('php://input'), true);
@@ -146,18 +174,21 @@ class REST_Controller
         return $response;
     }
 
+    /**
+     * Check if current user can manage options
+     *
+     * @since 3.0.0
+     *
+     * @return boolean $allowed
+     */
     private function permission_callback()
     {
-        // $nonce = $_REQUEST['_wpctnonce'];
-        if (!current_user_can('manage_options')) {
-            // if (!wp_verify_nonce($nonce, 'wpct-erp-forms')) {
-            return self::error(
+        return current_user_can('manage_options')
+            ? true
+            : self::error(
                 'rest_unauthorized',
                 'You can\'t manage wp options',
                 403
             );
-        }
-
-        return true;
     }
 }

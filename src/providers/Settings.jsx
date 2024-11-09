@@ -20,14 +20,14 @@ const defaultSettings = {
     backends: [],
   },
   "rest-api": {
-    forms: [],
+    form_hooks: [],
   },
   "rpc-api": {
     endpoint: "/jsonrpc",
     database: "crm.lead",
     user: "admin",
     password: "admin",
-    forms: [],
+    form_hooks: [],
   },
 };
 

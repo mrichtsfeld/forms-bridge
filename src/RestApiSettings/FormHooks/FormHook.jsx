@@ -7,9 +7,10 @@ import { useState, useRef, useEffect } from "@wordpress/element";
 // source
 import { useForms } from "../../providers/Forms";
 import { useGeneral } from "../../providers/Settings";
+import useHookNames from "../../hooks/useHookNames";
 import FormPipes from "../../FormPipes";
 
-function NewForm({ add }) {
+function NewFormHook({ add }) {
   const [{ backends }] = useGeneral();
   const backendOptions = backends.map(({ name, base_url }) => ({
     label: name,
@@ -21,14 +22,22 @@ function NewForm({ add }) {
     value: id,
   }));
 
+  const hookNames = useHookNames();
+
   const [name, setName] = useState("");
   const [backend, setBackend] = useState("");
-  const [model, setModel] = useState("");
+  const [endpoint, setEndpoint] = useState("");
   const [formId, setFormId] = useState("");
+  const [nameConflict, setNameConflict] = useState(false);
 
-  const onClick = () => add({ name, backend, model, form_id: formId });
+  const handleSetName = (name) => {
+    setNameConflict(hookNames.has(name));
+    setName(name.trim());
+  };
 
-  const disabled = !(name, backend, model, formId);
+  const onClick = () => add({ name, backend, endpoint, form_id: formId });
+
+  const disabled = !(name && backend && endpoint && formId && !nameConflict);
 
   return (
     <div
@@ -45,9 +54,14 @@ function NewForm({ add }) {
         }}
       >
         <TextControl
-          label={__("Bound ID", "wpct-erp-forms")}
+          label={__("Name", "wpct-erp-forms")}
+          help={
+            nameConflict
+              ? __("This name is already in use", "wpct-erp-forms")
+              : ""
+          }
           value={name}
-          onChange={setName}
+          onChange={handleSetName}
           __nextHasNoMarginBottom
         />
         <SelectControl
@@ -58,9 +72,9 @@ function NewForm({ add }) {
           __nextHasNoMarginBottom
         />
         <TextControl
-          label={__("Model", "wpct-erp-forms")}
-          value={model}
-          onChange={setModel}
+          label={__("Endpoint", "wpct-erp-forms")}
+          value={endpoint}
+          onChange={setEndpoint}
           __nextHasNoMarginBottom
         />
         <SelectControl
@@ -82,10 +96,9 @@ function NewForm({ add }) {
     </div>
   );
 }
-
 let focus;
-export default function Form({ update, remove, ...data }) {
-  if (data.name === "add") return <NewForm add={update} />;
+export default function FormHook({ update, remove, ...data }) {
+  if (data.name === "add") return <NewFormHook add={update} />;
 
   const [{ backends }] = useGeneral();
   const backendOptions = backends.map(({ name, base_url }) => ({
@@ -99,7 +112,15 @@ export default function Form({ update, remove, ...data }) {
   }));
 
   const [name, setName] = useState(data.name);
+  const initialName = useRef(data.name);
   const nameInput = useRef();
+
+  const hookNames = useHookNames();
+  const [nameConflict, setNameConflict] = useState(false);
+  const handleSetName = (name) => {
+    setNameConflict(name !== initialName.current && hookNames.has(name));
+    setName(name.trim());
+  };
 
   useEffect(() => {
     if (focus) {
@@ -107,21 +128,14 @@ export default function Form({ update, remove, ...data }) {
     }
   }, []);
 
-  const timeout = useRef(false);
+  const timeout = useRef();
   useEffect(() => {
-    if (timeout.current === false) {
-      timeout.current = 0;
-      return;
-    }
-
     clearTimeout(timeout.current);
+    if (!name || nameConflict) return;
     timeout.current = setTimeout(() => update({ ...data, name }), 500);
   }, [name]);
 
-  useEffect(() => {
-    timeout.current = false;
-    setName(data.name);
-  }, [data.name]);
+  useEffect(() => setName(data.name), [data.name]);
 
   return (
     <div
@@ -139,12 +153,17 @@ export default function Form({ update, remove, ...data }) {
       >
         <TextControl
           ref={nameInput}
-          label={__("Bound ID", "wpct-erp-forms")}
+          label={__("Name", "wpct-erp-forms")}
+          help={
+            nameConflict
+              ? __("This name is already in use", "wpct-erp-forms")
+              : ""
+          }
           value={name}
-          onChange={setName}
+          onChange={handleSetName}
           onFocus={() => (focus = true)}
           onBlur={() => (focus = false)}
-          __nextHasNoMarginBottom={true}
+          __nextHasNoMarginBottom
         />
         <SelectControl
           label={__("Backend", "wpct-erp-forms")}
@@ -154,10 +173,10 @@ export default function Form({ update, remove, ...data }) {
           __nextHasNoMarginBottom
         />
         <TextControl
-          label={__("Model", "wpct-erp-forms")}
-          value={data.model}
-          onChange={(model) => update({ ...data, model })}
-          __nextHasNoMarginBottom={true}
+          label={__("Endpoint", "wpct-erp-forms")}
+          value={data.endpoint}
+          onChange={(endpoint) => update({ ...data, endpoint })}
+          __nextHasNoMarginBottom
         />
         <SelectControl
           label={__("Form", "wpct-erp-forms")}
@@ -180,7 +199,7 @@ export default function Form({ update, remove, ...data }) {
           </label>
           <FormPipes
             formId={data.form_id}
-            pipes={data.pipes}
+            pipes={data.pipes || []}
             setPipes={(pipes) => update({ ...data, pipes })}
           />
         </div>

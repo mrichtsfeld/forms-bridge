@@ -12,8 +12,31 @@ import { useEffect } from "@wordpress/element";
 // vendor
 import useFormFields from "../hooks/useFormFields";
 
+const castOptions = [
+  {
+    value: "string",
+    label: __("String", "wpct-erp-forms"),
+  },
+  {
+    value: "int",
+    label: __("Integer", "wpct-erp-forms"),
+  },
+  {
+    value: "float",
+    label: __("Decimal", "wpct-erp-forms"),
+  },
+  {
+    value: "boolean",
+    label: __("Boolean", "wpct-erp-forms"),
+  },
+  {
+    value: "json",
+    label: __("JSON", "wpct-erp-forms"),
+  },
+];
+
 export default function PipesTable({ formId, pipes, setPipes }) {
-  const { fields, loading } = useFormFields({ formId });
+  const fields = useFormFields({ formId });
   const fromOptions = fields.map((field) => ({
     label: field.label,
     value: field.name,
@@ -29,7 +52,7 @@ export default function PipesTable({ formId, pipes, setPipes }) {
   };
 
   const addPipe = () => {
-    const newPipes = pipes.concat([{ from: "", to: "" }]);
+    const newPipes = pipes.concat([{ from: "", to: "", cast: "string" }]);
     setPipes(newPipes);
   };
 
@@ -41,8 +64,6 @@ export default function PipesTable({ formId, pipes, setPipes }) {
   useEffect(() => {
     if (!pipes.length) addPipe();
   }, [pipes]);
-
-  if (loading) return <p>Loading...</p>;
 
   return (
     <div className="components-base-control__label">
@@ -59,11 +80,11 @@ export default function PipesTable({ formId, pipes, setPipes }) {
       </label>
       <table style={{ width: "100%" }}>
         <tbody>
-          {pipes.map(({ from, to }, i) => (
+          {pipes.map(({ from, to, cast }, i) => (
             <tr key={i}>
               <td>
                 <SelectControl
-                  label={__("From", "wpct-erp-forms")}
+                  placeholder={__("From", "wpct-erp-forms")}
                   value={from}
                   onChange={(value) => setPipe("from", i, value)}
                   options={fromOptions}
@@ -75,6 +96,15 @@ export default function PipesTable({ formId, pipes, setPipes }) {
                   placeholder={__("To", "wpct-erp-forms")}
                   value={to}
                   onChange={(value) => setPipe("to", i, value)}
+                  __nextHasNoMarginBottom
+                />
+              </td>
+              <td style={{ borderLeft: "1rem solid transparent" }}>
+                <SelectControl
+                  placeholder={__("Cast as", "wpct-erp-forms")}
+                  value={cast || "string"}
+                  onChange={(value) => setPipe("cast", i, value)}
+                  options={castOptions}
                   __nextHasNoMarginBottom
                 />
               </td>

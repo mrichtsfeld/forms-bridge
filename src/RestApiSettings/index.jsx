@@ -11,10 +11,10 @@ import {
 
 // source
 import { useRestApi } from "../providers/Settings";
-import Forms from "./Forms";
+import FormHooks from "./FormHooks";
 
 export default function RestApiSettings() {
-  const [{ forms }, save] = useRestApi();
+  const [{ form_hooks: hooks }, save] = useRestApi();
   return (
     <Card size="large" style={{ height: "fit-content" }}>
       <CardHeader>
@@ -22,7 +22,10 @@ export default function RestApiSettings() {
       </CardHeader>
       <CardBody>
         <PanelRow>
-          <Forms forms={forms} setForms={(forms) => save({ forms })} />
+          <FormHooks
+            hooks={hooks}
+            setHooks={(form_hooks) => save({ form_hooks })}
+          />
         </PanelRow>
       </CardBody>
     </Card>
