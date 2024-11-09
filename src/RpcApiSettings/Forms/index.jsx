@@ -8,12 +8,13 @@ import Form from "./Form";
 
 export default function Forms({ forms, setForms }) {
   const tabs = forms
-    .map(({ backend, model, form_id, ref }) => ({
+    .map(({ backend, model, form_id, ref, pipes }) => ({
       name: ref,
       title: ref,
       form_id,
       model,
       backend,
+      pipes,
     }))
     .concat([
       {

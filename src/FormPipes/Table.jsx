@@ -2,35 +2,47 @@
 import React from "react";
 import { __ } from "@wordpress/i18n";
 import {
+  SelectControl,
   TextControl,
   Button,
   __experimentalSpacer as Spacer,
 } from "@wordpress/components";
 import { useEffect } from "@wordpress/element";
 
-export default function BackendHeaders({ headers, setHeaders }) {
-  const setHeader = (attr, index, value) => {
-    const newHeaders = headers.map((header, i) => {
-      if (index === i) header[attr] = value;
-      return { ...header };
+// vendor
+import useFormFields from "../hooks/useFormFields";
+
+export default function PipesTable({ formId, pipes, setPipes }) {
+  const { fields, loading } = useFormFields({ formId });
+  const fromOptions = fields.map((field) => ({
+    label: field.label,
+    value: field.name,
+  }));
+
+  const setPipe = (attr, index, value) => {
+    const newPipes = pipes.map((pipe, i) => {
+      if (index === i) pipe[attr] = value;
+      return { ...pipe };
     });
 
-    setHeaders(newHeaders);
+    setPipes(newPipes);
   };
 
-  const addHeader = () => {
-    const newHeaders = headers.concat([{ name: "", value: "" }]);
-    setHeaders(newHeaders);
+  const addPipe = () => {
+    const newPipes = pipes.concat([{ from: "", to: "" }]);
+    setPipes(newPipes);
   };
 
-  const dropHeader = (index) => {
-    const newHeaders = headers.slice(0, index).concat(headers.slice(index + 2));
-    setHeaders(newHeaders);
+  const dropPipe = (index) => {
+    const newPipes = pipes.slice(0, index).concat(pipes.slice(index + 2));
+    setPipes(newPipes);
   };
 
   useEffect(() => {
-    if (!headers.length) addHeader();
-  }, [headers]);
+    if (!pipes.length) addPipe();
+  }, [pipes]);
+
+  if (loading) return <p>Loading...</p>;
 
   return (
     <div className="components-base-control__label">
@@ -43,25 +55,26 @@ export default function BackendHeaders({ headers, setHeaders }) {
           marginBottom: "calc(8px)",
         }}
       >
-        {__("Backend HTTP Headers", "wpct-erp-forms")}
+        {__("Form format pipes", "wpct-erp-forms")}
       </label>
       <table style={{ width: "100%" }}>
         <tbody>
-          {headers.map(({ name, value }, i) => (
+          {pipes.map(({ from, to }, i) => (
             <tr key={i}>
               <td>
-                <TextControl
-                  placeholder={__("Header-Name", "wpct-erp-forms")}
-                  value={name}
-                  onChange={(value) => setHeader("name", i, value)}
+                <SelectControl
+                  label={__("From", "wpct-erp-forms")}
+                  value={from}
+                  onChange={(value) => setPipe("from", i, value)}
+                  options={fromOptions}
                   __nextHasNoMarginBottom
                 />
               </td>
               <td>
                 <TextControl
-                  placeholder={__("Value", "wpct-erp-forms")}
-                  value={value}
-                  onChange={(value) => setHeader("value", i, value)}
+                  placeholder={__("To", "wpct-erp-forms")}
+                  value={to}
+                  onChange={(value) => setPipe("to", i, value)}
                   __nextHasNoMarginBottom
                 />
               </td>
@@ -69,7 +82,7 @@ export default function BackendHeaders({ headers, setHeaders }) {
                 <Button
                   isDestructive
                   variant="secondary"
-                  onClick={() => dropHeader(i)}
+                  onClick={() => dropPipe(i)}
                   style={{ height: "32px" }}
                 >
                   {__("Drop", "wpct-erp-forms")}
@@ -82,7 +95,7 @@ export default function BackendHeaders({ headers, setHeaders }) {
       <Spacer paddingY="calc(3px)" />
       <Button
         variant="secondary"
-        onClick={() => addHeader()}
+        onClick={() => addPipe()}
         style={{ height: "32px" }}
       >
         {__("Add", "wpct-erp-forms")}

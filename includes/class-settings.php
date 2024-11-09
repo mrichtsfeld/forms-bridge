@@ -2,7 +2,6 @@
 
 namespace WPCT_ERP_FORMS;
 
-use Exception;
 use WPCT_ABSTRACT\Settings as BaseSettings;
 
 class Settings extends BaseSettings
@@ -114,6 +113,16 @@ class Settings extends BaseSettings
                             'form_id' => ['type' => 'string'],
                             'endpoint' => ['type' => 'string'],
                             'ref' => ['type' => 'string'],
+                            'pipes' => [
+                                'type' => 'array',
+                                'items' => [
+                                    'type' => 'object',
+                                    'properties' => [
+                                        'from' => ['type' => 'string'],
+                                        'to' => ['type' => 'string'],
+                                    ],
+                                ],
+                            ],
                         ],
                     ],
                 ],
@@ -125,6 +134,7 @@ class Settings extends BaseSettings
                         'form_id' => null,
                         'endpoint' => '/api/crm-lead',
                         'ref' => null,
+                        'pipes' => [],
                     ],
                 ],
             ]
@@ -154,6 +164,16 @@ class Settings extends BaseSettings
                             'form_id' => ['type' => 'string'],
                             'model' => ['type' => 'string'],
                             'ref' => ['type' => 'string'],
+                            'pipes' => [
+                                'type' => 'array',
+                                'items' => [
+                                    'type' => 'object',
+                                    'properties' => [
+                                        'from' => ['type' => 'string'],
+                                        'to' => ['type' => 'string'],
+                                    ],
+                                ],
+                            ],
                         ],
                     ],
                 ],
@@ -169,6 +189,7 @@ class Settings extends BaseSettings
                         'form_id' => 0,
                         'model' => 'crm.lead',
                         'ref' => null,
+                        'pipes' => [],
                     ],
                 ],
             ]

@@ -44,6 +44,20 @@ class REST_Controller
 
         register_rest_route(
             "{$this->namespace}/v{$this->version}",
+            '/erp-forms/form/(?P<id>[\d]+)',
+            [
+                'methods' => WP_REST_Server::READABLE,
+                'callback' => function ($req) {
+                    return $this->form_fields($req);
+                },
+                'permission_callback' => function () {
+                    return $this->permission_callback();
+                },
+            ]
+        );
+
+        register_rest_route(
+            "{$this->namespace}/v{$this->version}",
             '/erp-forms/settings/',
             [
                 [
@@ -77,6 +91,26 @@ class REST_Controller
         }
 
         return $response;
+    }
+
+    private function form_fields($req)
+    {
+        $target = null;
+        $form_id = $req->get_url_params()['id'];
+        $forms = Settings::get_forms();
+        foreach ($forms as $form) {
+            if ($form->id === $form_id) {
+                $target = $form;
+                break;
+            }
+        }
+
+        if (!$target) {
+            throw new Exception('Unkown form');
+        }
+
+        $fields = apply_filters('wpct_erp_forms_form_fields', [], $form_id);
+        return $fields;
     }
 
     private function get_settings()

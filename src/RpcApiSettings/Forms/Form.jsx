@@ -7,6 +7,7 @@ import { useState, useRef, useEffect } from "@wordpress/element";
 // source
 import { useForms } from "../../providers/Forms";
 import { useGeneral } from "../../providers/Settings";
+import FormPipes from "../../FormPipes";
 
 function NewForm({ add }) {
   const [{ backends }] = useGeneral();
@@ -165,6 +166,24 @@ export default function Form({ update, remove, ...data }) {
           options={formOptions}
           __nextHasNoMarginBottom
         />
+        <div>
+          <label
+            style={{
+              display: "block",
+              fontWeight: 500,
+              textTransform: "uppercase",
+              fontSize: "11px",
+              marginBottom: "calc(4px)",
+            }}
+          >
+            {__("Edit pipes", "wpct-erp-forms")}
+          </label>
+          <FormPipes
+            formId={data.form_id}
+            pipes={data.pipes}
+            setPipes={(pipes) => update({ ...data, pipes })}
+          />
+        </div>
         <div>
           <label
             style={{
