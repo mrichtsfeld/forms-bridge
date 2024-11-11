@@ -261,7 +261,12 @@ abstract class Integration extends Singleton
             foreach ($pipes as $pipe) {
                 if ($pipe['from'] === $field) {
                     unset($payload[$field]);
-                    $payload[$pipe['to']] = $this->cast($pipe['cast'], $value);
+                    if ($pipe['cast'] !== 'null') {
+                        $payload[$pipe['to']] = $this->cast(
+                            $pipe['cast'],
+                            $value
+                        );
+                    }
                 }
             }
         }
@@ -293,6 +298,10 @@ abstract class Integration extends Singleton
                 } catch (TypeError) {
                     return [];
                 }
+            case 'null':
+                return null;
+            default:
+                return (string) $value;
         }
     }
 

@@ -33,14 +33,22 @@ const castOptions = [
     value: "json",
     label: __("JSON", "wpct-erp-forms"),
   },
+  {
+    value: "null",
+    label: __("Ignore", "wpct-erp-forms"),
+  },
 ];
 
 export default function PipesTable({ formId, pipes, setPipes }) {
   const fields = useFormFields({ formId });
-  const fromOptions = fields.map((field) => ({
-    label: field.label,
-    value: field.name,
-  }));
+  const fromOptions = [
+    { label: __("Submission ID", "wpct-erp-forms"), value: "submission_id" },
+  ].concat(
+    fields.map((field) => ({
+      label: field.label,
+      value: field.name,
+    }))
+  );
 
   const setPipe = (attr, index, value) => {
     const newPipes = pipes.map((pipe, i) => {

@@ -15,6 +15,7 @@ namespace WPCT_ERP_FORMS;
 
 use WPCT_ERP_FORMS\WPCF7\Integration as Wpcf7Integration;
 use WPCT_ERP_FORMS\GF\Integration as GFIntegration;
+use WPCT_ERP_FORMS\WPFORMS\Integration as WPFormsIntegration;
 use WPCT_ABSTRACT\Plugin as BasePlugin;
 
 if (!defined('ABSPATH')) {
@@ -131,6 +132,17 @@ class Wpct_Erp_Forms extends BasePlugin
         ) {
             require_once 'includes/integrations/gf/class-integration.php';
             $this->_integrations['gf'] = GFIntegration::get_instance();
+        } elseif (
+            apply_filters(
+                'wpct_is_plugin_active',
+                false,
+                'wpforms-lite/wpforms.php'
+            )
+        ) {
+            require_once 'includes/integrations/wpforms/class-integration.php';
+            $this->_integrations[
+                'wpforms'
+            ] = WPFormsIntegration::get_instance();
         }
     }
 
