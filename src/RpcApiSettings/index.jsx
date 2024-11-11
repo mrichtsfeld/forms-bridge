@@ -1,6 +1,5 @@
 // vendor
 import React from "react";
-import { __ } from "@wordpress/i18n";
 import {
   Card,
   CardHeader,
@@ -14,8 +13,10 @@ import {
 // source
 import { useRpcApi } from "../providers/Settings";
 import FormHooks from "./FormHooks";
+import { useI18n } from "../providers/I18n";
 
 export default function RpcApiSettings() {
+  const __ = useI18n();
   const [{ endpoint, user, password, database, form_hooks: hooks }, save] =
     useRpcApi();
 

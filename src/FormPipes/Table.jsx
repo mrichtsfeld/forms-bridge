@@ -1,6 +1,5 @@
 // vendor
 import React from "react";
-import { __ } from "@wordpress/i18n";
 import {
   SelectControl,
   TextControl,
@@ -11,41 +10,43 @@ import { useEffect } from "@wordpress/element";
 
 // vendor
 import useFormFields from "../hooks/useFormFields";
+import { useI18n } from "../providers/I18n";
 
 const castOptions = [
   {
     value: "string",
-    label: __("String", "wpct-erp-forms"),
+    label: "String",
   },
   {
     value: "int",
-    label: __("Integer", "wpct-erp-forms"),
+    label: "Integer",
   },
   {
     value: "float",
-    label: __("Decimal", "wpct-erp-forms"),
+    label: "Decimal",
   },
   {
     value: "boolean",
-    label: __("Boolean", "wpct-erp-forms"),
+    label: "Boolean",
   },
   {
     value: "json",
-    label: __("JSON", "wpct-erp-forms"),
+    label: "JSON",
   },
   {
     value: "null",
-    label: __("Ignore", "wpct-erp-forms"),
+    label: "Ignore",
   },
 ];
 
 export default function PipesTable({ formId, pipes, setPipes }) {
+  const __ = useI18n();
   const fields = useFormFields({ formId });
   const fromOptions = [
     { label: __("Submission ID", "wpct-erp-forms"), value: "submission_id" },
   ].concat(
     fields.map((field) => ({
-      label: field.label,
+      label: __(field.label, "wpct-erp-forms"),
       value: field.name,
     }))
   );
@@ -117,7 +118,10 @@ export default function PipesTable({ formId, pipes, setPipes }) {
                   placeholder={__("Cast as", "wpct-erp-forms")}
                   value={cast || "string"}
                   onChange={(value) => setPipe("cast", i, value)}
-                  options={castOptions}
+                  options={castOptions.map(({ label, value }) => ({
+                    label: __(label, "wpct-erp-forms"),
+                    value,
+                  }))}
                   __nextHasNoMarginBottom
                 />
               </td>

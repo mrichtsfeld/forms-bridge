@@ -5,12 +5,14 @@ import { TabPanel } from "@wordpress/components";
 
 // source
 import Backend from "./Backend";
+import { useI18n } from "../../providers/I18n";
 
 export default function Backends({ backends, setBackends }) {
+  const __ = useI18n();
   const tabs = backends
     .map(({ name, base_url, headers }) => ({
       name,
-      title: name,
+      title: __(name, "wpct-erp-forms"),
       base_url,
       headers,
     }))

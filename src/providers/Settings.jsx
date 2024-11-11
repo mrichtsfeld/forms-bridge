@@ -84,8 +84,7 @@ export default function SettingsProvider({ children }) {
         saveSettings,
       ]}
     >
-      {(loading && <Loading message={__("Loading", "wpct-erp-forms")} />) ||
-        children}
+      {(loading && <Loading message={__("Loading")} />) || children}
     </SettingsContext.Provider>
   );
 }

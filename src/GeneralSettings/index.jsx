@@ -1,6 +1,5 @@
 // vendor
 import React from "react";
-import { __ } from "@wordpress/i18n";
 import {
   Card,
   CardHeader,
@@ -14,8 +13,10 @@ import {
 // source
 import { useGeneral } from "../providers/Settings";
 import Backends from "./Backends";
+import { useI18n } from "../providers/I18n";
 
 export default function GeneralSettings() {
+  const __ = useI18n();
   const [{ receiver, backends }, save] = useGeneral();
 
   const update = (field) => save({ receiver, backends, ...field });
@@ -31,6 +32,7 @@ export default function GeneralSettings() {
             label={__("Notification receiver", "wpct-erp-forms")}
             onChange={(receiver) => update({ receiver })}
             value={receiver}
+            style={{ width: "220px" }}
             __nextHasNoMarginBottom
           />
         </PanelRow>

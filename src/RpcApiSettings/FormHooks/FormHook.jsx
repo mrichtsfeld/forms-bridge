@@ -1,16 +1,17 @@
 // vendor
 import React from "react";
-import { __ } from "@wordpress/i18n";
 import { TextControl, SelectControl, Button } from "@wordpress/components";
 import { useState, useRef, useEffect } from "@wordpress/element";
 
 // source
 import { useForms } from "../../providers/Forms";
 import { useGeneral } from "../../providers/Settings";
+import { useI18n } from "../../providers/I18n";
 import useHookNames from "../../hooks/useHookNames";
 import FormPipes from "../../FormPipes";
 
 function NewFormHook({ add }) {
+  const __ = useI18n();
   const [{ backends }] = useGeneral();
   const backendOptions = backends.map(({ name }) => ({
     label: name,
@@ -25,9 +26,9 @@ function NewFormHook({ add }) {
   const hookNames = useHookNames();
 
   const [name, setName] = useState("");
-  const [backend, setBackend] = useState("");
+  const [backend, setBackend] = useState(backendOptions?.[0].value || "");
   const [model, setModel] = useState("");
-  const [formId, setFormId] = useState("");
+  const [formId, setFormId] = useState(formOptions?.[0].value || "");
   const [nameConflict, setNameConflict] = useState(false);
 
   const handleSetName = (name) => {
@@ -101,6 +102,7 @@ let focus;
 export default function FormHook({ update, remove, ...data }) {
   if (data.name === "add") return <NewFormHook add={update} />;
 
+  const __ = useI18n();
   const [{ backends }] = useGeneral();
   const backendOptions = backends.map(({ name }) => ({
     label: name,
@@ -211,7 +213,9 @@ export default function FormHook({ update, remove, ...data }) {
               fontWeight: 500,
               textTransform: "uppercase",
               fontSize: "11px",
+              margin: 0,
               marginBottom: "calc(4px)",
+              maxWidth: "100%",
             }}
           >
             {__("Remove form", "wpct-erp-forms")}

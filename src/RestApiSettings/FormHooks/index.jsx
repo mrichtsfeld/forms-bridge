@@ -1,12 +1,13 @@
 // vendor
 import React from "react";
-import { __ } from "@wordpress/i18n";
 import { TabPanel } from "@wordpress/components";
 
 // source
 import FormHook from "./FormHook";
+import { useI18n } from "../../providers/I18n";
 
 export default function FormHooks({ hooks, setHooks }) {
+  const __ = useI18n();
   const tabs = hooks
     .map(({ backend, endpoint, form_id, name, pipes }) => ({
       name,
@@ -24,7 +25,7 @@ export default function FormHooks({ hooks, setHooks }) {
     ]);
 
   const updateHook = (index, data) => {
-    if (index === -1) index = forms.length;
+    if (index === -1) index = hooks.length;
     const newHooks = hooks
       .slice(0, index)
       .concat([data])

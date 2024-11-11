@@ -207,6 +207,14 @@ class Wpct_Erp_Forms extends BasePlugin
         add_action('admin_enqueue_scripts', function ($admin_page) {
             $this->admin_enqueue_scripts($admin_page);
         });
+
+        add_action('init', function () {
+            wp_set_script_translations(
+                $this->get_textdomain(),
+                $this->get_textdomain(),
+                plugin_dir_path(__FILE__) . 'languages'
+            );
+        });
     }
 
     /**
@@ -362,7 +370,7 @@ class Wpct_Erp_Forms extends BasePlugin
         }
 
         wp_enqueue_script(
-            'wpct-erp-forms',
+            $this->get_textdomain(),
             plugins_url('assets/plugin.bundle.js', __FILE__),
             [
                 'react',

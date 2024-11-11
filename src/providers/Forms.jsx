@@ -32,8 +32,7 @@ export default function FormsProvider({ children }) {
 
   return (
     <FormsContext.Provider value={forms}>
-      {(loading && <Loading message={__("Loading", "wpct-erp-forms")} />) ||
-        children}
+      {(loading && <Loading message={__("Loading")} />) || children}
     </FormsContext.Provider>
   );
 }

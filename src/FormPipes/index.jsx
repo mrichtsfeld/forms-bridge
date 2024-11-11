@@ -1,15 +1,15 @@
 // vendor
 import React from "react";
-import { __ } from "@wordpress/i18n";
 import { Button, Modal } from "@wordpress/components";
 import { useState } from "@wordpress/element";
 
 // source
 import PipesTable from "./Table";
+import { useI18n } from "../providers/I18n";
 
 export default function FormPipes({ formId, pipes, setPipes }) {
+  const __ = useI18n();
   const [open, setOpen] = useState(false);
-
   return (
     <>
       <Button

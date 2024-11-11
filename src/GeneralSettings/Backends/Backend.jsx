@@ -1,6 +1,5 @@
 // vendor
 import React from "react";
-import { __ } from "@wordpress/i18n";
 import {
   TextControl,
   Button,
@@ -11,8 +10,10 @@ import { useState, useRef, useEffect } from "@wordpress/element";
 // source
 import BackendHeaders from "./Headers";
 import useBackendNames from "../../hooks/useBackendNames";
+import { useI18n } from "../../providers/I18n";
 
 function NewBackend({ add }) {
+  const __ = useI18n();
   const backendNames = useBackendNames();
 
   const [name, setName] = useState("");
@@ -77,6 +78,7 @@ let focus = false;
 export default function Backend({ update, remove, ...data }) {
   if (data.name === "add") return <NewBackend add={update} />;
 
+  const __ = useI18n();
   const [name, setName] = useState(data.name);
   const initialName = useRef(data.name);
   const nameInput = useRef();
@@ -84,7 +86,6 @@ export default function Backend({ update, remove, ...data }) {
   const backendNames = useBackendNames();
   const [nameConflict, setNameConflict] = useState(false);
   const handleSetName = (name) => {
-    console.log(backendNames, name);
     setNameConflict(name !== initialName.current && backendNames.has(name));
     setName(name.trim());
   };
@@ -157,7 +158,7 @@ export default function Backend({ update, remove, ...data }) {
             isDestructive
             variant="primary"
             onClick={() => remove(data)}
-            style={{ width: "130px", justifyContent: "center", height: "32px" }}
+            style={{ width: "150px", justifyContent: "center", height: "32px" }}
           >
             {__("Remove", "wpct-erp-forms")}
           </Button>

@@ -1,6 +1,5 @@
 // vendor
 import React from "react";
-import { __ } from "@wordpress/i18n";
 import {
   TextControl,
   Button,
@@ -8,7 +7,11 @@ import {
 } from "@wordpress/components";
 import { useEffect } from "@wordpress/element";
 
+// source
+import { useI18n } from "../../providers/I18n";
+
 export default function BackendHeaders({ headers, setHeaders }) {
+  const __ = useI18n();
   const setHeader = (attr, index, value) => {
     const newHeaders = headers.map((header, i) => {
       if (index === i) header[attr] = value;

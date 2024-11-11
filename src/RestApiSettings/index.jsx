@@ -12,8 +12,10 @@ import {
 // source
 import { useRestApi } from "../providers/Settings";
 import FormHooks from "./FormHooks";
+import { useI18n } from "../providers/I18n";
 
 export default function RestApiSettings() {
+  const __ = useI18n();
   const [{ form_hooks: hooks }, save] = useRestApi();
   return (
     <Card size="large" style={{ height: "fit-content" }}>
