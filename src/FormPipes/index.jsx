@@ -5,10 +5,9 @@ import { useState } from "@wordpress/element";
 
 // source
 import PipesTable from "./Table";
-import { useI18n } from "../providers/I18n";
 
 export default function FormPipes({ formId, pipes, setPipes }) {
-  const __ = useI18n();
+  const __ = wp.i18n.__;
   const [open, setOpen] = useState(false);
   return (
     <>

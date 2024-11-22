@@ -13,10 +13,9 @@ import {
 // source
 import { useRpcApi } from "../providers/Settings";
 import FormHooks from "./FormHooks";
-import { useI18n } from "../providers/I18n";
 
 export default function RpcApiSettings() {
-  const __ = useI18n();
+  const __ = wp.i18n.__;
   const [{ endpoint, user, password, database, form_hooks: hooks }, save] =
     useRpcApi();
 

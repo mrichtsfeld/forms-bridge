@@ -13,10 +13,10 @@ import {
 // source
 import { useGeneral } from "../providers/Settings";
 import Backends from "./Backends";
-import { useI18n } from "../providers/I18n";
 
 export default function GeneralSettings() {
-  const __ = useI18n();
+  const __ = wp.i18n.__;
+
   const [{ receiver, backends }, save] = useGeneral();
 
   const update = (field) => save({ receiver, backends, ...field });

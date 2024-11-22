@@ -9,13 +9,11 @@ import {
 import { useState } from "@wordpress/element";
 
 // source
-import I18nProvider from "../providers/I18n";
 import SettingsProvider, { useSubmitSettings } from "../providers/Settings";
 import FormsProvider from "../providers/Forms";
 import GeneralSettings from "../GeneralSettings";
 import RestApiSettings from "../RestApiSettings";
 import RpcApiSettings from "../RpcApiSettings";
-import { useI18n } from "../providers/I18n";
 
 const tabs = [
   {
@@ -44,7 +42,7 @@ function Content({ tab }) {
 }
 
 function SaveButton() {
-  const __ = useI18n();
+  const __ = wp.i18n.__;
   const submit = useSubmitSettings();
 
   const [loading, setLoading] = useState(false);
@@ -71,28 +69,26 @@ function SaveButton() {
 }
 
 export default function SettingsPage() {
-  const __ = useI18n();
+  const __ = wp.i18n.__;
   return (
-    <I18nProvider>
-      <SettingsProvider>
-        <Heading level={1}>Forms Bridge</Heading>
-        <TabPanel
-          initialTabName="general"
-          tabs={tabs.map(({ name, title }) => ({
-            name,
-            title: __(title, "forms-bridge"),
-          }))}
-        >
-          {(tab) => (
-            <FormsProvider>
-              <Spacer />
-              <Content tab={tab} />
-            </FormsProvider>
-          )}
-        </TabPanel>
-        <Spacer />
-        <SaveButton />
-      </SettingsProvider>
-    </I18nProvider>
+    <SettingsProvider>
+      <Heading level={1}>Forms Bridge</Heading>
+      <TabPanel
+        initialTabName="general"
+        tabs={tabs.map(({ name, title }) => ({
+          name,
+          title: __(title, "forms-bridge"),
+        }))}
+      >
+        {(tab) => (
+          <FormsProvider>
+            <Spacer />
+            <Content tab={tab} />
+          </FormsProvider>
+        )}
+      </TabPanel>
+      <Spacer />
+      <SaveButton />
+    </SettingsProvider>
   );
 }

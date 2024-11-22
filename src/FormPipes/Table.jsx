@@ -10,7 +10,6 @@ import { useEffect } from "@wordpress/element";
 
 // vendor
 import useFormFields from "../hooks/useFormFields";
-import { useI18n } from "../providers/I18n";
 
 const castOptions = [
   {
@@ -40,7 +39,7 @@ const castOptions = [
 ];
 
 export default function PipesTable({ formId, pipes, setPipes }) {
-  const __ = useI18n();
+  const __ = wp.i18n.__;
   const fields = useFormFields({ formId });
   const fromOptions = [
     { label: __("Submission ID", "forms-bridge"), value: "submission_id" },

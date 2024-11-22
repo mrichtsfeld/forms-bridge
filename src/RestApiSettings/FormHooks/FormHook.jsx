@@ -13,7 +13,6 @@ import { useForms } from "../../providers/Forms";
 import { useGeneral } from "../../providers/Settings";
 import useHookNames from "../../hooks/useHookNames";
 import FormPipes from "../../FormPipes";
-import { useI18n } from "../../providers/I18n";
 
 const methodOptions = [
   {
@@ -35,7 +34,7 @@ const methodOptions = [
 ];
 
 function NewFormHook({ add }) {
-  const __ = useI18n();
+  const __ = wp.i18n.__;
   const [{ backends }] = useGeneral();
   const backendOptions = backends.map(({ name }) => ({
     label: name,
@@ -176,7 +175,7 @@ let focus;
 export default function FormHook({ update, remove, ...data }) {
   if (data.name === "add") return <NewFormHook add={update} />;
 
-  const __ = useI18n();
+  const __ = wp.i18n.__;
   const [{ backends }] = useGeneral();
   const backendOptions = backends.map(({ name }) => ({
     label: name,

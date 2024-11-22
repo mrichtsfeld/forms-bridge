@@ -5,10 +5,9 @@ import { TabPanel } from "@wordpress/components";
 
 // source
 import Backend from "./Backend";
-import { useI18n } from "../../providers/I18n";
 
 export default function Backends({ backends, setBackends }) {
-  const __ = useI18n();
+  const __ = wp.i18n.__;
   const tabs = backends
     .map(({ name, base_url, headers }) => ({
       name,
