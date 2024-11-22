@@ -20,6 +20,7 @@ module.exports = function (grunt) {
           "!bin/**/*",
           "!node_modules/**/*",
           "!tests/**/*",
+          "!deps/**/*",
         ],
       },
     },

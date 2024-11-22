@@ -53,7 +53,7 @@ sections:
 ## Developers
 
 The plugin offers some hooks to expose its internal API. Go to [documentation](./docs/API.md) to see
-more details about the hooks. 
+more details about the hooks.
 
 ## Dependencies
 
@@ -70,3 +70,4 @@ about its managment. You can see this plugins documentation to know more about i
 3. [ ] Publish on wordpress.org repositories.
 4. [ ] Backend connectors as an opt-in list with Odoo JSON-RPC API suited integration.
 5. [ ] Backend connectors as an opt-in list with Dolibarr REST API suited integration.
+6. [ ] Add test coverage with phpunit.
