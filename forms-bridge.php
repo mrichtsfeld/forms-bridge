@@ -16,7 +16,7 @@ namespace FORMS_BRIDGE;
 use FORMS_BRIDGE\WPCF7\Integration as Wpcf7Integration;
 use FORMS_BRIDGE\GF\Integration as GFIntegration;
 use FORMS_BRIDGE\WPFORMS\Integration as WPFormsIntegration;
-use WPCT_ABASTRACT\Plugin as BasePlugin;
+use WPCT_ABSTRACT\Plugin as BasePlugin;
 
 if (!defined('ABSPATH')) {
     exit();
@@ -52,7 +52,11 @@ class Forms_Bridge extends BasePlugin
      *
      * @var array $_integrations
      */
-    private $_integrations = null;
+    private $_integrations = [
+        'gf' => null,
+        'wpforms' => null,
+        'wpcf7' => null,
+    ];
 
     /**
      * Handle plugin name.
@@ -134,7 +138,7 @@ class Forms_Bridge extends BasePlugin
     }
 
     /**
-     * Bound plugin to wp hooks.
+     * Bind plugin to wp hooks.
      */
     private function wp_hooks()
     {
@@ -158,14 +162,11 @@ class Forms_Bridge extends BasePlugin
 
         // Patch http bridge settings to erp forms settings
         add_filter('option_forms-bridge_general', function ($value) {
-            $http_setting = Settings::get_setting(
-                'forms-bridge',
-                'general'
-            );
-            foreach ($http_setting as $key => $val) {
-                $value[$key] = $val;
-            }
+            $http_setting = Settings::get_setting('http-bridge', 'general');
 
+            $value['backends'] = isset($http_setting['backends'])
+                ? (array) $http_setting['backends']
+                : [];
             return $value;
         });
 
@@ -177,12 +178,12 @@ class Forms_Bridge extends BasePlugin
                     return;
                 }
 
-                $http_setting = Settings::get_setting(
-                    'forms-bridge',
-                    'general'
-                );
-                $http_setting['backends'] = $to['backends'];
-                update_option('forms-bridge_general', $http_setting);
+                $http_setting = Settings::get_setting('http-bridge', 'general');
+
+                $http_setting['backends'] = isset($to['backends'])
+                    ? (array) $to['backends']
+                    : [];
+                update_option('http-bridge_general', $http_setting);
             },
             10,
             3
@@ -306,7 +307,7 @@ class Forms_Bridge extends BasePlugin
      */
     private function get_integration()
     {
-        foreach ($this->_integrations as $key => $integration) {
+        foreach (array_values($this->_integrations) as $integration) {
             if ($integration) {
                 return $integration;
             }
@@ -384,6 +385,12 @@ class Forms_Bridge extends BasePlugin
             ],
             FORMS_BRIDGE_VERSION,
             ['in_footer' => true]
+        );
+
+        wp_set_script_translations(
+            $this->get_textdomain(),
+            $this->get_textdomain(),
+            plugin_dir_path(__FILE__) . 'languages'
         );
 
         wp_enqueue_style('wp-components');
