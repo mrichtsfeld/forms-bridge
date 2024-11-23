@@ -37,10 +37,11 @@ function NewFormHook({ add }) {
 
   const handleSetName = (name) => {
     setNameConflict(hookNames.has(name));
-    setName(name.trim());
+    setName(name);
   };
 
-  const onClick = () => add({ name, backend, model, form_id: formId });
+  const onClick = () =>
+    add({ name: name.trim(), backend, model, form_id: formId });
 
   const disabled = !(name && backend && model && formId && !nameConflict);
 
@@ -159,7 +160,7 @@ export default function FormHook({ update, remove, ...data }) {
   const [nameConflict, setNameConflict] = useState(false);
   const handleSetName = (name) => {
     setNameConflict(name !== initialName.current && hookNames.has(name));
-    setName(name.trim());
+    setName(name);
   };
 
   useEffect(() => {
@@ -172,7 +173,10 @@ export default function FormHook({ update, remove, ...data }) {
   useEffect(() => {
     clearTimeout(timeout.current);
     if (!name || nameConflict) return;
-    timeout.current = setTimeout(() => update({ ...data, name }), 500);
+    timeout.current = setTimeout(
+      () => update({ ...data, name: name.trim() }),
+      500
+    );
   }, [name]);
 
   useEffect(() => setName(data.name), [data.name]);
