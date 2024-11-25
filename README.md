@@ -43,10 +43,10 @@ has three main sections:
 	* **Form Hooks**: A list of hooked forms and it's relation with your backend endpoints.
 	Each relation needs a unique name, a form ID, a backend, and an endpoint. Submission
 	will be sent as encoded JSON objects.
-3. JSON-RPC API
-	* **RPC API endpoint**: Entry point of your ERP JSON-RPC external API.
-	* **API user login**: Login of the ERP's user to use on the API authentication requests.
-	* **User password**: Password of the user.
+3. Odoo JSON-RPC
+	* **RPC API endpoint**: Entry point of your Odoo JSON-RPC external API.
+	* **API user login**: Login of the Odoo user to use on the API authentication requests.
+	* **User password**: Password or APIKEY of the user.
 	* **Database name**: Database  name to be used.
 	* **Form Hooks**: A list of hooked forms and it's relation with your backend models.
 	Each relation needs a unique name, a from ID, a backend, and a model. Submission will
