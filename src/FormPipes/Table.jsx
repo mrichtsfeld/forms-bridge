@@ -38,7 +38,7 @@ const castOptions = [
   },
 ];
 
-export default function PipesTable({ formId, pipes, setPipes }) {
+export default function PipesTable({ formId, pipes, setPipes, done }) {
   const __ = wp.i18n.__;
   const fields = useFormFields({ formId });
   const fromOptions = [

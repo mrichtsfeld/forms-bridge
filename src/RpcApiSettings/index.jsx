@@ -25,7 +25,7 @@ export default function RpcApiSettings() {
   return (
     <Card size="large" style={{ height: "fit-content" }}>
       <CardHeader>
-        <Heading level={3}>{__("RPC API", "forms-bridge")}</Heading>
+        <Heading level={3}>{__("Odoo JSON-RPC", "forms-bridge")}</Heading>
       </CardHeader>
       <CardBody>
         <PanelRow>
