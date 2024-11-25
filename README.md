@@ -2,14 +2,14 @@
 
 ![Forms Bridge]()
 
-Bridge WP form builder plugins to any backend over http requests.
+Bridge WP form builder plugins to any backend over HTTP requests.
 
 Forms Bridge has integrations for [GravityForms](https://www.gravityforms.com)
 , [Contact Form 7](https://contactform7.com/) and [WP Forms](https://wpforms.com/).
 
 The plugin allow comunication with any backend over REST or JSON-RPC API protocols.
 
-> Http requests will be sent with data encoded as `application/json` if there is no
+> HTTP requests will be sent with data encoded as `application/json` if there is no
 uploads. Else if form submission contains files, the default behavior is to send data
 as `multipart/formdata` encodec content type.
 
@@ -51,6 +51,12 @@ has three main sections:
 	* **Form Hooks**: A list of hooked forms and it's relation with your backend models.
 	Each relation needs a unique name, a from ID, a backend, and a model. Submission will
 	be sent encoded as JSON-RPC payloads.
+
+## Form Pipes
+
+Each hooked form can be configured with transform pipes. With this pipes, you can transform
+your form submissions into your backend API schemas. Form pipes allows you to rename variables
+and force primitive types casting.
 
 ## Developers
 
