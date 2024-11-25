@@ -58,6 +58,10 @@ Each hooked form can be configured with transform pipes. With this pipes, you ca
 your form submissions into your backend API schemas. Form pipes allows you to rename variables
 and force primitive types casting.
 
+If you need more complex transformations, use the plugin's hooks to transform form submissions
+before they were sent. See the [filters](./docs/API.md#filters) documentation to get more
+informatinon.
+
 ## Developers
 
 The plugin offers some hooks to expose its internal API. Go to [documentation](./docs/API.md)
