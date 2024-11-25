@@ -170,4 +170,88 @@ class Settings extends BaseSettings
             ]
         );
     }
+
+    protected function sanitize_setting($option, $value)
+    {
+        [$group, $setting] = explode('_', $option);
+        switch ($setting) {
+            case 'general':
+                $value = $this->validate_general($value);
+                break;
+            case 'rest-api':
+            case 'rpc-api':
+                $value = $this->validate_api($value);
+                break;
+        }
+
+        return parent::sanitize_setting($option, $value);
+    }
+
+    private function validate_general($setting)
+    {
+        $rest = self::get_setting($this->get_group_name(), 'rest-api');
+        $rpc = self::get_setting($this->get_group_name(), 'rpc-api');
+
+        $hooks = $this->validate_form_hooks(
+            $rest['form_hooks'],
+            $setting['backends']
+        );
+        if (count($hooks) !== count($rest['form_hooks'])) {
+            $rest['form_hooks'] = $hooks;
+            update_option($this->get_group_name() . '_' . 'rest-api', $rest);
+        }
+
+        $hooks = $this->validate_form_hooks(
+            $rpc['form_hooks'],
+            $setting['backends']
+        );
+        if (count($hooks) !== count($rpc['form_hooks'])) {
+            $rpc['form_hooks'] = $hooks;
+            update_option($this->get_group_name() . '_' . 'rpc-api', $rpc);
+        }
+
+        return $setting;
+    }
+
+    private function validate_api($setting)
+    {
+        $backends = Settings::get_setting(
+            $this->get_group_name(),
+            'general',
+            'backends'
+        );
+        $setting['form_hooks'] = $this->validate_form_hooks(
+            $setting['form_hooks'],
+            $backends
+        );
+        return $setting;
+    }
+
+    private function validate_form_hooks($form_hooks, $backends)
+    {
+        $form_ids = array_reduce(
+            apply_filters('forms_bridge_forms', []),
+            function ($form_ids, $form) {
+                return array_merge($form_ids, [$form['id']]);
+            },
+            []
+        );
+        $valid_hooks = [];
+        for ($i = 0; $i < count($form_hooks); $i++) {
+            $hook = $form_hooks[$i];
+            $is_valid =
+                array_reduce(
+                    $backends,
+                    function ($is_valid, $backend) use ($hook) {
+                        return $hook['backend'] === $backend['name'] ||
+                            $is_valid;
+                    },
+                    false
+                ) && in_array($hook['form_id'], $form_ids);
+            if ($is_valid) {
+                $valid_hooks[] = $hook;
+            }
+        }
+        return $valid_hooks;
+    }
 }

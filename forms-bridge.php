@@ -119,7 +119,7 @@ class Forms_Bridge extends BasePlugin
     }
 
     /**
-     * Load plugin integrations.
+     * Loads plugin integrations.
      */
     private function load_integrations()
     {
@@ -191,7 +191,7 @@ class Forms_Bridge extends BasePlugin
     }
 
     /**
-     * Bind plugin to wp hooks.
+     * Binds plugin to wp hooks.
      */
     private function wp_hooks()
     {
