@@ -7,6 +7,8 @@ use WP_Error;
 use Exception;
 use TypeError;
 
+use function HTTP_BRIDGE\http_bridge_post;
+
 if (!defined('ABSPATH')) {
     exit();
 }
@@ -212,7 +214,7 @@ abstract class Integration extends Singleton
     /**
      * After submission hook.
      *
-     * @param array $response Response data.
+     * @param array|WP_Error $response Response data.
      * @param array $payload Payload data.
      * @param array $form_data Form data.
      */
@@ -362,7 +364,7 @@ abstract class Integration extends Singleton
      */
     private function rpc_login($url)
     {
-        $session_id = time();
+        $session_id = 'forms-bridge-' . time();
         [
             'database' => $database,
             'user' => $user,
@@ -378,19 +380,22 @@ abstract class Integration extends Singleton
             ])
         );
 
-        $res = \HTTP_BRIDGE\http_bridge_post($url, ['data' => $payload]);
+        $response = http_bridge_post($url, ['data' => $payload]);
 
-        if (is_wp_error($res)) {
-            throw new Exception('Error while establish RPC session');
+        if (is_wp_error($response)) {
+            return $response;
         }
 
-        $login = (array) json_decode($res['body'], true);
+        $login = (array) json_decode($response['body'], true);
         if (isset($login['error'])) {
-            throw new Exception('RPC login error');
+            return new WP_Error(
+                $login['error']['code'],
+                $login['error']['message'],
+                $login['error']['data']
+            );
         }
 
-        $user_id = isset($login['result']) ? $login['result'] : null;
-        return [$session_id, $user_id];
+        return [$login['id'], $login['result']];
     }
 
     /**
@@ -433,11 +438,12 @@ abstract class Integration extends Singleton
             'password'
         );
 
-        try {
-            [$session_id, $user_id] = $this->rpc_login($url);
-        } catch (Exception) {
-            return false;
+        $login = $this->rpc_login($url);
+        if (is_wp_error($login)) {
+            return $login;
         }
+
+        [$session_id, $user_id] = $login;
 
         $payload = apply_filters(
             'forms_bridge_rpc_payload',
@@ -453,21 +459,27 @@ abstract class Integration extends Singleton
             $form_data
         );
 
-        $response = \HTTP_BRIDGE\http_bridge_post($url, [
+        $response = http_bridge_post($url, [
             'data' => $payload,
             'files' => $attachments,
             'headers' => $headers,
         ]);
 
-        if (isset($response['error'])) {
+        if (is_wp_error($response)) {
+            return $response;
+        }
+
+        $data = (array) json_decode($response['body'], true);
+
+        if (isset($data['error'])) {
             return new WP_Error(
-                'rpc_api_error',
-                'RPC API error response',
-                $response['error']
+                $data['error']['code'],
+                $data['error']['message'],
+                $data['error']['data']
             );
         }
 
-        return $response;
+        return $data['result'];
     }
 
     /**
