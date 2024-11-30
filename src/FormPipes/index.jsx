@@ -23,12 +23,14 @@ export default function FormPipes({ formId, pipes, setPipes }) {
           title={__("Form pipes", "forms-bridge")}
           onRequestClose={() => setOpen(false)}
         >
-          <PipesTable
-            formId={formId}
-            pipes={pipes}
-            setPipes={setPipes}
-            done={() => setOpen(false)}
-          />
+          <div style={{ minWidth: "575px", minHeight: "125px" }}>
+            <PipesTable
+              formId={formId}
+              pipes={pipes}
+              setPipes={setPipes}
+              done={() => setOpen(false)}
+            />
+          </div>
         </Modal>
       )}
     </>

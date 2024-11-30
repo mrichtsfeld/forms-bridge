@@ -9,15 +9,10 @@ import {
   useEffect,
 } from "@wordpress/element";
 
-// source
-import Loading from "../Loading";
-
 const FormsContext = createContext([]);
 
-export default function FormsProvider({ children }) {
+export default function FormsProvider({ children, setLoading }) {
   const [forms, setForms] = useState([]);
-
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     apiFetch({
@@ -31,9 +26,7 @@ export default function FormsProvider({ children }) {
   }, []);
 
   return (
-    <FormsContext.Provider value={forms}>
-      {(loading && <Loading message={__("Loading")} />) || children}
-    </FormsContext.Provider>
+    <FormsContext.Provider value={forms}>{children}</FormsContext.Provider>
   );
 }
 

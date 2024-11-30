@@ -7,12 +7,8 @@ import {
   useContext,
   useState,
   useEffect,
+  useRef,
 } from "@wordpress/element";
-
-// source
-import Loading from "../Loading";
-
-const noop = () => {};
 
 const defaultSettings = {
   "general": {
@@ -31,17 +27,18 @@ const defaultSettings = {
   },
 };
 
-const SettingsContext = createContext([defaultSettings, noop]);
+const SettingsContext = createContext([defaultSettings, () => {}]);
 
-export default function SettingsProvider({ children }) {
+export default function SettingsProvider({ children, setLoading }) {
+  const persisted = useRef(true);
+
   const [general, setGeneral] = useState({ ...defaultSettings.general });
   const [restApi, setRestApi] = useState({ ...defaultSettings["rest-api"] });
   const [rpcApi, setRpcApi] = useState({ ...defaultSettings["rpc-api"] });
 
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    apiFetch({
+  const fetchSettings = () => {
+    setLoading(true);
+    return apiFetch({
       path: `${window.wpApiSettings.root}wp-bridges/v1/forms-bridge/settings`,
       headers: {
         "X-WP-Nonce": wpApiSettings.nonce,
@@ -52,10 +49,32 @@ export default function SettingsProvider({ children }) {
         setRestApi(settings["rest-api"]);
         setRpcApi(settings["rpc-api"]);
       })
-      .finally(() => setLoading(false));
+      .finally(() => {
+        setLoading(false);
+        setTimeout(() => {
+          persisted.current = true;
+        }, 500);
+      });
+  };
+
+  const beforeUnload = useRef((ev) => {
+    if (!persisted.current) {
+      ev.preventDefault();
+      ev.returnValue = true;
+    }
+  }).current;
+
+  useEffect(() => {
+    fetchSettings();
+    window.addEventListener("beforeunload", (ev) => beforeUnload(ev));
   }, []);
 
+  useEffect(() => {
+    persisted.current = false;
+  }, [general, restApi, rpcApi]);
+
   const saveSettings = () => {
+    setLoading(true);
     return apiFetch({
       path: `${window.wpApiSettings.root}wp-bridges/v1/forms-bridge/settings`,
       method: "POST",
@@ -67,11 +86,7 @@ export default function SettingsProvider({ children }) {
         "rest-api": restApi,
         "rpc-api": rpcApi,
       },
-    }).then((settings) => {
-      setGeneral(settings.general);
-      setRestApi(settings["rest-api"]);
-      setRpcApi(settings["rpc-api"]);
-    });
+    }).then(fetchSettings);
   };
 
   return (
@@ -88,7 +103,7 @@ export default function SettingsProvider({ children }) {
         saveSettings,
       ]}
     >
-      {(loading && <Loading message={__("Loading")} />) || children}
+      {children}
     </SettingsContext.Provider>
   );
 }

@@ -36,23 +36,27 @@ const methodOptions = [
 function NewFormHook({ add }) {
   const __ = wp.i18n.__;
   const [{ backends }] = useGeneral();
-  const backendOptions = backends.map(({ name }) => ({
-    label: name,
-    value: name,
-  }));
+  const backendOptions = [{ label: "", value: "" }].concat(
+    backends.map(({ name }) => ({
+      label: name,
+      value: name,
+    }))
+  );
   const forms = useForms();
-  const formOptions = forms.map(({ id, title }) => ({
-    label: title,
-    value: id,
-  }));
+  const formOptions = [{ label: "", value: "" }].concat(
+    forms.map(({ id, title }) => ({
+      label: title,
+      value: id,
+    }))
+  );
 
   const hookNames = useHookNames();
 
   const [name, setName] = useState("");
-  const [backend, setBackend] = useState(backendOptions[0]?.value || "");
+  const [backend, setBackend] = useState("");
   const [method, setMethod] = useState("POST");
   const [endpoint, setEndpoint] = useState("");
-  const [formId, setFormId] = useState(formOptions[0]?.value || "");
+  const [formId, setFormId] = useState("");
   const [nameConflict, setNameConflict] = useState(false);
 
   const handleSetName = (name) => {
@@ -60,8 +64,22 @@ function NewFormHook({ add }) {
     setName(name);
   };
 
-  const onClick = () =>
-    add({ name: name.trim(), backend, method, endpoint, form_id: formId });
+  const onClick = () => {
+    add({
+      name: name.trim(),
+      backend,
+      method,
+      endpoint,
+      form_id: formId,
+      pipes: [],
+    });
+    setName("");
+    setBackend("");
+    setMethod("POST");
+    setEndpoint("");
+    setFormId("");
+    setNameConflict(false);
+  };
 
   const disabled = !(
     name &&
@@ -177,15 +195,19 @@ export default function FormHook({ update, remove, ...data }) {
 
   const __ = wp.i18n.__;
   const [{ backends }] = useGeneral();
-  const backendOptions = backends.map(({ name }) => ({
-    label: name,
-    value: name,
-  }));
+  const backendOptions = [{ label: "", value: "" }].concat(
+    backends.map(({ name }) => ({
+      label: name,
+      value: name,
+    }))
+  );
   const forms = useForms();
-  const formOptions = forms.map(({ id, title }) => ({
-    label: title,
-    value: id,
-  }));
+  const formOptions = [{ label: "", value: "" }].concat(
+    forms.map(({ id, title }) => ({
+      label: title,
+      value: id,
+    }))
+  );
 
   const [name, setName] = useState(data.name);
   const initialName = useRef(data.name);
@@ -299,13 +321,14 @@ export default function FormHook({ update, remove, ...data }) {
               textTransform: "uppercase",
               fontSize: "11px",
               marginBottom: "calc(4px)",
+              maxWidth: "unset",
             }}
           >
             {__("Edit pipes", "forms-bridge")}
           </label>
           <FormPipes
             formId={data.form_id}
-            pipes={data.pipes || []}
+            pipes={data.pipes}
             setPipes={(pipes) => update({ ...data, pipes })}
           />
         </div>

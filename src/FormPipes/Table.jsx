@@ -42,6 +42,7 @@ export default function PipesTable({ formId, pipes, setPipes, done }) {
   const __ = wp.i18n.__;
   const fields = useFormFields({ formId });
   const fromOptions = [
+    { label: "", value: "" },
     { label: __("Submission ID", "forms-bridge"), value: "submission_id" },
   ].concat(
     fields.map((field) => ({
@@ -65,9 +66,7 @@ export default function PipesTable({ formId, pipes, setPipes, done }) {
   };
 
   const addPipe = () => {
-    const newPipes = pipes.concat([
-      { from: "submission_id", to: "submission_id", cast: "string" },
-    ]);
+    const newPipes = pipes.concat([{ from: "", to: "", cast: "" }]);
     setPipes(newPipes);
   };
 
