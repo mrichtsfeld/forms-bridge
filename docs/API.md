@@ -149,7 +149,25 @@ Filters the submission data to be sent to the backend.
 2. `array $attachments`: Submission attached files.
 3. `array $form_data`: Form data.
 
-Example:
+#### Example
+
+```php
+add_filter('forms_bridge_payload', function ($payload, $attachments, $form_data) {
+	return $payload;
+}, 10, 3);
+```
+
+### `forms_bridge_payload_{$hook_name}`
+
+Filters the submission data to be sent to the backend for a given post type.
+
+#### Arguments
+
+1. `array $payload`: Submission payload.
+2. `array $attachments`: Submission attached files.
+3. `array $form_data`: Form data.
+
+#### Example
 
 ```php
 add_filter('forms_bridge_payload', function ($payload, $attachments, $form_data) {
