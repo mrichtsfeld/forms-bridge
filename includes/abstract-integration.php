@@ -252,7 +252,7 @@ abstract class Integration extends Singleton
      */
     private function apply_pipes($pipes, $payload)
     {
-        $finger = new Forms_Bridge_JSON_Finger($payload);
+        $finger = new JSON_Finger($payload);
         foreach ($pipes as $pipe) {
             extract($pipe);
             $value = $finger->get($from);

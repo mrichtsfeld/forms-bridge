@@ -6,7 +6,7 @@ use ValueError;
 use TypeError;
 use Error;
 
-class Forms_Bridge_JSON_Finger
+class JSON_Finger
 {
     private $data;
 
