@@ -6,6 +6,10 @@ use ValueError;
 use TypeError;
 use Error;
 
+if (!defined('ABSPATH')) {
+    exit();
+}
+
 /**
  * JSON Finger handler.
  */
