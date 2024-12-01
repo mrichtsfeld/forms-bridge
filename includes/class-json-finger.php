@@ -160,7 +160,7 @@ class JSON_Finger
         return $keys;
     }
 
-    private function isset($name)
+    public function isset($name)
     {
         return isset($this->data[$name]);
     }
