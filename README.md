@@ -41,8 +41,8 @@ has three main sections:
 	name, a base URL, and, optional, a map of HTTP headers.
 2. REST API
 	* **Form Hooks**: A list of hooked forms and it's relation with your backend endpoints.
-	Each relation needs a unique name, a form ID, a backend, and an endpoint. Submission
-	will be sent as encoded JSON objects.
+	Each relation needs a unique name, a form ID, a backend, a HTTP method, and an endpoint.
+	Submission will be sent as encoded JSON objects.
 3. Odoo JSON-RPC
 	* **RPC API endpoint**: Entry point of your Odoo JSON-RPC external API.
 	* **API user login**: Login of the Odoo user to use on the API authentication requests.
@@ -52,15 +52,46 @@ has three main sections:
 	Each relation needs a unique name, a from ID, a backend, and a model. Submission will
 	be sent encoded as JSON-RPC payloads.
 
+Once configured, try to submit data with one of your hooked forms and watch the magic happen!
+
 ## Form Pipes
 
 Each hooked form can be configured with transform pipes. With this pipes, you can transform
-your form submissions into your backend API schemas. Form pipes allows you to rename variables
-and force primitive types casting.
+your form submissions into your backend API schemas. Form pipes allows you to rename
+variables, force primitive types casting and mutate data structures. If your form submission
+model does not fit your backend API schema, mutate it with pipes before its sendend over
+the network.
+
+Generaly, form submissions where stored as a plain associative array of fields and values.
+**If do you need nested data structures, us JSON fingers to achive it**.
 
 If you need more complex transformations, use the plugin's hooks to transform form submissions
 before they were sent. See the [filters](./docs/API.md#filters) documentation to get more
 informatinon.
+
+### JSON Fingers
+
+The form pipes supports JSON Fingers as payload attribute names. A JSON Finger
+is a hierarchical pointer to array attributes like `children[0].name.rendered`. The former
+will point to the attribute `rendered` from the array `name` inside the first `child`
+in the array `children`. Use this fingers to set your payload attributes from your form's
+submissions.
+
+For example, if your backend waits for an payload like this:
+
+```php
+$payload = [
+	'name' => 'Bob',
+	'address' => [
+		'street' => 'Carrer de Balmes, 250',
+		'city' => 'Barcelona'
+	],
+];`
+```
+
+Then you can rename your form fields `street` and `city` as `address.street` and `address.city`
+and cast them as strings. JSON fingers will create the nested array on your form submission
+payload and remove the original fields.
 
 ## Developers
 
@@ -70,15 +101,16 @@ to see more details about the hooks.
 ### Local development
 
 The repository handles dependencies as [git submodules](https://www.atlassian.com/git/tutorials/git-submodule).
-In order to work local, you have to clone this repository and initialize its submodules with this
-command:
+In order to work local, you have to clone this repository and initialize its submodules
+with this command:
 
 ```bash
 git submodule update --init --recursive
 ```
 
-Once done, you will need to install frontend dependencies with `npm install`. To build the admin's react client,
-run `npm run dev` for development, or `npm run build` for production builts.
+Once done, you will need to install frontend dependencies with `npm install`. To build
+the admin's react client, run `npm run dev` for development, or `npm run build` for
+production builts.
 
 > We work WordPress with docker. See our [development setup](https://github.com/codeccoop/wp-development/)
 > if you are interested.
@@ -91,12 +123,3 @@ as well as the [Wpct Plugin Abstracts](https://git.coopdevs.org/codeccoop/wp/plu
 snippets. The plugin comes with its dependencies bundled in its releases, so you should
 not worry about its managment. You can see this plugins documentation to know more about
 its APIs.
-
-## Roadmap
-
-1. [ ] More agonstic JSON-RPC support decoupled from Odoo JSON-RPC API.
-2. [X] Rename plugin to Forms Bridge.
-3. [ ] Publish on wordpress.org repositories.
-4. [ ] Backend connectors as an opt-in list with Odoo JSON-RPC API suited integration.
-5. [ ] Backend connectors as an opt-in list with Dolibarr REST API suited integration.
-6. [ ] Add test coverage with phpunit.
