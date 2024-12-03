@@ -30,6 +30,8 @@ export default function FormHooks({ hooks, setHooks }) {
       .slice(0, index)
       .concat([data])
       .concat(hooks.slice(index + 1, hooks.length));
+
+    newHooks.forEach((hook) => delete hook.title);
     setHooks(newHooks);
   };
 
