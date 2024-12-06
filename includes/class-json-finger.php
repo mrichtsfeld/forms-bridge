@@ -192,6 +192,10 @@ class JSON_Finger
             $keys = static::parse($finger);
             $partial = &$data;
             for ($i = 0; $i < count($keys) - 1; $i++) {
+                if (!is_array($partial)) {
+                    throw new TypeError('Finger points to a non traversable value');
+                }
+
                 $key = $keys[$i];
                 if (!isset($partial[$key])) {
                     $partial[$key] = [];
@@ -217,7 +221,7 @@ class JSON_Finger
             }
         } catch (Error $e) {
             error_log($e->getMessage());
-            return null;
+            return $this->data;
         }
 
         $this->data = $data;
