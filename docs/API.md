@@ -36,7 +36,7 @@ Get available forms.
 
 #### Arguments
 
-1. `any $default`: Default value.
+1. `mixed $default`: Fallback value.
 
 #### Returns
 
@@ -57,12 +57,12 @@ Get active hooks for the current form.
 
 #### Arguments
 
-1. `any $default`: Default value.
-2. `integer $form_id`: If declared, try to return form hooks by ID.
+1. `mixed $default`: Fallback value.
+2. `integer $form_id`: If declared, try to return form hooks by ID, otherwise gets the current form, if exists.
 
 #### Returns
 
-1. `array $hooks`: List of given form active hooks.
+1. `array $hooks`: List of given form active hooks instances.
 
 #### Example
 
@@ -79,12 +79,12 @@ Check if current form is hooked to a given hook.
 
 #### Arguments
 
-1. `any $default`: Default value.
+1. `mixed $default`: Fallback value.
 2. `string $hook_name`: Needle hook name.
 
 #### Returns
 
-1. `boolean $is_hooked`: True if form is hooked to the given hook, false otherwise.
+1. `boolean $is_hooked`: True if the current form is bound to the given hook, false otherwise.
 
 #### Example
 
@@ -97,15 +97,15 @@ if ($is_hooked) {
 
 ### `forms_bridge_submission`
 
-Get the current form submission.
+Gets the current form submission.
 
 #### Arguments
 
-1. `any $default`: Default value.
+1. `mixed $default`: Fallback value.
 
 #### Returns
 
-1. `array|null $submission`: Current form submission.
+1. `array|null $submission`: Current form's submission data.
 
 #### Example
 
@@ -118,15 +118,15 @@ if ($submission) {
 
 ### `forms_bridge_uploads`
 
-Get the current form submission uploaded files.
+Gets the current form's submission uploaded files.
 
 #### Arguments
 
-1. `any $default`: Default value.
+1. `mixed $default`: Fallback value.
 
 #### Returns
 
-1. `array|null`: Current form submission uploaded files.
+1. `array|null`: Current form's submission uploaded files.
 
 #### Example
 
@@ -245,6 +245,20 @@ add_filter('forms_bridge_rpc_payload', function ($payload, $attachments, $form_d
 }, 10, 3);
 ```
 
+### `forms_bridge_prune_empties`
+
+Control if Forms Bridge should clean up the submission data and prune its empty fields.
+
+#### Arguments
+
+1. `boolean $prune`: False by default.
+
+#### Example
+
+```php
+add_filter('forms_bridge_prune_empties', '__return_true');
+```
+
 ### `forms_bridge_private_upload`
 
 Filter if form uploaded files should be stored in a private folder.
@@ -286,7 +300,7 @@ Action to do just before submission has been sent to the backend.
 
 #### Arguments
 
-1. `array $payload`: Submission payload.
+1. `array $payload`: Submission prepared payload data.
 2. `array $attachments`: Submission attached files.
 3. `array $form_data`: Form data.
 
@@ -333,3 +347,64 @@ add_action('forms_bridge_on_failure', function ($payload, $attachments, $form_da
 	// do something
 }, 10, 3);
 ```
+
+### `forms_bridge_before_rest_submit`
+
+Fired before Forms Bridge submits data to a REST API.
+
+#### Arguments
+
+1. `string $endpoint`: Target endpoint.
+2. `array $submission`: Submission data.
+3. `array $attachments`: Array of attached files.
+4. `Form_Hook $hook`: Instance of the form hook who triggers the request.
+
+### `forms_bridge_after_rest_submit`
+
+Fired with the response data from the REST API.
+
+#### Arguments
+
+1. `array|WP_Error $response`: Response from the REST API.
+2. `string $name`: Name of the hook who made the request.
+3. `Form_Hook $hook`: Instance of the form hook object.
+
+### `forms_bridge_before_rpc_submit`
+
+Fired before Forms Bridge submits data to a JSON-RPC API.
+
+#### Arguments
+
+1. `string $endpoint`: Target endpoint.
+2. `array $payload`: RPC payload with the submission data.
+3. `Form_Hook $hook`: Instance of the form hook who triggers the request.
+
+### `forms_bridge_after_rpc_submit`
+
+Fired with the response data from the JSON-RPC API.
+
+#### Arguments
+
+1. `array|WP_Error`: Response from the JSON-RPC API.
+2. `string $name`: Name of the hook who made the request.
+3. `Form_Hook $hook`: Instance of hte form hook object.
+
+### `forms_bridge_before_rpc_login`
+
+Fired before Forms Bridge trigger a login call to a JSON-RPC API.
+
+#### Arguments
+
+1. `string $endpoint`: Target endpoint.
+2. `array $payload`: JSON-RPC login payload.
+3. `Form_Hook $hook`: Instance of the form hook who tiggers the request.
+
+### `forms_bridge_after_rpc_login`
+
+Fired with the login call response.
+
+#### Arguments
+
+1. `array|WP_Error`: Login request response.
+2. `string $name`: Name of the hook who made the request.
+3. `Form_Hook $hook`: Instance of the form hook object.
