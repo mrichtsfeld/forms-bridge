@@ -42,7 +42,7 @@ has three main sections:
 2. REST API
 	* **Form Hooks**: A list of hooked forms and it's relation with your backend endpoints.
 	Each relation needs a unique name, a form ID, a backend, a HTTP method, and an endpoint.
-	Submission will be sent as encoded JSON objects.
+	Submission will be sent as encoded JSON data.
 3. Odoo JSON-RPC
 	* **RPC API endpoint**: Entry point of your Odoo JSON-RPC external API.
 	* **API user login**: Login of the Odoo user to use on the API authentication requests.
@@ -52,7 +52,48 @@ has three main sections:
 	Each relation needs a unique name, a from ID, a backend, and a model. Submission will
 	be sent encoded as JSON-RPC payloads.
 
-Once configured, try to submit data with one of your hooked forms and watch the magic happen!
+Once configured, try to submit data with one of your hooked forms and watch the magic happen 🛹!
+
+## Backends
+
+Forms Bridge use [Http Bridge](https://git.coopdevs.org/codeccoop/wp/plugins/bridges/http-bridge/)
+backends as a foundational part of its system. With this feature, Forms Bridge can be configured
+with many backend connexions configured to establish HTTP requests against.
+
+Each backend needs a unique name that identifies it and a base URL. The base URL will be
+prepended to your form hook endpoints to build the URLs from the backend HTTP API.
+
+To each backend you can set a collection of HTTP headers be sent on each request. In addition,
+Http Bridge will add some default headers to the request.
+
+> With the `Content-Type` header you can modify how Forms Bridge encode your submission data
+> before is sent. Supported content types are: `application/json`, `application/x-www-form-urlencoded`
+> and `multipart/form-data`.
+
+## Form Hooks
+
+Forms Bridge use form hooks to link your form submissions to your backends. There are two
+types of form hooks:
+
+1. `REST hooks`: Form submissions will be sent to the backend as HTTP REST requests. You
+   can select which HTTP method to use and a backend configuration to build the request.
+2. `JSON-RPC hooks`: Form submissions will be sent to the backend as JSON-RPC calls. To
+   allow this kind of communication, Forms Bridge needs to establish a session with the
+   backend and use some credentials: The target database, the username and the password.
+   Data will be sent as POST requests encoded as JSON data.
+
+On REST form hooks, submission data will be sent with data encoded as `application/json` by default
+if there is no uploads. Else if form submission contains files, the default behavior is to send data
+as `multipart/formdata` encodec content type. You can modify this behavior using backend's HTTP headers.
+Supported content types are `application/json`, `application/x-www-form-urlencoded` and
+`multipart/form-data`. If you needs any other encoding schema, you have to use `forms_bridge_payload`
+to encode your submission as string.
+
+> 🚩 For REST HTTP methods GET and DELETE, the request has no body and your data will be sent as
+> URL query params.
+
+> 🚩 On JSON-RPC hooks attachments will be encoded as base64 content and included to your submission
+> data. This is needed because JSON-RPC API does not support `multipart/form-data` content types.
 
 ## Form Pipes
 
@@ -117,7 +158,7 @@ production builts.
 
 ## Dependencies
 
-This plugin relays on [HTTP Bridge](https://git.coopdevs.org/codeccoop/wp/plugins/bridges/http-bridge/)
+This plugin relays on [Http Bridge](https://git.coopdevs.org/codeccoop/wp/plugins/bridges/http-bridge/)
 and [Wpct i18n](https://git.coopdevs.org/codeccoop/wp/plugins/wpct/i18n/) as depenendencies,
 as well as the [Wpct Plugin Abstracts](https://git.coopdevs.org/codeccoop/wp/plugins/wpct/plugin-abstracts)
 snippets. The plugin comes with its dependencies bundled in its releases, so you should
