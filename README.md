@@ -9,10 +9,6 @@ Forms Bridge has integrations for [GravityForms](https://www.gravityforms.com)
 
 The plugin allow comunication with any backend over REST or JSON-RPC API protocols.
 
-> HTTP requests will be sent with data encoded as `application/json` if there is no
-uploads. Else if form submission contains files, the default behavior is to send data
-as `multipart/formdata` encodec content type.
-
 ## Installation
 
 Download the [latest release](https://git.coopdevs.org/codeccoop/wp/plugins/bridges/forms-bridge/-/releases/permalink/latest/downloads/plugins/bridges/forms-bridge.zip)
@@ -74,9 +70,9 @@ before is sent. Supported content types are: `application/json`, `application/x-
 and `multipart/form-data`. **JSON is the default encoding schema if there is no** `Content-Type`
 **header on the backend configuration**.
 
-If you needs any other encoding schema, you have to use `forms_bridge_payload` to encode your
-submission as string. When data comes as string, Forms Bridge skips the encoding step and sets
-the unmodified payload as the body of the request.  
+If you needs any other encoding schema, you have to use `forms_bridge_payload` filter to encode
+your submission as string. When data comes as string, Forms Bridge skips the encoding step and
+sets the unmodified payload as the body of the request.  
 
 ## Form Hooks
 
@@ -87,8 +83,8 @@ types of form hooks:
    can select which HTTP method to use and a backend configuration to build the request.
 2. `JSON-RPC hooks`: Form submissions will be sent to the backend as JSON-RPC calls. To
    allow this kind of communication, Forms Bridge needs to establish a session with the
-   backend and use some credentials: The target database, the username and the password.
-   Data will be sent as POST requests encoded as JSON data.
+   backend and use some credentials: The target database, the username, the password, and
+   the target model. Data will be sent as POST requests encoded as JSON data.
 
 > 🚩 For REST HTTP methods GET and DELETE, the request has no body and your data will be sent
 > as URL query params.
@@ -100,7 +96,7 @@ backend.
 
 By default, Forms Bridge will send this files as binary data using the `multipart/form-data`
 encoding schema unless your backend connexions has a different `Content-Type` HTTP header.
-Forms Bridge will check to the form hook's backend for this header.  If it exists and is
+Forms Bridge will check to the form hook's backend for this header. If it exists and is
 not `multipart/form-data`, Forms Bridge will include this files as base64 encoded strings to
 your payload.
 
