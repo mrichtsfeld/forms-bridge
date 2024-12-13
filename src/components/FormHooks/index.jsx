@@ -3,9 +3,6 @@ import React from "react";
 import { TabPanel } from "@wordpress/components";
 import { useState } from "@wordpress/element";
 
-// source
-import FormHook from "./FormHook";
-
 const CopyIcon = ({ onClick }) => {
   const [focus, setFocus] = useState(false);
 
@@ -61,18 +58,18 @@ function TabTitle({ name, focus, setFocus, copy }) {
   );
 }
 
-export default function FormHooks({ hooks, setHooks }) {
+export default function FormHooks({ hooks, setHooks, FormHook }) {
   const __ = wp.i18n.__;
 
   const [currentTab, setCurrentTab] = useState(hooks[0]?.name || "add");
   const [tabFocus, setTabFocus] = useState(null);
   const tabs = hooks
-    .map(({ backend, model, form_id, name, pipes }) => ({
+    .map(({ backend, form_id, name, pipes, ...customFields }) => ({
+      ...customFields,
       name,
       title: name,
-      form_id,
-      model,
       backend,
+      form_id,
       pipes,
       icon: (
         <TabTitle
@@ -114,22 +111,20 @@ export default function FormHooks({ hooks, setHooks }) {
 
   const copyHook = (name) => {
     const i = hooks.findIndex((h) => h.name === name);
-    const hook = {
-      name: hooks[i].name,
-      form_id: hooks[i].form_id,
-      model: hooks[i].model,
-      backend: hooks[i].backend,
-      pipes: JSON.parse(JSON.stringify(hooks[i].pipes)),
+    const hook = hooks[i];
+    const copy = {
+      ...hook,
+      pipes: JSON.parse(JSON.stringify(hooks.pipes || [])),
     };
 
     let isUnique = false;
     while (!isUnique) {
-      hook.name += "-copy";
-      isUnique = hooks.find((h) => h.name === hook.name) === undefined;
+      copy.name += "-copy";
+      isUnique = hooks.find((h) => h.name === copy.name) === undefined;
     }
 
-    setHooks(hooks.concat(hook));
-    setCurrentTab(hook.name);
+    setHooks(hooks.concat(copy));
+    setCurrentTab(copy.name);
   };
 
   return (
@@ -152,7 +147,7 @@ export default function FormHooks({ hooks, setHooks }) {
       >
         {(hook) => (
           <FormHook
-            {...hook}
+            data={hook}
             remove={removeHook}
             update={(data) =>
               updateHook(

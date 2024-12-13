@@ -6,7 +6,7 @@ import { useState } from "@wordpress/element";
 // source
 import PipesTable from "./Table";
 
-export default function FormPipes({ formId, pipes, setPipes }) {
+export default function FormPipes({ form, pipes, setPipes }) {
   const __ = wp.i18n.__;
   const [open, setOpen] = useState(false);
   return (
@@ -25,7 +25,7 @@ export default function FormPipes({ formId, pipes, setPipes }) {
         >
           <div style={{ minWidth: "575px", minHeight: "125px" }}>
             <PipesTable
-              formId={formId}
+              form={form}
               pipes={pipes}
               setPipes={setPipes}
               done={() => setOpen(false)}

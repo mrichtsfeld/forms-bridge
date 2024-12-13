@@ -4,10 +4,7 @@ import { __ } from "@wordpress/i18n";
 import { TabPanel } from "@wordpress/components";
 import { useState } from "@wordpress/element";
 
-// source
-import Backend from "./Backend";
-
-export default function Backends({ backends, setBackends }) {
+export default function Backends({ backends, setBackends, Backend }) {
   const __ = wp.i18n.__;
 
   const [currentTab, setCurrentTab] = useState(backends[0]?.name || "add");

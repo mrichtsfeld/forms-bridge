@@ -1,7 +1,5 @@
 // vendor
 import React from "react";
-import { __ } from "@wordpress/i18n";
-import apiFetch from "@wordpress/api-fetch";
 import {
   createContext,
   useContext,
@@ -11,18 +9,11 @@ import {
 
 const FormsContext = createContext([]);
 
-export default function FormsProvider({ children, setLoading }) {
+export default function FormsProvider({ children }) {
   const [forms, setForms] = useState([]);
 
   useEffect(() => {
-    apiFetch({
-      path: `${window.wpApiSettings.root}wp-bridges/v1/forms-bridge/forms`,
-      headers: {
-        "X-WP-Nonce": wpApiSettings.nonce,
-      },
-    })
-      .then((forms) => setForms(forms))
-      .finally(() => setLoading(false));
+    wpfb.on("forms", setForms);
   }, []);
 
   return (

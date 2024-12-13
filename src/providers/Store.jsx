@@ -1,0 +1,66 @@
+// vendor
+import React from "react";
+import apiFetch from "@wordpress/api-fetch";
+import { createContext, useContext, useEffect } from "@wordpress/element";
+
+const StoreContext = createContext(() => {});
+
+export default function StoreProvider({ children, setLoading }) {
+  const fetchSettings = () => {
+    setLoading(true);
+    return apiFetch({
+      path: `${window.wpApiSettings.root}wp-bridges/v1/forms-bridge/settings`,
+      headers: {
+        "X-WP-Nonce": wpApiSettings.nonce,
+      },
+    })
+      .then((settings) => {
+        wpfb.emit("fetch", settings);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  };
+
+  const fetchForms = () => {
+    setLoading(true);
+    return apiFetch({
+      path: `${window.wpApiSettings.root}wp-bridges/v1/forms-bridge/forms`,
+      headers: {
+        "X-WP-Nonce": wpApiSettings.nonce,
+      },
+    })
+      .then((forms) => {
+        wpfb.emit("forms", forms);
+      })
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    fetchForms().then(fetchSettings);
+  }, []);
+
+  const submit = () => {
+    setLoading(true);
+
+    console.log("submit");
+    const settings = wpfb.bus("submit", {});
+    console.log({ settings });
+    return apiFetch({
+      path: `${window.wpApiSettings.root}wp-bridges/v1/forms-bridge/settings`,
+      method: "POST",
+      headers: {
+        "X-WP-Nonce": wpApiSettings.nonce,
+      },
+      data: settings,
+    }).then(fetchSettings);
+  };
+
+  return (
+    <StoreContext.Provider value={submit}>{children}</StoreContext.Provider>
+  );
+}
+
+export function useStoreSubmit() {
+  return useContext(StoreContext);
+}

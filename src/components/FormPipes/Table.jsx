@@ -6,10 +6,7 @@ import {
   Button,
   __experimentalSpacer as Spacer,
 } from "@wordpress/components";
-import { useEffect } from "@wordpress/element";
-
-// vendor
-import useFormFields from "../hooks/useFormFields";
+import { useEffect, useMemo } from "@wordpress/element";
 
 const castOptions = [
   {
@@ -38,9 +35,15 @@ const castOptions = [
   },
 ];
 
-export default function PipesTable({ formId, pipes, setPipes, done }) {
+export default function PipesTable({ form, pipes, setPipes, done }) {
   const __ = wp.i18n.__;
-  const fields = useFormFields({ formId });
+
+  const fields = useMemo(() => {
+    console.log(form);
+    if (!form) return [];
+    return form.fields.map(({ name, label }) => ({ name, label }));
+  }, [form]);
+
   const fromOptions = [
     { label: "", value: "" },
     { label: __("Submission ID", "forms-bridge"), value: "submission_id" },

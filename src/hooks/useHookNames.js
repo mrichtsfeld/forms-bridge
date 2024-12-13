@@ -2,13 +2,12 @@
 import { useMemo } from "@wordpress/element";
 
 // source
-import { useRestApi, useRpcApi } from "../providers/Settings";
+import { useFormHooks } from "../providers/Settings";
 
 export default function useHookNames() {
-  const [{ form_hooks: restHooks }] = useRestApi();
-  const [{ form_hooks: rpcHooks }] = useRpcApi();
+  const formHooks = useFormHooks();
 
   return useMemo(() => {
-    return new Set(restHooks.concat(rpcHooks).map(({ name }) => name));
-  }, [restHooks, rpcHooks]);
+    return new Set(formHooks.map(({ name }) => name));
+  }, [formHooks]);
 }

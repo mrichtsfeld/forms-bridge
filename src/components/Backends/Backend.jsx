@@ -8,12 +8,15 @@ import {
 import { useState, useRef, useEffect } from "@wordpress/element";
 
 // source
-import BackendHeaders from "./Headers";
+import { useGeneral } from "../../providers/Settings";
 import useBackendNames from "../../hooks/useBackendNames";
+import BackendHeaders from "./Headers";
 
 function NewBackend({ add }) {
   const __ = wp.i18n.__;
-  const backendNames = useBackendNames();
+
+  const { backends } = useGeneral();
+  const backendNames = useBackendNames(backends);
 
   const [name, setName] = useState("");
   const [baseUrl, setBaseUrl] = useState("https://");
@@ -87,7 +90,8 @@ export default function Backend({ update, remove, ...data }) {
   const initialName = useRef(data.name);
   const nameInput = useRef();
 
-  const backendNames = useBackendNames();
+  const { backends } = useGeneral();
+  const backendNames = useBackendNames(backends);
   const [nameConflict, setNameConflict] = useState(false);
   const handleSetName = (name) => {
     setNameConflict(name !== initialName.current && backendNames.has(name));

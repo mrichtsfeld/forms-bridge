@@ -4,7 +4,7 @@ import { TabPanel } from "@wordpress/components";
 import { useState } from "@wordpress/element";
 
 // source
-import FormHook from "./FormHook";
+import Database from "./Database";
 
 const CopyIcon = ({ onClick }) => {
   const [focus, setFocus] = useState(false);
@@ -61,77 +61,71 @@ function TabTitle({ name, focus, setFocus, copy }) {
   );
 }
 
-export default function FormHooks({ hooks, setHooks }) {
+export default function Databases({ databases, setDatabases }) {
   const __ = wp.i18n.__;
 
-  const [currentTab, setCurrentTab] = useState(hooks[0]?.name || "add");
+  const [currentTab, setCurrentTab] = useState(databases[0]?.name || "add");
   const [tabFocus, setTabFocus] = useState(null);
-  const tabs = hooks
-    .map(({ backend, method, endpoint, form_id, name, pipes }) => ({
+  const tabs = databases
+    .map(({ name, user, password, backend }) => ({
       name,
       title: name,
+      user,
+      password,
       backend,
-      method,
-      endpoint,
-      form_id,
-      pipes,
       icon: (
         <TabTitle
           name={name}
           focus={tabFocus === name}
           setFocus={(value) => setTabFocus(value ? name : null)}
-          copy={() => copyHook(name)}
+          copy={() => copyDatabase(name)}
         />
       ),
     }))
     .concat([
       {
-        title: __("Add Form", "forms-bridge"),
+        title: __("Add database", "forms-bridge"),
         name: "add",
       },
     ]);
 
-  const updateHook = (index, data) => {
-    if (index === -1) index = hooks.length;
-    const newHooks = hooks
+  const updateDatabases = (index, data) => {
+    if (index === -1) index = databases.length;
+    const newDatabases = databases
       .slice(0, index)
       .concat([data])
-      .concat(hooks.slice(index + 1, hooks.length));
+      .concat(databases.slice(index + 1, databases.length));
 
-    newHooks.forEach((hook) => {
-      delete hook.title;
-      delete hook.icon;
+    newDatabases.forEach((db) => {
+      delete db.title;
+      delete db.icon;
     });
-    setHooks(newHooks);
-    setCurrentTab(newHooks[index].name);
+    setDatabases(newDatabases);
+    setCurrentTab(newDatabases[index].name);
   };
 
-  const removeHook = ({ name }) => {
-    const index = hooks.findIndex((h) => h.name === name);
-    const newHooks = hooks.slice(0, index).concat(hooks.slice(index + 1));
-    setHooks(newHooks);
-    setCurrentTab(newHooks[index - 1]?.name || "add");
+  const removeDatabase = ({ name }) => {
+    const index = databases.findIndex((db) => db.name === name);
+    const newDatabases = databases
+      .slice(0, index)
+      .concat(databases.slice(index + 1));
+    setDatabases(newDatabases);
+    setCurrentTab(newDatabases[index - 1]?.name || "add");
   };
 
-  const copyHook = (name) => {
-    const i = hooks.findIndex((h) => h.name === name);
-    const hook = {
-      name: hooks[i].name,
-      endpoint: hooks[i].endpoint,
-      form_id: hooks[i].form_id,
-      method: hooks[i].method,
-      backend: hooks[i].backend,
-      pipes: JSON.parse(JSON.stringify(hooks[i].pipes)),
-    };
+  const copyDatabase = (name) => {
+    const i = databases.findIndex((db) => db.name === name);
+    const db = databases[i];
+    const copy = { ...db };
 
     let isUnique = false;
-    while (!isUnique) {
-      hook.name += "-copy";
-      isUnique = hooks.find((h) => h.name === hook.name) === undefined;
+    if (!isUnique) {
+      copy.name += "-copy";
+      isUnique = databases.find((db) => db.name === copy.name) === undefined;
     }
 
-    setHooks(hooks.concat(hook));
-    setCurrentTab(hook.name);
+    setDatabases(databases.concat(copy));
+    setCurrentTab(copy.name);
   };
 
   return (
@@ -145,23 +139,24 @@ export default function FormHooks({ hooks, setHooks }) {
           marginBottom: "calc(8px)",
         }}
       >
-        {__("Form Hooks", "forms-bridge")}
+        {__("Databases", "forms-bridge")}
       </label>
       <TabPanel
         tabs={tabs}
         onSelect={setCurrentTab}
         initialTabName={currentTab}
       >
-        {(hook) => (
-          <FormHook
-            {...hook}
-            remove={removeHook}
+        {(db) => (
+          <Database
+            data={db}
+            remove={removeDatabase}
             update={(data) =>
-              updateHook(
-                hooks.findIndex(({ name }) => name === hook.name),
+              updateDatabases(
+                databases.findIndex(({ name }) => name === db.name),
                 data
               )
             }
+            databases={databases}
           />
         )}
       </TabPanel>

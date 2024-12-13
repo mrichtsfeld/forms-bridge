@@ -9,14 +9,13 @@ import {
 import { useState } from "@wordpress/element";
 
 // source
-import SettingsProvider, { useSubmitSettings } from "../providers/Settings";
+import StoreProvider, { useStoreSubmit } from "../providers/Store";
+import SettingsProvider from "../providers/Settings";
 import FormsProvider from "../providers/Forms";
-import GeneralSettings from "../GeneralSettings";
-import RestApiSettings from "../RestApiSettings";
-import RpcApiSettings from "../RpcApiSettings";
-import Spinner from "../Spinner";
+import GeneralSettings from "./tabs/General";
+import RestApiSettings from "./tabs/RestApi";
 
-const tabs = [
+const defaultTabs = [
   {
     name: "general",
     title: "General",
@@ -25,35 +24,28 @@ const tabs = [
     name: "rest-api",
     title: "REST API",
   },
-  {
-    name: "rpc-api",
-    title: "Odoo JSON-RPC",
-  },
 ];
 
 function Content({ tab }) {
   switch (tab.name) {
+    case "general":
+      return <GeneralSettings />;
     case "rest-api":
       return <RestApiSettings />;
-    case "rpc-api":
-      return <RpcApiSettings />;
     default:
-      return <GeneralSettings />;
+      const root = <div id={tab.name} style={{ minHeight: "400px" }}></div>;
+      setTimeout(() => wpfb.emit("tab", tab.name));
+      return root;
   }
 }
 
-function SaveButton({ loading, setLoading }) {
+function SaveButton({ loading }) {
   const __ = wp.i18n.__;
-  const submit = useSubmitSettings();
+  const submit = useStoreSubmit();
 
   const [error, setError] = useState(false);
 
-  const onClick = () => {
-    setLoading(true);
-    submit()
-      .then(() => setLoading(false))
-      .catch(() => setError(true));
-  };
+  const onClick = () => submit().catch(() => setError(true));
 
   return (
     <Button
@@ -68,22 +60,20 @@ function SaveButton({ loading, setLoading }) {
   );
 }
 
-export default function SettingsPage() {
+export default function SettingsPage({ addons }) {
   const __ = wp.i18n.__;
 
-  const [loaders, setLoaders] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-  const loading = loaders.length > 0;
-  const setLoading = (state) => {
-    const newLoaders = loaders
-      .slice(1)
-      .concat(state)
-      .filter((state) => state);
-    setLoaders(newLoaders);
-  };
+  const tabs = defaultTabs.concat(
+    Object.keys(addons).map((addon) => ({
+      name: addon,
+      title: addons[addon],
+    }))
+  );
 
   return (
-    <SettingsProvider setLoading={setLoading}>
+    <StoreProvider setLoading={setLoading}>
       <Heading level={1}>Forms Bridge</Heading>
       <TabPanel
         initialTabName="general"
@@ -93,14 +83,16 @@ export default function SettingsPage() {
         }))}
       >
         {(tab) => (
-          <FormsProvider setLoading={setLoading}>
-            <Spacer />
-            <Content tab={tab} />
+          <FormsProvider>
+            <SettingsProvider handle={["general", "rest-api"]}>
+              <Spacer />
+              <Content tab={tab} />
+            </SettingsProvider>
           </FormsProvider>
         )}
       </TabPanel>
-      <SaveButton loading={loading} setLoading={setLoading} />
+      <SaveButton loading={loading} />
       <Spacer show={loading} />
-    </SettingsProvider>
+    </StoreProvider>
   );
 }

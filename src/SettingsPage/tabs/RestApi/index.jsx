@@ -10,12 +10,14 @@ import {
 } from "@wordpress/components";
 
 // source
-import { useRestApi } from "../providers/Settings";
-import FormHooks from "./FormHooks";
+import FormHooks from "../../../components/FormHooks";
+import RestFormHook from "./FormHook";
+import useRestApi from "./useRestApi";
 
-export default function RestApiSettings() {
+export default function RestApiSetting() {
   const __ = wp.i18n.__;
   const [{ form_hooks: hooks }, save] = useRestApi();
+
   return (
     <Card size="large" style={{ height: "fit-content" }}>
       <CardHeader>
@@ -26,6 +28,7 @@ export default function RestApiSettings() {
           <FormHooks
             hooks={hooks}
             setHooks={(form_hooks) => save({ form_hooks })}
+            FormHook={RestFormHook}
           />
         </PanelRow>
       </CardBody>
