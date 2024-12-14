@@ -17,6 +17,8 @@ use Exception;
 use WPCT_ABSTRACT\Plugin as BasePlugin;
 use WPCT_ABSTRACT\Setting;
 
+use function WPCT_ABSTRACT\is_list;
+
 if (!defined('ABSPATH')) {
     exit();
 }
@@ -210,12 +212,8 @@ class Forms_Bridge extends BasePlugin
         add_filter(
             'forms_bridge_form_hooks',
             function ($form_hooks, $form_id) {
-                if (!is_array($form_hooks)) {
+                if (!is_list($form_hooks)) {
                     $form_hooks = [];
-                }
-
-                if ($form_id) {
-                    return Form_Hook::form_hooks($form_id);
                 }
 
                 return array_merge(
@@ -231,7 +229,7 @@ class Forms_Bridge extends BasePlugin
         add_filter(
             'forms_bridge_forms',
             function ($forms) {
-                if (!is_array($forms)) {
+                if (!is_list($forms)) {
                     $forms = [];
                 }
 

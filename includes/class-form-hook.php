@@ -86,7 +86,7 @@ class Form_Hook
      *
      * @return Http_Backend Backend instance.
      */
-    private function backend()
+    protected function backend()
     {
         return apply_filters(
             'http_bridge_backend',
@@ -100,7 +100,7 @@ class Form_Hook
      *
      * @return string API endpoint.
      */
-    private function endpoint()
+    protected function endpoint()
     {
         $endpoint = $this->data['endpoint'];
         return apply_filters(
@@ -116,7 +116,7 @@ class Form_Hook
      *
      * @return arrray Form data.
      */
-    private function form()
+    protected function form()
     {
         return apply_filters('forms_bridge_form', null, $this->form_id);
     }
@@ -126,9 +126,9 @@ class Form_Hook
      *
      * @return string|null Encoding schema.
      */
-    private function content_type()
+    protected function content_type()
     {
-        return $this->backend()->content_type();
+        return $this->backend()->content_type;
     }
 
     /**
