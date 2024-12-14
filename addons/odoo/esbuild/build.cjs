@@ -6,6 +6,7 @@ const esbuild = require("esbuild");
     bundle: true,
     minify: true,
     outfile: "assets/addon.bundle.js",
+    loader: { ".png": "base64" },
     plugins: [
       {
         name: "rebuild-log",

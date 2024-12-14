@@ -19,6 +19,8 @@ class Odoo_Form_Hook extends Form_Hook
                 return $this->backend();
             case 'database':
                 return $this->database();
+            case 'endpoint':
+                return $this->endpoint();
             default:
                 return parent::__get($name);
         }
@@ -36,6 +38,16 @@ class Odoo_Form_Hook extends Form_Hook
             if ($db['name'] === $this->data['database']) {
                 return new Odoo_DB($db);
             }
+        }
+    }
+
+    protected function endpoint()
+    {
+        $base_url = $this->backend()->base_url;
+        if (preg_match('/\/jsonrpc\/?$/', $base_url)) {
+            return '';
+        } else {
+            return '/jsonrpc';
         }
     }
 }

@@ -16,6 +16,9 @@ import OdooFormHook from "./FormHook";
 import useOdooApi from "../hooks/useOdooSetting";
 import Databases from "../components/Databases";
 
+// assets
+import logo from "../../assets/logo.png";
+
 export default function OdooSetting() {
   const __ = wp.i18n.__;
   const [{ databases, form_hooks: hooks }, save] = useOdooApi();
@@ -26,6 +29,7 @@ export default function OdooSetting() {
     <Card size="large" style={{ height: "fit-content" }}>
       <CardHeader>
         <Heading level={3}>{__("Odoo JSON-RPC", "forms-bridge")}</Heading>
+        <img src={"data:image/png;base64," + logo} style={{ width: "70px" }} />
       </CardHeader>
       <CardBody>
         <PanelRow>
