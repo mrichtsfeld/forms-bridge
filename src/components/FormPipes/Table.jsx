@@ -40,7 +40,9 @@ export default function PipesTable({ form, pipes, setPipes, done }) {
 
   const fields = useMemo(() => {
     if (!form) return [];
-    return form.fields.map(({ name, label }) => ({ name, label }));
+    return form.fields
+      .filter(({ is_file }) => !is_file)
+      .map(({ name, label }) => ({ name, label }));
   }, [form]);
 
   const fromOptions = [

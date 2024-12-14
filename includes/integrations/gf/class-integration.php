@@ -227,6 +227,7 @@ class Integration extends BaseIntegration
             'required' => $field->isRequired,
             'options' => $options,
             'inputs' => $inputs,
+            'is_file' => in_array($type, ['files', 'file']),
             'conditional' =>
                 is_array($field->conditionalLogic) &&
                 $field->conditionalLogic['enabled'],

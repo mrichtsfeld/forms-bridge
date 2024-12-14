@@ -164,6 +164,7 @@ class Integration extends BaseIntegration
             'label' => $field['label'],
             'required' => $field['required'] == '1',
             'options' => isset($field['choices']) ? $field['choices'] : [],
+            'is_file' => in_array($field['type'], ['files', 'file']),
             'conditional' => false,
         ];
     }
