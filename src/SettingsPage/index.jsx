@@ -1,6 +1,9 @@
 // vendor
 import React from "react";
 import {
+  Card,
+  CardHeader,
+  CardBody,
   TabPanel,
   __experimentalHeading as Heading,
   Button,
@@ -26,17 +29,39 @@ const defaultTabs = [
   },
 ];
 
-function Content({ tab }) {
-  switch (tab.name) {
-    case "general":
-      return <GeneralSettings />;
-    case "rest-api":
-      return <RestApiSettings />;
-    default:
-      const root = <div id={tab.name} style={{ minHeight: "400px" }}></div>;
-      setTimeout(() => wpfb.emit("tab", tab.name));
-      return root;
-  }
+function Content({ tab, children }) {
+  const __ = wp.i18n.__;
+
+  const content = (() => {
+    switch (tab.name) {
+      case "general":
+        return <GeneralSettings />;
+      case "rest-api":
+        return <RestApiSettings />;
+      default:
+        const root = (
+          <div className="root" style={{ minHeight: "300px" }}></div>
+        );
+        setTimeout(() => wpfb.emit("tab", tab.name));
+        return root;
+    }
+  })();
+
+  return (
+    <div id={tab.name}>
+      <Card size="large" style={{ height: "fit-content" }}>
+        <CardHeader>
+          <Heading level={3}>{__(tab.title, "forms-bridge")}</Heading>
+          <img className="addon-logo" />
+        </CardHeader>
+        <CardBody>
+          {content}
+          <Spacer paddingY="calc(16px)" />
+          {children}
+        </CardBody>
+      </Card>
+    </div>
+  );
 }
 
 function SaveButton({ loading }) {
@@ -97,12 +122,13 @@ export default function SettingsPage({ addons }) {
           <FormsProvider>
             <SettingsProvider handle={["general", "rest-api"]}>
               <Spacer />
-              <Content tab={tab} />
+              <Content tab={tab}>
+                <SaveButton loading={loading} />
+              </Content>
             </SettingsProvider>
           </FormsProvider>
         )}
       </TabPanel>
-      <SaveButton loading={loading} />
       <Spacer show={loading} />
     </StoreProvider>
   );
