@@ -2,7 +2,6 @@
 
 namespace FORMS_BRIDGE;
 
-use Exception;
 use TypeError;
 use WP_Error;
 
@@ -12,8 +11,8 @@ if (!defined('ABSPATH')) {
 
 class Form_Hook
 {
-    private $data;
-    private $proto;
+    protected $data;
+    protected $api;
 
     /**
      * Form hooks getter.
@@ -31,17 +30,19 @@ class Form_Hook
             $form_id = $form['id'];
         }
 
-        $rest = Settings::get_setting('forms-bridge', 'rest-api')->form_hooks;
-        $rpc = Settings::get_setting('forms-bridge', 'rpc-api')->form_hooks;
+        $form_hooks = apply_filters('forms_bridge_setting', null, 'rest-api')
+            ->form_hooks;
 
-        $hooks = [];
-        foreach (array_merge($rest, $rpc) as $hook) {
-            if ((int) $hook['form_id'] === (int) $form_id) {
-                $hooks[$hook['name']] = new Form_Hook($hook);
-            }
-        }
-
-        return $hooks;
+        return array_map(
+            static function ($hook_data) {
+                return new Form_Hook($hook_data);
+            },
+            array_filter($form_hooks, static function ($hook_data) use (
+                $form_id
+            ) {
+                return (int) $hook_data['form_id'] === (int) $form_id;
+            })
+        );
     }
 
     /**
@@ -50,7 +51,7 @@ class Form_Hook
     public function __construct($data)
     {
         $this->data = $data;
-        $this->proto = isset($this->data['endpoint']) ? 'rest' : 'rpc';
+        $this->api = 'rest';
     }
 
     /**
@@ -63,19 +64,23 @@ class Form_Hook
     public function __get($name)
     {
         switch ($name) {
-            case 'proto':
-                return $this->proto;
-            case 'endpoint':
-                return $this->endpoint();
+            case 'api':
+                $value = $this->api;
+                break;
             case 'form':
-                return $this->form();
+                $value = $this->form();
+                break;
             case 'backend':
-                return $this->backend();
+                $value = $this->backend();
+                break;
             case 'content_type':
-                return $this->content_type();
+                $value = $this->content_type();
+                break;
             default:
-                return isset($this->data[$name]) ? $this->data[$name] : null;
+                $value = isset($this->data[$name]) ? $this->data[$name] : null;
         }
+
+        return apply_filters("forms_bridge_hook_{$name}", $value, $this);
     }
 
     /**
@@ -88,29 +93,7 @@ class Form_Hook
         return apply_filters(
             'http_bridge_backend',
             null,
-            $this->data['backend']
-        );
-    }
-
-    /**
-     * Retrives the hook's endpoint.
-     *
-     * @return string API endpoint.
-     */
-    private function endpoint()
-    {
-        if ($this->proto === 'rpc') {
-            $endpoint = Settings::get_setting('forms-bridge', 'rpc-api')
-                ->endpoint;
-        } else {
-            $endpoint = $this->data['endpoint'];
-        }
-
-        return apply_filters(
-            'forms_bridge_endpoint',
-            $endpoint,
-            $this->data['name'],
-            $this
+            isset($this->data['backend']) ? $this->data['backend'] : null
         );
     }
 
@@ -119,7 +102,7 @@ class Form_Hook
      *
      * @return arrray Form data.
      */
-    private function form()
+    protected function form()
     {
         return apply_filters('forms_bridge_form', null, $this->form_id);
     }
@@ -129,13 +112,9 @@ class Form_Hook
      *
      * @return string|null Encoding schema.
      */
-    private function content_type()
+    protected function content_type()
     {
-        if ($this->proto === 'rpc') {
-            return 'application/json';
-        }
-
-        return $this->backend()->content_type();
+        return $this->backend()->content_type;
     }
 
     /**
@@ -147,23 +126,6 @@ class Form_Hook
      * @return array|WP_Error Http request response.
      */
     public function submit($submission, $attachments = [])
-    {
-        if ($this->proto === 'rest') {
-            return $this->submit_rest($submission, $attachments);
-        } else {
-            return $this->submit_rpc($submission);
-        }
-    }
-
-    /**
-     * Submits submission over the REST protocol.
-     *
-     * @param array $submission Submission data.
-     * @param array $attachments Submission attachmeed files.
-     *
-     * @return array|WP_Error Http request response.
-     */
-    private function submit_rest($submission, $attachments)
     {
         $backend = $this->backend;
         $method = strtolower($this->method);
@@ -177,7 +139,7 @@ class Form_Hook
         }
 
         do_action(
-            'forms_bridge_before_rest_submit',
+            'forms_bridge_before_submit',
             $this->endpoint,
             $submission,
             $attachments,
@@ -189,141 +151,8 @@ class Form_Hook
             [],
             $attachments
         );
-        do_action(
-            'forms_bridge_after_rest_submit',
-            $response,
-            $this->name,
-            $this
-        );
+        do_action('forms_bridge_after_submit', $response, $this->name, $this);
         return $response;
-    }
-
-    /**
-     * Submits submission data over Odoo's JSON-RPC API.
-     *
-     * @param array $submission Submission payload.
-     *
-     * @return mixed|WP_Error Request result.
-     */
-    private function submit_rpc($submission)
-    {
-        $rpc = Settings::get_setting('forms-bridge', 'rpc-api');
-        $backend = $this->backend;
-
-        [$sid, $uid] = $this->rpc_login($backend);
-        if (is_wp_error($uid)) {
-            return $uid;
-        }
-
-        $payload = $this->rpc_payload($sid, 'object', 'execute', [
-            $rpc->database,
-            $uid,
-            $rpc->password,
-            $this->model,
-            'create',
-            $submission,
-        ]);
-
-        do_action(
-            'forms_bridge_before_rpc_submit',
-            $this->endpoint,
-            $payload,
-            $this
-        );
-        $response = $backend->post($this->endpoint, $payload);
-        do_action(
-            'forms_bridge_after_rpc_submit',
-            $response,
-            $this->name,
-            $this
-        );
-
-        return $this->rpc_response($response);
-    }
-
-    /**
-     * JSON RPC login request.
-     *
-     * @return array Tuple with RPC session id and user id.
-     */
-    private function rpc_login()
-    {
-        $session_id = 'forms-bridge-' . time();
-        $rpc = Settings::get_setting('forms-bridge', 'rpc-api');
-        $backend = $this->backend;
-
-        $payload = $this->rpc_payload($session_id, 'common', 'login', [
-            $rpc->database,
-            $rpc->user,
-            $rpc->password,
-        ]);
-
-        do_action(
-            'forms_bridge_before_rpc_login',
-            $this->endpoint,
-            $payload,
-            $this
-        );
-        $response = $backend->post($this->endpoint, $payload);
-        do_action(
-            'forms_bridge_after_rpc_login',
-            $response,
-            $this->name,
-            $this
-        );
-
-        $result = $this->rpc_response($response);
-        return [$session_id, $result];
-    }
-
-    /**
-     * Handle RPC responses and catch errors on the application layer.
-     *
-     * @param array $response Request response.
-     *
-     * @return mixed|WP_Error Request result.
-     */
-    private function rpc_response($response)
-    {
-        if (is_wp_error($response)) {
-            return $response;
-        }
-
-        $data = json_decode($response['body'], true);
-
-        if (isset($data['error'])) {
-            return new WP_Error(
-                $data['error']['code'],
-                $data['error']['message'],
-                $data['error']['data']
-            );
-        }
-
-        return $data['result'];
-    }
-
-    /**
-     * RPC payload decorator.
-     *
-     * @param int $session_id RPC session ID.
-     * @param string $service RPC service name.
-     * @param string $method RPC method name.
-     * @param array $args RPC request arguments.
-     *
-     * @return array JSON-RPC conformant payload.
-     */
-    private function rpc_payload($session_id, $service, $method, $args)
-    {
-        return [
-            'jsonrpc' => '2.0',
-            'method' => 'call',
-            'id' => $session_id,
-            'params' => [
-                'service' => $service,
-                'method' => $method,
-                'args' => $args,
-            ],
-        ];
     }
 
     /**

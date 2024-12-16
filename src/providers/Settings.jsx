@@ -1,7 +1,5 @@
 // vendor
 import React from "react";
-import { __ } from "@wordpress/i18n";
-import apiFetch from "@wordpress/api-fetch";
 import {
   createContext,
   useContext,
@@ -10,129 +8,114 @@ import {
   useRef,
 } from "@wordpress/element";
 
-const defaultSettings = {
-  "general": {
-    notification_receiver: `admin@${window.location.hostname}`,
+const defaults = {
+  general: {
+    notification_receiver: "",
     backends: [],
+    addons: {},
   },
-  "rest-api": {
-    form_hooks: [],
-  },
-  "rpc-api": {
-    endpoint: "/jsonrpc",
-    database: "crm.lead",
-    user: "admin",
-    password: "admin",
-    form_hooks: [],
+  apis: {
+    "rest-api": {
+      form_hooks: [],
+    },
   },
 };
 
-const SettingsContext = createContext([defaultSettings, () => {}]);
+const SettingsContext = createContext([defaults, () => {}]);
 
-export default function SettingsProvider({ children, setLoading }) {
-  const persisted = useRef(true);
+export default function SettingsProvider({ children, handle = ["general"] }) {
+  const initialState = useRef(null);
+  const currentState = useRef(defaults);
+  const [state, setState] = useState(defaults);
+  const [reload, setReload] = useState(false);
+  currentState.current = state;
 
-  const [general, setGeneral] = useState({ ...defaultSettings.general });
-  const [restApi, setRestApi] = useState({ ...defaultSettings["rest-api"] });
-  const [rpcApi, setRpcApi] = useState({ ...defaultSettings["rpc-api"] });
+  const onFetch = useRef((settings) => {
+    const newState = {
+      general: { ...defaults.general, ...settings.general },
+    };
+    newState.apis = Object.fromEntries(
+      Object.entries(settings)
+        .filter(([key]) => key !== "general")
+        .map(([key, data]) => [key, { ...defaults.apis[key], ...data }])
+    );
+    setState(newState);
+    const previousState = initialState.current;
+    initialState.current = { ...newState };
+    if (previousState === null) return;
 
-  const fetchSettings = () => {
-    setLoading(true);
-    return apiFetch({
-      path: `${window.wpApiSettings.root}wp-bridges/v1/forms-bridge/settings`,
-      headers: {
-        "X-WP-Nonce": wpApiSettings.nonce,
+    const reload = Object.keys(newState.general.addons).reduce(
+      (changed, addon) => {
+        return (
+          changed ||
+          newState.general.addons[addon] !== previousState.general.addons[addon]
+        );
       },
-    })
-      .then((settings) => {
-        setGeneral(settings.general);
-        setRestApi(settings["rest-api"]);
-        setRpcApi(settings["rpc-api"]);
-      })
-      .finally(() => {
-        setLoading(false);
-        setTimeout(() => {
-          persisted.current = true;
-        }, 500);
-      });
-  };
+      false
+    );
+    setReload(reload);
+  }).current;
+
+  const onSubmit = useRef((bus) => {
+    const state = currentState.current;
+    if (handle.indexOf("general") !== -1) {
+      bus.data.general = state.general;
+    }
+    Object.entries(state.apis).forEach(([name, value]) => {
+      if (handle.indexOf(name) !== -1) {
+        bus.data[name] = value;
+      }
+    });
+  }).current;
 
   const beforeUnload = useRef((ev) => {
-    if (!persisted.current) {
+    const state = currentState.current;
+    if (JSON.stringify(state) !== JSON.stringify(initialState.current)) {
       ev.preventDefault();
       ev.returnValue = true;
     }
   }).current;
 
   useEffect(() => {
-    fetchSettings();
-    window.addEventListener("beforeunload", (ev) => beforeUnload(ev));
+    wpfb.off("fetch", onFetch);
+    wpfb.on("fetch", onFetch);
+    wpfb.join("submit", onSubmit);
+    window.addEventListener("beforeunload", beforeUnload);
+
+    () => {
+      wpfb.off("fetch", onFetch);
+      wpfb.leave("submit", onSubmit);
+      window.removeEventListener("beforeunload", beforeUnload);
+    };
   }, []);
 
   useEffect(() => {
-    persisted.current = false;
-  }, [general, restApi, rpcApi]);
+    if (reload) window.location.reload();
+  }, [reload]);
 
-  const saveSettings = () => {
-    setLoading(true);
-    return apiFetch({
-      path: `${window.wpApiSettings.root}wp-bridges/v1/forms-bridge/settings`,
-      method: "POST",
-      headers: {
-        "X-WP-Nonce": wpApiSettings.nonce,
-      },
-      data: {
-        general,
-        "rest-api": restApi,
-        "rpc-api": rpcApi,
-      },
-    }).then(fetchSettings);
-  };
+  const patchState = (partial) => setState({ ...state, ...partial });
 
   return (
-    <SettingsContext.Provider
-      value={[
-        {
-          general,
-          setGeneral,
-          restApi,
-          setRestApi,
-          rpcApi,
-          setRpcApi,
-        },
-        saveSettings,
-      ]}
-    >
+    <SettingsContext.Provider value={[state, patchState]}>
       {children}
     </SettingsContext.Provider>
   );
 }
 
 export function useGeneral() {
-  const [{ general, setGeneral }] = useContext(SettingsContext);
-
-  const { notification_receiver: receiver, backends } = general;
-
-  const update = ({ receiver, backends }) =>
-    setGeneral({
-      notification_receiver: receiver,
-      backends,
-    });
-
-  return [{ receiver, backends }, update];
+  const [{ general }, patch] = useContext(SettingsContext);
+  return [general, (general) => patch({ general })];
 }
 
-export function useRestApi() {
-  const [{ restApi, setRestApi }] = useContext(SettingsContext);
-  return [restApi, setRestApi];
+export function useApis() {
+  const [{ apis }, patch] = useContext(SettingsContext);
+  return [apis, (api) => patch({ apis: { ...apis, ...api } })];
 }
 
-export function useRpcApi() {
-  const [{ rpcApi, setRpcApi }] = useContext(SettingsContext);
-  return [rpcApi, setRpcApi];
-}
+export function useFormHooks() {
+  const [apis] = useApis();
 
-export function useSubmitSettings() {
-  const [, submit] = useContext(SettingsContext);
-  return submit;
+  return Object.keys(apis).reduce((formHooks, api) => {
+    return formHooks.concat(apis[api].form_hooks);
+  }, []);
 }

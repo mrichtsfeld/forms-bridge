@@ -176,6 +176,7 @@ class Integration extends BaseIntegration
             'label' => $field->name,
             'required' => $field->is_required(),
             'options' => $options,
+            'is_file' => in_array($type, ['file', 'files']),
             'conditional' =>
                 $field->basetype === 'conditional' ||
                 $field->basetype === 'fileconditional',

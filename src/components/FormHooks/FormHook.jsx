@@ -1,0 +1,186 @@
+// vendor
+import React from "react";
+import {
+  TextControl,
+  SelectControl,
+  Button,
+  __experimentalSpacer as Spacer,
+} from "@wordpress/components";
+import { useState, useRef, useEffect, useMemo } from "@wordpress/element";
+
+// source
+import { useForms } from "../../providers/Forms";
+import { useFormHooks, useGeneral } from "../../providers/Settings";
+import useHookNames from "../../hooks/useHookNames";
+import FormPipes from "../FormPipes";
+import NewFormHook from "./NewFormHook";
+
+let focus = false;
+export default function FormHook({
+  data,
+  update,
+  remove,
+  schema = ["name", "backend", "form_id"],
+  template = ({ add, schema }) => <NewFormHook add={add} schema={schema} />,
+  children = () => {},
+}) {
+  if (data.name === "add") return template({ add: update, schema });
+
+  const __ = wp.i18n.__;
+  const [{ backends }] = useGeneral();
+  const backendOptions = [{ label: "", value: "" }].concat(
+    backends.map(({ name }) => ({
+      label: name,
+      value: name,
+    }))
+  );
+
+  const forms = useForms();
+  const formOptions = [{ label: "", value: "" }].concat(
+    forms.map(({ id, title }) => ({
+      label: title,
+      value: id,
+    }))
+  );
+
+  const form = useMemo(() => {
+    return forms.find((form) => form.id == data.form_id);
+  }, [data.form_id]);
+
+  const [name, setName] = useState(data.name);
+  const initialName = useRef(data.name);
+  const nameInput = useRef();
+
+  const formHooks = useFormHooks();
+  const hookNames = useHookNames(formHooks);
+  const [nameConflict, setNameConflict] = useState(false);
+  const handleSetName = (name) => {
+    setNameConflict(name !== initialName.current && hookNames.has(name.trim()));
+    setName(name);
+  };
+
+  useEffect(() => {
+    if (focus) nameInput.current.focus();
+  }, []);
+
+  const timeout = useRef();
+  useEffect(() => {
+    clearTimeout(timeout.current);
+    if (!name || nameConflict) return;
+    timeout.current = setTimeout(() => {
+      if (hookNames.has(name.trim())) return;
+      update({ ...data, name: name.trim() });
+    }, 500);
+  }, [name]);
+
+  useEffect(() => setName(data.name), [data.name]);
+
+  return (
+    <div
+      style={{
+        padding: "calc(24px) calc(32px)",
+        width: "calc(100% - 64px)",
+        backgroundColor: "rgb(245, 245, 245)",
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          gap: "1em",
+          flexWrap: "wrap",
+        }}
+      >
+        <div style={{ flex: 1, minWidth: "150px", maxWidth: "250px" }}>
+          <TextControl
+            ref={nameInput}
+            label={__("Name", "forms-bridge")}
+            help={
+              nameConflict
+                ? __("This name is already in use", "forms-bridge")
+                : ""
+            }
+            value={name}
+            onChange={handleSetName}
+            onFocus={() => (focus = true)}
+            onBlur={() => (focus = false)}
+            __nextHasNoMarginBottom
+          />
+        </div>
+        {schema.includes("backend") && (
+          <div style={{ flex: 1, minWidth: "150px", maxWidth: "250px" }}>
+            <SelectControl
+              label={__("Backend", "forms-bridge")}
+              value={data.backend}
+              onChange={(backend) => update({ ...data, backend })}
+              options={backendOptions}
+              __nextHasNoMarginBottom
+            />
+          </div>
+        )}
+        {schema.includes("form_id") && (
+          <div style={{ flex: 1, minWidth: "150px", maxWidth: "250px" }}>
+            <SelectControl
+              label={__("Form", "forms-bridge")}
+              value={data.form_id}
+              onChange={(form_id) => update({ ...data, form_id })}
+              options={formOptions}
+              __nextHasNoMarginBottom
+            />
+          </div>
+        )}
+        {children({ data, update })}
+      </div>
+      <Spacer paddingY="calc(8px)" />
+      <div
+        style={{
+          display: "flex",
+          gap: "1em",
+          flexWrap: "wrap",
+        }}
+      >
+        <div>
+          <label
+            style={{
+              display: "block",
+              fontWeight: 500,
+              textTransform: "uppercase",
+              fontSize: "11px",
+              marginBottom: "calc(4px)",
+              maxWidth: "unset",
+            }}
+          >
+            {__("Edit pipes", "forms-bridge")}
+          </label>
+          <FormPipes
+            form={form}
+            pipes={data.pipes}
+            setPipes={(pipes) => update({ ...data, pipes })}
+          />
+        </div>
+        <div>
+          <label
+            style={{
+              display: "block",
+              fontWeight: 500,
+              textTransform: "uppercase",
+              fontSize: "11px",
+              margin: 0,
+              marginBottom: "calc(4px)",
+              maxWidth: "100%",
+            }}
+          >
+            {__("Remove form", "forms-bridge")}
+          </label>
+          <Button
+            isDestructive
+            variant="primary"
+            onClick={() => remove(data)}
+            style={{ width: "130px", justifyContent: "center", height: "32px" }}
+          >
+            {__("Remove", "forms-bridge")}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}

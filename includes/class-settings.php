@@ -39,8 +39,6 @@ class Settings extends BaseSettings
      */
     public function register()
     {
-        $host = parse_url(get_bloginfo('url'))['host'];
-
         // Register general setting
         $this->register_setting(
             'general',
@@ -72,19 +70,8 @@ class Settings extends BaseSettings
                 ],
             ],
             [
-                'notification_receiver' => 'admin@' . $host,
-                'backends' => [
-                    [
-                        'name' => 'ERP',
-                        'base_url' => 'https://erp.' . $host,
-                        'headers' => [
-                            [
-                                'name' => 'Authorization',
-                                'value' => 'Bearer <erp-backend-token>',
-                            ],
-                        ],
-                    ],
-                ],
+                'notification_receiver' => get_option('admin_email'),
+                'backends' => [],
             ]
         );
 
@@ -136,59 +123,6 @@ class Settings extends BaseSettings
                 'form_hooks' => [],
             ]
         );
-
-        // Register RPC API setting
-        $this->register_setting(
-            'rpc-api',
-            [
-                'endpoint' => ['type' => 'string'],
-                'user' => ['type' => 'string'],
-                'password' => ['type' => 'string'],
-                'database' => ['type' => 'string'],
-                'form_hooks' => [
-                    'type' => 'array',
-                    'items' => [
-                        'type' => 'object',
-                        'additionalProperties' => false,
-                        'properties' => [
-                            'name' => ['type' => 'string'],
-                            'backend' => ['type' => 'string'],
-                            'form_id' => ['type' => 'string'],
-                            'model' => ['type' => 'string'],
-                            'pipes' => [
-                                'type' => 'array',
-                                'items' => [
-                                    'type' => 'object',
-                                    'additionalProperties' => false,
-                                    'properties' => [
-                                        'from' => ['type' => 'string'],
-                                        'to' => ['type' => 'string'],
-                                        'cast' => [
-                                            'type' => 'string',
-                                            'enum' => [
-                                                'boolean',
-                                                'string',
-                                                'integer',
-                                                'float',
-                                                'json',
-                                                'null',
-                                            ],
-                                        ],
-                                    ],
-                                ],
-                            ],
-                        ],
-                    ],
-                ],
-            ],
-            [
-                'endpoint' => '/jsonrpc',
-                'user' => 'admin',
-                'password' => 'admin',
-                'database' => 'erp',
-                'form_hooks' => [],
-            ]
-        );
     }
 
     /**
@@ -209,9 +143,9 @@ class Settings extends BaseSettings
         switch ($name) {
             case 'general':
                 $value = $this->validate_general($value);
+                $this->update_addons($value);
                 break;
             case 'rest-api':
-            case 'rpc-api':
                 $value = $this->validate_api($value);
                 break;
         }
@@ -236,7 +170,6 @@ class Settings extends BaseSettings
         );
 
         $rest = self::get_setting($this->group(), 'rest-api');
-        $rpc = self::get_setting($this->group(), 'rpc-api');
 
         $hooks = $this->validate_form_hooks(
             $rest->form_hooks,
@@ -244,14 +177,6 @@ class Settings extends BaseSettings
         );
         if (count($hooks) !== count($rest->form_hooks)) {
             $rest->form_hooks = $hooks;
-        }
-
-        $hooks = $this->validate_form_hooks(
-            $rpc->form_hooks,
-            $value['backends']
-        );
-        if (count($hooks) !== count($rpc->form_hooks)) {
-            $rpc->form_hooks = $hooks;
         }
 
         return $value;
@@ -286,6 +211,10 @@ class Settings extends BaseSettings
      */
     private function validate_form_hooks($form_hooks, $backends)
     {
+        if (!is_array($form_hooks)) {
+            return [];
+        }
+
         $form_ids = array_reduce(
             apply_filters('forms_bridge_forms', []),
             static function ($form_ids, $form) {
@@ -324,21 +253,12 @@ class Settings extends BaseSettings
                 $hook['backend'] = sanitize_text_field($hook['backend']);
                 $hook['form_id'] = (int) $hook['form_id'];
 
-                if (isset($hook['model'])) {
-                    $hook['model'] = sanitize_text_field($hook['model']);
-                } else {
-                    if (
-                        !in_array($hook['method'], [
-                            'GET',
-                            'POST',
-                            'PUT',
-                            'DELETE',
-                        ])
-                    ) {
-                        $hook['method'] = null;
-                    }
-                    $hook['endpoint'] = sanitize_text_field($hook['endpoint']);
+                if (
+                    !in_array($hook['method'], ['GET', 'POST', 'PUT', 'DELETE'])
+                ) {
+                    $hook['method'] = null;
                 }
+                $hook['endpoint'] = sanitize_text_field($hook['endpoint']);
 
                 $pipes = [];
                 foreach ($hook['pipes'] as $pipe) {
@@ -362,5 +282,22 @@ class Settings extends BaseSettings
             }
         }
         return $valid_hooks;
+    }
+
+    private function update_addons($value)
+    {
+        $addons = isset($value['addons']) ? $value['addons'] : [];
+        $addons_dir = dirname(__FILE__, 2) . '/addons';
+        $enableds = "{$addons_dir}/enabled";
+
+        foreach ($addons as $addon => $enabled) {
+            $index = "{$enableds}/{$addon}";
+            if ($enabled && !is_file($index)) {
+                $fp = fopen($index, 'w');
+                fclose($fp);
+            } elseif (!$enabled && is_file($index)) {
+                unlink($index);
+            }
+        }
     }
 }

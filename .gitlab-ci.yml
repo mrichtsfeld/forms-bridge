@@ -40,14 +40,24 @@ build:
     - find . -name node_modules -type d | xargs rm -rf
   artifacts:
     paths:
-      - assets
+      - assets/plugin.bundle.js
+      - addons/**/*/addon.bundle.js
+
+vendor:
+  stage: build
+  image: composer:latest
+  script:
+    - cd addons/google-sheets && composer install
+  artifacts:
+    paths:
+      - addons/google-sheets/vendor
 
 package:
   image: javieraviles/zip:latest
   stage: package
   script:
-    - 'zip -r $ZIP * -x "*CODE_OF_CONDUCT.md" -x "*node_modules*" -x "*bin/*" -x "*tests/*" -x "*.git*" -x "*.php-cs-fixer.cache" -x "*phpunit.xml.dist" -x "*.phpcs.xml.dist" -x "*package.json" -x "*package-lock.json" -x "*.editorconfig" -x "*.distignore" -x "*src/*" -x "*.husky*" -x "*.lintstagedrc.js" -x "*.prettie*" -x "*eslint.config.js" -x "*.nvimrc*"'
-    - "ls -lah"
+    - zip -r $ZIP * -x $(cat .distignore | grep -v '^#' | sed -z 's/\n/ -x /g') foo
+    - zip -r $ZIP addons/**/vendor
   artifacts:
     paths:
       - $ZIP

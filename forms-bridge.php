@@ -8,13 +8,16 @@ Author:          Còdec
 Author URI:      https://www.codeccoop.org
 Text Domain:     forms-bridge
 Domain Path:     /languages
-Version:         1.2.2
+Version:         2.0.0
 */
 
 namespace FORMS_BRIDGE;
 
 use Exception;
 use WPCT_ABSTRACT\Plugin as BasePlugin;
+use WPCT_ABSTRACT\Setting;
+
+use function WPCT_ABSTRACT\is_list;
 
 if (!defined('ABSPATH')) {
     exit();
@@ -25,7 +28,7 @@ if (!defined('ABSPATH')) {
  *
  * @var string FORMS_BRIDGE_VERSION Current plugin version.
  */
-define('FORMS_BRIDGE_VERSION', '1.2.2');
+define('FORMS_BRIDGE_VERSION', '2.0.0');
 
 require_once 'abstracts/class-plugin.php';
 
@@ -33,6 +36,8 @@ require_once 'deps/http/http-bridge.php';
 require_once 'deps/i18n/wpct-i18n.php';
 
 require_once 'includes/abstract-integration.php';
+require_once 'addons/abstract-addon.php';
+
 require_once 'includes/class-menu.php';
 require_once 'includes/class-settings.php';
 require_once 'includes/class-rest-settings-controller.php';
@@ -69,6 +74,8 @@ class Forms_Bridge extends BasePlugin
      */
     public static $textdomain = 'forms-bridge';
 
+    protected static $settings_class = '\FORMS_BRIDGE\Settings';
+
     /**
      * Handle plugin menu class name.
      *
@@ -96,6 +103,14 @@ class Forms_Bridge extends BasePlugin
             90,
             3
         );
+
+        $addons = $this->addons();
+        foreach ($addons as $addon => $enabled) {
+            if ($enabled) {
+                require_once plugin_dir_path(__FILE__) .
+                    "addons/{$addon}/{$addon}.php";
+            }
+        }
     }
 
     /**
@@ -134,11 +149,26 @@ class Forms_Bridge extends BasePlugin
      */
     private function sync_http_setting()
     {
+        // Patch addons to the general setting default value
+        add_filter(
+            'wpct_setting_default',
+            function ($default, $name) {
+                if ($name !== self::$textdomain . '_general') {
+                    return $default;
+                }
+
+                return array_merge($default, ['addons' => $this->addons()]);
+            },
+            10,
+            2
+        );
+
         // Patch http bridge settings to plugin settings
         add_filter('option_forms-bridge_general', function ($value) {
             $backends = Settings::get_setting('http-bridge', 'general')
                 ->backends;
             $value['backends'] = $backends;
+            $value['addons'] = $this->addons();
             return $value;
         });
 
@@ -191,39 +221,95 @@ class Forms_Bridge extends BasePlugin
         // Return registerd form hooks
         add_filter(
             'forms_bridge_form_hooks',
-            function ($hooks, $form_id) {
-                return Form_Hook::form_hooks($form_id);
+            function ($form_hooks, $form_id) {
+                if (!is_list($form_hooks)) {
+                    $form_hooks = [];
+                }
+
+                return array_merge(
+                    $form_hooks,
+                    Form_Hook::form_hooks($form_id)
+                );
             },
-            10,
+            5,
             2
         );
 
         // Return pair plugin registered forms datums
-        add_filter('forms_bridge_forms', function () {
-            return $this->forms();
-        });
+        add_filter(
+            'forms_bridge_forms',
+            function ($forms) {
+                if (!is_array($forms)) {
+                    $forms = [];
+                }
+
+                return array_merge($forms, $this->forms());
+            },
+            5
+        );
 
         // Return current pair plugin form representation
         // If $form_id is passed, retrives form by ID.
-        add_filter('forms_bridge_form', function ($default, $form_id = null) {
-            return $this->form($form_id);
-        });
+        add_filter(
+            'forms_bridge_form',
+            function ($form_data, $form_id = null) {
+                if (!is_array($form_data)) {
+                    $form_data = [];
+                }
+
+                return array_merge($form_data, $this->form($form_id));
+            },
+            5
+        );
 
         // Check if current form is bound to certain hook
-        add_filter('forms_bridge_submitting', function ($default, $hook_name) {
-            $form = $this->form();
-            return isset($form['hooks'][$hook_name]);
-        });
+        add_filter(
+            'forms_bridge_submitting',
+            function ($submitting, $hook_name) {
+                $form = $this->form();
+                return $submitting || isset($form['hooks'][$hook_name]);
+            },
+            5
+        );
 
         // Return the current submission data
-        add_filter('forms_bridge_submission', function () {
-            return $this->submission();
-        });
+        add_filter(
+            'forms_bridge_submission',
+            function ($submission) {
+                if (!is_array($submission)) {
+                    $submission = [];
+                }
+
+                return array_merge($submission, $this->submission());
+            },
+            5
+        );
 
         // Return the current submission uploaded files
-        add_filter('forms_bridge_uploads', function () {
-            return $this->uploads();
-        });
+        add_filter(
+            'forms_bridge_uploads',
+            function ($uploads) {
+                if (!is_array($uploads)) {
+                    $uploads = [];
+                }
+
+                return array_merge($uploads, $this->uploads());
+            },
+            5
+        );
+
+        add_filter(
+            'forms_bridge_setting',
+            function ($setting, $name) {
+                if ($setting instanceof Setting) {
+                    return $setting;
+                }
+
+                return Settings::get_setting('forms-bridge', $name);
+            },
+            5,
+            2
+        );
     }
 
     /**
@@ -240,6 +326,28 @@ class Forms_Bridge extends BasePlugin
                 return $integration;
             })
         );
+    }
+
+    private function addons()
+    {
+        $addons_dir = plugin_dir_path(__FILE__) . 'addons';
+        $enableds = "{$addons_dir}/enabled";
+        $addons = scandir($addons_dir);
+        $registry = [];
+
+        foreach ($addons as $addon) {
+            if (in_array($addon, ['.', '..'])) {
+                continue;
+            }
+
+            $addon_dir = "{$addons_dir}/{$addon}";
+            $index = "{$addon_dir}/{$addon}.php";
+            if (is_file($index)) {
+                $registry[$addon] = is_file("{$enableds}/{$addon}");
+            }
+        }
+
+        return $registry;
     }
 
     /**
@@ -326,19 +434,29 @@ class Forms_Bridge extends BasePlugin
             return;
         }
 
+        $dependencies = apply_filters('forms_bridge_admin_script_deps', [
+            'react',
+            'react-jsx-runtime',
+            'wp-api-fetch',
+            'wp-components',
+            'wp-dom-ready',
+            'wp-element',
+            'wp-i18n',
+            'wp-api',
+        ]);
+
         wp_enqueue_script(
             $this->textdomain(),
+            plugins_url('assets/wpfb.js', __FILE__),
+            [],
+            FORMS_BRIDGE_VERSION,
+            ['in_footer' => false]
+        );
+
+        wp_enqueue_script(
+            $this->textdomain() . '-admin',
             plugins_url('assets/plugin.bundle.js', __FILE__),
-            [
-                'react',
-                'react-jsx-runtime',
-                'wp-api-fetch',
-                'wp-components',
-                'wp-dom-ready',
-                'wp-element',
-                'wp-i18n',
-                'wp-api',
-            ],
+            $dependencies,
             FORMS_BRIDGE_VERSION,
             ['in_footer' => true]
         );
