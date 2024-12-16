@@ -198,9 +198,9 @@ class Form_Hook
                 return (bool) $value;
             case 'json':
                 try {
-                    return json_decode((string) $value, JSON_UNESCAPED_UNICODE);
+                    return json_encode($value, JSON_UNESCAPED_UNICODE);
                 } catch (TypeError) {
-                    return [];
+                    return '';
                 }
             case 'null':
                 return null;
