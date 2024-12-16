@@ -31,9 +31,13 @@ export default function SettingsProvider({ children, handle = ["general"] }) {
   currentState.current = state;
 
   const onFetch = useRef((settings) => {
-    const newState = { general: settings.general };
+    const newState = {
+      general: { ...defaults.general, ...settings.general },
+    };
     newState.apis = Object.fromEntries(
-      Object.entries(settings).filter(([key]) => key !== "general")
+      Object.entries(settings)
+        .filter(([key]) => key !== "general")
+        .map(([key, data]) => [key, { ...defaults.apis[key], ...data }])
     );
     setState(newState);
     const previousState = initialState.current;

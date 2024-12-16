@@ -39,8 +39,6 @@ class Settings extends BaseSettings
      */
     public function register()
     {
-        $host = parse_url(get_bloginfo('url'))['host'];
-
         // Register general setting
         $this->register_setting(
             'general',
@@ -72,19 +70,8 @@ class Settings extends BaseSettings
                 ],
             ],
             [
-                'notification_receiver' => 'admin@' . $host,
-                'backends' => [
-                    [
-                        'name' => 'ERP',
-                        'base_url' => 'https://erp.' . $host,
-                        'headers' => [
-                            [
-                                'name' => 'Authorization',
-                                'value' => 'Bearer <erp-backend-token>',
-                            ],
-                        ],
-                    ],
-                ],
+                'notification_receiver' => get_option('admin_email'),
+                'backends' => [],
             ]
         );
 

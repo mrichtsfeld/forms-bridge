@@ -149,6 +149,20 @@ class Forms_Bridge extends BasePlugin
      */
     private function sync_http_setting()
     {
+        // Patch addons to the general setting default value
+        add_filter(
+            'wpct_setting_default',
+            function ($default, $name) {
+                if ($name !== self::$textdomain . '_general') {
+                    return $default;
+                }
+
+                return array_merge($default, ['addons' => $this->addons()]);
+            },
+            10,
+            2
+        );
+
         // Patch http bridge settings to plugin settings
         add_filter('option_forms-bridge_general', function ($value) {
             $backends = Settings::get_setting('http-bridge', 'general')
