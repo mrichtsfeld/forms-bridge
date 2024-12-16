@@ -49,6 +49,7 @@ CODE_OF_CONDUCT.md
 *.git*
 *.php-cs-fixer.cache
 *phpunit.xml.dist
+*phpcs.xml.dist
 *package.json
 *package-lock.json
 *composer.json
