@@ -63,4 +63,4 @@ addons/*/src/*
 *.prettier*
 *eslint.config.js
 *.nvimrc*
-*.storage
+*.store
