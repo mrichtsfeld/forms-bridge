@@ -52,7 +52,7 @@ class Google_Sheets_Store extends Singleton
 
     protected function construct(...$args)
     {
-        $this->path = plugin_dir_path(__FILE__) . '.store';
+        $this->path = wp_upload_dir()['basedir'] . '/.forms-bridge-gs-store';
 
         if (!is_dir($this->path)) {
             mkdir($this->path, 0700);
