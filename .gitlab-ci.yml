@@ -40,8 +40,8 @@ build:
     - find . -name node_modules -type d | xargs rm -rf
   artifacts:
     paths:
-      - assets
-      - addons
+      - assets/plugin.bundle.js
+      - addons/**/*/addon.bundle.js
 
 vendor:
   stage: build
@@ -50,8 +50,7 @@ vendor:
     - cd addons/google-sheets && composer install
   artifacts:
     paths:
-      - assets
-      - addons
+      - addons/google-sheets/vendor
 
 package:
   image: javieraviles/zip:latest
