@@ -13,7 +13,7 @@ if (!defined('ABSPATH')) {
 require_once 'class-odoo-db.php';
 require_once 'class-odoo-form-hook.php';
 
-class Odoo_Plugin extends Addon
+class Odoo_Addon extends Addon
 {
     protected static $name = 'Odoo JSON-RPC';
     protected static $slug = 'odoo-api';
@@ -60,7 +60,7 @@ class Odoo_Plugin extends Addon
      */
     public static function rpc_response($res)
     {
-        if (is_wp_error($res) || empty($res['data'])) {
+        if (is_wp_error($res)) {
             return $res;
         }
 
@@ -70,8 +70,16 @@ class Odoo_Plugin extends Addon
                 $res['data']['error']['message'],
                 $res['data']['error']['data']
             );
-        } else {
-            $res['data'] = $res['data']['result'];
+        }
+
+        $data = $res['data'];
+
+        if (empty($data['result'])) {
+            return new WP_Error(
+                'rpc_api_error',
+                'An unkown error has ocurred with the RPC API',
+                ['response' => $res]
+            );
         }
 
         return $res;
@@ -313,6 +321,10 @@ class Odoo_Plugin extends Addon
             return [];
         }
 
+        $backends = array_map(function ($backend) {
+            return $backend['name'];
+        }, apply_filters('forms_bridge_setting', null, 'general')->backends);
+
         return array_map(
             function ($db_data) {
                 $db_data['name'] = sanitize_text_field($db_data['name']);
@@ -323,13 +335,13 @@ class Odoo_Plugin extends Addon
                 $db_data['backend'] = sanitize_text_field($db_data['backend']);
                 return $db_data;
             },
-            array_filter($dbs, function ($db_data) {
+            array_filter($dbs, function ($db_data) use ($backends) {
                 return isset(
                     $db_data['name'],
                     $db_data['user'],
                     $db_data['password'],
                     $db_data['backend']
-                );
+                ) && in_array($db_data['backend'], $backends);
             })
         );
     }
@@ -376,7 +388,6 @@ class Odoo_Plugin extends Addon
                 $hook['name'] = sanitize_text_field($hook['name']);
                 $hook['form_id'] = (int) $hook['form_id'];
                 $hook['model'] = sanitize_text_field($hook['model']);
-                $hook['database'] = sanitize_text_field($hook['database']);
 
                 $pipes = [];
                 foreach ($hook['pipes'] as $pipe) {
@@ -404,4 +415,4 @@ class Odoo_Plugin extends Addon
     }
 }
 
-Odoo_Plugin::setup();
+Odoo_Addon::setup();
