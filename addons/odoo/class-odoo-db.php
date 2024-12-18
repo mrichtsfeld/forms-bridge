@@ -42,7 +42,7 @@ class Odoo_DB
         return array_values(
             array_filter($form_hooks, function ($form_hook) {
                 return $form_hook->api === 'odoo' &&
-                    ($form_hook->database = $this->data['name']);
+                    $form_hook->database === $this->data['name'];
             })
         );
     }

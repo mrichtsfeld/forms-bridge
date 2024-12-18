@@ -36,13 +36,14 @@ require_once 'deps/http/http-bridge.php';
 require_once 'deps/i18n/wpct-i18n.php';
 
 require_once 'includes/abstract-integration.php';
-require_once 'addons/abstract-addon.php';
 
 require_once 'includes/class-menu.php';
 require_once 'includes/class-settings.php';
 require_once 'includes/class-rest-settings-controller.php';
 require_once 'includes/class-json-finger.php';
 require_once 'includes/class-form-hook.php';
+
+require_once 'addons/abstract-addon.php';
 
 /**
  * Forms Bridge plugin.
@@ -328,18 +329,19 @@ class Forms_Bridge extends BasePlugin
         );
     }
 
+    /**
+     * Gets plugin's available addons at its activation state.
+     *
+     * @return array $addons Array with addons name and its activation state.
+     */
     private function addons()
     {
         $addons_dir = plugin_dir_path(__FILE__) . 'addons';
         $enableds = "{$addons_dir}/enabled";
-        $addons = scandir($addons_dir);
+        $addons = array_diff(scandir($addons_dir), ['.', '..']);
         $registry = [];
 
         foreach ($addons as $addon) {
-            if (in_array($addon, ['.', '..'])) {
-                continue;
-            }
-
             $addon_dir = "{$addons_dir}/{$addon}";
             $index = "{$addon_dir}/{$addon}.php";
             if (is_file($index)) {

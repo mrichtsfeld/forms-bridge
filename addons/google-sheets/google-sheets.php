@@ -16,7 +16,7 @@ require_once 'class-gs-ajax-controller.php';
 require_once 'class-gs-service.php';
 require_once 'class-gs-form-hook.php';
 
-class Google_Sheets extends Addon
+class Google_Sheets_Addon extends Addon
 {
     protected static $name = 'Google Sheets';
     protected static $slug = 'google-sheets-api';
@@ -324,4 +324,4 @@ class Google_Sheets extends Addon
     }
 }
 
-Google_Sheets::setup();
+Google_Sheets_Addon::setup();
