@@ -174,29 +174,15 @@ class Forms_Bridge extends BasePlugin
         });
 
         // Syncronize plugin settings with http bridge settings
-        function _forms_bridge_http_sync($option, $to)
-        {
-            if ($option !== 'forms-bridge_general') {
-                return;
-            }
-
-            $http = Settings::get_setting('http-bridge', 'general');
-            $http->backends = $to['backends'];
-        }
-
-        add_action(
-            'add_option',
-            static function ($option, $to) {
-                _forms_bridge_http_sync($option, $to);
-            },
-            10,
-            2
-        );
-
         add_action(
             'updated_option',
             function ($option, $from, $to) {
-                _forms_bridge_http_sync($option, $to);
+                if ($option !== 'forms-bridge_general') {
+                    return;
+                }
+
+                $http = Settings::get_setting('http-bridge', 'general');
+                $http->backends = $to['backends'];
             },
             10,
             3
