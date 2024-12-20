@@ -69,15 +69,20 @@ class REST_Settings_Controller extends Base_Controller
         // forms endpoint registration
         $namespace = self::$namespace;
         $version = self::$version;
-        register_rest_route("{$namespace}/v{$version}", '/forms-bridge/forms', [
-            'methods' => WP_REST_Server::READABLE,
-            'callback' => function () {
-                return $this->forms();
-            },
-            'permission_callback' => function () {
-                return $this->permission_callback();
-            },
-        ]);
+        $plugin_slug = Forms_Bridge::slug();
+        register_rest_route(
+            "{$namespace}/v{$version}",
+            "/{$plugin_slug}/forms",
+            [
+                'methods' => WP_REST_Server::READABLE,
+                'callback' => function () {
+                    return $this->forms();
+                },
+                'permission_callback' => function () {
+                    return $this->permission_callback();
+                },
+            ]
+        );
     }
 
     /**

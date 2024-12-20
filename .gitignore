@@ -21,5 +21,7 @@ addon.bundle.*
 
 # composer
 vendor
+
+# addons
 addons/enabled/*
 .store

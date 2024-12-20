@@ -46,7 +46,7 @@ class Google_Sheets_Addon extends Addon
         add_filter(
             'forms_bridge_attachments',
             function ($attachments, $uploads, $hook) {
-                if ($hook->api === 'google-sheets-api') {
+                if ($hook->api === self::$slug) {
                     return [];
                 }
 
@@ -76,7 +76,7 @@ class Google_Sheets_Addon extends Addon
         add_filter(
             'wpct_setting_default',
             function ($value, $name) {
-                if ($name !== 'forms-bridge_' . self::$slug) {
+                if ($name !== Forms_Bridge::slug() . '_' . self::$slug) {
                     return $value;
                 }
 
@@ -95,7 +95,9 @@ class Google_Sheets_Addon extends Addon
     private function wp_hooks()
     {
         // Patch authorized state on the setting value
-        add_filter('option_forms-bridge_google-sheets-api', function ($value) {
+        $plugin_slug = Forms_Bridge::slug();
+        $addon_slug = self::$slug;
+        add_filter("option_{$plugin_slug}_{$addon_slug}", function ($value) {
             $value['authorized'] = Google_Sheets_Service::is_authorized();
             return $value;
         });
@@ -109,7 +111,7 @@ class Google_Sheets_Addon extends Addon
     protected function register_setting($settings)
     {
         $settings->register_setting(
-            'google-sheets-api',
+            self::$slug,
             [
                 'form_hooks' => [
                     'type' => 'array',
@@ -165,7 +167,7 @@ class Google_Sheets_Addon extends Addon
             return $payload;
         }
 
-        if ($form_hook->api !== 'google-sheets-api') {
+        if ($form_hook->api !== self::$slug) {
             return $payload;
         }
 

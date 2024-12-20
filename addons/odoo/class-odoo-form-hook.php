@@ -55,7 +55,8 @@ class Odoo_Form_Hook extends Form_Hook
 
     private function database()
     {
-        $dbs = Settings::get_setting('forms-bridge', 'odoo-api')->databases;
+        $dbs = apply_filters('forms_bridge_setting', null, 'odoo-api')
+            ->databases;
         foreach ($dbs as $db) {
             if ($db['name'] === $this->data['database']) {
                 return new Odoo_DB($db);

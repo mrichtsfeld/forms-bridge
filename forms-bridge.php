@@ -8,7 +8,7 @@ Author:          Còdec
 Author URI:      https://www.codeccoop.org
 Text Domain:     forms-bridge
 Domain Path:     /languages
-Version:         2.0.2
+Version:         2.0.3
 */
 
 namespace FORMS_BRIDGE;
@@ -28,7 +28,7 @@ if (!defined('ABSPATH')) {
  *
  * @var string FORMS_BRIDGE_VERSION Current plugin version.
  */
-define('FORMS_BRIDGE_VERSION', '2.0.2');
+define('FORMS_BRIDGE_VERSION', '2.0.3');
 
 require_once 'abstracts/class-plugin.php';
 
@@ -60,20 +60,6 @@ class Forms_Bridge extends BasePlugin
         'wpforms' => null,
         'wpcf7' => null,
     ];
-
-    /**
-     * Handle plugin name.
-     *
-     * @var string $name Plugin name.
-     */
-    public static $name = 'Forms Bridge';
-
-    /**
-     * Handle plugin textdomain.
-     *
-     * @var string $textdomain Plugin text domain.
-     */
-    public static $textdomain = 'forms-bridge';
 
     protected static $settings_class = '\FORMS_BRIDGE\Settings';
 
@@ -154,7 +140,7 @@ class Forms_Bridge extends BasePlugin
         add_filter(
             'wpct_setting_default',
             function ($default, $name) {
-                if ($name !== self::$textdomain . '_general') {
+                if ($name !== $this->slug() . '_general') {
                     return $default;
                 }
 
@@ -165,7 +151,7 @@ class Forms_Bridge extends BasePlugin
         );
 
         // Patch http bridge settings to plugin settings
-        add_filter('option_forms-bridge_general', function ($value) {
+        add_filter("option_{$this->slug()}_general", function ($value) {
             $backends = Settings::get_setting('http-bridge', 'general')
                 ->backends;
             $value['backends'] = $backends;
@@ -177,7 +163,7 @@ class Forms_Bridge extends BasePlugin
         add_action(
             'updated_option',
             function ($option, $from, $to) {
-                if ($option !== 'forms-bridge_general') {
+                if ($option !== $this->slug() . '_general') {
                     return;
                 }
 
@@ -287,12 +273,12 @@ class Forms_Bridge extends BasePlugin
 
         add_filter(
             'forms_bridge_setting',
-            function ($setting, $name) {
+            static function ($setting, $name) {
                 if ($setting instanceof Setting) {
                     return $setting;
                 }
 
-                return Settings::get_setting('forms-bridge', $name);
+                return Settings::get_setting(self::slug(), $name);
             },
             5,
             2
@@ -418,7 +404,7 @@ class Forms_Bridge extends BasePlugin
      */
     private function admin_enqueue_scripts($admin_page)
     {
-        if ('settings_page_forms-bridge' !== $admin_page) {
+        if ('settings_page_' . $this->slug() !== $admin_page) {
             return;
         }
 
@@ -434,24 +420,24 @@ class Forms_Bridge extends BasePlugin
         ]);
 
         wp_enqueue_script(
-            $this->textdomain(),
+            $this->slug(),
             plugins_url('assets/wpfb.js', __FILE__),
             [],
-            FORMS_BRIDGE_VERSION,
+            $this->version(),
             ['in_footer' => false]
         );
 
         wp_enqueue_script(
-            $this->textdomain() . '-admin',
+            $this->slug() . '-admin',
             plugins_url('assets/plugin.bundle.js', __FILE__),
             $dependencies,
-            FORMS_BRIDGE_VERSION,
+            $this->version(),
             ['in_footer' => true]
         );
 
         wp_set_script_translations(
-            $this->textdomain(),
-            $this->textdomain(),
+            $this->slug(),
+            $this->slug(),
             plugin_dir_path(__FILE__) . 'languages'
         );
 
@@ -467,7 +453,7 @@ class Forms_Bridge extends BasePlugin
      */
     private function notify_error($form_data, $payload, $error = '')
     {
-        $email = Settings::get_setting('forms-bridge', 'general')
+        $email = Settings::get_setting($this->slug(), 'general')
             ->notification_receiver;
 
         if (empty($email)) {

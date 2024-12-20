@@ -95,7 +95,7 @@ class Odoo_Addon extends Addon
      */
     private static function rpc_login($db, $endpoint)
     {
-        $session_id = 'forms-bridge-' . time();
+        $session_id = Forms_Bridge::slug() . '-' . time();
         $backend = $db->backend;
 
         $payload = self::rpc_payload($session_id, 'common', 'login', [
@@ -197,7 +197,7 @@ class Odoo_Addon extends Addon
     protected function register_setting($settings)
     {
         $settings->register_setting(
-            'odoo-api',
+            self::$slug,
             [
                 'databases' => [
                     'type' => 'array',
