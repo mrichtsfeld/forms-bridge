@@ -1,4 +1,4 @@
-![Forms Bridge](./assets/logo.png)
+![Forms Bridge](./assets/icon-256x256.png)
 
 Bridge WP form builder plugins to any backend over HTTP requests.
 
