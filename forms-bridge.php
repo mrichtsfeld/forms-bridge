@@ -23,13 +23,6 @@ if (!defined('ABSPATH')) {
     exit();
 }
 
-/**
- * Handle plugin version.
- *
- * @var string FORMS_BRIDGE_VERSION Current plugin version.
- */
-define('FORMS_BRIDGE_VERSION', '2.0.3');
-
 require_once 'abstracts/class-plugin.php';
 
 require_once 'deps/http/http-bridge.php';
@@ -85,11 +78,11 @@ class Forms_Bridge extends BasePlugin
 
         add_action(
             'forms_bridge_on_failure',
-            function ($form_data, $submission, $error = '') {
-                $this->notify_error($form_data, $submission, $error);
+            function ($payload, $attachments, $form_data, $error_data = []) {
+                $this->notify_error($payload, $attachments, $form_data, $error_data);
             },
             90,
-            3
+            4
         );
 
         $addons = $this->addons();
@@ -232,16 +225,6 @@ class Forms_Bridge extends BasePlugin
                 }
 
                 return array_merge($form_data, $this->form($form_id));
-            },
-            5
-        );
-
-        // Check if current form is bound to certain hook
-        add_filter(
-            'forms_bridge_submitting',
-            function ($submitting, $hook_name) {
-                $form = $this->form();
-                return $submitting || isset($form['hooks'][$hook_name]);
             },
             5
         );
@@ -448,11 +431,12 @@ class Forms_Bridge extends BasePlugin
     /**
      * Sends error notifications to the email receiver.
      *
-     * @param array $form_data Form data.
      * @param array $payload Submission data.
+     * @param array $attachments Submission attachments.
+     * @param array $form_data Form data.
      * @param array $error_data Error data.
      */
-    private function notify_error($form_data, $payload, $error = '')
+    private function notify_error($payload, $attachments, $form_data, $error_data = [])
     {
         $email = Settings::get_setting($this->slug(), 'general')
             ->notification_receiver;
@@ -461,6 +445,7 @@ class Forms_Bridge extends BasePlugin
             return;
         }
 
+        $error = print_r($error_data, true);
         $to = $email;
         $subject = 'Forms Bridge Error';
         $body = "Form ID: {$form_data['id']}\n";

@@ -177,6 +177,11 @@ class Google_Sheets_Addon extends Addon
             return $payload;
         }
 
+        $form_data = apply_filters('forms_bridge_form', null);
+        if (!$form_data) {
+            return;
+        }
+        
         $payload = $this->flatten_payload($payload);
         $result = Google_Sheets_Service::write_row(
             $form_hook->spreadsheet,
@@ -185,12 +190,20 @@ class Google_Sheets_Addon extends Addon
         );
 
         if (is_wp_error($result)) {
-            $form_data = apply_filters('forms_bridge_form', null);
             do_action(
                 'forms_bridge_on_failure',
-                $form_data,
                 $payload,
-                print_r($result->get_error_data(), true)
+                [],
+                $form_data,
+                $result->get_error_data()
+            );
+        } else {
+            do_action(
+                'forms_bridge_after_submission',
+                $result,
+                $payload,
+                $attachments,
+                $form_data
             );
         }
     }

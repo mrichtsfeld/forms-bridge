@@ -181,9 +181,10 @@ abstract class Integration extends Singleton
             if (is_wp_error($response)) {
                 do_action(
                     'forms_bridge_on_failure',
-                    $form_data,
                     $payload,
-                    print_r($response->get_error_data(), true)
+                    $attachments,
+                    $form_data,
+                    $response->get_error_data()
                 );
             } else {
                 do_action(

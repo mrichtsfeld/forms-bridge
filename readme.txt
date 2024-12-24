@@ -20,4 +20,4 @@ Forms Bridge has core support for REST API connexions and addons for [Odoo](http
 
 == Docs ==
 
-See the official plugin's documentation on our [gitlab repository](https://git.coopdevs.org/codeccoop/wp/plugins/forms-bridge/).
+See the official plugin's documentation in our [gitlab repository](https://git.coopdevs.org/codeccoop/wp/plugins/forms-bridge/).
