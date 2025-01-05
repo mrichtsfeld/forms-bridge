@@ -25,19 +25,6 @@ class Settings extends BaseSettings
         parent::construct(...$args);
 
         add_filter(
-            'pre_update_option',
-            function ($value, $option) {
-                if ($option !== $this->group() . '_general') {
-                    return $value;
-                }
-
-                return Addon::update_registry($value);
-            },
-            9,
-            2
-        );
-
-        add_filter(
             'wpct_sanitize_setting',
             function ($value, $setting) {
                 return $this->sanitize_setting($value, $setting);

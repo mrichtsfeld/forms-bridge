@@ -78,24 +78,22 @@ abstract class Addon extends Singleton
     }
 
     /**
-     * Updates the registry state and remove addons from setting data before updates.
+     * Updates the addons' registry state.
      *
      * @param array $value Plugin's general setting data.
-     *
-     * @return array Plugin's general setting data without addons registry.
      */
-    public static function update_registry($value)
+    private static function update_registry($addons = [])
     {
         $registry = self::registry();
-        $addons = isset($value['addons']) ? (array) $value['addons'] : [];
         foreach ($addons as $addon => $enabled) {
+            if (!isset($registry[$addon])) {
+                continue;
+            }
+
             $registry[$addon] = (bool) $enabled;
         }
 
         update_option(self::registry, $registry);
-        unset($value['addons']);
-
-        return $value;
     }
 
     /**
@@ -127,6 +125,22 @@ abstract class Addon extends Singleton
         add_filter("option_{$general_setting}", static function ($value) {
             return array_merge($value, ['addons' => self::registry()]);
         });
+
+        add_filter(
+            'pre_update_option',
+            function ($value, $option) use ($general_setting) {
+                if ($option !== $general_setting) {
+                    return $value;
+                }
+
+                self::update_registry((array) $value['addons']);
+                unset($value['addons']);
+
+                return $value;
+            },
+            9,
+            2
+        );
     }
 
     /**

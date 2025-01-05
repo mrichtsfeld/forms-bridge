@@ -28,8 +28,6 @@ require_once 'abstracts/class-plugin.php';
 require_once 'deps/http/http-bridge.php';
 require_once 'deps/i18n/wpct-i18n.php';
 
-require_once 'includes/abstract-integration.php';
-
 require_once 'includes/class-logger.php';
 require_once 'includes/class-menu.php';
 require_once 'includes/class-settings.php';
@@ -37,6 +35,7 @@ require_once 'includes/class-rest-settings-controller.php';
 require_once 'includes/class-json-finger.php';
 require_once 'includes/class-form-hook.php';
 
+require_once 'integrations/abstract-integration.php';
 require_once 'addons/abstract-addon.php';
 
 /**
