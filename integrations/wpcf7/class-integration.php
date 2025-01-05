@@ -196,6 +196,7 @@ class Integration extends BaseIntegration
             case 'email':
             case 'url':
             case 'textarea':
+            case 'quiz':
                 return 'text';
             case 'select':
             case 'checkbox':

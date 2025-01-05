@@ -106,7 +106,9 @@ class Integration extends BaseIntegration
             'required' => isset($settings['required'])
                 ? $settings['required'] === '1'
                 : false,
-            'options' => $settings['options'],
+            'options' => isset($settings['options'])
+                ? $settings['options']
+                : [],
             'is_file' => $type === 'file',
             'is_multi' => in_array($settings['type'], [
                 'listmultiselect',
@@ -166,21 +168,27 @@ class Integration extends BaseIntegration
             }
 
             if ($field_data['type'] === 'repeater') {
+                $subfields = $field['fields'];
                 $values = $field['value'];
                 $fieldset = [];
-                foreach ($values as $key => $value) {
-                    $index = (int) explode('_', $key)[1];
-                    $row = count($data) <= $index ? [] : $data[$index];
-                    $datum = [];
-                    for ($i = 0; $i < count($field['fields']); $i++) {
-                        $child = $field['fields'][$i];
-                        $datum[$child['label']] = $this->format_field_value(
-                            $field_data['children'][$i]['type'],
-                            $value['value']
-                        );
-                    }
-                    $row[] = $datum;
-                    $fieldset[$index] = $row;
+                $i = 0;
+                foreach (array_values($values) as $value) {
+                    $row_index = floor($i / count($subfields));
+                    $row =
+                        count($fieldset) == $row_index
+                            ? []
+                            : $fieldset[$row_index];
+
+                    $field_index = $i % count($subfields);
+                    $child_field = $field['fields'][$field_index];
+
+                    $row[$child_field['label']] = $this->format_field_value(
+                        $child_field['type'],
+                        $value['value']
+                    );
+
+                    $fieldset[$row_index] = $row;
+                    $i++;
                 }
                 $data[$field['label']] = $fieldset;
             } else {
