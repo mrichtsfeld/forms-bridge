@@ -103,7 +103,7 @@ export default function Integrations() {
           <PanelRow key={integration}>
             <ToggleControl
               __nextHasNoMarginBottom
-              label={integration}
+              label={__(integration, "forms-bridge")}
               checked={enabled}
               onChange={() => toggle(integration)}
             />
