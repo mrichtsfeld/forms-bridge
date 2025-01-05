@@ -53,10 +53,10 @@ vendor:
       - addons/google-sheets/vendor
 
 package:
-  image: javieraviles/zip:latest
+  image: codeccoop/wp-cli:latest
   stage: package
   script:
-    - zip -r $ZIP * -x $(cat .distignore | grep -v '^#' | tr '\n' '#' | sed 's/#/ -x /g') foo
+    - wp dist-archive . ./$ZIP
     - zip -r $ZIP addons/**/vendor
   artifacts:
     paths:
