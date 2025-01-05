@@ -8,7 +8,7 @@ Author:          Còdec
 Author URI:      https://www.codeccoop.org
 Text Domain:     forms-bridge
 Domain Path:     /languages
-Version:         2.1.1
+Version:         2.1.2
 */
 
 namespace FORMS_BRIDGE;
@@ -79,7 +79,12 @@ class Forms_Bridge extends BasePlugin
         add_action(
             'forms_bridge_on_failure',
             function ($payload, $attachments, $form_data, $error_data = []) {
-                $this->notify_error($payload, $attachments, $form_data, $error_data);
+                $this->notify_error(
+                    $payload,
+                    $attachments,
+                    $form_data,
+                    $error_data
+                );
             },
             90,
             4
@@ -436,8 +441,12 @@ class Forms_Bridge extends BasePlugin
      * @param array $form_data Form data.
      * @param array $error_data Error data.
      */
-    private function notify_error($payload, $attachments, $form_data, $error_data = [])
-    {
+    private function notify_error(
+        $payload,
+        $attachments,
+        $form_data,
+        $error_data = []
+    ) {
         $email = Settings::get_setting($this->slug(), 'general')
             ->notification_receiver;
 
