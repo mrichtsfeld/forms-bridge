@@ -8,7 +8,7 @@ Author:          Còdec
 Author URI:      https://www.codeccoop.org
 Text Domain:     forms-bridge
 Domain Path:     /languages
-Version:         2.1.2
+Version:         2.2.0
 */
 
 namespace FORMS_BRIDGE;
