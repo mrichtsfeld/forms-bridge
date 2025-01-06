@@ -21,7 +21,10 @@ function forms_bridge_upload_path($path_info, $form_id)
 
     $base_path = forms_bridge_attachment_base_path();
     $path =
-        $base_path . '/' . implode('/', [$form_id, date('Y'), date('m')]) . '/';
+        $base_path .
+        '/' .
+        implode('/', [$form_id, gmdate('Y'), gmdate('m')]) .
+        '/';
 
     if (!is_dir($path)) {
         mkdir($path, 0700, true);

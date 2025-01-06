@@ -100,6 +100,10 @@ class Integration extends BaseIntegration
             return null;
         }
 
+        if (!isset($_POST['wpforms']['complete'])) {
+            return null;
+        }
+
         $submission = $_POST['wpforms'];
         $submission['fields'] = $_POST['wpforms']['complete'];
         return $this->serialize_submission($submission, $form);

@@ -38,7 +38,7 @@ class Google_Sheets_Client
     public function flush_credentials()
     {
         $path = getenv('GOOGLE_APPLICATION_CREDENTIALS');
-        unlink($path);
+        wp_delete_file($path);
     }
 
     public function get_drive_service()

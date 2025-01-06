@@ -433,7 +433,7 @@ class Integration extends BaseIntegration
                     $field['type'] === 'files' ? json_decode($paths) : [$paths];
                 $paths = array_map(function ($path) use ($private_upload) {
                     if ($private_upload) {
-                        $url = parse_url($path);
+                        $url = wp_parse_url($path);
                         parse_str($url['query'], $query);
                         $path = forms_bridge_attachment_fullpath(
                             $query['forms-bridge-attachment']

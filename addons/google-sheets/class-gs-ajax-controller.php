@@ -47,6 +47,9 @@ class Google_Sheets_Ajax_Controller extends Singleton
         check_ajax_referer(self::nonce, 'nonce');
 
         $status = 200;
+        $method = isset($_SERVER['REQUEST_METHOD'])
+            ? $_SERVER['REQUEST_METHOD']
+            : 'GET';
         switch ($_SERVER['REQUEST_METHOD']) {
             case 'DELETE':
                 $success = $this->revoke_credentials($status);
@@ -73,7 +76,7 @@ class Google_Sheets_Ajax_Controller extends Singleton
             'credentials',
             file_get_contents($credentials['tmp_name'])
         );
-        unlink($credentials['tmp_name']);
+        wp_delete_file($credentials['tmp_name']);
         return true;
     }
 

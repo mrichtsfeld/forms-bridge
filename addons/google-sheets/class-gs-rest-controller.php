@@ -63,7 +63,7 @@ class Google_Sheet_REST_Controller extends Singleton
             ? true
             : new WP_Error(
                 'rest_unauthorized',
-                __('You can\'t manage wp options', 'forms-brdige'),
+                __('You can\'t manage wp options', 'forms-bridge'),
                 ['code' => 403]
             );
     }

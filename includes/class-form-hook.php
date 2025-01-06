@@ -238,7 +238,7 @@ class Form_Hook
                 return (bool) $value;
             case 'json':
                 try {
-                    return json_encode($value, JSON_UNESCAPED_UNICODE);
+                    return wp_json_encode($value, JSON_UNESCAPED_UNICODE);
                 } catch (TypeError) {
                     return '';
                 }

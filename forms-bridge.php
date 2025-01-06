@@ -395,7 +395,7 @@ class Forms_Bridge extends BasePlugin
         $success = wp_mail($to, $subject, $body, $headers, $attachments);
         if (!$success) {
             throw new Exception(
-                'Error while submitting form ' . $form_data['id']
+                'Error while submitting form ' . (int) $form_data['id']
             );
         }
     }
