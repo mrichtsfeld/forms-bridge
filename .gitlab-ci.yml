@@ -57,7 +57,7 @@ package:
   stage: package
   script:
     - wp dist-archive . ./$ZIP
-    - mkdir forms-bridge && mv addons forms-bridge && zip -r $ZIP forms-bridge/addons/**/vendor
+    - mkdir forms-bridge && mv addons forms-bridge && zip -r $ZIP forms-bridge/addons/**/vendor -x "*.sh"
   artifacts:
     paths:
       - $ZIP

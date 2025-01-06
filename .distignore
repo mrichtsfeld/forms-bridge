@@ -50,6 +50,7 @@ node_modules
 *.sql
 *.tar.gz
 *.zip
+*.sh
 .nvimrc
 .vscode
 .postbuild

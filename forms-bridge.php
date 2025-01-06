@@ -6,6 +6,8 @@ Plugin URI:      https://git.coopdevs.org/codeccoop/wp/plugins/bridges/forms-bri
 Description:     Plugin to bridge WP forms submissions to any backend
 Author:          Còdec
 Author URI:      https://www.codeccoop.org
+License:         GPLv2 or later
+License URI:     https://git.coopdevs.org/codeccoop/wp/plugins/bridges/forms-bridge/-/raw/main/license.txt
 Text Domain:     forms-bridge
 Domain Path:     /languages
 Version:         2.2.0
