@@ -136,9 +136,15 @@ class Integration extends BaseIntegration
 
         $form_id = (int) $data['id'];
         return [
+            '_id' => 'wpforms:' . $form_id,
             'id' => $form_id,
             'title' => $data['settings']['form_title'],
-            'hooks' => apply_filters('forms_bridge_form_hooks', [], $form_id),
+            'hooks' => apply_filters(
+                'forms_bridge_form_hooks',
+                [],
+                'wpforms',
+                $form_id
+            ),
             'fields' => array_values(
                 array_filter(
                     array_map(function ($field) {

@@ -28,14 +28,6 @@ export default function Integrations() {
     () => Object.keys(general.integrations).length > 1,
     [general]
   );
-  const hasMulti = useMemo(
-    () =>
-      Object.keys(general.integrations).reduce(
-        (count, key) => (count += Number(general.integrations[key])),
-        0
-      ) > 1,
-    [general]
-  );
   const isUnconfigured = useMemo(
     () =>
       Object.keys(general.integrations).reduce(
@@ -85,15 +77,7 @@ export default function Integrations() {
       {isUnconfigured && (
         <p>
           {__(
-            "👋 Welcome! It seems you have more than one forms plugin installed. Before you continue, please, select which plugin do you want to integrate with Forms Bridge.",
-            "forms-bridge"
-          )}
-        </p>
-      )}
-      {hasMulti && (
-        <p>
-          {__(
-            "⚠️ This panel allow you to activate integrations. Work with multiple integrations at the same time can lead Forms Bridge to buggy behaviors. If it isn't required, please activate only once.",
+            "👋 Welcome! It seems you have more than one forms builder plugin installed. Before you continue, please, select which plugins do you want to integrate with Forms Bridge.",
             "forms-bridge"
           )}
         </p>

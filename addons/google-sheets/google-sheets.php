@@ -180,7 +180,11 @@ class Google_Sheets_Addon extends Addon
             return $payload;
         }
 
-        $form_data = apply_filters('forms_bridge_form', null);
+        $form_data = apply_filters(
+            'forms_bridge_form',
+            null,
+            $form_hook->integration
+        );
         if (!$form_data) {
             return;
         }
@@ -224,7 +228,9 @@ class Google_Sheets_Addon extends Addon
     {
         $flat = [];
         foreach ($payload as $field => $value) {
-            if (is_array($value)) {
+            if (is_list($value)) {
+                $flat[$path . $field] = implode(',', $value);
+            } elseif (is_array($value)) {
                 $payload = array_merge(
                     $payload,
                     self::flatten_payload($value, $field . '.')
@@ -264,10 +270,10 @@ class Google_Sheets_Addon extends Addon
             return [];
         }
 
-        $form_ids = array_reduce(
+        $_ids = array_reduce(
             apply_filters('forms_bridge_forms', []),
             static function ($form_ids, $form) {
-                return array_merge($form_ids, [$form['id']]);
+                return array_merge($form_ids, [$form['_id']]);
             },
             []
         );
@@ -278,7 +284,7 @@ class Google_Sheets_Addon extends Addon
             $hook = $form_hooks[$i];
 
             // Valid only if database and form id exists
-            $is_valid = in_array($hook['form_id'], $form_ids);
+            $is_valid = in_array($hook['form_id'], $_ids);
 
             if ($is_valid) {
                 // filter empty pipes
@@ -292,7 +298,7 @@ class Google_Sheets_Addon extends Addon
                 });
 
                 $hook['name'] = sanitize_text_field($hook['name']);
-                $hook['form_id'] = (int) $hook['form_id'];
+                $hook['form_id'] = sanitize_text_field($hook['form_id']);
                 $hook['spreadsheet'] = sanitize_text_field(
                     $hook['spreadsheet']
                 );

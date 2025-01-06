@@ -140,45 +140,49 @@ class Forms_Bridge extends BasePlugin
         // Return registerd form hooks
         add_filter(
             'forms_bridge_form_hooks',
-            static function ($form_hooks, $form_id) {
+            static function ($form_hooks, $integration, $form_id) {
                 if (!is_list($form_hooks)) {
                     $form_hooks = [];
                 }
 
                 return array_merge(
                     $form_hooks,
-                    Form_Hook::form_hooks($form_id)
+                    Form_Hook::form_hooks($integration, $form_id)
                 );
             },
             5,
-            2
+            3
         );
 
         // Return pair plugin registered forms datums
         add_filter(
             'forms_bridge_forms',
-            static function ($forms) {
+            static function ($forms, $integration = null) {
                 if (!is_array($forms)) {
                     $forms = [];
                 }
 
-                return array_merge($forms, self::forms());
+                return array_merge($forms, self::forms($integration));
             },
-            5
+            5,
+            2
         );
 
         // Return current pair plugin form representation
-        // If $form_id is passed, retrives form by ID.
         add_filter(
             'forms_bridge_form',
-            static function ($form_data, $form_id = null) {
+            static function ($form_data, $integration = null, $form_id = null) {
                 if (!is_array($form_data)) {
                     $form_data = [];
                 }
 
-                return array_merge($form_data, self::form($form_id));
+                return array_merge(
+                    $form_data,
+                    self::form($integration, $form_id)
+                );
             },
-            5
+            5,
+            3
         );
 
         // Return the current submission data
@@ -207,6 +211,7 @@ class Forms_Bridge extends BasePlugin
             5
         );
 
+        // Expose plugin settings with a filter by name.
         add_filter(
             'forms_bridge_setting',
             static function ($setting, $name) {
@@ -224,11 +229,17 @@ class Forms_Bridge extends BasePlugin
     /**
      * Gets available forms' data.
      *
+     * @param string $integration Integration slug.
+     *
      * @return array Available forms' data.
      */
-    private static function forms()
+    private static function forms($integration)
     {
         $integrations = Integration::integrations();
+
+        if ($integration) {
+            return $integrations[$integration]->forms();
+        }
 
         $forms = [];
         foreach (array_values($integrations) as $integration) {
@@ -241,13 +252,21 @@ class Forms_Bridge extends BasePlugin
     /**
      * Gets form data, by context or by ID.
      *
+     * @param string $integration Integration slug.
      * @param int $form_id Form ID, optional.
      *
      * @return array|null Form data or null;
      */
-    private static function form($form_id = null)
+    private static function form($integration, $form_id)
     {
         $integrations = Integration::integrations();
+
+        if ($integration) {
+            $integrations = [$integration => $integrations[$integration]];
+        } elseif ($form_id) {
+            // Form id without integration is ambiguous, discard.
+            return;
+        }
 
         foreach ($integrations as $integration) {
             if ($form_id) {
@@ -270,7 +289,7 @@ class Forms_Bridge extends BasePlugin
     private static function submission()
     {
         $integrations = Integration::integrations();
-        foreach ($integrations as $integration) {
+        foreach (array_values($integrations) as $integration) {
             $submission = $integration->submission();
             if ($submission) {
                 return $submission;
@@ -286,7 +305,7 @@ class Forms_Bridge extends BasePlugin
     private static function uploads()
     {
         $integrations = Integration::integrations();
-        foreach ($integrations as $integration) {
+        foreach (array_values($integrations) as $integration) {
             $uploads = $integration->uploads();
             if ($uploads) {
                 return $uploads;
@@ -369,7 +388,11 @@ class Forms_Bridge extends BasePlugin
         $body .= "Form title: {$form_data['title']}\n";
         $body .= 'Submission: ' . print_r($payload, true) . "\n";
         $body .= "Error: {$error}\n";
-        $success = wp_mail($to, $subject, $body);
+
+        $from_email = get_option('admin_email');
+        $headers = ["From: Forms Bridge <{$from_email}>"];
+
+        $success = wp_mail($to, $subject, $body, $headers, $attachments);
         if (!$success) {
             throw new Exception(
                 'Error while submitting form ' . $form_data['id']

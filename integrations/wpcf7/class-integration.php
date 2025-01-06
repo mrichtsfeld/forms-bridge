@@ -122,11 +122,17 @@ class Integration extends BaseIntegration
      */
     public function serialize_form($form)
     {
-        $form_id = $form->id();
+        $form_id = (int) $form->id();
         return [
+            '_id' => 'wpcf7:' . $form_id,
             'id' => $form_id,
             'title' => $form->title(),
-            'hooks' => apply_filters('forms_bridge_form_hooks', [], $form_id),
+            'hooks' => apply_filters(
+                'forms_bridge_form_hooks',
+                [],
+                'wpcf7',
+                $form_id
+            ),
             'fields' => array_values(
                 array_filter(
                     array_map(function ($field) {

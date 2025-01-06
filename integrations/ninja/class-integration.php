@@ -73,14 +73,17 @@ class Integration extends BaseIntegration
     public function serialize_form($form_factory)
     {
         $form = $form_factory->get();
+        $form_id = (int) $form->get_id();
 
         return [
-            'id' => (int) $form->get_id(),
+            '_id' => 'ninja:' . $form_id,
+            'id' => $form_id,
             'title' => $form->get_setting('title'),
             'hooks' => apply_filters(
                 'forms_bridge_form_hooks',
                 [],
-                $form->get_id()
+                'ninja',
+                $form_id
             ),
             'fields' => array_values(
                 array_filter(

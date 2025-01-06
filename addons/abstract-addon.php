@@ -178,16 +178,20 @@ abstract class Addon extends Singleton
         // Add addon templates to the plugin's form hooks registry.
         add_filter(
             'forms_bridge_form_hooks',
-            function ($form_hooks, $form_id = null) {
-                return self::form_hooks($form_hooks, $form_id);
+            function ($form_hooks, $integration, $form_id = null) {
+                return self::form_hooks($form_hooks, $integration, $form_id);
             },
             9,
-            2
+            3
         );
     }
 
     /**
      * Addon templates getter.
+     *
+     * @todo Define abstract template and implementations.
+     *
+     * @return array List with addon template instances.
      */
     protected static function templates()
     {
@@ -211,34 +215,46 @@ abstract class Addon extends Singleton
      * Adds addons' form hooks to the available hooks.
      *
      * @param array $form_hooks List with available form hooks.
+     * @param string $integration Integration slug.
      * @param int|null $form_id Target form ID.
      *
      * @return array List with available form hooks.
      */
-    private static function form_hooks($form_hooks, $form_id)
+    private static function form_hooks($form_hooks, $integration, $form_id)
     {
+        if (empty($form_id)) {
+            $form = apply_filters(
+                'forms_bridge_form',
+                null,
+                $integration,
+                $form_id
+            );
+            if (!$form) {
+                return [];
+            }
+
+            $form_id = $form['id'];
+        }
+
+        $_id = "{$integration}:{$form_id}";
+
         if (!is_list($form_hooks)) {
             $form_hooks = [];
         }
 
-        $form_hooks = array_merge(
+        return array_merge(
             $form_hooks,
-            array_map(static function ($hook_data) {
-                return new static::$hook_class($hook_data);
-            }, static::setting()->form_hooks)
-        );
-
-        if ($form_id) {
-            $form_hooks = array_values(
-                array_filter($form_hooks, static function ($hook) use (
-                    $form_id
-                ) {
-                    return (int) $hook->form_id === (int) $form_id;
+            array_map(
+                static function ($hook_data) {
+                    return new static::$hook_class($hook_data);
+                },
+                array_filter(static::setting()->form_hooks, static function (
+                    $hook_data
+                ) use ($_id) {
+                    return $hook_data['form_id'] === $_id;
                 })
-            );
-        }
-
-        return $form_hooks;
+            )
+        );
     }
 
     /**

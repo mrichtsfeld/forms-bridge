@@ -158,13 +158,16 @@ class Integration extends BaseIntegration
      */
     public function serialize_form($form)
     {
+        $form_id = (int) $form['id'];
         return [
-            'id' => $form['id'],
+            '_id' => 'gf:' . $form_id,
+            'id' => $form_id,
             'title' => $form['title'],
             'hooks' => apply_filters(
                 'forms_bridge_form_hooks',
                 null,
-                $form['id']
+                'gf',
+                $form_id
             ),
             'description' => $form['description'],
             'fields' => array_values(

@@ -82,7 +82,7 @@ class Odoo_Addon extends Addon
             );
         }
 
-        return $res;
+        return $data['result'];
     }
 
     /**
@@ -91,7 +91,7 @@ class Odoo_Addon extends Addon
      * @param Odoo_DB $db Current db instance.
      * @param string $ednpoint JSON-RPC API endpoint.
      *
-     * @return array Tuple with RPC session id and user id.
+     * @return array|WP_Error Tuple with RPC session id and user id.
      */
     private static function rpc_login($db, $endpoint)
     {
@@ -260,7 +260,11 @@ class Odoo_Addon extends Addon
         $endpoint = $form_hook->endpoint;
         $login = self::rpc_login($db, $endpoint);
         if (is_wp_error($login)) {
-            $form_data = apply_filters('forms_bridge_form', null);
+            $form_data = apply_filters(
+                'forms_bridge_form',
+                null,
+                $form_hook->integration
+            );
             do_action(
                 'forms_bridge_on_failure',
                 $payload,
@@ -342,10 +346,10 @@ class Odoo_Addon extends Addon
             return [];
         }
 
-        $form_ids = array_reduce(
+        $_ids = array_reduce(
             apply_filters('forms_bridge_forms', []),
             static function ($form_ids, $form) {
-                return array_merge($form_ids, [$form['id']]);
+                return array_merge($form_ids, [$form['_id']]);
             },
             []
         );
@@ -362,7 +366,7 @@ class Odoo_Addon extends Addon
                         return $hook['database'] === $db['name'] || $is_valid;
                     },
                     false
-                ) && in_array($hook['form_id'], $form_ids);
+                ) && in_array($hook['form_id'], $_ids);
 
             if ($is_valid) {
                 // filter empty pipes
@@ -376,7 +380,7 @@ class Odoo_Addon extends Addon
                 });
 
                 $hook['name'] = sanitize_text_field($hook['name']);
-                $hook['form_id'] = (int) $hook['form_id'];
+                $hook['form_id'] = sanitize_text_field($hook['form_id']);
                 $hook['model'] = sanitize_text_field($hook['model']);
 
                 $pipes = [];

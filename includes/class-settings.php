@@ -109,6 +109,8 @@ class Settings extends BaseSettings
                                                 'integer',
                                                 'float',
                                                 'json',
+                                                'csv',
+                                                'concat',
                                                 'null',
                                             ],
                                         ],
@@ -205,10 +207,10 @@ class Settings extends BaseSettings
             return [];
         }
 
-        $form_ids = array_reduce(
+        $_ids = array_reduce(
             apply_filters('forms_bridge_forms', []),
             static function ($form_ids, $form) {
-                return array_merge($form_ids, [$form['id']]);
+                return array_merge($form_ids, [$form['_id']]);
             },
             []
         );
@@ -226,7 +228,7 @@ class Settings extends BaseSettings
                             $is_valid;
                     },
                     false
-                ) && in_array($hook['form_id'], $form_ids);
+                ) && in_array($hook['form_id'], $_ids);
 
             if ($is_valid) {
                 // filter empty pipes
@@ -241,7 +243,7 @@ class Settings extends BaseSettings
 
                 $hook['name'] = sanitize_text_field($hook['name']);
                 $hook['backend'] = sanitize_text_field($hook['backend']);
-                $hook['form_id'] = (int) $hook['form_id'];
+                $hook['form_id'] = sanitize_text_field($hook['form_id']);
 
                 if (
                     !in_array($hook['method'], ['GET', 'POST', 'PUT', 'DELETE'])
@@ -260,6 +262,8 @@ class Settings extends BaseSettings
                         'integer',
                         'float',
                         'json',
+                        'csv',
+                        'concat',
                         'null',
                     ])
                         ? $pipe['cast']
@@ -271,6 +275,7 @@ class Settings extends BaseSettings
                 $valid_hooks[] = $hook;
             }
         }
+
         return $valid_hooks;
     }
 }

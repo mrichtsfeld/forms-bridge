@@ -125,13 +125,14 @@ abstract class Integration extends Singleton
      */
     public static function integrations()
     {
-        return array_values(
-            array_filter(array_values(self::$integrations), static function (
-                $integration
-            ) {
-                return $integration;
-            })
-        );
+        $actives = [];
+        foreach (self::$integrations as $integration => $instance) {
+            if ($instance) {
+                $actives[$integration] = $instance;
+            }
+        }
+
+        return $actives;
     }
 
     /**
