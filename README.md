@@ -143,7 +143,7 @@ In order to work local, you have to clone this repository and initialize its sub
 with this command:
 
 ```bash
-git submodule update --init --recursive
+git submodule update --init
 ```
 
 Once done, you will need to install frontend dependencies with `npm install`. To build
