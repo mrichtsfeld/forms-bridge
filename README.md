@@ -143,6 +143,7 @@ In order to work local, you have to clone this repository and initialize its sub
 with this command:
 
 ```bash
+git submodule sync
 git submodule update --init
 ```
 
