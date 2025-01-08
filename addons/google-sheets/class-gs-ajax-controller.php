@@ -48,7 +48,7 @@ class Google_Sheets_Ajax_Controller extends Singleton
 
         $status = 200;
         $method = isset($_SERVER['REQUEST_METHOD'])
-            ? $_SERVER['REQUEST_METHOD']
+            ? sanitize_text_field(wp_unslash($_SERVER['REQUEST_METHOD']))
             : 'GET';
         switch ($_SERVER['REQUEST_METHOD']) {
             case 'DELETE':
@@ -71,12 +71,20 @@ class Google_Sheets_Ajax_Controller extends Singleton
             return false;
         }
 
-        $credentials = $_FILES['credentials'];
+        $credentials = sanitize_text_field(
+            wp_unslash($_FILES['credentials']['tmp_name'])
+        );
+        if (!is_file($credentials)) {
+            $status = 400;
+            return false;
+        }
+
         Google_Sheets_Store::set(
             'credentials',
-            file_get_contents($credentials['tmp_name'])
+            file_get_contents($credentials)
         );
-        wp_delete_file($credentials['tmp_name']);
+
+        wp_delete_file($credentials);
         return true;
     }
 

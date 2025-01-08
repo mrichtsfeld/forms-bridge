@@ -31,7 +31,7 @@ class Integration extends BaseIntegration
     public function form()
     {
         $form_data = !empty($_POST['formData'])
-            ? json_decode(stripslashes($_POST['formData']), true)
+            ? json_decode(wp_unslash($_POST['formData']), true)
             : ['id' => null];
         $form_id = (int) $form_data['id'];
         if (empty($form_id)) {

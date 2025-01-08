@@ -56,7 +56,9 @@ function forms_bridge_download_file()
         return;
     }
 
-    $path = forms_bridge_attachment_fullpath($_GET['forms-bridge-attachment']);
+    $path = forms_bridge_attachment_fullpath(
+        sanitize_text_field(wp_unslash($_GET['forms-bridge-attachment']))
+    );
 
     if (!(is_user_logged_in() && file_exists($path))) {
         global $wp_query;
