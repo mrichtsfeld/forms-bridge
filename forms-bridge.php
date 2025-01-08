@@ -1,16 +1,16 @@
 <?php
 
 /*
-Plugin Name:     Forms Bridge
-Plugin URI:      https://git.coopdevs.org/codeccoop/wp/plugins/bridges/forms-bridge
-Description:     Plugin to bridge WP forms submissions to any backend
-Author:          Còdec
-Author URI:      https://www.codeccoop.org
-License:         GPLv2 or later
-License URI:     https://git.coopdevs.org/codeccoop/wp/plugins/bridges/forms-bridge/-/raw/main/license.txt
-Text Domain:     forms-bridge
-Domain Path:     /languages
-Version:         2.2.0
+Plugin Name:    Forms Bridge
+Plugin URI:     https://git.coopdevs.org/codeccoop/wp/plugins/bridges/forms-bridge
+Description:    Plugin to bridge WP forms submissions to any backend
+Author:         codeccoop
+Author URI:     https://www.codeccoop.org
+License:        GPLv2 or later
+License URI:    http://www.gnu.org/licenses/gpl-2.0.html
+Text Domain:    forms-bridge
+Domain Path:    /languages
+Version:        2.2.0
 */
 
 namespace FORMS_BRIDGE;
