@@ -302,14 +302,14 @@ class Integration extends BaseIntegration
         ]);
 
         $uploads = [];
-        foreach ($fields as $field) {
-            if (empty($files_paths)) {
+        foreach ($files as $file) {
+            if (empty($file)) {
                 continue;
             }
 
-            $is_multi = sizeof($paths) > 1;
-            $uploads[$field['name']] = [
-                'path' => $is_multi ? $paths : $paths[0],
+            $is_multi = sizeof($file) > 1;
+            $uploads[$file['name']] = [
+                'path' => $is_multi ? $file : $file[0],
                 'is_multi' => $is_multi,
             ];
         }
