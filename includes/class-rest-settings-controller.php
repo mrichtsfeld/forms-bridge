@@ -39,8 +39,8 @@ class REST_Settings_Controller extends Base_Controller
     {
         parent::construct(...$args);
 
-        add_action('rest_api_init', function () {
-            $this->register_forms_route();
+        add_action('rest_api_init', static function () {
+            self::register_forms_route();
         });
 
         add_filter(
@@ -64,22 +64,23 @@ class REST_Settings_Controller extends Base_Controller
     /**
      * Registers form API routes.
      */
-    private function register_forms_route()
+    private static function register_forms_route()
     {
         // forms endpoint registration
         $namespace = self::$namespace;
         $version = self::$version;
         $plugin_slug = Forms_Bridge::slug();
+
         register_rest_route(
             "{$namespace}/v{$version}",
             "/{$plugin_slug}/forms",
             [
                 'methods' => WP_REST_Server::READABLE,
-                'callback' => function () {
-                    return $this->forms();
+                'callback' => static function () {
+                    return self::forms();
                 },
-                'permission_callback' => function () {
-                    return $this->permission_callback();
+                'permission_callback' => static function () {
+                    return self::permission_callback();
                 },
             ]
         );
@@ -90,10 +91,10 @@ class REST_Settings_Controller extends Base_Controller
      *
      * @return array Collection of array form representations.
      */
-    private function forms()
+    private static function forms()
     {
         $forms = apply_filters('forms_bridge_forms', []);
-        return array_map(function ($form) {
+        return array_map(static function ($form) {
             unset($form['hooks']);
             return $form;
         }, $forms);

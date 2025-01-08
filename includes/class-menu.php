@@ -28,7 +28,7 @@ class Menu extends BaseMenu
         printf(
             '<div class="wrap" id="%s">%s</div>',
             esc_attr($this->slug()),
-            esc_html__('Loading', Forms_Bridge::textdomain())
+            esc_html__('Loading', 'forms-bridge')
         );
     }
 }

@@ -1,17 +1,17 @@
 <?php
 
 /*
-Plugin Name:    Forms Bridge
-Plugin URI:     https://git.coopdevs.org/codeccoop/wp/plugins/bridges/forms-bridge
-Description:    Plugin to bridge WP forms submissions to any backend
-Author:         codeccoop
-Author URI:     https://www.codeccoop.org
-License:        GPLv2 or later
-License URI:    http://www.gnu.org/licenses/gpl-2.0.html
-Text Domain:    forms-bridge
-Domain Path:    /languages
-Version:        2.2.0
-*/
+ * Plugin Name:    Forms Bridge
+ * Plugin URI:     https://git.coopdevs.org/codeccoop/wp/plugins/bridges/forms-bridge
+ * Description:    Plugin to bridge WP forms submissions to any backend
+ * Author:         codeccoop
+ * Author URI:     https://www.codeccoop.org
+ * License:        GPLv2 or later
+ * License URI:    http://www.gnu.org/licenses/gpl-2.0.html
+ * Text Domain:    forms-bridge
+ * Domain Path:    /languages
+ * Version:        2.2.0
+ */
 
 namespace FORMS_BRIDGE;
 
@@ -45,12 +45,17 @@ require_once 'addons/abstract-addon.php';
  */
 class Forms_Bridge extends BasePlugin
 {
+    /**
+     * Handle plugin settings class name.
+     *
+     * @var string
+     */
     protected static $settings_class = '\FORMS_BRIDGE\Settings';
 
     /**
      * Handle plugin menu class name.
      *
-     * @var string $menu_class Plugin menu class name.
+     * @var string
      */
     protected static $menu_class = '\FORMS_BRIDGE\Menu';
 
