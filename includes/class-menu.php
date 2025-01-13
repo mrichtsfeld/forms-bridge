@@ -27,7 +27,7 @@ class Menu extends BaseMenu
     {
         printf(
             '<div class="wrap" id="forms-bridge">%s</div>',
-            esc_html__('Loading')
+            esc_html__('Loading', 'forms-bridge')
         );
     }
 }

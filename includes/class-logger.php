@@ -12,106 +12,70 @@ if (!defined('ABSPATH')) {
 
 class Logger extends Singleton
 {
-    private const config_path = ABSPATH . 'wp-config.php';
-    private const log_path = ABSPATH . 'wp-content/debug.log';
-    private const debug_re = '/(?<=define\()\s*.WP_DEBUG.\s*,\s*(true|false|[0-1])\s*(?=\))/i';
-    private const log_re = '/(?<=define\()\s*.WP_DEBUG_LOG.\s*,\s*(true|false|[0-1])\s*(?=\))/i';
-    private const display_re = '/(?<=define\()\s*.WP_DEBUG_DISPLAY.\s*,\s*(true|false|[0-1])\s*(?=\))/i';
+    private const log_file = '.forms-bridge.log';
 
-    private const custom_block_closure = '/* That\'s all, stop editing! Happy publishing. */';
-
-    private static function config($config = null)
+    private static function log_path()
     {
-        if (is_string($config)) {
-            file_put_contents(self::config_path, $config);
-        }
-
-        return file_get_contents(self::config_path);
+        return wp_upload_dir()['basedir'] . '/' . self::log_file;
     }
 
-    private static function logs($lines = null)
+    private static function logs()
     {
-        if (is_string($lines)) {
-            file_put_contents(self::log_path, $lines);
+        if (
+            defined('WP_DEBUG') &&
+            WP_DEBUG &&
+            defined('WP_DEBUG_LOG') &&
+            (bool) WP_DEBUG_LOG
+        ) {
+            $log_path = ini_get('error_log');
+        } else {
+            $log_path = self::log_path();
         }
 
-        if (!is_file(self::log_path)) {
-            $fp = fopen(self::log_path, 'w');
-            fclose($fp);
-            chmod(self::log_path, 0600);
+        if (!is_file($log_path) || !is_readable($log_path)) {
+            return '';
         }
 
-        return file_get_contents(self::log_path);
+        return file_get_contents($log_path);
     }
 
     public static function is_active()
     {
-        $config = self::config();
-        preg_match(self::debug_re, $config, $matches);
-        return empty($matches)
-            ? false
-            : strtolower($matches[1]) === 'true' || $matches[1] === '1';
+        $log_path = self::log_path();
+        return is_file($log_path);
     }
 
     public static function activate()
     {
-        $config = self::config();
-        $config = preg_replace(self::debug_re, '\'WP_DEBUG\', true', $config);
-        $config = preg_replace(self::log_re, '\'WP_DEBUG_LOG\', true', $config);
-        $config = preg_replace(
-            self::display_re,
-            '\'WP_DEBUG_DISPLAY\', false',
-            $config
-        );
-        self::config($config);
+        if (!self::is_active()) {
+            $log_path = self::log_path();
+            if (!is_file($log_path)) {
+                touch($log_path);
+            }
+        }
     }
 
     public static function deactivate()
     {
-        $config = self::config();
-        $config = preg_replace(self::debug_re, '\'WP_DEBUG\', false', $config);
-        $config = preg_replace(
-            self::log_re,
-            '\'WP_DEBUG_LOG\', false',
-            $config
-        );
-        self::config($config);
-        self::logs('');
+        if (self::is_active()) {
+            $log_path = self::log_path();
+            if (is_file($log_path)) {
+                unlink($log_path);
+            }
+        }
     }
 
     public static function setup()
     {
-        $config = self::config();
+        if (self::is_active()) {
+            error_reporting(E_ALL);
+            if (!ini_get('log_errors')) {
+                ini_set('log_errors', 1);
+            }
 
-        $debug_const = preg_match(self::debug_re, $config);
-        if (!$debug_const) {
-            $config = preg_replace(
-                '/' . preg_quote(self::custom_block_closure, '/') . '/',
-                "define('WP_DEBUG', false);\n" . self::custom_block_closure,
-                $config
-            );
-            $config = self::config($config);
-        }
-
-        $log_const = preg_match(self::log_re, $config);
-        if (!$log_const) {
-            $config = preg_replace(
-                '/' . preg_quote(self::custom_block_closure, '/') . '/',
-                "define('WP_DEBUG_LOG', false);\n" . self::custom_block_closure,
-                $config
-            );
-            $config = self::config($config);
-        }
-
-        $display_const = preg_match(self::display_re, $config);
-        if (!$display_const) {
-            $config = preg_replace(
-                '/' . preg_quote(self::custom_block_closure, '/') . '/',
-                "define('WP_DEBUG_DISPLAY', false);\n" .
-                    self::custom_block_closure,
-                $config
-            );
-            $config = self::config($config);
+            if (!defined('WP_DEBUG_LOG') || !boolval(WP_DEBUG_LOG)) {
+                ini_set('error_log', self::log_path());
+            }
         }
 
         return self::get_instance();
