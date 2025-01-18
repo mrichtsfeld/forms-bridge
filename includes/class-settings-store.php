@@ -2,7 +2,7 @@
 
 namespace FORMS_BRIDGE;
 
-use WPCT_ABSTRACT\SettingsStore as BaseSettings;
+use WPCT_ABSTRACT\Settings_Store as Base_Settings;
 
 use function WPCT_ABSTRACT\is_list;
 
@@ -13,12 +13,12 @@ if (!defined('ABSPATH')) {
 /**
  * Plugin settings.
  */
-class SettingsStore extends BaseSettings
+class Settings_Store extends Base_Settings
 {
     /**
      * Handle plugin settings rest controller class name.
      *
-     * @var string $rest_controller_class Settings REST Controller class name.
+     * @var string REST Controller class name.
      */
     protected static $rest_controller_class = '\FORMS_BRIDGE\REST_Settings_Controller';
 
@@ -168,7 +168,7 @@ class SettingsStore extends BaseSettings
      */
     private static function validate_general($data)
     {
-        $data['backends'] = \HTTP_BRIDGE\SettingsStore::validate_backends(
+        $data['backends'] = \HTTP_BRIDGE\Settings_Store::validate_backends(
             $data['backends']
         );
 

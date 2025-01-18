@@ -18,7 +18,7 @@
 namespace FORMS_BRIDGE;
 
 use Exception;
-use WPCT_ABSTRACT\Plugin as BasePlugin;
+use WPCT_ABSTRACT\Plugin as Base_Plugin;
 
 use function WPCT_ABSTRACT\is_list;
 
@@ -44,14 +44,14 @@ require_once 'addons/abstract-addon.php';
 /**
  * Forms Bridge plugin.
  */
-class Forms_Bridge extends BasePlugin
+class Forms_Bridge extends Base_Plugin
 {
     /**
      * Handle plugin settings class name.
      *
      * @var string
      */
-    protected static $settings_class = '\FORMS_BRIDGE\SettingsStore';
+    protected static $settings_class = '\FORMS_BRIDGE\Settings_Store';
 
     /**
      * Handle plugin menu class name.
@@ -102,7 +102,7 @@ class Forms_Bridge extends BasePlugin
         $slug = self::slug();
         // Patch http bridge settings to plugin settings
         add_filter("option_{$slug}_general", static function ($value) {
-            $backends = \HTTP_BRIDGE\SettingsStore::setting('general')
+            $backends = \HTTP_BRIDGE\Settings_Store::setting('general')
                 ->backends;
 
             return array_merge($value, ['backends' => $backends]);
@@ -116,7 +116,7 @@ class Forms_Bridge extends BasePlugin
                     return;
                 }
 
-                $http = \HTTP_BRIDGE\SettingsStore::setting('general');
+                $http = \HTTP_BRIDGE\Settings_Store::setting('general');
                 $http->backends = $to['backends'];
             },
             10,
@@ -370,7 +370,7 @@ class Forms_Bridge extends BasePlugin
         $form_data,
         $error_data = []
     ) {
-        $email = SettingsStore::setting('general')->notification_receiver;
+        $email = Settings_Store::setting('general')->notification_receiver;
 
         if (empty($email)) {
             return;
