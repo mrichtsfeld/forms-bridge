@@ -15,8 +15,8 @@ import { useGeneral, useApis } from "../../../../providers/Settings";
 export default function Exporter() {
   const __ = wp.i18n.__;
 
-  const general = useGeneral();
-  const apis = useApis();
+  const [general] = useGeneral();
+  const [apis] = useApis();
   const submit = useStoreSubmit();
 
   const [showModal, setShowModal] = useState(false);
@@ -50,22 +50,43 @@ export default function Exporter() {
 
       const reader = new FileReader();
       reader.onload = () => {
-        const config = JSON.parse(reader.result);
+        let config;
+        try {
+          config = JSON.parse(reader.result);
+        } catch {
+          setError(__("JSON syntax error", "forms-bridge"));
+          return;
+        }
 
         const newState = {
-          general: { ...general, ...config.general },
-          apis: Object.fromEntries(
-            Object.entries(config)
-              .filter(([key]) => key !== "general")
-              .map(([key, data]) => [key, { ...(apis[key] || {}), ...data }])
-          ),
+          general: { ...general, ...(config.general || {}) },
+          apis: {
+            ...apis,
+            ...Object.fromEntries(
+              Object.entries(config)
+                .filter(
+                  ([key]) =>
+                    key !== "general" && Object.keys(apis).indexOf(key) !== -1
+                )
+                .map(([key, data]) => [key, { ...apis[key], ...data }])
+            ),
+          },
         };
 
         wpfb.emit("patch", newState);
-        setTimeout(() => submit().catch(() => setError(true)));
+        setTimeout(() =>
+          submit()
+            .then(() => setError(false))
+            .catch(() =>
+              setError(
+                __("It has been an error on confi import", "forms-bridge")
+              )
+            )
+        );
       };
 
-      reader.onerror = () => setError(true);
+      reader.onerror = () =>
+        setError(__("Somthing went wrong on the file upload", "forms-bridge"));
 
       reader.readAsText(file);
     });
@@ -85,7 +106,7 @@ export default function Exporter() {
       <Spacer paddyngY="calc(3px)" />
       {error && (
         <Notice status="error" isDismissable={false} politeness="assertive">
-          {__("It has been an error on config import", "forms-bridge")}
+          {error}
         </Notice>
       )}
       <ul style={{ display: "flex", gap: "1rem" }}>
