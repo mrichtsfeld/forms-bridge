@@ -5,6 +5,7 @@ import {
   PanelRow,
   TextControl,
   __experimentalSpacer as Spacer,
+  ButtonGroup,
 } from "@wordpress/components";
 import { useEffect } from "@wordpress/element";
 
@@ -15,6 +16,7 @@ import Backend from "../../../components/Backends/Backend";
 import Integrations from "../../../components/Integrations";
 import Addons from "../../../components/Addons";
 import Logger from "./Logger";
+import Exporter from "./Exporter";
 
 export default function GeneralSettings() {
   const __ = wp.i18n.__;
@@ -57,6 +59,12 @@ export default function GeneralSettings() {
       <Addons />
       <PanelBody title={__("Debug", "forms-bridge")} initialOpen={!!debug}>
         <Logger />
+      </PanelBody>
+      <PanelBody
+        title={__("Import / Export", "forms-bridge")}
+        initialOpen={false}
+      >
+        <Exporter />
       </PanelBody>
     </>
   );
