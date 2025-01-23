@@ -10,10 +10,13 @@ import {
 
 // source
 import { useStoreSubmit } from "../../../../providers/Store";
+import { useGeneral, useApis } from "../../../../providers/Settings";
 
 export default function Exporter() {
   const __ = wp.i18n.__;
 
+  const general = useGeneral();
+  const apis = useApis();
   const submit = useStoreSubmit();
 
   const [showModal, setShowModal] = useState(false);
@@ -48,8 +51,18 @@ export default function Exporter() {
       const reader = new FileReader();
       reader.onload = () => {
         const config = JSON.parse(reader.result);
-        wpfb.emit("patch", config);
-        submit().catch(() => setError(true));
+
+        const newState = {
+          general: { ...general, ...config.general },
+          apis: Object.fromEntries(
+            Object.entries(config)
+              .filter(([key]) => key !== "general")
+              .map(([key, data]) => [key, { ...(apis[key] || {}), ...data }])
+          ),
+        };
+
+        wpfb.emit("patch", newState);
+        setTimeout(() => submit().catch(() => setError(true)));
       };
 
       reader.onerror = () => setError(true);

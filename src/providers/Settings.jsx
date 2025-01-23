@@ -38,12 +38,16 @@ export default function SettingsProvider({ children, handle = ["general"] }) {
   const onFetch = useRef((settings) => {
     const newState = {
       general: { ...defaults.general, ...settings.general },
+      apis: Object.fromEntries(
+        Object.entries(settings)
+          .filter(([key]) => key !== "general")
+          .map(([key, data]) => [
+            key,
+            { ...(defaults.apis[key] || {}), ...data },
+          ])
+      ),
     };
-    newState.apis = Object.fromEntries(
-      Object.entries(settings)
-        .filter(([key]) => key !== "general")
-        .map(([key, data]) => [key, { ...defaults.apis[key], ...data }])
-    );
+
     setState(newState);
     const previousState = initialState.current;
     initialState.current = { ...newState };
