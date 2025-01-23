@@ -50,7 +50,7 @@ class Google_Sheets_Ajax_Controller extends Singleton
         $method = isset($_SERVER['REQUEST_METHOD'])
             ? sanitize_text_field(wp_unslash($_SERVER['REQUEST_METHOD']))
             : 'GET';
-        switch ($_SERVER['REQUEST_METHOD']) {
+        switch ($method) {
             case 'DELETE':
                 $success = self::revoke_credentials($status);
                 break;
@@ -66,7 +66,7 @@ class Google_Sheets_Ajax_Controller extends Singleton
 
     private static function add_credentials(&$status)
     {
-        if (!isset($_FILES['credentials'])) {
+        if (!isset($_FILES['credentials']['tmp_name'])) {
             $status = 400;
             return false;
         }
