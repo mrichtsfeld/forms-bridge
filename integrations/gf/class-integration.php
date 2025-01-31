@@ -420,7 +420,7 @@ class Integration extends BaseIntegration
 
         return array_reduce(
             array_filter($form_data['fields'], function ($field) {
-                return $field['type'] === 'file' || $field['type'] === 'files';
+                return $field['type'] === 'file';
             }),
             function ($carry, $field) use ($submission, $private_upload) {
                 $paths = rgar($submission, (string) $field['id']);
@@ -428,8 +428,7 @@ class Integration extends BaseIntegration
                     return $carry;
                 }
 
-                $paths =
-                    $field['type'] === 'files' ? json_decode($paths) : [$paths];
+                $paths = $field['is_multi'] ? json_decode($paths) : [$paths];
                 $paths = array_map(function ($path) use ($private_upload) {
                     if ($private_upload) {
                         $url = wp_parse_url($path);
@@ -443,8 +442,8 @@ class Integration extends BaseIntegration
                 }, $paths);
 
                 $carry[$field['name']] = [
-                    'path' => $field['type'] === 'files' ? $paths : $paths[0],
-                    'is_multi' => $field['type'] === 'files',
+                    'path' => $field['is_multi'] ? $paths : $paths[0],
+                    'is_multi' => $field['is_multi'],
                 ];
 
                 return $carry;
