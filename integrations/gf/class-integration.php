@@ -296,6 +296,18 @@ class Integration extends BaseIntegration
 
             if (!empty($inputs)) {
                 // composed fields
+                $isset = array_reduce(
+                    $inputs,
+                    function ($isset, $input) {
+                        return $isset || $this->isset($input['id']);
+                    },
+                    false
+                );
+
+                if (!$isset) {
+                    continue;
+                }
+
                 $names = array_map(function ($input) {
                     return $input['name'];
                 }, $inputs);
@@ -306,11 +318,7 @@ class Integration extends BaseIntegration
                             continue;
                         }
                         $value = rgar($submission, (string) $inputs[$i]['id']);
-                        // Prevent overwriting duplicated fields (conditionals?)
-                        // with empty values
-                        if (empty($data[$names[$i]])) {
-                            $data[$names[$i]] = $value;
-                        }
+                        $data[$names[$i]] = $value;
                     }
                 } else {
                     // Plain composed
@@ -330,19 +338,24 @@ class Integration extends BaseIntegration
                     }
 
                     if ($field['type'] === 'consent') {
-                        $data[$input_name] = $values[0];
-                    } elseif (empty($data[$input_name])) {
+                        $data[$input_name] = $values[0] ?? false;
+                    } else {
                         $data[$input_name] = $values;
                     }
                 }
             } else {
                 // simple fields
+                $isset = $this->isset($field['id']);
+                if (!$isset) {
+                    continue;
+                }
+
                 if ($input_name) {
                     $raw_value = rgar($submission, (string) $field['id']);
-                    $value = $this->format_value($raw_value, $field);
-                    if (empty($data[$input_name])) {
-                        $data[$input_name] = $value;
-                    }
+                    $data[$input_name] = $this->format_value(
+                        $raw_value,
+                        $field
+                    );
                 }
             }
         }
@@ -447,5 +460,11 @@ class Integration extends BaseIntegration
             },
             []
         );
+    }
+
+    private function isset($field_id)
+    {
+        $key = 'input_' . implode('_', explode('.', $field_id));
+        return isset($_POST[$key]);
     }
 }
