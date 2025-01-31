@@ -333,13 +333,6 @@ abstract class Integration extends Singleton
                 continue;
             }
 
-            do_action(
-                'forms_bridge_before_submission',
-                $hook,
-                $payload,
-                $attachments
-            );
-
             $skip = apply_filters(
                 'forms_bridge_skip_submission',
                 false,
@@ -350,6 +343,13 @@ abstract class Integration extends Singleton
             if ($skip) {
                 continue;
             }
+
+            do_action(
+                'forms_bridge_before_submission',
+                $hook,
+                $payload,
+                $attachments
+            );
 
             $response = $hook->submit($payload, $attachments);
 

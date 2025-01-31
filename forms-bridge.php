@@ -138,6 +138,29 @@ class Forms_Bridge extends Base_Plugin
                     $form_hooks = [];
                 }
 
+                // Check if form_id is internal or external
+                if ($form_id) {
+                    [$integration, $id] = explode(':', $form_id);
+                    if (empty($id)) {
+                        $id = $integration;
+                    }
+                    $integrations = array_keys(Integration::integrations());
+                    if (count($integrations) > 1) {
+                        _doing_it_wrong(
+                            'forms_bridge_form_hooks',
+                            __(
+                                '$form_id param should incloude the integration prefix if there is more than one integration active',
+                                'forms-bridge'
+                            ),
+                            '2.3.0'
+                        );
+                        return [];
+                    }
+
+                    $integration = array_pop($integrations);
+                    $form_id = "{$integration}:{$id}";
+                }
+
                 return array_merge(
                     $form_hooks,
                     Form_Hook::form_hooks($form_id)
