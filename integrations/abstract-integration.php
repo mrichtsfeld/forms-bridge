@@ -378,6 +378,11 @@ abstract class Integration extends Singleton
                     );
                 }
             } catch (Error | Exception $e) {
+                $message = $e->getMessage();
+                if (strstr($message, 'Error while submitting form ')) {
+                    throw $e;
+                }
+
                 $error = new WP_Error(
                     'internal_server_error',
                     $e->getMessage(),
