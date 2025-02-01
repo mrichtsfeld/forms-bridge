@@ -4,7 +4,6 @@ import {
   TextControl,
   SelectControl,
   Button,
-  CheckboxControl,
   __experimentalSpacer as Spacer,
 } from "@wordpress/components";
 import { useEffect } from "@wordpress/element";
@@ -59,7 +58,8 @@ function ContentTypeHeader({ setValue, value }) {
         >
           ⚠{" "}
           {__(
-            "If your backend uses custom encoding, Forms Bridge will need a string payload. You can use the `forms_bridge_payload` hook to encode your form submission as string."
+            "If your backend uses custom encoding, Forms Bridge will need a string payload. You can use the `forms_bridge_payload` hook to encode your form submission as string.",
+            "forms-bridge"
           )}
         </span>
       </label>
@@ -166,12 +166,13 @@ export default function BackendHeaders({ headers, setHeaders }) {
                     __next40pxDefaultSize
                   />
                 </td>
-                <td style={{ borderLeft: "1rem solid transparent" }}>
+                <td>
                   <Button
                     disabled={name === "Content-Type"}
                     isDestructive
                     variant="secondary"
                     onClick={() => dropHeader(i)}
+                    style={{ width: "150px", justifyContent: "center" }}
                     __next40pxDefaultSize
                   >
                     {__("Drop", "forms-bridge")}
@@ -185,9 +186,10 @@ export default function BackendHeaders({ headers, setHeaders }) {
         <Button
           variant="secondary"
           onClick={() => addHeader()}
+          style={{ width: "150px", justifyContent: "center" }}
           __next40pxDefaultSize
         >
-          {__("Add header", "forms-bridge")}
+          {__("Add", "forms-bridge")}
         </Button>
       </div>
     </>
