@@ -172,7 +172,7 @@ class Integration extends BaseIntegration
     public function serialize_submission($submission, $form_data)
     {
         $data = [
-            'submission_id' => $submission['actions']['save']['sub_id'],
+            'submission_id' => $submission['actions']['save']['sub_id'] ?? 0,
         ];
 
         foreach ($form_data['fields'] as $field_data) {
