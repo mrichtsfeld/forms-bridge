@@ -163,7 +163,7 @@ class Odoo_Addon extends Addon
             static function ($payload, $hook) {
                 return self::payload_interceptor($payload, $hook);
             },
-            9,
+            90,
             2
         );
 
