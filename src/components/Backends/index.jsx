@@ -26,7 +26,7 @@ export default function Backends({ backends, setBackends, Backend }) {
   const tabs = backends
     .map(({ name, base_url, headers }, i) => ({
       name: String(i),
-      title: __(name, "forms-bridge"),
+      title: name,
       base_url,
       headers,
       icon: (

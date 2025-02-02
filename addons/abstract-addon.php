@@ -270,7 +270,7 @@ abstract class Addon extends Singleton
             static function ($data, $setting) {
                 return self::do_validation($data, $setting);
             },
-            10,
+            11,
             2
         );
 

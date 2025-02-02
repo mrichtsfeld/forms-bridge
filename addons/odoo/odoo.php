@@ -381,9 +381,12 @@ class Odoo_Addon extends Addon
             return [];
         }
 
-        $backends = array_map(function ($backend) {
-            return $backend['name'];
-        }, Forms_Bridge::setting('general')->backends);
+        $backends = array_map(
+            function ($backend) {
+                return $backend['name'];
+            },
+            Forms_Bridge::setting('general')->backends ?: []
+        );
 
         return array_filter($dbs, function ($db_data) use ($backends) {
             return isset(

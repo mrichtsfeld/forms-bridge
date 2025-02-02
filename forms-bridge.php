@@ -70,7 +70,6 @@ class Forms_Bridge extends Base_Plugin
         Addon::load();
         Integration::load();
 
-        self::sync_http_setting();
         self::wp_hooks();
         self::custom_hooks();
 
@@ -81,36 +80,6 @@ class Forms_Bridge extends Base_Plugin
             },
             90,
             4
-        );
-    }
-
-    /**
-     * Synchronize plugin and http-bridge settings
-     */
-    private static function sync_http_setting()
-    {
-        $slug = self::slug();
-        // Patch http bridge settings to plugin settings
-        add_filter("option_{$slug}_general", static function ($value) {
-            $backends = \HTTP_BRIDGE\Settings_Store::setting('general')
-                ->backends;
-
-            return array_merge($value, ['backends' => $backends]);
-        });
-
-        // Syncronize plugin settings with http bridge settings
-        add_action(
-            'updated_option',
-            static function ($option, $from, $to) use ($slug) {
-                if ($option !== $slug . '_general') {
-                    return;
-                }
-
-                $http = \HTTP_BRIDGE\Settings_Store::setting('general');
-                $http->backends = $to['backends'];
-            },
-            10,
-            3
         );
     }
 

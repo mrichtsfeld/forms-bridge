@@ -30,13 +30,36 @@ class Settings_Store extends Base_Settings
     {
         parent::construct(...$args);
 
+        $slug = Forms_Bridge::slug();
+
+        // Patch http bridge default settings to plugin settings
         add_filter(
-            'wpct_validate_setting',
-            static function ($data, $setting) {
-                return self::validate_setting($data, $setting);
+            'wpct_setting_default',
+            static function ($default, $name) use ($slug) {
+                if ($name !== $slug . '_general') {
+                    return $default;
+                }
+
+                $backends = \HTTP_BRIDGE\Settings_Store::setting('general')
+                    ->backends;
+
+                return array_merge($default, ['backends' => $backends]);
             },
             10,
             2
+        );
+
+        // Patch http bridge settings to plugin settings
+        add_filter(
+            "option_{$slug}_general",
+            static function ($value) {
+                $backends = \HTTP_BRIDGE\Settings_Store::setting('general')
+                    ->backends;
+
+                return array_merge($value, ['backends' => $backends]);
+            },
+            10,
+            1
         );
     }
 
@@ -49,35 +72,10 @@ class Settings_Store extends Base_Settings
             [
                 'general',
                 [
-                    'notification_receiver' => [
-                        'type' => 'string',
-                    ],
-                    'backends' => [
-                        'type' => 'array',
-                        'items' => [
-                            'type' => 'object',
-                            'additionalProperties' => false,
-                            'properties' => [
-                                'name' => ['type' => 'string'],
-                                'base_url' => ['type' => 'string'],
-                                'headers' => [
-                                    'type' => 'array',
-                                    'items' => [
-                                        'type' => 'object',
-                                        'additionalProperties' => false,
-                                        'properties' => [
-                                            'name' => ['type' => 'string'],
-                                            'value' => ['type' => 'string'],
-                                        ],
-                                    ],
-                                ],
-                            ],
-                        ],
-                    ],
+                    'notification_receiver' => ['type' => 'string'],
                 ],
                 [
                     'notification_receiver' => get_option('admin_email'),
-                    'backends' => [],
                 ],
             ],
             [
@@ -133,7 +131,7 @@ class Settings_Store extends Base_Settings
     }
 
     /**
-     * Validate setting data callback.
+     * Validates setting data before database inserts.
      *
      * @param array $data Setting data.
      * @param Setting $setting Setting instance.
@@ -142,10 +140,6 @@ class Settings_Store extends Base_Settings
      */
     protected static function validate_setting($data, $setting)
     {
-        if ($setting->group() !== self::group()) {
-            return $data;
-        }
-
         $name = $setting->name();
         switch ($name) {
             case 'general':
@@ -168,9 +162,18 @@ class Settings_Store extends Base_Settings
      */
     private static function validate_general($data)
     {
-        $data['backends'] = \HTTP_BRIDGE\Settings_Store::validate_backends(
-            $data['backends']
+        $data['notification_receiver'] =
+            filter_var($data['notification_receiver'], FILTER_VALIDATE_EMAIL) ?:
+            '';
+
+        $http = \HTTP_BRIDGE\Settings_Store::setting('general');
+        $http->backends = \HTTP_BRIDGE\Settings_Store::validate_backends(
+            isset($data['backends']) && is_array($data['backends'])
+                ? $data['backends']
+                : []
         );
+
+        unset($data['backends']);
 
         return $data;
     }
