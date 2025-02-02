@@ -1,12 +1,11 @@
-// vendor
-import React from "react";
-import {
+const {
   SelectControl,
   TextControl,
   Button,
-  __experimentalSpacer as Spacer,
-} from "@wordpress/components";
-import { useEffect, useMemo } from "@wordpress/element";
+  __experimentalSpacer: Spacer,
+} = wp.components;
+const { useEffect, useMemo } = wp.element;
+const { __ } = wp.i18n;
 
 const castOptions = [
   {
@@ -44,8 +43,6 @@ const castOptions = [
 ];
 
 export default function PipesTable({ form, pipes, setPipes, done }) {
-  const __ = wp.i18n.__;
-
   const fields = useMemo(() => {
     if (!form) return [];
     return form.fields
@@ -172,7 +169,7 @@ export default function PipesTable({ form, pipes, setPipes, done }) {
           {__("Add", "forms-bridge")}
         </Button>
         <Button variant="primary" onClick={() => done()} __next40pxDefaultSize>
-          {__("Done", "posts-bridge")}
+          {__("Done", "forms-bridge")}
         </Button>
       </div>
     </div>

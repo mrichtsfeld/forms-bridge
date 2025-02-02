@@ -1,15 +1,12 @@
-// vendor
-import React from "react";
-import { TextControl, SelectControl } from "@wordpress/components";
-
 // source
 import FormHook from "../../../../src/components/FormHooks/FormHook";
 import NewGSFormHook from "./NewFormHook";
 import { useSpreadsheets } from "../providers/Spreadsheets";
 
-export default function OdooFormHook({ data, update, remove }) {
-  const __ = wp.i18n.__;
+const { TextControl, SelectControl } = wp.components;
+const { __ } = wp.i18n;
 
+export default function OdooFormHook({ data, update, remove }) {
   const spreadsheets = useSpreadsheets();
   const sheetOptions = [{ label: "", value: "" }].concat(
     spreadsheets.map(({ title, id }) => ({

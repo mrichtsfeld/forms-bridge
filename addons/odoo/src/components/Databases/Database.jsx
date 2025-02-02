@@ -1,22 +1,19 @@
-// vendor
-import React from "react";
-import {
-  TextControl,
-  SelectControl,
-  Button,
-  __experimentalSpacer as Spacer,
-} from "@wordpress/components";
-import { useState, useRef, useEffect, useMemo } from "@wordpress/element";
-
 // source
 import { useGeneral } from "../../../../../src/providers/Settings";
 import NewDatabase from "./NewDatabase";
 
+const {
+  TextControl,
+  SelectControl,
+  Button,
+  __experimentalSpacer: Spacer,
+} = wp.components;
+const { useState, useRef, useEffect, useMemo } = wp.element;
+const { __ } = wp.i18n;
+
 export default function Database({ data, update, remove, databases }) {
   if (data.name === "add")
     return <NewDatabase add={update} databases={databases} />;
-
-  const __ = wp.i18n.__;
 
   const [{ backends }] = useGeneral();
   const backendOptions = [{ label: "", value: "" }].concat(
@@ -115,34 +112,18 @@ export default function Database({ data, update, remove, databases }) {
       <div
         style={{
           display: "flex",
-          gap: "1em",
-          flexWrap: "wrap",
+          gap: "0.5rem",
         }}
       >
-        <div>
-          <label
-            style={{
-              display: "block",
-              fontWeight: 500,
-              textTransform: "uppercase",
-              fontSize: "11px",
-              margin: 0,
-              marginBottom: "calc(4px)",
-              maxWidth: "100%",
-            }}
-          >
-            {__("Remove database", "forms-bridge")}
-          </label>
-          <Button
-            isDestructive
-            variant="primary"
-            onClick={() => remove(data)}
-            style={{ width: "150px", justifyContent: "center" }}
-            __next40pxDefaultSize
-          >
-            {__("Remove", "forms-bridge")}
-          </Button>
-        </div>
+        <Button
+          isDestructive
+          variant="primary"
+          onClick={() => remove(data)}
+          style={{ width: "150px", justifyContent: "center" }}
+          __next40pxDefaultSize
+        >
+          {__("Remove", "forms-bridge")}
+        </Button>
       </div>
     </div>
   );

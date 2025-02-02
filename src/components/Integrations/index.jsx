@@ -1,14 +1,11 @@
-// vendor
-import React from "react";
-import { PanelBody, PanelRow, ToggleControl } from "@wordpress/components";
-import { useMemo } from "@wordpress/element";
-
 // source
 import { useGeneral } from "../../providers/Settings";
 
-export default function Integrations() {
-  const __ = wp.i18n.__;
+const { PanelBody, PanelRow, ToggleControl } = wp.components;
+const { useMemo } = wp.element;
+const { __ } = wp.i18n;
 
+export default function Integrations() {
   const [general, patch] = useGeneral();
 
   const toggle = (integration) =>

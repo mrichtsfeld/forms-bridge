@@ -1,14 +1,6 @@
-// vendor
-import React from "react";
-import {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-  useRef,
-} from "@wordpress/element";
-
 import useDiff from "../hooks/useDiff";
+
+const { createContext, useContext, useState, useEffect, useRef } = wp.element;
 
 const defaults = {
   general: {
@@ -92,7 +84,7 @@ export default function SettingsProvider({ children, handle = ["general"] }) {
     window.addEventListener("beforeunload", beforeUnload);
 
     () => {
-      wpfb.on("patch", onPatch);
+      wpfb.off("patch", onPatch);
       wpfb.off("fetch", onFetch);
       wpfb.leave("submit", onSubmit);
       window.removeEventListener("beforeunload", beforeUnload);

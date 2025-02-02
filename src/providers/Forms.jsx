@@ -1,11 +1,4 @@
-// vendor
-import React from "react";
-import {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-} from "@wordpress/element";
+const { createContext, useContext, useState, useEffect } = wp.element;
 
 const FormsContext = createContext([]);
 

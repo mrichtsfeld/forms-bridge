@@ -1,14 +1,3 @@
-// vendor
-import React from "react";
-import {
-  PanelBody,
-  PanelRow,
-  TextControl,
-  __experimentalSpacer as Spacer,
-  ButtonGroup,
-} from "@wordpress/components";
-import { useEffect } from "@wordpress/element";
-
 // source
 import { useGeneral } from "../../../providers/Settings";
 import Backends from "../../../components/Backends";
@@ -18,9 +7,16 @@ import Addons from "../../../components/Addons";
 import Logger from "./Logger";
 import Exporter from "./Exporter";
 
-export default function GeneralSettings() {
-  const __ = wp.i18n.__;
+const {
+  PanelBody,
+  PanelRow,
+  TextControl,
+  __experimentalSpacer: Spacer,
+} = wp.components;
+const { useEffect } = wp.element;
+const { __ } = wp.i18n;
 
+export default function GeneralSettings() {
   const [{ notification_receiver, backends, debug, ...general }, save] =
     useGeneral();
 
@@ -48,14 +44,19 @@ export default function GeneralSettings() {
         />
       </PanelRow>
       <Spacer paddingY="calc(8px)" />
-      <PanelRow>
-        <Backends
-          backends={backends}
-          setBackends={(backends) => update({ backends })}
-          Backend={Backend}
-        />
-      </PanelRow>
-      <Spacer paddingY="calc(8px)" />
+      <PanelBody
+        title={__("Backends", "forms-bridge")}
+        initialOpen={backends.length === 0}
+      >
+        <Spacer paddingY="calc(8px)" />
+        <PanelRow>
+          <Backends
+            backends={backends}
+            setBackends={(backends) => update({ backends })}
+            Backend={Backend}
+          />
+        </PanelRow>
+      </PanelBody>
       <Integrations />
       <Addons />
       <PanelBody title={__("Debug", "forms-bridge")} initialOpen={!!debug}>

@@ -1,19 +1,18 @@
-// vendor
-import React from "react";
-import {
-  TextControl,
-  SelectControl,
-  Button,
-  __experimentalSpacer as Spacer,
-} from "@wordpress/components";
-import { useState, useRef, useEffect, useMemo } from "@wordpress/element";
-
 // source
 import { useForms } from "../../providers/Forms";
 import { useFormHooks, useGeneral } from "../../providers/Settings";
 import useHookNames from "../../hooks/useHookNames";
 import FormPipes from "../FormPipes";
 import NewFormHook from "./NewFormHook";
+
+const {
+  TextControl,
+  SelectControl,
+  Button,
+  __experimentalSpacer: Spacer,
+} = wp.components;
+const { useState, useRef, useEffect, useMemo } = wp.element;
+const { __ } = wp.i18n;
 
 let focus = false;
 export default function FormHook({
@@ -26,7 +25,6 @@ export default function FormHook({
 }) {
   if (data.name === "add") return template({ add: update, schema });
 
-  const __ = wp.i18n.__;
   const [{ backends }] = useGeneral();
   const backendOptions = [{ label: "", value: "" }].concat(
     backends.map(({ name }) => ({

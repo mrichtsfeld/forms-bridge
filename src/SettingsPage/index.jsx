@@ -1,16 +1,3 @@
-// vendor
-import React from "react";
-import {
-  Card,
-  CardHeader,
-  CardBody,
-  TabPanel,
-  __experimentalHeading as Heading,
-  Button,
-  __experimentalSpacer as Spacer,
-} from "@wordpress/components";
-import { useState } from "@wordpress/element";
-
 // source
 import StoreProvider, { useStoreSubmit } from "../providers/Store";
 import SettingsProvider from "../providers/Settings";
@@ -18,6 +5,18 @@ import FormsProvider from "../providers/Forms";
 import GeneralSettings from "./tabs/General";
 import RestApiSettings from "./tabs/RestApi";
 import Spinner from "../components/Spinner";
+
+const {
+  Card,
+  CardHeader,
+  CardBody,
+  TabPanel,
+  __experimentalHeading: Heading,
+  Button,
+  __experimentalSpacer: Spacer,
+} = wp.components;
+const { useState } = wp.element;
+const { __ } = wp.i18n;
 
 const defaultTabs = [
   {
@@ -31,8 +30,6 @@ const defaultTabs = [
 ];
 
 function Content({ tab, children }) {
-  const __ = wp.i18n.__;
-
   const content = (() => {
     switch (tab.name) {
       case "general":
@@ -66,7 +63,6 @@ function Content({ tab, children }) {
 }
 
 function SaveButton({ loading }) {
-  const __ = wp.i18n.__;
   const submit = useStoreSubmit();
 
   const [error, setError] = useState(false);
@@ -87,8 +83,6 @@ function SaveButton({ loading }) {
 }
 
 export default function SettingsPage({ addons }) {
-  const __ = wp.i18n.__;
-
   const [loading, setLoading] = useState(false);
 
   const tabs = defaultTabs.concat(

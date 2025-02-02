@@ -179,7 +179,7 @@ abstract class Addon extends Singleton
                 return self::form_hooks($form_hooks, $form_id);
             },
             9,
-            3
+            2
         );
     }
 
@@ -190,7 +190,7 @@ abstract class Addon extends Singleton
      *
      * @return array List with addon template instances.
      */
-    protected static function templates()
+    final protected static function templates()
     {
         return apply_filters('forms_bridge_addon_templates', [], static::$slug);
     }
@@ -200,7 +200,7 @@ abstract class Addon extends Singleton
      *
      * @return string Setting name.
      */
-    protected static function setting_name()
+    final protected static function setting_name()
     {
         return Forms_Bridge::slug() . '_' . static::$slug;
     }
@@ -208,7 +208,7 @@ abstract class Addon extends Singleton
     /**
      * Addon setting getter.
      */
-    protected static function setting()
+    final protected static function setting()
     {
         return Forms_Bridge::setting(static::$slug);
     }
@@ -320,7 +320,16 @@ abstract class Addon extends Singleton
                 wp_enqueue_script(
                     $script_name,
                     plugins_url('assets/addon.bundle.js', $__FILE__),
-                    [],
+                    [
+                        'react',
+                        'react-jsx-runtime',
+                        'wp-api-fetch',
+                        'wp-components',
+                        'wp-dom-ready',
+                        'wp-element',
+                        'wp-i18n',
+                        'wp-api',
+                    ],
                     Forms_Bridge::version(),
                     ['in_footer' => true]
                 );

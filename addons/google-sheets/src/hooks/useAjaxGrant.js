@@ -1,5 +1,4 @@
-// vendor
-import { useState } from "@wordpress/element";
+const { useState } = wp.element;
 
 export default function useGrant() {
   const [loading, setLoading] = useState(false);

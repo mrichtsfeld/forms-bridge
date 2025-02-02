@@ -1,7 +1,5 @@
-// vendor
-import React from "react";
-import apiFetch from "@wordpress/api-fetch";
-import { createContext, useContext, useEffect } from "@wordpress/element";
+const apiFetch = wp.apiFetch;
+const { createContext, useContext, useEffect } = wp.element;
 
 const StoreContext = createContext(() => {});
 
@@ -9,10 +7,7 @@ export default function StoreProvider({ children, setLoading }) {
   const fetchSettings = () => {
     setLoading(true);
     return apiFetch({
-      path: `${window.wpApiSettings.root}forms-bridge/v1/settings`,
-      headers: {
-        "X-WP-Nonce": wpApiSettings.nonce,
-      },
+      path: "forms-bridge/v1/settings",
     })
       .then((settings) => {
         wpfb.emit("fetch", settings);
@@ -25,10 +20,7 @@ export default function StoreProvider({ children, setLoading }) {
   const fetchForms = () => {
     setLoading(true);
     return apiFetch({
-      path: `${window.wpApiSettings.root}forms-bridge/v1/forms`,
-      headers: {
-        "X-WP-Nonce": wpApiSettings.nonce,
-      },
+      path: "forms-bridge/v1/forms",
     })
       .then((forms) => {
         wpfb.emit("forms", forms);
@@ -45,11 +37,8 @@ export default function StoreProvider({ children, setLoading }) {
 
     const settings = wpfb.bus("submit", {});
     return apiFetch({
-      path: `${window.wpApiSettings.root}forms-bridge/v1/settings`,
+      path: "forms-bridge/v1/settings",
       method: "POST",
-      headers: {
-        "X-WP-Nonce": wpApiSettings.nonce,
-      },
       data: settings,
     }).then(fetchSettings);
   };

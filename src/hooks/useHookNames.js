@@ -1,8 +1,7 @@
-// vendor
-import { useMemo } from "@wordpress/element";
-
 // source
 import { useFormHooks } from "../providers/Settings";
+
+const { useMemo } = wp.element;
 
 export default function useHookNames() {
   const formHooks = useFormHooks();
