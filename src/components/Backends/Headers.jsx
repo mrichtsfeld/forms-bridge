@@ -1,13 +1,10 @@
-// vendor
-import React from "react";
-import {
+const {
   TextControl,
   SelectControl,
   Button,
-  __experimentalSpacer as Spacer,
-} from "@wordpress/components";
-import { useEffect } from "@wordpress/element";
-
+  __experimentalSpacer: Spacer,
+} = wp.components;
+const { useEffect } = wp.element;
 const { __ } = wp.i18n;
 
 const WELL_KNOWN_CONTENT_TYPES = {
@@ -84,8 +81,6 @@ function ContentTypeHeader({ setValue, value }) {
 }
 
 export default function BackendHeaders({ headers, setHeaders }) {
-  const __ = wp.i18n.__;
-
   const contentType =
     headers.find((header) => header.name === "Content-Type")?.value || "";
 
@@ -150,6 +145,7 @@ export default function BackendHeaders({ headers, setHeaders }) {
               <tr key={i}>
                 <td>
                   <TextControl
+                    disabled={name === "Content-Type"}
                     placeholder={__("Header-Name", "forms-bridge")}
                     value={name}
                     onChange={(value) => setHeader("name", i, value)}
@@ -159,6 +155,9 @@ export default function BackendHeaders({ headers, setHeaders }) {
                 </td>
                 <td>
                   <TextControl
+                    disabled={
+                      name === "Content-Type" && WELL_KNOWN_CONTENT_TYPES[value]
+                    }
                     placeholder={__("Value", "forms-bridge")}
                     value={value}
                     onChange={(value) => setHeader("value", i, value)}

@@ -1,20 +1,12 @@
-// vendor
-import React from "react";
-import { useState, useEffect } from "@wordpress/element";
-import {
-  __experimentalSpacer as Spacer,
-  Button,
-  Modal,
-  Notice,
-} from "@wordpress/components";
-
 // source
 import { useStoreSubmit } from "../../../../providers/Store";
 import { useGeneral, useApis } from "../../../../providers/Settings";
 
-export default function Exporter() {
-  const __ = wp.i18n.__;
+const { useState, useEffect } = wp.element;
+const { __experimentalSpacer: Spacer, Button, Modal, Notice } = wp.components;
+const { __ } = wp.i18n;
 
+export default function Exporter() {
   const [general] = useGeneral();
   const [apis] = useApis();
   const submit = useStoreSubmit();
@@ -79,7 +71,7 @@ export default function Exporter() {
             .then(() => setError(false))
             .catch(() =>
               setError(
-                __("It has been an error on confi import", "forms-bridge")
+                __("It has been an error on config import", "forms-bridge")
               )
             )
         );
@@ -109,33 +101,26 @@ export default function Exporter() {
           {error}
         </Notice>
       )}
-      <ul style={{ display: "flex", gap: "1rem" }}>
-        <li>
-          <Button
-            variant="primary"
-            description={__(
-              "Export Forms Bridge config as JSON",
-              "forms-bridge"
-            )}
-            onClick={downloadConfig}
-            style={{ width: "150px", justifyContent: "center" }}
-            __next40pxDefaultSize
-          >
-            {__("Download config", "forms-bridge")}
-          </Button>
-        </li>
-        <li>
-          <Button
-            variant="secondary"
-            description={__("Import Forms Bridge JSON config", "forms-bridge")}
-            onClick={() => setShowModal(true)}
-            style={{ width: "150px", justifyContent: "center" }}
-            __next40pxDefaultSize
-          >
-            {__("Import config", "forms-bridge")}
-          </Button>
-        </li>
-      </ul>
+      <div style={{ display: "flex", gap: "0.5rem" }}>
+        <Button
+          variant="primary"
+          description={__("Export Forms Bridge config as JSON", "forms-bridge")}
+          onClick={downloadConfig}
+          style={{ width: "150px", justifyContent: "center" }}
+          __next40pxDefaultSize
+        >
+          {__("Download config", "forms-bridge")}
+        </Button>
+        <Button
+          variant="secondary"
+          description={__("Import Forms Bridge JSON config", "forms-bridge")}
+          onClick={() => setShowModal(true)}
+          style={{ width: "150px", justifyContent: "center" }}
+          __next40pxDefaultSize
+        >
+          {__("Import config", "forms-bridge")}
+        </Button>
+      </div>
       {showModal && (
         <Modal
           title={__("Config import warning", "forms-bridge")}
@@ -148,7 +133,7 @@ export default function Exporter() {
             )}
           </p>
           <p>{__("Are you sure to continue?", "forms-bridge")}</p>
-          <div style={{ display: "flex", gap: "1rem" }}>
+          <div style={{ display: "flex", gap: "0.5rem" }}>
             <Button
               variant="primary"
               description={__("Continue with the import", "forms-bridge")}

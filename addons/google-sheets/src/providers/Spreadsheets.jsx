@@ -1,12 +1,5 @@
-// vendor
-import React from "react";
-import apiFetch from "@wordpress/api-fetch";
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useState,
-} from "@wordpress/element";
+const apiFetch = wp.apiFetch;
+const { createContext, useContext, useEffect, useState } = wp.element;
 
 const SpreadsheetsContext = createContext([]);
 
@@ -15,10 +8,7 @@ export default function SpreadsheetsProvider({ children }) {
 
   useEffect(() => {
     apiFetch({
-      path: `${window.wpApiSettings.root}forms-bridge/v1/spreadsheets`,
-      headers: {
-        "X-WP-Nonce": wpApiSettings.nonce,
-      },
+      path: "forms-bridge/v1/spreadsheets",
     }).then((spreadsheets) => {
       setSpreadsheets(spreadsheets);
     });

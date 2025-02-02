@@ -1,10 +1,9 @@
-// vendor
-import React from "react";
-import { TextControl, SelectControl } from "@wordpress/components";
-
 // source
 import FormHook from "../../../components/FormHooks/FormHook";
 import NewRestFormHook from "./NewFormHook";
+
+const { TextControl, SelectControl } = wp.components;
+const { __ } = wp.i18n;
 
 const methodOptions = [
   {
@@ -26,8 +25,6 @@ const methodOptions = [
 ];
 
 export default function RestFormHook({ data, update, remove }) {
-  const __ = wp.i18n.__;
-
   return (
     <FormHook
       data={data}

@@ -1,8 +1,3 @@
-// vendor
-import React from "react";
-import { PanelRow } from "@wordpress/components";
-import { useEffect } from "@wordpress/element";
-
 // source
 import FormHooks from "../../../components/FormHooks";
 import RestFormHook from "./FormHook";
@@ -10,6 +5,9 @@ import useRestApi from "./useRestApi";
 
 // assets
 import logo from "../../../../assets/rest.png";
+
+const { PanelRow } = wp.components;
+const { useEffect } = wp.element;
 
 export default function RestApiSetting() {
   const [{ form_hooks: hooks }, save] = useRestApi();

@@ -1,22 +1,20 @@
-// vendor
-import React from "react";
-import {
-  PanelBody,
-  PanelRow,
-  ToggleControl,
-  FormFileUpload,
-  __experimentalSpacer as Spacer,
-} from "@wordpress/components";
-import { useState, useEffect } from "@wordpress/element";
-
 // source
 import FormHooks from "../../../../src/components/FormHooks";
 import GSFormHook from "./FormHook";
 import useGSApi from "../hooks/useGSApi";
 import useAjaxGrant from "../hooks/useAjaxGrant";
 
+const {
+  PanelBody,
+  PanelRow,
+  ToggleControl,
+  FormFileUpload,
+  __experimentalSpacer: Spacer,
+} = wp.components;
+const { useState, useEffect } = wp.element;
+const { __ } = wp.i18n;
+
 export default function GoogleSheetsSetting() {
-  const __ = wp.i18n.__;
   const [{ authorized, form_hooks }, save] = useGSApi();
 
   const { grant, revoke, loading, result } = useAjaxGrant();
@@ -48,7 +46,7 @@ export default function GoogleSheetsSetting() {
       </PanelRow>
       <Spacer paddingY="calc(8px)" />
       <PanelBody
-        title={__("Google Service Credentials", "posts-bridge")}
+        title={__("Google Service Credentials", "forms-bridge")}
         initialOpen={!authorized}
       >
         <Spacer paddingY="calc(8px)" />

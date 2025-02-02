@@ -1,21 +1,18 @@
-// vendor
-import React from "react";
-import {
-  TextControl,
-  SelectControl,
-  Button,
-  __experimentalSpacer as Spacer,
-} from "@wordpress/components";
-import { useState, useMemo } from "@wordpress/element";
-
 // source
 import { useForms } from "../../providers/Forms";
 import { useGeneral } from "../../providers/Settings";
 import useHookNames from "../../hooks/useHookNames";
 
-export default function NewFormHook({ add, schema, children = () => {} }) {
-  const __ = wp.i18n.__;
+const {
+  TextControl,
+  SelectControl,
+  Button,
+  __experimentalSpacer: Spacer,
+} = wp.components;
+const { useState, useMemo } = wp.element;
+const { __ } = wp.i18n;
 
+export default function NewFormHook({ add, schema, children = () => {} }) {
   const [{ backends }] = useGeneral();
   const backendOptions = [{ label: "", value: "" }].concat(
     backends.map(({ name }) => ({

@@ -1,19 +1,12 @@
-// vendor
-import React from "react";
-import { useState, useEffect, useRef } from "@wordpress/element";
-import {
-  __experimentalSpacer as Spacer,
-  ToggleControl,
-  PanelRow,
-} from "@wordpress/components";
-
 // source
 import useDebug from "../../../../hooks/useDebug";
 import useLogs from "../../../../hooks/useLogs";
 
-export default function Logger() {
-  const __ = wp.i18n.__;
+const { useState, useEffect, useRef } = wp.element;
+const { __experimentalSpacer: Spacer, ToggleControl, PanelRow } = wp.components;
+const { __ } = wp.i18n;
 
+export default function Logger() {
   const [debug, setDebug] = useDebug();
   const { logs, loading, error } = useLogs({ debug });
 

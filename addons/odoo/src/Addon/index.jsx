@@ -1,7 +1,3 @@
-// vendor
-import React from "react";
-import { useEffect, useState, useRef, createPortal } from "@wordpress/element";
-
 // source
 import SettingsProvider from "../../../../src/providers/Settings";
 import FormsProvider from "../../../../src/providers/Forms";
@@ -9,6 +5,8 @@ import Setting from "../Setting";
 
 // assets
 import logo from "../../assets/logo.png";
+
+const { useEffect, useState, useRef, createPortal } = wp.element;
 
 export default function Addon() {
   const [root, setRoot] = useState(null);

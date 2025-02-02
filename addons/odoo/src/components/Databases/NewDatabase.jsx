@@ -1,19 +1,16 @@
-// vendor
-import React from "react";
-import {
-  TextControl,
-  SelectControl,
-  Button,
-  __experimentalSpacer as Spacer,
-} from "@wordpress/components";
-import { useState, useMemo } from "@wordpress/element";
-
 // source
 import { useGeneral } from "../../../../../src/providers/Settings";
 
-export default function NewDatabase({ add, databases }) {
-  const __ = wp.i18n.__;
+const {
+  TextControl,
+  SelectControl,
+  Button,
+  __experimentalSpacer: Spacer,
+} = wp.components;
+const { useState, useMemo } = wp.element;
+const { __ } = wp.i18n;
 
+export default function NewDatabase({ add, databases }) {
   const [{ backends }] = useGeneral();
   const backendOptions = [{ label: "", value: "" }].concat(
     backends.map(({ name }) => ({
@@ -116,34 +113,18 @@ export default function NewDatabase({ add, databases }) {
       <div
         style={{
           display: "flex",
-          gap: "1em",
-          flexWrap: "wrap",
+          gap: "0.5rem",
         }}
       >
-        <div>
-          <label
-            style={{
-              display: "block",
-              fontWeight: 500,
-              textTransform: "uppercase",
-              fontSize: "11px",
-              margin: 0,
-              marginBottom: "calc(4px)",
-              maxWidth: "100%",
-            }}
-          >
-            {__("Add database", "forms-bridge")}
-          </label>
-          <Button
-            variant="primary"
-            onClick={() => onClick()}
-            style={{ width: "150px", justifyContent: "center" }}
-            disabled={disabled}
-            __next40pxDefaultSize
-          >
-            {__("Add", "forms-bridge")}
-          </Button>
-        </div>
+        <Button
+          variant="primary"
+          onClick={() => onClick()}
+          style={{ width: "150px", justifyContent: "center" }}
+          disabled={disabled}
+          __next40pxDefaultSize
+        >
+          {__("Add", "forms-bridge")}
+        </Button>
       </div>
     </div>
   );

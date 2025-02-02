@@ -1,15 +1,12 @@
-// vendor
-import React from "react";
-import { TextControl, SelectControl } from "@wordpress/components";
-
 // source
 import FormHook from "../../../../src/components/FormHooks/FormHook";
 import NewOdooFormHook from "./NewFormHook";
 import useOdooApi from "../hooks/useOdooApi";
 
-export default function OdooFormHook({ data, update, remove }) {
-  const __ = wp.i18n.__;
+const { TextControl, SelectControl } = wp.components;
+const { __ } = wp.i18n;
 
+export default function OdooFormHook({ data, update, remove }) {
   const [{ databases }] = useOdooApi();
   const dbOptions = [{ label: "", value: "" }].concat(
     databases.map(({ name }) => ({

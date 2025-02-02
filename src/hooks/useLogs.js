@@ -1,6 +1,5 @@
-// vendor
-import apiFetch from "@wordpress/api-fetch";
-import { useState, useEffect, useRef } from "@wordpress/element";
+const apiFetch = wp.apiFetch;
+const { useState, useEffect, useRef } = wp.element;
 
 export default function useLogs({ debug }) {
   const [logs, setLogs] = useState([]);
@@ -12,10 +11,7 @@ export default function useLogs({ debug }) {
   const fetch = () => {
     setLoading(true);
     return apiFetch({
-      path: `${window.wpApiSettings.root}forms-bridge/v1/logs`,
-      headers: {
-        "X-WP-Nonce": wpApiSettings.nonce,
-      },
+      path: "forms-bridge/v1/logs",
     })
       .then((logs) => setLogs(logs))
       .catch(() => setError(true))
