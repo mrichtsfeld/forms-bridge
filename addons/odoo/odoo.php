@@ -4,8 +4,6 @@ namespace FORMS_BRIDGE;
 
 use WP_Error;
 
-use function WPCT_ABSTRACT\is_list;
-
 if (!defined('ABSPATH')) {
     exit();
 }
@@ -183,7 +181,7 @@ class Odoo_Addon extends Addon
     private static function custom_hooks()
     {
         add_filter('forms_bridge_odoo_dbs', static function ($dbs) {
-            if (!is_list($dbs)) {
+            if (!wp_is_numeric_array($dbs)) {
                 $dbs = [];
             }
 
@@ -377,7 +375,7 @@ class Odoo_Addon extends Addon
      */
     private static function validate_databases($dbs)
     {
-        if (!is_list($dbs)) {
+        if (!wp_is_numeric_array($dbs)) {
             return [];
         }
 
@@ -409,7 +407,7 @@ class Odoo_Addon extends Addon
      */
     private static function validate_form_hooks($form_hooks, $dbs)
     {
-        if (!is_list($form_hooks)) {
+        if (!wp_is_numeric_array($form_hooks)) {
             return [];
         }
 

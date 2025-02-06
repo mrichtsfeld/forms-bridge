@@ -2,8 +2,6 @@
 
 namespace FORMS_BRIDGE;
 
-use function WPCT_ABSTRACT\is_list;
-
 if (!defined('ABSPATH')) {
     exit();
 }
@@ -249,7 +247,7 @@ class Google_Sheets_Addon extends Addon
         foreach ($payload as $field => $value) {
             if (is_array($value)) {
                 $is_flat =
-                    is_list($value) &&
+                    wp_is_numeric_array($value) &&
                     count(
                         array_filter($value, static function ($d) {
                             return !is_array($d);
@@ -294,7 +292,7 @@ class Google_Sheets_Addon extends Addon
      */
     private static function validate_form_hooks($form_hooks)
     {
-        if (!is_list($form_hooks)) {
+        if (!wp_is_numeric_array($form_hooks)) {
             return [];
         }
 

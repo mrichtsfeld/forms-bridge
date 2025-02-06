@@ -44,9 +44,7 @@ class Integration extends BaseIntegration
     /**
      * Integration initializer to be fired on wp init.
      */
-    protected function init()
-    {
-    }
+    protected function init() {}
 
     /**
      * Retrive the current form data.
@@ -172,7 +170,7 @@ class Integration extends BaseIntegration
             $type = $field->get_option('type')[0];
         }
 
-        $type = $this->norm_field_type($type);
+        // $type = $this->norm_field_type($type);
 
         $options = [];
         if (is_array($field->values)) {

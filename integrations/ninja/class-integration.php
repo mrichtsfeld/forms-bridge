@@ -112,10 +112,10 @@ class Integration extends BaseIntegration
 
     private function _serialize_field($id, $settings)
     {
-        $type = $this->norm_field_type($settings['type']);
+        // $type = $this->norm_field_type($settings['type']);
         return [
             'id' => $id,
-            'type' => $type,
+            'type' => $settings['type'],
             'name' => $settings['key'],
             'label' => $settings['label'],
             'required' => isset($settings['required'])
@@ -124,7 +124,7 @@ class Integration extends BaseIntegration
             'options' => isset($settings['options'])
                 ? $settings['options']
                 : [],
-            'is_file' => $type === 'file',
+            'is_file' => false, // $settings['type'] === 'file',
             'is_multi' => in_array($settings['type'], [
                 'listmultiselect',
                 'listcheckbox',

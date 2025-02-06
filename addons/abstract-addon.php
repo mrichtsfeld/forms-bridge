@@ -6,8 +6,6 @@ use Exception;
 use ReflectionClass;
 use WPCT_ABSTRACT\Singleton;
 
-use function WPCT_ABSTRACT\is_list;
-
 if (!defined('ABSPATH')) {
     exit();
 }
@@ -43,7 +41,7 @@ abstract class Addon extends Singleton
      *
      * @var string
      */
-    protected static $hook_class;
+    protected static $hook_class = '\FORMS_BRIDGE\Form_Hook';
 
     /**
      * Public singleton initializer.
@@ -192,7 +190,7 @@ abstract class Addon extends Singleton
      */
     final protected static function templates()
     {
-        return apply_filters('forms_bridge_addon_templates', [], static::$slug);
+        return apply_filters('forms_bridge_templates', [], static::$slug);
     }
 
     /**
@@ -223,7 +221,7 @@ abstract class Addon extends Singleton
      */
     private static function form_hooks($form_hooks, $form_id = null)
     {
-        if (!is_list($form_hooks)) {
+        if (!wp_is_numeric_array($form_hooks)) {
             $form_hooks = [];
         }
 

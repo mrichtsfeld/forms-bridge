@@ -4,8 +4,6 @@ namespace FORMS_BRIDGE;
 
 use WPCT_ABSTRACT\Settings_Store as Base_Settings;
 
-use function WPCT_ABSTRACT\is_list;
-
 if (!defined('ABSPATH')) {
     exit();
 }
@@ -60,6 +58,41 @@ class Settings_Store extends Base_Settings
             },
             10,
             1
+        );
+
+        add_filter(
+            'wpct_setting_default',
+            static function ($default, $name) use ($slug) {
+                if ($name !== $slug . '_rest-api') {
+                    return $default;
+                }
+
+                $templates = apply_filters(
+                    'forms_bridge_templates',
+                    [],
+                    'rest-api'
+                );
+                return array_merge($default, [
+                    'templates' => $templates,
+                ]);
+            },
+            10,
+            2
+        );
+
+        add_filter(
+            'option_' . $slug . '_rest-api',
+            static function ($value) {
+                $templates = apply_filters(
+                    'forms_bridge_templates',
+                    [],
+                    'rest-api'
+                );
+                return array_merge($value, [
+                    'templates' => $templates,
+                ]);
+            },
+            10
         );
     }
 
@@ -119,6 +152,13 @@ class Settings_Store extends Base_Settings
                                         ],
                                     ],
                                 ],
+                                'template' => ['type' => 'string'],
+                            ],
+                            'required' => [
+                                'name',
+                                'backend',
+                                'form_id',
+                                'endpoint',
                             ],
                         ],
                     ],
@@ -174,6 +214,7 @@ class Settings_Store extends Base_Settings
         );
 
         unset($data['backends']);
+        unset($data['templates']);
 
         return $data;
     }
@@ -207,7 +248,7 @@ class Settings_Store extends Base_Settings
      */
     private static function validate_form_hooks($form_hooks, $backends)
     {
-        if (!is_list($form_hooks)) {
+        if (!wp_is_numeric_array($form_hooks)) {
             return [];
         }
 
@@ -218,6 +259,10 @@ class Settings_Store extends Base_Settings
             },
             []
         );
+
+        $tempaltes = array_map(function ($template) {
+            return $template->name;
+        }, apply_filters('forms_bridge_templates', [], 'rest-api'));
 
         $valid_hooks = [];
         for ($i = 0; $i < count($form_hooks); $i++) {
@@ -232,7 +277,10 @@ class Settings_Store extends Base_Settings
                             $is_valid;
                     },
                     false
-                ) && in_array($hook['form_id'], $_ids);
+                ) &&
+                in_array($hook['form_id'], $_ids) &&
+                (empty($hook['template']) ||
+                    in_array($hook['template'], $tempaltes));
 
             if ($is_valid) {
                 // filter empty pipes

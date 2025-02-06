@@ -36,9 +36,7 @@ class Integration extends BaseIntegration
     /**
      * Integration initializer to be fired on wp init.
      */
-    protected function init()
-    {
-    }
+    protected function init() {}
 
     /**
      * Retrives the current form data.
@@ -196,8 +194,6 @@ class Integration extends BaseIntegration
             return;
         }
 
-        $type = $this->norm_field_type($field->type);
-
         $name = $field->inputName
             ? $field->inputName
             : ($field->adminLabel
@@ -226,15 +222,15 @@ class Integration extends BaseIntegration
 
         return [
             'id' => $field->id,
-            'type' => $type,
+            'type' => $field->type,
             'name' => $name,
             'label' => $field->label,
             'required' => $field->isRequired,
             'options' => $options,
             'inputs' => $inputs,
-            'is_file' => $type === 'file',
+            'is_file' => $field->type === 'fileupload',
             'is_multi' =>
-                $type === 'file'
+                $field->type === 'fileupload'
                     ? $field->multipleFiles
                     : $field->storageType === 'json' ||
                         $field->choiceLimit === 'unlimited' ||
@@ -434,7 +430,7 @@ class Integration extends BaseIntegration
 
         return array_reduce(
             array_filter($form_data['fields'], function ($field) {
-                return $field['type'] === 'file';
+                return $field['is_file'];
             }),
             function ($carry, $field) use ($submission, $private_upload) {
                 $paths = rgar($submission, (string) $field['id']);

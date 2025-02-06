@@ -39,9 +39,7 @@ class Integration extends BaseIntegration
     /**
      * Integration initializer to be fired on wp init.
      */
-    protected function init()
-    {
-    }
+    protected function init() {}
 
     /**
      * Retrives the current WPForms_Form_Handler data.
@@ -169,20 +167,20 @@ class Integration extends BaseIntegration
      */
     private function serialize_field($field)
     {
-        $type = $this->norm_field_type($field['type']);
-        if (in_array($type, ['submit'])) {
+        // $type = $this->norm_field_type($field['type']);
+        if (in_array($field['type'], ['submit'])) {
             return;
         }
 
         return [
             'id' => (int) $field['id'],
-            'type' => $type,
+            'type' => $field['type'],
             'name' => $field['label'],
             'label' => $field['label'],
             'required' =>
                 isset($field['required']) && $field['required'] === '1',
             'options' => isset($field['choices']) ? $field['choices'] : [],
-            'is_file' => $type === 'file',
+            'is_file' => false, // $field['type'] === 'file',
             'is_multi' =>
                 strstr($field['type'], 'checkbox') ||
                 ($field['type'] === 'select' && $field['multiple'] === '1'),
