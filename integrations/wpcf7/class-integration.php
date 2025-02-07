@@ -16,12 +16,10 @@ if (!defined('ABSPATH')) {
 class Integration extends BaseIntegration
 {
     /**
-     * Inherit parent constructor and hooks submissions to wpcf7_before_send_mail
+     * Binds form submit hook to the do_submission routine.
      */
-    protected function construct(...$args)
+    protected function init()
     {
-        parent::construct(...$args);
-
         add_filter(
             'wpcf7_submit',
             function ($form, $result) {
@@ -42,12 +40,7 @@ class Integration extends BaseIntegration
     }
 
     /**
-     * Integration initializer to be fired on wp init.
-     */
-    protected function init() {}
-
-    /**
-     * Retrive the current form data.
+     * Retrives the current contact form's data.
      *
      * @return array $form_data Form data array representation.
      */
@@ -62,7 +55,7 @@ class Integration extends BaseIntegration
     }
 
     /**
-     * Retrive form data by ID.
+     * Retrives a contact form's data by ID.
      *
      * @param int $form_id Form ID.
      * @return array $form_data Form data.
@@ -78,7 +71,7 @@ class Integration extends BaseIntegration
     }
 
     /**
-     * Retrive available integration's forms data.
+     * Retrives available constact forms as form data.
      *
      * @return array $forms Collection of form data.
      */
@@ -90,6 +83,13 @@ class Integration extends BaseIntegration
         }, $forms);
     }
 
+    /**
+     * Creates a form from the given template fields.
+     *
+     * @param array $data Form template data.
+     *
+     * @return int|null ID of the new form.
+     */
     public function create_form($data)
     {
         if (empty($data['title']) || empty($data['fields'])) {
@@ -109,11 +109,15 @@ class Integration extends BaseIntegration
             'mail' => get_option('admin_email'),
         ]);
 
+        if (!$contact_form) {
+            return;
+        }
+
         return $contact_form->id();
     }
 
     /**
-     * Retrive the current submission data.
+     * Retrives the current submission data.
      *
      * @return array Submission data.
      */
@@ -129,7 +133,7 @@ class Integration extends BaseIntegration
     }
 
     /**
-     * Retrive the current submission uploaded files.
+     * Retrives the current submission uploaded files.
      *
      * @return array Uploaded files data.
      */
@@ -140,16 +144,15 @@ class Integration extends BaseIntegration
             return null;
         }
 
-        $form = $this->form();
-        return $this->submission_uploads($submission, $form);
+        return $this->submission_uploads($submission);
     }
 
     /**
-     * Serialize form data.
+     * Serializes a contact form instance as array data.
      *
      * @param WPCF7_ContactForm $form Form instance.
      *
-     * @return array Form data.
+     * @return array.
      */
     public function serialize_form($form)
     {
@@ -174,12 +177,12 @@ class Integration extends BaseIntegration
     }
 
     /**
-     * Serialize form tags to array.
+     * Serializes a form tags as array data.
      *
      * @param WPCF7_FormTag $field Form tag instance.
      * @param array $form_data Form data.
      *
-     * @return array Field data.
+     * @return array.
      */
     private function serialize_field($field)
     {
@@ -248,7 +251,7 @@ class Integration extends BaseIntegration
     }
 
     /**
-     * Serialize the form's submission data.
+     * Serializes the form's submission data.
      *
      * @param WPCF7_Submission $submission Submission instance.
      * @param array $form Form data.
@@ -284,11 +287,10 @@ class Integration extends BaseIntegration
      * Gets submission uploaded files.
      *
      * @param WPCF7_Submission $submission Submission instance.
-     * @param array $form_data Form data.
      *
      * @return array Uploaded files data.
      */
-    protected function submission_uploads($submission, $form_data)
+    protected function submission_uploads($submission)
     {
         $uploads = [];
         $uploads = $submission->uploaded_files();
@@ -306,9 +308,9 @@ class Integration extends BaseIntegration
     }
 
     /**
-     * Gets fields from a template and return a contact form content string.
+     * Gets form fields from a template and return a contact form content string.
      *
-     * @param array $fields
+     * @param array $fields.
      *
      * @return string Form content.
      */

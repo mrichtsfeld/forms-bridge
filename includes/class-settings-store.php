@@ -21,8 +21,7 @@ class Settings_Store extends Base_Settings
     protected static $rest_controller_class = '\FORMS_BRIDGE\REST_Settings_Controller';
 
     /**
-     * Class constructor. Inherits the parent constructor and setup settings validation
-     * callbacks.
+     * Inherits the parent constructor and sets up settings' validation callbacks.
      */
     protected function construct(...$args)
     {

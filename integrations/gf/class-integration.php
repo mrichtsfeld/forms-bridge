@@ -22,26 +22,19 @@ require_once 'attachments.php';
 class Integration extends BaseIntegration
 {
     /**
-     * Inherits prent constructor and hooks submissions to gform_after_submission
+     * Binds after submission hook to the do_submission routine.
      */
-    protected function construct(...$args)
+    protected function init()
     {
         add_action('gform_after_submission', function () {
             $this->do_submission();
         });
-
-        parent::construct(...$args);
     }
 
     /**
-     * Integration initializer to be fired on wp init.
-     */
-    protected function init() {}
-
-    /**
-     * Retrives the current form data.
+     * Retrives the current form's data.
      *
-     * @return array Form data.
+     * @return array.
      */
     public function form()
     {
@@ -64,11 +57,11 @@ class Integration extends BaseIntegration
     }
 
     /**
-     * Retrives form data by ID.
+     * Retrives a form's data by ID.
      *
      * @param int $form_id Form ID.
      *
-     * @return array Form data.
+     * @return array.
      */
     public function get_form_by_id($form_id)
     {
@@ -81,7 +74,7 @@ class Integration extends BaseIntegration
     }
 
     /**
-     * Retrives available forms data.
+     * Retrives available forms' data.
      *
      * @return array Collection of form data array representations.
      */
@@ -99,9 +92,20 @@ class Integration extends BaseIntegration
     }
 
     /**
+     * Creates a form from a given template fields.
+     *
+     * @param array $data Form template data.
+     *
+     * @return int|null ID of the new form.
+     *
+     * @todo Implement this routine.
+     */
+    public function create_form($data) {}
+
+    /**
      * Retrives the current submission data.
      *
-     * @return array Submission data.
+     * @return array
      */
     public function submission()
     {
@@ -147,11 +151,11 @@ class Integration extends BaseIntegration
     }
 
     /**
-     * Serializes gf form data.
+     * Serializes gf form's data.
      *
      * @param array $form GF form data.
      *
-     * @return array Form data.
+     * @return array
      */
     public function serialize_form($form)
     {
@@ -178,11 +182,11 @@ class Integration extends BaseIntegration
     }
 
     /**
-     * Serializes GF form data field.
+     * Serializes a GFField as array data.
      *
      * @param GFField $field Field object instance.
      *
-     * @return array Field data.
+     * @return array
      */
     private function serialize_field($field)
     {
@@ -273,12 +277,12 @@ class Integration extends BaseIntegration
     }
 
     /**
-     * Serializes current form submission data.
+     * Serializes the current form's submission data.
      *
      * @param array $submission GF form submission.
      * @param array $form Form data.
      *
-     * @return array Submission data.
+     * @return array
      */
     public function serialize_submission($submission, $form_data)
     {
@@ -366,9 +370,9 @@ class Integration extends BaseIntegration
     /**
      * Formats field values with noop fallback.
      *
-     * @param mixed $value Field value.
+     * @param mixed $value Field's value.
      * @param GFField $field Field object instance.
-     * @param array $input Field input data.
+     * @param array $input Field's input data.
      *
      * @return mixed Formatted value.
      */
@@ -417,7 +421,7 @@ class Integration extends BaseIntegration
     }
 
     /**
-     * Gets current submission uploaded files.
+     * Gets the current submission's uploaded files.
      *
      * @param array $submission GF submission data.
      * @param array $form_data Form data.
@@ -462,6 +466,13 @@ class Integration extends BaseIntegration
         );
     }
 
+    /**
+     * Helper function to check if field is set on $_POST super global.
+     *
+     * @param string $field_id ID of the field.
+     *
+     * @return boolean
+     */
     private function isset($field_id)
     {
         $key = 'input_' . implode('_', explode('.', $field_id));

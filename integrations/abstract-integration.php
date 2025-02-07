@@ -217,6 +217,15 @@ abstract class Integration extends Singleton
     abstract public function forms();
 
     /**
+     * Creates a form from a given template fields.
+     *
+     * @param array $data Form template data.
+     *
+     * @return int|null ID of the new form.
+     */
+    abstract public function create_form($data);
+
+    /**
      * Retrives the current form submission.
      *
      * @return array Submission data.

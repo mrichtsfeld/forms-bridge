@@ -14,15 +14,18 @@ if (!defined('ABSPATH')) {
  */
 class Integration extends BaseIntegration
 {
+    /**
+     * Handles the current submission data.
+     *
+     * @var array|null
+     */
     private static $submission = null;
 
     /**
-     * Inherit parent constructor and hooks submissions to wpforms_process_complete
+     * Binds process complete hook to the do_submission routine.
      */
-    protected function construct(...$args)
+    protected function init()
     {
-        parent::construct(...$args);
-
         add_action(
             'wpforms_process_complete',
             function ($fields, $entry, $form_data, $entry_id) {
@@ -37,12 +40,7 @@ class Integration extends BaseIntegration
     }
 
     /**
-     * Integration initializer to be fired on wp init.
-     */
-    protected function init() {}
-
-    /**
-     * Retrives the current WPForms_Form_Handler data.
+     * Retrives the current WPForms_Form_Handler's data.
      *
      * @return array Form data.
      */
@@ -60,11 +58,11 @@ class Integration extends BaseIntegration
     }
 
     /**
-     * Retrives form data by ID.
+     * Retrives a WPForms_Form_Handler's data by ID.
      *
-     * @param int $form_id Form ID.
+     * @param int $form_id ID of the form.
      *
-     * @return array Form data.
+     * @return array.
      */
     public function get_form_by_id($form_id)
     {
@@ -77,9 +75,9 @@ class Integration extends BaseIntegration
     }
 
     /**
-     * Retrives available forms data.
+     * Retrives available form instances' data.
      *
-     * @return array Collection of form data.
+     * @return array Collection of forms data.
      */
     public function forms()
     {
@@ -90,7 +88,18 @@ class Integration extends BaseIntegration
     }
 
     /**
-     * Retrives the current submission data.
+     * Creates a form from the given template fields.
+     *
+     * @param array $data Form template data.
+     *
+     * @return int|null ID of the new form.
+     *
+     * @todo Implement this routine.
+     */
+    public function create_form($data) {}
+
+    /**
+     * Retrives the current form submission data.
      *
      * @return array Submission data.
      */
@@ -124,11 +133,11 @@ class Integration extends BaseIntegration
     }
 
     /**
-     * Serialize form data.
+     * Serializes a wp form post instance as array data.
      *
      * @param WP_Post $form Form post instance.
      *
-     * @return array Form data.
+     * @return array
      */
     public function serialize_form($form)
     {
@@ -158,12 +167,12 @@ class Integration extends BaseIntegration
     }
 
     /**
-     * Serialize form field data.
+     * Serializes a field as array data.
      *
-     * @param array $field WPForms field data representation.
+     * @param array $field Field data.
      * @param array $form_data Form data.
      *
-     * @return array Field data.
+     * @return array
      */
     private function serialize_field($field)
     {
@@ -213,12 +222,12 @@ class Integration extends BaseIntegration
     }
 
     /**
-     * Serialize form submission data.
+     * Serializes the form's submission data.
      *
-     * @param array $submission WPForms submission data.
+     * @param array $submission Submission data.
      * @param array $form Form data.
      *
-     * @return array Submission data.
+     * @return array
      */
     public function serialize_submission($submission, $form_data)
     {
@@ -276,12 +285,14 @@ class Integration extends BaseIntegration
     }
 
     /**
-     * Get form submission uploaded files.
+     * Gets submission uploaded files.
      *
-     * @param object $submission WPForms submission data.
+     * @param object $submission Submission data.
      * @param array $form_data Form data.
      *
      * @return array Uploaded files data.
+     *
+     * @todo Adapt to premium version with available upload field.
      */
     protected function submission_uploads($submission, $form_data)
     {

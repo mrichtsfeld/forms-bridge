@@ -13,7 +13,8 @@ if (!defined('ABSPATH')) {
 }
 
 /**
- * Plugin REST API controller
+ * Plugin REST API controller. Handles routes registration, permissions
+ * and request callbacks.
  */
 class REST_Settings_Controller extends Base_Controller
 {
@@ -137,9 +138,9 @@ class REST_Settings_Controller extends Base_Controller
     }
 
     /**
-     * GET requests forms endpoint callback.
+     * Callback for GET requests to the forms endpoint.
      *
-     * @return array Collection of array form representations.
+     * @return array Collection of array forms data.
      */
     private static function forms()
     {
@@ -150,6 +151,13 @@ class REST_Settings_Controller extends Base_Controller
         }, $forms);
     }
 
+    /**
+     * Callback for GET requests to the templates endpoint.
+     *
+     * @param REST_Request Request instance.
+     *
+     * @return array|WP_Error Template data.
+     */
     private static function get_template($request)
     {
         $template_name = $request['name'];
@@ -165,6 +173,13 @@ class REST_Settings_Controller extends Base_Controller
         return $template->to_json();
     }
 
+    /**
+     * Callback for POST requests to the templates endpoint.
+     *
+     * @param REST_Request Request instance.
+     *
+     * @return array|WP_Error Template use result.
+     */
     private static function post_template($request)
     {
         $name = isset($request['name'])
@@ -202,6 +217,7 @@ class REST_Settings_Controller extends Base_Controller
 
             return ['success' => true];
         } catch (Form_Hook_Template_Exception $e) {
+            // Use custom exception to catch custom error status
             return new WP_Error($e->getStringCode(), $e->getMessage());
         } catch (Error | Exception $e) {
             return new WP_Error('internal_server_error', $e->getMessage());

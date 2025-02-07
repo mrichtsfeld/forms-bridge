@@ -8,31 +8,82 @@ if (!defined('ABSPATH')) {
     exit();
 }
 
+/**
+ * Custom exception for fine grained error handling during template implementations.
+ */
 class Form_Hook_Template_Exception extends Exception
 {
+    /**
+     * Handles the error's string code.
+     *
+     * @var string.
+     */
     private $string_code;
 
+    /**
+     * Recives a code as string and a message and store the string code
+     * as a custom attribute.
+     *
+     * @param string $string_code String code compatible with WP_Error codes.
+     * @param string $message Error message.
+     */
     public function __construct($string_code, $message)
     {
         $this->string_code = $string_code;
         parent::__construct($message);
     }
 
+    /**
+     * String code getter.
+     *
+     * @return string
+     */
     public function getStringCode()
     {
         return $this->string_code;
     }
 }
 
+/**
+ * Form hooks template class. Handles the config data validation
+ * and the use of template as form hook creation strategy.
+ */
 class Form_Hook_Template
 {
+    /**
+     * Handles the template api name.
+     *
+     * @var string
+     */
     private $api;
+
+    /**
+     * Handles the template file name.
+     *
+     * @var string
+     */
     private $file;
+
+    /**
+     * Handles the template name.
+     *
+     * @var string
+     */
     private $name;
-    private $title;
+
+    /**
+     * Handles the template config data.
+     *
+     * @var array
+     */
     private $config;
 
-    private static $default = [
+    /**
+     * Handles the template default values.
+     *
+     * @var array
+     */
+    protected static $default = [
         'fields' => [
             [
                 'ref' => '#form',
@@ -80,6 +131,12 @@ class Form_Hook_Template
         ],
     ];
 
+    /**
+     * Handles the common template data json schema. The schema is common for all
+     * Form_Hook_Templates.
+     *
+     * @var array
+     */
     private static $schema = [
         'title' => ['type' => 'string'],
         'integrations' => [
@@ -174,7 +231,7 @@ class Form_Hook_Template
                             'is_file' => ['type' => 'boolean'],
                             'is_multi' => ['type' => 'boolean'],
                         ],
-                        'required' => ['label', 'name', 'type'],
+                        'required' => ['name', 'type'],
                     ],
                     'minItems' => 1,
                 ],
@@ -184,6 +241,13 @@ class Form_Hook_Template
         ],
     ];
 
+    /**
+     * Validates input config against the template schema.
+     *
+     * @param array $config Input config.
+     *
+     * @return array|WP_Error Validated config.
+     */
     private static function validate_config($config)
     {
         $schema = [
@@ -327,6 +391,16 @@ class Form_Hook_Template
         return $collection;
     }
 
+    /**
+     * Generic array default values merger. Switches between merge_collection and merge_list
+     * based on the list items' data type.
+     *
+     * @param array $array Input array.
+     * @param array $default Default array values.
+     * @param array $schema JSON schema of the array values.
+     *
+     * @return array Array fullfilled with defaults.
+     */
     private static function merge_array($array, $default, $schema)
     {
         foreach ($default as $key => $default_value) {
@@ -367,6 +441,13 @@ class Form_Hook_Template
         return $array;
     }
 
+    /**
+     * Store template attribute values, validates config data and binds the
+     * instance to custom forms bridge template hooks.
+     *
+     * @param string $file Source file path of the template config.
+     * @param array $config Template config data.
+     */
     public function __construct($file, $config)
     {
         $this->api = 'rest-api';
@@ -407,6 +488,13 @@ class Form_Hook_Template
         });
     }
 
+    /**
+     * Magic method to proxy private template attributes and config data.
+     *
+     * @param string $name Attribute name.
+     *
+     * @return mixed Attribute value or null.
+     */
     public function __get($name)
     {
         switch ($name) {
@@ -421,6 +509,11 @@ class Form_Hook_Template
         return $this->config[$name] ?? null;
     }
 
+    /**
+     * Decorates the template config data for REST responses.
+     *
+     * @return array REST config data.
+     */
     public function to_json()
     {
         return [
@@ -430,6 +523,13 @@ class Form_Hook_Template
         ];
     }
 
+    /**
+     * Applies the input fields with the template's config data to
+     * create a form and bind it with a form hook.
+     *
+     * @param array $fields User input fields data.
+     * @param string $integration Target integration.
+     */
     private function use_template($fields, $integration)
     {
         $template = $this->config;
@@ -561,6 +661,13 @@ class Form_Hook_Template
         }
     }
 
+    /**
+     * Stores the form hook data on the settings store.
+     *
+     * @param array $data Form hook data.
+     *
+     * @return boolean Creation result.
+     */
     private function create_hook($data)
     {
         $setting = Forms_Bridge::setting($this->api);
