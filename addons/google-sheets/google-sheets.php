@@ -14,7 +14,11 @@ require_once 'class-gs-rest-controller.php';
 require_once 'class-gs-ajax-controller.php';
 require_once 'class-gs-service.php';
 require_once 'class-gs-form-hook.php';
+require_once 'class-gs-form-hook-template.php';
 
+/**
+ * Google Sheets addon class.
+ */
 class Google_Sheets_Addon extends Addon
 {
     /**

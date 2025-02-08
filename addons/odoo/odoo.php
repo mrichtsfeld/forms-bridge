@@ -10,6 +10,7 @@ if (!defined('ABSPATH')) {
 
 require_once 'class-odoo-db.php';
 require_once 'class-odoo-form-hook.php';
+require_once 'class-odoo-form-hook-template.php';
 
 /**
  * Odoo Addon class.
@@ -123,7 +124,9 @@ class Odoo_Addon extends Addon
         ]);
 
         do_action('forms_bridge_before_odoo_rpc_login', $payload, $db);
+
         $response = $backend->post($endpoint, $payload);
+
         do_action(
             'forms_bridge_after_odoo_rpc_login',
             $response,
@@ -132,6 +135,7 @@ class Odoo_Addon extends Addon
         );
 
         $user_id = self::rpc_response($response);
+
         if (is_wp_error($user_id)) {
             return $user_id;
         }
@@ -146,6 +150,7 @@ class Odoo_Addon extends Addon
     protected function construct(...$args)
     {
         parent::construct(...$args);
+
         self::interceptors();
         self::custom_hooks();
     }

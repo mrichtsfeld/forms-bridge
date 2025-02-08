@@ -6,7 +6,7 @@ if (!defined('ABSPATH')) {
     exit();
 }
 
-class Rest_Form_Hook_Template extends Form_Hook_Template
+class Google_Sheets_Form_Hook_Template extends Form_Hook_Template
 {
     /**
      * Handles the template default values.
@@ -17,44 +17,22 @@ class Rest_Form_Hook_Template extends Form_Hook_Template
         'fields' => [
             [
                 'ref' => '#hook',
-                'name' => 'backend',
-                'label' => 'Backend',
+                'name' => 'spreadsheet',
+                'label' => 'Spreadsheet',
                 'type' => 'string',
                 'required' => true,
             ],
             [
                 'ref' => '#hook',
-                'name' => 'endpoint',
-                'label' => 'Endpoint',
+                'name' => 'tab',
+                'label' => 'Tab',
                 'type' => 'string',
                 'required' => true,
-            ],
-            [
-                'ref' => '#hook',
-                'name' => 'method',
-                'label' => 'Method',
-                'type' => 'string',
-                'required' => true,
-                'default' => 'POST',
-            ],
-            [
-                'ref' => '#backend',
-                'name' => 'name',
-                'label' => 'Name',
-                'type' => 'string',
-                'required' => true,
-            ],
-            [
-                'ref' => '#backend',
-                'name' => 'base_url',
-                'label' => 'Base URL',
-                'type' => 'string',
             ],
         ],
         'hook' => [
-            'backend' => '',
-            'endpoint' => '',
-            'method' => 'POST',
+            'spreadsheet' => '',
+            'tab' => '',
         ],
     ];
 
@@ -67,7 +45,7 @@ class Rest_Form_Hook_Template extends Form_Hook_Template
      */
     public function __construct($file, $config)
     {
-        $this->api = 'rest-api';
+        $this->api = 'google-sheets';
 
         add_filter(
             'forms_bridge_template_schema',
@@ -97,18 +75,13 @@ class Rest_Form_Hook_Template extends Form_Hook_Template
         $schema['hook']['properties'] = array_merge(
             $schema['hook']['properties'],
             [
-                'backend' => ['type' => 'string'],
-                'endpoint' => ['type' => 'string'],
-                'method' => [
-                    'type' => 'string',
-                    'enum' => ['GET', 'POST', 'PUT', 'DELETE'],
-                ],
+                'spreadsheet' => ['type' => 'string'],
+                'tab' => ['type' => 'string'],
             ]
         );
 
-        $schema['hook']['required'][] = 'backend';
-        $schema['hook']['required'][] = 'endpoint';
-        $schema['hook']['required'][] = 'method';
+        $schema['hook']['required'][] = 'spreadsheet';
+        $schema['hook']['required'][] = 'tab';
 
         return $schema;
     }

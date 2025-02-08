@@ -99,26 +99,6 @@ class Form_Hook_Template
                 'type' => 'string',
                 'required' => true,
             ],
-            [
-                'ref' => '#hook',
-                'name' => 'backend',
-                'label' => 'Backend',
-                'type' => 'string',
-                'required' => true,
-            ],
-            [
-                'ref' => '#backend',
-                'name' => 'name',
-                'label' => 'Backend name',
-                'type' => 'string',
-                'required' => true,
-            ],
-            [
-                'ref' => '#backend',
-                'name' => 'base_url',
-                'label' => 'Base URL',
-                'type' => 'string',
-            ],
         ],
         'hook' => [
             'name' => '',
@@ -192,9 +172,7 @@ class Form_Hook_Template
             'type' => 'object',
             'properties' => [
                 'name' => ['type' => 'string'],
-                'backend' => ['type' => 'string'],
                 'form_id' => ['type' => 'string'],
-                'endpoint' => ['type' => 'string'],
                 'pipes' => [
                     'type' => 'array',
                     'items' => [
@@ -726,6 +704,13 @@ class Form_Hook_Template
         $data = apply_filters('forms_bridge_template_data', $data, $this->name);
 
         $integration_instance = Integration::integrations()[$integration];
+
+        do_action(
+            'forms_bridge_before_template_form',
+            $data['form'],
+            $this->name
+        );
+
         $form_id = $integration_instance->create_form($data['form']);
 
         if (!$form_id) {
@@ -734,6 +719,10 @@ class Form_Hook_Template
                 __('Forms bridge can\'t create the form', 'forms-bridge')
             );
         }
+
+        $data['hook']['form_id'] = $integration . ':' . $form_id;
+
+        do_action('forms_bridge_template_form', $data['form'], $this->name);
 
         if (isset($data['backend']['base_url'])) {
             $result = $this->create_backend($data['backend']);
@@ -796,7 +785,12 @@ class Form_Hook_Template
             return;
         }
 
-        $setting->form_hooks = $setting_data['form_hooks'];
+        do_action('forms_bridge_before_template_backend', $data, $this->name);
+
+        $setting->backends = $setting_data['backends'];
+
+        do_action('forms_bridge_template_backend', $data, $this->name);
+
         return true;
     }
     /**
@@ -838,7 +832,12 @@ class Form_Hook_Template
             return;
         }
 
+        do_action('forms_bridge_before_template_hook', $data, $this->name);
+
         $setting->form_hooks = $setting_data['form_hooks'];
+
+        do_action('forms_bridge_template_hook', $data, $this->name);
+
         return true;
     }
 }
