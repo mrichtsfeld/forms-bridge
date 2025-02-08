@@ -83,7 +83,7 @@ export default function FormHooks({ hooks, setHooks, FormHook }) {
     const hook = hooks[i];
     const copy = {
       ...hook,
-      pipes: JSON.parse(JSON.stringify(hooks.pipes || [])),
+      pipes: JSON.parse(JSON.stringify(hook.pipes || [])),
     };
 
     let isUnique = false;
