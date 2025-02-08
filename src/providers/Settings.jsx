@@ -9,11 +9,7 @@ const defaults = {
     addons: {},
     integrations: {},
   },
-  apis: {
-    "rest-api": {
-      form_hooks: [],
-    },
-  },
+  apis: {},
 };
 
 const SettingsContext = createContext([defaults, () => {}]);

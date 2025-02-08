@@ -1,12 +1,11 @@
 const esbuild = require("esbuild");
 
 (async () => {
-  await esbuild.build({
+  const ctx = await esbuild.context({
     entryPoints: ["src/index.jsx"],
     bundle: true,
     sourcemap: true,
-    minify: true,
-    outfile: "assets/plugin.bundle.js",
+    outfile: "assets/addon.bundle.js",
     loader: { ".png": "base64" },
     plugins: [
       {
@@ -23,4 +22,7 @@ const esbuild = require("esbuild");
       },
     ],
   });
+
+  await ctx.watch();
+  console.log("watching...");
 })();

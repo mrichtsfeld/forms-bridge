@@ -39,7 +39,6 @@ return [
     'form' => [
         'fields' => [
             [
-                'label' => __('Campaign', 'forms-bridge'),
                 'name' => 'campaign',
                 'type' => 'hidden',
                 'required' => true,

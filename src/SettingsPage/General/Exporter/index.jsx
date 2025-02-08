@@ -1,6 +1,6 @@
 // source
-import { useStoreSubmit } from "../../../../providers/Store";
-import { useGeneral, useApis } from "../../../../providers/Settings";
+import { useStoreSubmit } from "../../../providers/Store";
+import { useGeneral, useApis } from "../../../providers/Settings";
 
 const { useState, useEffect } = wp.element;
 const { __experimentalSpacer: Spacer, Button, Modal, Notice } = wp.components;
@@ -147,7 +147,7 @@ export default function Exporter() {
             <Button
               variant="primary"
               isDestructive={true}
-              description={__("Cancel de import", "forms-bridge")}
+              description={__("Cancel the import", "forms-bridge")}
               onClick={() => {
                 setUserConsent(false);
                 setTimeout(() => setShowModal(false));

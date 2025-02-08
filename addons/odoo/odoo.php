@@ -28,7 +28,7 @@ class Odoo_Addon extends Addon
      *
      * @var string
      */
-    protected static $slug = 'odoo-api';
+    protected static $slug = 'odoo';
 
     /**
      * Handles the addom's custom form hook class.
@@ -240,6 +240,7 @@ class Odoo_Addon extends Addon
                             'password' => ['type' => 'string'],
                             'backend' => ['type' => 'string'],
                         ],
+                        'required' => ['name', 'user', 'password', 'backend'],
                     ],
                 ],
                 'form_hooks' => [
@@ -272,8 +273,16 @@ class Odoo_Addon extends Addon
                                             ],
                                         ],
                                     ],
+                                    'required' => ['from', 'to', 'cast'],
                                 ],
                             ],
+                        ],
+                        'required' => [
+                            'name',
+                            'database',
+                            'form_id',
+                            'model',
+                            'pipes',
                         ],
                     ],
                 ],
@@ -283,6 +292,103 @@ class Odoo_Addon extends Addon
                 'form_hooks' => [],
             ],
         ];
+    }
+
+    /**
+     * Apply settings' data validations before db updates.
+     *
+     * @param array $data Setting data.
+     * @param Setting $setting Setting instance.
+     *
+     * @return array Validated setting data.
+     */
+    protected static function validate_setting($data, $setting)
+    {
+        $data['databases'] = self::validate_databases($data['databases']);
+        $data['form_hooks'] = self::validate_form_hooks(
+            $data['form_hooks'],
+            $data['databases']
+        );
+
+        return $data;
+    }
+
+    /**
+     * Database setting field validation.
+     *
+     * @param array $dbs Databases data.
+     *
+     * @return array Validated databases data.
+     */
+    private static function validate_databases($dbs)
+    {
+        if (!wp_is_numeric_array($dbs)) {
+            return [];
+        }
+
+        $backends = array_map(
+            function ($backend) {
+                return $backend['name'];
+            },
+            Forms_Bridge::setting('general')->backends ?: []
+        );
+
+        return array_filter($dbs, function ($db_data) use ($backends) {
+            return in_array($db_data['backend'] ?? null, $backends);
+        });
+    }
+
+    /**
+     * Validate form hooks settings. Filters form hooks with inconsistencies with the
+     * existing databases.
+     *
+     * @param array $form_hooks Array with form hooks configurations.
+     * @param array $dbs Array with databases data.
+     *
+     * @return array Array with valid form hook configurations.
+     */
+    private static function validate_form_hooks($form_hooks, $dbs)
+    {
+        if (!wp_is_numeric_array($form_hooks)) {
+            return [];
+        }
+
+        $_ids = array_reduce(
+            apply_filters('forms_bridge_forms', []),
+            static function ($form_ids, $form) {
+                return array_merge($form_ids, [$form['_id']]);
+            },
+            []
+        );
+
+        $tempaltes = array_map(function ($template) {
+            return $template['name'];
+        }, apply_filters('forms_bridge_templates', [], 'odoo'));
+
+        $valid_hooks = [];
+        for ($i = 0; $i < count($form_hooks); $i++) {
+            $hook = $form_hooks[$i];
+
+            // Valid only if database and form id exists
+            $is_valid =
+                array_reduce(
+                    $dbs,
+                    static function ($is_valid, $db) use ($hook) {
+                        return $hook['database'] === $db['name'] || $is_valid;
+                    },
+                    false
+                ) &&
+                in_array($hook['form_id'], $_ids) &&
+                (empty($hook['template']) ||
+                    empty($tempaltes) ||
+                    in_array($hook['template'], $tempaltes));
+
+            if ($is_valid) {
+                $valid_hooks[] = $hook;
+            }
+        }
+
+        return $valid_hooks;
     }
 
     /**
@@ -345,108 +451,6 @@ class Odoo_Addon extends Addon
 
         self::$submitting = false;
         return self::rpc_response($response);
-    }
-
-    /**
-     * Validate setting data callback.
-     *
-     * @param array $data Setting data.
-     * @param Setting $setting Setting instance.
-     *
-     * @return array Validated setting data.
-     */
-    protected static function validate_setting($data, $setting)
-    {
-        $data['databases'] = self::validate_databases($data['databases']);
-        $data['form_hooks'] = self::validate_form_hooks(
-            $data['form_hooks'],
-            $data['databases']
-        );
-
-        return $data;
-    }
-
-    /**
-     * Database setting field validation.
-     *
-     * @param array $dbs Databases data.
-     *
-     * @return array Validated databases data.
-     */
-    private static function validate_databases($dbs)
-    {
-        if (!wp_is_numeric_array($dbs)) {
-            return [];
-        }
-
-        $backends = array_map(
-            function ($backend) {
-                return $backend['name'];
-            },
-            Forms_Bridge::setting('general')->backends ?: []
-        );
-
-        return array_filter($dbs, function ($db_data) use ($backends) {
-            return isset(
-                $db_data['name'],
-                $db_data['user'],
-                $db_data['password'],
-                $db_data['backend']
-            ) && in_array($db_data['backend'], $backends);
-        });
-    }
-
-    /**
-     * Validate form hooks settings. Filters form hooks with inconsistencies with the
-     * existing databases.
-     *
-     * @param array $form_hooks Array with form hooks configurations.
-     * @param array $dbs Array with databases data.
-     *
-     * @return array Array with valid form hook configurations.
-     */
-    private static function validate_form_hooks($form_hooks, $dbs)
-    {
-        if (!wp_is_numeric_array($form_hooks)) {
-            return [];
-        }
-
-        $_ids = array_reduce(
-            apply_filters('forms_bridge_forms', []),
-            static function ($form_ids, $form) {
-                return array_merge($form_ids, [$form['_id']]);
-            },
-            []
-        );
-
-        $valid_hooks = [];
-        for ($i = 0; $i < count($form_hooks); $i++) {
-            $hook = $form_hooks[$i];
-
-            // Valid only if database and form id exists
-            $is_valid =
-                array_reduce(
-                    $dbs,
-                    static function ($is_valid, $db) use ($hook) {
-                        return $hook['database'] === $db['name'] || $is_valid;
-                    },
-                    false
-                ) && in_array($hook['form_id'], $_ids);
-
-            if ($is_valid) {
-                // filter empty pipes
-                $hook['pipes'] = array_filter(
-                    (array) $hook['pipes'],
-                    static function ($pipe) {
-                        return $pipe['to'] && $pipe['from'] && $pipe['cast'];
-                    }
-                );
-
-                $valid_hooks[] = $hook;
-            }
-        }
-
-        return $valid_hooks;
     }
 }
 

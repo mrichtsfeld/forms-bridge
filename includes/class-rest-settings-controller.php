@@ -70,7 +70,7 @@ class REST_Settings_Controller extends Base_Controller
                     },
                 ],
                 [
-                    'methods' => WP_REST_Server::EDITABLE,
+                    'methods' => WP_REST_Server::CREATABLE,
                     'callback' => static function ($request) {
                         return self::post_template($request);
                     },

@@ -15,24 +15,40 @@ if (!defined('ABSPATH')) {
 class Form_Hook
 {
     /**
-     * Handles form hook settings data.
+     * Handles the form hook's settings data.
      *
-     * @var array $data.
+     * @var array
      */
-    protected $data;
+    private $data;
 
     /**
      * Handles form hook's api slug.
      *
-     * @var string $api;
+     * @var string
      */
     protected $api;
 
+    /**
+     * Handles the form hook's template class.
+     *
+     * @var string
+     */
     protected static $template_class = '\FORMS_BRIDGE\Form_Hook_Template';
 
-    protected static $templates = [];
+    /**
+     * Handles available template instances.
+     *
+     * @var array
+     */
+    private static $templates = [];
 
-    public static function load_templates($templates_path)
+    /**
+     * Loads template configs from a given directory path.Allowed file formats
+     * are php and json.
+     *
+     * @param string $templates_path Source templates directory path.
+     */
+    final public static function load_templates($templates_path)
     {
         if (!is_dir($templates_path)) {
             $res = mkdir($templates_path);
@@ -49,15 +65,34 @@ class Form_Hook
             array_diff(scandir($templates_path), ['.', '..'])
             as $template_file
         ) {
-            $config = include $templates_path . '/' . $template_file;
-            static::$templates[] = new static::$template_class(
-                $template_file,
-                $config
-            );
+            $path = $templates_path . '/' . $template_file;
+            $ext = pathinfo($path)['extension'];
+
+            $config = null;
+            if ($ext === 'php') {
+                $config = include $path;
+            } elseif ($ext === 'json') {
+                $content = file_get_contents($path);
+                $config = json_decode($content, true);
+            }
+
+            if ($config) {
+                static::$templates[] = new static::$template_class(
+                    $template_file,
+                    $config
+                );
+            }
         }
     }
 
-    public static function get_template($name)
+    /**
+     * Gets a template instance by name.
+     *
+     * @param string $name Template name.
+     *
+     * @return Form_Hook_Template|null
+     */
+    final public static function get_template($name)
     {
         foreach (static::$templates as $template) {
             if ($template->name === $name) {
@@ -67,40 +102,11 @@ class Form_Hook
     }
 
     /**
-     * Form hooks getter.
-     *
-     * @param string $integration Integration slug.
-     * @param int $form_id Optional, ID of the target form. Current form is used if not especified.
-     *
-     * @return array $hooks Array with hooks.
-     */
-    public static function form_hooks($form_id = null)
-    {
-        // Get available form hooks
-        $form_hooks = Forms_Bridge::setting('rest-api')->form_hooks;
-
-        // Filter form hooks by form id and returns the resulting array
-        return array_map(
-            static function ($hook_data) {
-                return new Form_Hook($hook_data);
-            },
-            array_filter($form_hooks, static function ($hook_data) use (
-                $form_id
-            ) {
-                return $form_id !== null
-                    ? $hook_data['form_id'] === $form_id
-                    : true;
-            })
-        );
-    }
-
-    /**
-     * Binds the hook data and sets its protocol.
+     * Stores the hook's data as a private attribute.
      */
     public function __construct($data)
     {
         $this->data = $data;
-        $this->api = 'rest-api';
     }
 
     /**
@@ -138,7 +144,7 @@ class Form_Hook
     /**
      * Retrives the hook's backend instance.
      *
-     * @return Http_Backend Backend instance.
+     * @return Http_Backend|null
      */
     private function backend()
     {
@@ -153,7 +159,7 @@ class Form_Hook
     /**
      * Retrives the hook's form data.
      *
-     * @return array Form data.
+     * @return array|null
      */
     protected function form()
     {
@@ -162,9 +168,9 @@ class Form_Hook
     }
 
     /**
-     * Retrives the hook's integration.
+     * Retrives the hook's integration name.
      *
-     * @return string Integration slug.
+     * @return string
      */
     protected function integration()
     {
@@ -175,7 +181,7 @@ class Form_Hook
     /**
      * Gets form hook's default body encoding schema.
      *
-     * @return string|null Encoding schema.
+     * @return string|null
      */
     protected function content_type()
     {
@@ -244,12 +250,12 @@ class Form_Hook
     }
 
     /**
-     * Cast value to type.
+     * Casts value to the given type.
      *
      * @param mixed $value Original value.
      * @param string $type Target type to cast value.
      *
-     * @return mixed $value Casted value.
+     * @return mixed
      */
     private function cast($value, $type)
     {

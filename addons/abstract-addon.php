@@ -72,6 +72,9 @@ abstract class Addon extends Singleton
             }
         }
 
+        // REST API always enabled
+        $registry['rest-api'] = true;
+
         return $registry;
     }
 
@@ -173,10 +176,28 @@ abstract class Addon extends Singleton
 
         add_filter(
             'forms_bridge_form_hooks',
-            static function ($form_hooks, $form_id = null) {
-                return self::form_hooks($form_hooks, $form_id);
+            static function ($form_hooks, $form_id = null, $api = null) {
+                return self::form_hooks($form_hooks, $form_id, $api);
             },
-            9,
+            10,
+            3
+        );
+
+        add_filter(
+            'forms_bridge_form_hook',
+            static function ($form_hook, $hook_name) {
+                if ($form_hook instanceof Form_Hook) {
+                    return $form_hook;
+                }
+
+                $form_hooks = static::setting()->form_hooks;
+                foreach ($form_hooks as $hook_data) {
+                    if ($hook_data['name'] === $hook_name) {
+                        return new static::$hook_class($hook_data);
+                    }
+                }
+            },
+            10,
             2
         );
     }
@@ -205,6 +226,8 @@ abstract class Addon extends Singleton
 
     /**
      * Addon setting getter.
+     *
+     * @return Setting|null Setting instance.
      */
     final protected static function setting()
     {
@@ -216,13 +239,51 @@ abstract class Addon extends Singleton
      *
      * @param array $form_hooks List with available form hooks.
      * @param int|null $form_id Target form ID.
+     * @param string $api Api name to filter by.
      *
      * @return array List with available form hooks.
      */
-    private static function form_hooks($form_hooks, $form_id = null)
-    {
+    private static function form_hooks(
+        $form_hooks,
+        $form_id = null,
+        $api = null
+    ) {
         if (!wp_is_numeric_array($form_hooks)) {
             $form_hooks = [];
+        }
+
+        if (!empty($api) && $api !== static::$slug) {
+            return $form_hooks;
+        }
+
+        // Check if form_id is internal or external
+        if ($form_id) {
+            $parts = explode(':', $form_id);
+            if (count($parts) === 1) {
+                $integration = null;
+                $id = $parts[0];
+            } else {
+                [$integration, $id] = $parts;
+            }
+
+            if (!$integration) {
+                $integrations = array_keys(Integration::integrations());
+                if (count($integrations) > 1) {
+                    _doing_it_wrong(
+                        'forms_bridge_form_hooks',
+                        __(
+                            '$form_id param should incloude the integration prefix if there is more than one integration active',
+                            'forms-bridge'
+                        ),
+                        '2.3.0'
+                    );
+                    return [];
+                }
+
+                $integration = array_pop($integrations);
+            }
+
+            $form_id = "{$integration}:{$id}";
         }
 
         return array_merge(
@@ -332,6 +393,12 @@ abstract class Addon extends Singleton
                     ['in_footer' => true]
                 );
 
+                wp_set_script_translations(
+                    $script_name,
+                    Forms_Bridge::slug(),
+                    Forms_Bridge::path() . 'languages'
+                );
+
                 add_filter('forms_bridge_admin_script_deps', static function (
                     $deps
                 ) use ($script_name) {
@@ -362,25 +429,13 @@ abstract class Addon extends Singleton
     }
 
     /**
-     * Loads addon templates.
+     * Loads addon's hook templates.
      */
     private static function load_templates()
     {
         $__FILE__ = (new ReflectionClass(static::class))->getFileName();
         $dir = dirname($__FILE__) . '/templates';
-        if (!is_dir($dir)) {
-            $result = mkdir($dir);
-            if (!$result) {
-                return;
-            }
-        }
 
-        if (!is_readable($dir)) {
-            return;
-        }
-
-        foreach (array_diff(scandir($dir), ['.', '..']) as $file) {
-            include_once $file;
-        }
+        static::$hook_class::load_templates($dir);
     }
 }

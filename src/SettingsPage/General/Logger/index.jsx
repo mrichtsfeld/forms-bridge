@@ -1,6 +1,6 @@
 // source
-import useDebug from "../../../../hooks/useDebug";
-import useLogs from "../../../../hooks/useLogs";
+import useDebug from "../../../hooks/useDebug";
+import useLogs from "../../../hooks/useLogs";
 
 const { useState, useEffect, useRef } = wp.element;
 const { __experimentalSpacer: Spacer, ToggleControl, PanelRow } = wp.components;

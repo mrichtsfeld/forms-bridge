@@ -69,9 +69,6 @@ class Forms_Bridge extends Base_Plugin
         Addon::load();
         Integration::load();
 
-        $templates_path = self::path() . 'templates';
-        Form_Hook::load_templates($templates_path);
-
         self::wp_hooks();
         self::custom_hooks();
 
@@ -101,67 +98,6 @@ class Forms_Bridge extends Base_Plugin
      */
     private static function custom_hooks()
     {
-        // Return registerd form hooks
-        add_filter(
-            'forms_bridge_form_hooks',
-            static function ($form_hooks, $form_id = null) {
-                if (!wp_is_numeric_array($form_hooks)) {
-                    $form_hooks = [];
-                }
-
-                // Check if form_id is internal or external
-                if ($form_id) {
-                    $parts = explode(':', $form_id);
-                    if (count($parts) === 1) {
-                        $integration = null;
-                        $id = $parts[0];
-                    } else {
-                        [$integration, $id] = $parts;
-                    }
-
-                    if (!$integration) {
-                        $integrations = array_keys(Integration::integrations());
-                        if (count($integrations) > 1) {
-                            _doing_it_wrong(
-                                'forms_bridge_form_hooks',
-                                __(
-                                    '$form_id param should incloude the integration prefix if there is more than one integration active',
-                                    'forms-bridge'
-                                ),
-                                '2.3.0'
-                            );
-                            return [];
-                        }
-
-                        $integration = array_pop($integrations);
-                    }
-
-                    $form_id = "{$integration}:{$id}";
-                }
-
-                return array_merge(
-                    $form_hooks,
-                    Form_Hook::form_hooks($form_id)
-                );
-            },
-            5,
-            2
-        );
-
-        add_filter(
-            'forms_bridge_form_hook',
-            static function ($form_hook, $hook_name) {
-                $form_hooks = apply_filters('forms_bridge_form_hooks', []);
-                foreach ($form_hooks as $form_hook) {
-                    if ($form_hook->name === $hook_name) {
-                        return $form_hook;
-                    }
-                }
-            },
-            10,
-            2
-        );
-
         // Return pair plugin registered forms datums
         add_filter(
             'forms_bridge_forms',

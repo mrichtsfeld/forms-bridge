@@ -1,11 +1,14 @@
 // source
-import FormHook from "../../../components/FormHooks/FormHook";
-import NewRestFormHook from "./NewFormHook";
+import NewFormHook from "../../../../src/components/FormHooks/NewFormHook";
 
 const { TextControl, SelectControl } = wp.components;
 const { __ } = wp.i18n;
 
 const methodOptions = [
+  {
+    label: "",
+    value: "",
+  },
   {
     label: "GET",
     value: "GET",
@@ -24,26 +27,15 @@ const methodOptions = [
   },
 ];
 
-export default function RestFormHook({ data, update, remove }) {
+export default function NewRestFormHook({ add, schema }) {
   return (
-    <FormHook
-      data={data}
-      update={update}
-      remove={remove}
-      schema={["name", "backend", "form_id", "method", "endpoint"]}
-      template={({ add, schema }) => (
-        <NewRestFormHook
-          add={(data) => add({ method: "POST", ...data })}
-          schema={schema}
-        />
-      )}
-    >
+    <NewFormHook add={add} schema={schema}>
       {({ data, update }) => (
         <>
           <div style={{ flex: 1, minWidth: "150px", maxWidth: "250px" }}>
             <SelectControl
               label={__("Method", "forms-bridge")}
-              value={data.method}
+              value={data.method || ""}
               onChange={(method) => update({ ...data, method })}
               options={methodOptions}
               __nextHasNoMarginBottom
@@ -53,7 +45,7 @@ export default function RestFormHook({ data, update, remove }) {
           <div style={{ flex: 1, minWidth: "150px", maxWidth: "250px" }}>
             <TextControl
               label={__("Endpoint", "forms-bridge")}
-              value={data.endpoint}
+              value={data.endpoint || ""}
               onChange={(endpoint) => update({ ...data, endpoint })}
               __nextHasNoMarginBottom
               __next40pxDefaultSize
@@ -61,6 +53,6 @@ export default function RestFormHook({ data, update, remove }) {
           </div>
         </>
       )}
-    </FormHook>
+    </NewFormHook>
   );
 }

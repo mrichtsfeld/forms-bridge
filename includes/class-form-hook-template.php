@@ -154,8 +154,12 @@ class Form_Hook_Template
                     'label' => ['type' => 'string'],
                     'type' => ['type' => 'string'],
                     'required' => ['type' => 'boolean'],
-                    'const' => [],
-                    'default' => [],
+                    'const' => [
+                        'type' => ['string', 'boolean', 'number', 'integer'],
+                    ],
+                    'default' => [
+                        'type' => ['string', 'boolean', 'number', 'integer'],
+                    ],
                     'options' => [
                         'type' => 'array',
                         'items' => ['type' => 'string'],
@@ -350,6 +354,10 @@ class Form_Hook_Template
      */
     private static function merge_collection($collection, $default, $schema)
     {
+        if (!isset($schema['type'])) {
+            return $collection;
+        }
+
         if (!in_array($schema['type'], ['array', 'object'])) {
             return self::merge_list($collection, $default);
         }
@@ -366,11 +374,11 @@ class Form_Hook_Template
 
             $items = [];
             foreach ($collection as $item) {
-                $default_item = array_filter($default, function ($value) use (
-                    $item
-                ) {
-                    return $value['name'] === $item['name'];
-                });
+                $default_item = array_values(
+                    array_filter($default, function ($value) use ($item) {
+                        return $value['name'] === $item['name'];
+                    })
+                );
 
                 if (!empty($default_item)) {
                     $items[] = self::merge_array(
@@ -408,7 +416,12 @@ class Form_Hook_Template
                 $array[$key] = $default_value;
             } else {
                 $value = $array[$key];
-                if ($schema['properties'][$key]['type'] === 'object') {
+                $type = $schema['properties'][$key]['type'] ?? null;
+                if (!$type) {
+                    continue;
+                }
+
+                if ($type === 'object') {
                     if (!is_array($value) || wp_is_numeric_array($value)) {
                         $array[$key] = $default_value;
                     } else {
@@ -418,7 +431,7 @@ class Form_Hook_Template
                             $schema['properties'][$key]
                         );
                     }
-                } elseif ($schema['properties'][$key]['type'] === 'array') {
+                } elseif ($type === 'array') {
                     if (!wp_is_numeric_array($value)) {
                         $array[$key] = $default_value;
                     } else {
@@ -558,7 +571,9 @@ class Form_Hook_Template
                 'properties' => [
                     'ref' => ['type' => 'string'],
                     'name' => ['type' => 'string'],
-                    'value' => [],
+                    'value' => [
+                        'type' => ['string', 'boolean', 'number', 'integer'],
+                    ],
                 ],
                 'required' => ['ref', 'name', 'value'],
             ]);
@@ -566,9 +581,9 @@ class Form_Hook_Template
             if (!$is_valid || ($field['ref'][0] ?? '') !== '#') {
                 throw new Form_Hook_Template_Exception(
                     'invalid_field',
-                    /* translators: %s: Field name */
                     sprintf(
                         __(
+                            /* translators: %s: Field name */
                             'Field `%s` does not match the schema',
                             'forms-bridge'
                         ),
@@ -589,6 +604,7 @@ class Form_Hook_Template
                         'invalid_template',
                         sprintf(
                             __(
+                                /* translators: %s: Field name */
                                 'Template does not include form field `%s`',
                                 'forms-bridge'
                             ),
@@ -611,9 +627,9 @@ class Form_Hook_Template
                 if (!isset($leaf[$clean_key])) {
                     throw new Form_Hook_Template_Exception(
                         'invalid_ref',
-                        /* translators: %s: ref value */
                         sprintf(
                             __(
+                                /* translators: %s: ref value */
                                 'Invalid template field ref `%s`',
                                 'forms-bridge'
                             ),
@@ -649,6 +665,7 @@ class Form_Hook_Template
         $result = $this->create_hook(
             array_merge($data['hook'], [
                 'form_id' => $integration . ':' . $form_id,
+                'template' => $this->name,
             ])
         );
 

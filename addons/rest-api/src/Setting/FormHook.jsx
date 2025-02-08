@@ -1,14 +1,11 @@
 // source
-import NewFormHook from "../../../components/FormHooks/NewFormHook";
+import FormHook from "../../../../src/components/FormHooks/FormHook";
+import NewRestFormHook from "./NewFormHook";
 
 const { TextControl, SelectControl } = wp.components;
 const { __ } = wp.i18n;
 
 const methodOptions = [
-  {
-    label: "",
-    value: "",
-  },
   {
     label: "GET",
     value: "GET",
@@ -27,9 +24,20 @@ const methodOptions = [
   },
 ];
 
-export default function NewRestFormHook({ add, schema }) {
+export default function RestFormHook({ data, update, remove }) {
   return (
-    <NewFormHook add={add} schema={schema}>
+    <FormHook
+      data={data}
+      update={update}
+      remove={remove}
+      schema={["name", "backend", "form_id", "method", "endpoint"]}
+      template={({ add, schema }) => (
+        <NewRestFormHook
+          add={(data) => add({ method: "POST", ...data })}
+          schema={schema}
+        />
+      )}
+    >
       {({ data, update }) => (
         <>
           <div style={{ flex: 1, minWidth: "150px", maxWidth: "250px" }}>
@@ -53,6 +61,6 @@ export default function NewRestFormHook({ add, schema }) {
           </div>
         </>
       )}
-    </NewFormHook>
+    </FormHook>
   );
 }

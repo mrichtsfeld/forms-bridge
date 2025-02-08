@@ -29,7 +29,7 @@ class Google_Sheets_Addon extends Addon
      *
      * @var string
      */
-    protected static $slug = 'google-sheets-api';
+    protected static $slug = 'google-sheets';
 
     /**
      * Handles the addom's custom form hook class.
@@ -169,8 +169,16 @@ class Google_Sheets_Addon extends Addon
                                             ],
                                         ],
                                     ],
+                                    'required' => ['from', 'to', 'cast'],
                                 ],
                             ],
+                        ],
+                        'required' => [
+                            'name',
+                            'form_id',
+                            'spreadsheet',
+                            'tab',
+                            'pipes',
                         ],
                     ],
                 ],
@@ -304,22 +312,22 @@ class Google_Sheets_Addon extends Addon
             []
         );
 
+        $tempaltes = array_map(function ($template) {
+            return $template['name'];
+        }, apply_filters('forms_bridge_templates', [], 'google-sheets'));
+
         $valid_hooks = [];
         for ($i = 0; $i < count($form_hooks); $i++) {
             $hook = $form_hooks[$i];
 
             // Valid only if database and form id exists
-            $is_valid = in_array($hook['form_id'], $_ids);
+            $is_valid =
+                in_array($hook['form_id'], $_ids) &&
+                (empty($hook['template']) ||
+                    empty($tempaltes) ||
+                    in_array($hook['template'], $tempaltes));
 
             if ($is_valid) {
-                // filter empty pipes
-                $hook['pipes'] = array_filter(
-                    (array) $hook['pipes'],
-                    static function ($pipe) {
-                        return $pipe['to'] && $pipe['from'] && $pipe['cast'];
-                    }
-                );
-
                 $valid_hooks[] = $hook;
             }
         }
