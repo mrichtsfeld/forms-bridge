@@ -226,6 +226,15 @@ abstract class Integration extends Singleton
     abstract public function create_form($data);
 
     /**
+     * Removes a form by ID.
+     *
+     * @param integer $form_id Form ID.
+     *
+     * @return boolean Removal result.
+     */
+    abstract public function remove_form($form_id);
+
+    /**
      * Retrives the current form submission.
      *
      * @return array Submission data.

@@ -117,6 +117,19 @@ class Integration extends BaseIntegration
     }
 
     /**
+     * Removes a form by ID.
+     *
+     * @param integer $form_id Form ID.
+     *
+     * @return boolean Removal result.
+     */
+    public function remove_form($form_id)
+    {
+        $result = wp_delete_post($form_id);
+        return !!$result;
+    }
+
+    /**
      * Retrives the current submission data.
      *
      * @return array Submission data.

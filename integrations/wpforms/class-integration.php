@@ -99,6 +99,17 @@ class Integration extends BaseIntegration
     public function create_form($data) {}
 
     /**
+     * Removes a form by ID.
+     *
+     * @param integer $form_id Form ID.
+     *
+     * @return boolean Removal result.
+     *
+     * @todo Implement this routine.
+     */
+    public function remove_form($form_id) {}
+
+    /**
      * Retrives the current form submission data.
      *
      * @return array Submission data.
