@@ -1,0 +1,39 @@
+{
+  "translation-revision-date": "2025-02-08 03:50+0000",
+  "generator": "WP-CLI\/2.11.0",
+  "source": "addons\/odoo\/assets\/addon.bundle.js",
+  "domain": "messages",
+  "locale_data": {
+    "messages": {
+      "": {
+        "domain": "messages",
+        "lang": "ca",
+        "plural-forms": "nplurals=2; plural=n != 1;"
+      },
+      "Add": ["Afegir"],
+      "Add database": ["Afegir base de dades"],
+      "Add Form": ["Afegir Formulari"],
+      "Backend": ["Backend"],
+      "Cast as": ["Com a"],
+      "Database": ["Base de dades"],
+      "Databases": ["Bases de dades"],
+      "Done": ["Fet"],
+      "Drop": ["Descartar"],
+      "Form": ["Formulari"],
+      "Form format pipes": ["Conversors de format"],
+      "Form Hooks": ["Connctors de Formularis"],
+      "Form pipes": ["Conversors del formulari"],
+      "From": ["De"],
+      "Model": ["Model"],
+      "Name": ["N\u00f3m"],
+      "Password": ["Contrasenya"],
+      "Pipes": ["Conversors"],
+      "Remove": ["Eliminar"],
+      "Submission ID": ["Submission ID"],
+      "This name is already in use": ["Aquest n\u00f3m ja s'est\u00e0 usant"],
+      "To": ["A"],
+      "User": ["Usuari"],
+      "odoo": ["Odoo JSON-RPC"]
+    }
+  }
+}

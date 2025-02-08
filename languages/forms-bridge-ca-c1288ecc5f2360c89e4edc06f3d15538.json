@@ -1,0 +1,48 @@
+{
+  "translation-revision-date": "2025-02-08 03:50+0000",
+  "generator": "WP-CLI\/2.11.0",
+  "source": "addons\/google-sheets\/assets\/addon.bundle.js",
+  "domain": "messages",
+  "locale_data": {
+    "messages": {
+      "": {
+        "domain": "messages",
+        "lang": "ca",
+        "plural-forms": "nplurals=2; plural=n != 1;"
+      },
+      "Add": ["Afegir"],
+      "Add Form": ["Afegir Formulari"],
+      "Backend": ["Backend"],
+      "Before you can use spreadsheet hooks, you have to grant access to Forms Bridge as OAuth client": [
+        "Abans de poder utilitzar hooks de spreadsheets, has de garantir l'acc\u00e9s a Forms Bridge com a client OAuth"
+      ],
+      "Cast as": ["Com a"],
+      "Done": ["Fet"],
+      "Drop": ["Descartar"],
+      "Follow <a href='https:\/\/github.com\/juampynr\/google-spreadsheet-reader?tab=readme-ov-file' target='_blank'>example<\/a> if do you need help with the process.": [
+        "Segueix <a href='https:\/\/github.com\/juampynr\/google-spreadsheet-reader?tab=readme-ov-file' target='_blank'>l'exemple<\/a> si necessites ajuda amb el process."
+      ],
+      "Form": ["Formulari"],
+      "Form format pipes": ["Conversors de format"],
+      "Form Hooks": ["Connctors de Formularis"],
+      "Form pipes": ["Conversors del formulari"],
+      "From": ["De"],
+      "Google Service Credentials": ["Credencials de Google Service"],
+      "Grant access": ["Garantir acc\u00e9s"],
+      "Name": ["N\u00f3m"],
+      "Pipes": ["Conversors"],
+      "Remove": ["Eliminar"],
+      "Revoke access": ["Revocar l'acc\u00e9s"],
+      "Spreadsheet": ["Spreadsheet"],
+      "Submission ID": ["Submission ID"],
+      "Tab Name": ["Nom de la pestanya"],
+      "This name is already in use": ["Aquest n\u00f3m ja s'est\u00e0 usant"],
+      "To": ["A"],
+      "Upload credentials": ["Pujar credencials"],
+      "You have to create a service account credentials to grant Forms Bridge access to your spreadhseets": [
+        "Has de crear credencials de compte de servei per garantis l'acc\u00e9s de Forms Bridge als teus spreadsheets"
+      ],
+      "google-sheets": ["Google Sheets"]
+    }
+  }
+}
