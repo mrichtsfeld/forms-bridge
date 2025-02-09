@@ -27,21 +27,18 @@ class Odoo_Form_Hook_Template extends Form_Hook_Template
                 'name' => 'backend',
                 'label' => 'Backend',
                 'type' => 'string',
-                'required' => true,
             ],
             [
                 'ref' => '#database',
                 'name' => 'user',
                 'label' => 'User',
                 'type' => 'string',
-                'required' => true,
             ],
             [
                 'ref' => '#database',
                 'name' => 'password',
                 'label' => 'Password',
                 'type' => 'string',
-                'required' => true,
             ],
             [
                 'ref' => '#hook',
@@ -50,23 +47,46 @@ class Odoo_Form_Hook_Template extends Form_Hook_Template
                 'type' => 'string',
                 'required' => true,
             ],
+            // [
+            //     'ref' => '#hook',
+            //     'name' => 'model',
+            //     'label' => 'Model',
+            //     'type' => 'string',
+            //     'required' => true,
+            // ],
             [
-                'ref' => '#hook',
-                'name' => 'model',
-                'label' => 'Model',
+                'ref' => '#backend',
+                'name' => 'name',
+                'label' => 'Name',
                 'type' => 'string',
                 'required' => true,
+                'default' => 'Odoo',
+            ],
+            [
+                'ref' => '#backend',
+                'name' => 'base_url',
+                'label' => 'Base URL',
+                'type' => 'string',
             ],
         ],
         'hook' => [
             'name' => '',
-            'backend' => 'Odoo',
             'form_id' => '',
             'database' => '',
             'model' => '',
         ],
         'backend' => [
             'name' => 'Odoo',
+            'headers' => [
+                [
+                    'name' => 'Content-Type',
+                    'value' => 'application/json',
+                ],
+                [
+                    'name' => 'Accept',
+                    'value' => 'application/json',
+                ],
+            ],
         ],
         'database' => [
             'name' => '',
@@ -103,7 +123,12 @@ class Odoo_Form_Hook_Template extends Form_Hook_Template
         add_filter(
             'forms_bridge_template_data',
             function ($data, $name) {
-                if ($name === $this->name) {
+                if (
+                    $name === $this->name &&
+                    !empty($data['database']['backend']) &&
+                    !empty($data['database']['user']) &&
+                    !empty($data['database']['password'])
+                ) {
                     $result = $this->create_database($data['database']);
 
                     if (!$result) {
@@ -164,37 +189,31 @@ class Odoo_Form_Hook_Template extends Form_Hook_Template
     private function create_database($data)
     {
         $setting = Forms_Bridge::setting($this->api);
-        $setting_data = $setting->data();
+        $databases = $setting->databases;
 
         $name_conflict = array_search(
             $data['name'],
-            array_column($setting_data['databases'], 'name')
+            array_column($databases, 'name')
         );
 
         if ($name_conflict) {
             return;
         }
 
-        $setting_data['databases'][] = $data;
-        $setting_data = apply_filters(
-            'wpct_validate_setting',
-            $setting_data,
-            $setting
-        );
+        do_action('forms_bridge_before_template_database', $data, $this->name);
+
+        $setting->databases = array_merge($databases, [$data]);
+        $setting->refresh();
 
         $is_valid =
             array_search(
                 $data['name'],
-                array_column($setting_data['databases'], 'name')
+                array_column($setting->databases, 'name')
             ) !== false;
 
         if (!$is_valid) {
             return;
         }
-
-        do_action('forms_bridge_before_template_database', $data, $this->name);
-
-        $setting->databases = $setting_data['databases'];
 
         do_action('forms_bridge_template_database', $data, $this->name);
 
