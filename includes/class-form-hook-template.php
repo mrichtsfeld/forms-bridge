@@ -3,6 +3,7 @@
 namespace FORMS_BRIDGE;
 
 use Exception;
+use Error;
 
 if (!defined('ABSPATH')) {
     exit();
@@ -739,53 +740,80 @@ class Form_Hook_Template
             $this->name
         );
 
-        $form_id = $integration_instance->create_form($data['form']);
+        try {
+            $form_id = $integration_instance->create_form($data['form']);
 
-        if (!$form_id) {
-            throw new Form_Hook_Template_Exception(
-                'form_creation_error',
-                __('Forms bridge can\'t create the form', 'forms-bridge')
+            if (!$form_id) {
+                throw new Form_Hook_Template_Exception(
+                    'form_creation_error',
+                    __('Forms bridge can\'t create the form', 'forms-bridge')
+                );
+            }
+
+            $data['hook']['form_id'] = $integration . ':' . $form_id;
+            $data['form']['id'] = $form_id;
+
+            do_action('forms_bridge_template_form', $data['form'], $this->name);
+
+            $create_backend =
+                (isset($data['backend']['name']) &&
+                    !$this->backend_exists($data['backend']['name'])) ||
+                false;
+            if ($create_backend) {
+                $result = $this->create_backend($data['backend']);
+
+                if (!$result) {
+                    $integration_instance->remove_form($form_id);
+                    throw new Form_Hook_Template_Exception(
+                        'backend_creation_error',
+                        __(
+                            'Forms bridge can\'t create the backend',
+                            'forms-bridge'
+                        )
+                    );
+                }
+            }
+
+            $result = $this->create_hook(
+                array_merge($data['hook'], [
+                    'form_id' => $integration . ':' . $form_id,
+                    'template' => $this->name,
+                ])
             );
-        }
-
-        $data['hook']['form_id'] = $integration . ':' . $form_id;
-        $data['form']['id'] = $form_id;
-
-        do_action('forms_bridge_template_form', $data['form'], $this->name);
-
-        $create_backend =
-            (isset($data['backend']['name']) &&
-                !$this->backend_exists($data['backend']['name'])) ||
-            false;
-        if ($create_backend) {
-            $result = $this->create_backend($data['backend']);
 
             if (!$result) {
                 $integration_instance->remove_form($form_id);
+
+                if ($create_backend) {
+                    $this->remove_backend($data['backend']['name']);
+                }
+
                 throw new Form_Hook_Template_Exception(
-                    'backend_creation_error',
-                    __('Forms bridge can\'t create the backend', 'forms-bridge')
+                    'hook_creation_error',
+                    __(
+                        'Forms bridge can\'t create the form hook',
+                        'forms-bridge'
+                    )
                 );
             }
-        }
+        } catch (Form_Hook_Template_Exception $e) {
+            throw $e;
+        } catch (Error | Exception $e) {
+            if (isset($form_id)) {
+                $integration_instance->remove_form($form_id);
+            }
 
-        $result = $this->create_hook(
-            array_merge($data['hook'], [
-                'form_id' => $integration . ':' . $form_id,
-                'template' => $this->name,
-            ])
-        );
-
-        if (!$result) {
-            $integration_instance->remove_form($form_id);
-
-            if ($create_backend) {
+            if (isset($create_backend) && $create_backend) {
                 $this->remove_backend($data['backend']['name']);
             }
 
+            if (isset($result) && $result) {
+                $this->remove_hook($data['hook']['name']);
+            }
+
             throw new Form_Hook_Template_Exception(
-                'hook_creation_error',
-                __('Forms bridge can\'t create the form hook', 'forms-bridge')
+                'internal_server_error',
+                $e->getMessage()
             );
         }
     }
@@ -846,6 +874,21 @@ class Form_Hook_Template
         do_action('forms_bridge_template_backend', $data, $this->name);
 
         return true;
+    }
+
+    /**
+     * Removes hook from the settings store by name.
+     *
+     * @param string $name Hook name.
+     */
+    private function remove_hook($name)
+    {
+        $setting = Forms_Bridge::setting($this->api);
+        $setting->form_hooks = array_filter($setting->form_hooks, function (
+            $form_hook
+        ) use ($name) {
+            return $form_hook['name'] !== $name;
+        });
     }
 
     /**
