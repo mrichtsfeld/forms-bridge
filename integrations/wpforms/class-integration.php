@@ -4,6 +4,7 @@ namespace FORMS_BRIDGE\WPFORMS;
 
 use FORMS_BRIDGE\Integration as BaseIntegration;
 use WP_Post;
+use WP_Query;
 
 if (!defined('ABSPATH')) {
     exit();
@@ -96,7 +97,55 @@ class Integration extends BaseIntegration
      *
      * @todo Implement this routine.
      */
-    public function create_form($data) {}
+    public function create_form($data)
+    {
+        $form_title = esc_html($data['title']);
+        $title_query = new WP_Query([
+            'post_type' => 'wpforms',
+            'title' => $form_title,
+            'posts_per_page' => 1,
+            'fields' => 'ids',
+            'update_post_meta_cache' => false,
+            'update_post_term_cache' => false,
+            'no_found_rows' => true,
+        ]);
+        $title_exists = $title_query->post_count > 0;
+
+        add_filter(
+            'wpforms_create_form_args',
+            function ($args, $create_data) use ($data) {
+                if ($create_data['template'] === 'forms-bridge') {
+                    $args['post_content'] = $this->encode_form_data($data);
+                }
+                return $args;
+            },
+            99,
+            2
+        );
+
+        $form_id = wpforms()
+            ->obj('form')
+            ->add(
+                esc_html($data['title']),
+                [],
+                [
+                    'template' => 'forms-bridge',
+                    'category' => 'all',
+                    'subcategory' => 'all',
+                ]
+            );
+
+        if ($title_exists) {
+            remove_action('post_updated', 'wp_save_post_revision');
+            wp_update_post([
+                'ID' => $form_id,
+                'post_title' => $form_title . ' (ID #' . $form_id . ')',
+            ]);
+            add_action('post_updated', 'wp_save_post_revision');
+        }
+
+        return $form_id;
+    }
 
     /**
      * Removes a form by ID.
@@ -171,7 +220,7 @@ class Integration extends BaseIntegration
                 array_filter(
                     array_map(function ($field) {
                         return $this->serialize_field($field);
-                    }, $data['fields'])
+                    }, $data['fields'] ?? [])
                 )
             ),
         ];
@@ -343,5 +392,175 @@ class Integration extends BaseIntegration
         }
 
         return $uploads;
+    }
+
+    private function encode_form_data($data)
+    {
+        $wp_fields = [];
+        for ($i = 0; $i < count($data['fields']); $i++) {
+            $id = $i + 1;
+            $field = $data['fields'][$i];
+
+            $args = [$id, $field['name'], $field['required'] ?? false];
+            switch ($field['type']) {
+                case 'textarea':
+                    $wp_fields[strval($id)] = $this->textarea_field(...$args);
+                    break;
+                case 'hidden':
+                    $args[] = $field['value'] ?? '';
+                    $wp_fields[strval($id)] = $this->hidden_field(...$args);
+                    break;
+                case 'options':
+                    $args[] = $field['options'] ?? [];
+                    $args[] = $field['is_multi'] ?? false;
+                    $wp_fields[strval($id)] = $this->options_field(...$args);
+                    break;
+                case 'file':
+                    $args[] = $field['filetypes'] ?? '';
+                    $wp_fields[strval($id)] = $this->file_field(...$args);
+                    break;
+                case 'text':
+                    $wp_fields[strval($id)] = $this->text_field(...$args);
+                    break;
+                case 'url':
+                case 'email':
+                case 'number':
+                default:
+                    $wp_fields[strval($id)] = $this->textarea_field(
+                        $field['type'],
+                        ...$args
+                    );
+            }
+        }
+
+        return wpforms_encode([
+            'fields' => $wp_fields,
+            'field_id' => $id + 1,
+            'settings' => [
+                'form_desc' => '',
+                'submit_text' => esc_html__('Submit', 'forms-bridge'),
+                'submit_text_processing' => esc_html__(
+                    'Sending...',
+                    'forms-bridge'
+                ),
+                'antispam_v3' => '1',
+                'notification_enable' => '1',
+                'notifications' => [
+                    '1' => [
+                        'email' => '{admin_email}',
+                        'replyto' => '',
+                        'message' => '{all_fields}',
+                    ],
+                ],
+                'confirmations' => [
+                    '1' => [
+                        'type' => 'message',
+                        'message' => esc_html__(
+                            'Thanks for contacting us! We will be in touch with you shortly.',
+                            'forms-bridge'
+                        ),
+                        'message_scroll' => '1',
+                    ],
+                ],
+                'ajax_submit' => '1',
+            ],
+            'meta' => ['template' => 'forms-bridge'],
+        ]);
+    }
+
+    private function field_template($type, $id, $label, $required)
+    {
+        return [
+            'id' => (string) $id,
+            'type' => $type,
+            'label' => esc_html($label),
+            'required' => $required ? '1' : '0',
+            'size' => 'medium',
+            'description' => '',
+            'placeholder' => '',
+            'css' => '',
+        ];
+    }
+
+    private function text_field($id, $name, $required)
+    {
+        return array_merge(
+            $this->field_template('text', $id, $name, $required),
+            [
+                'limit_count' => '1',
+                'limit_mode' => 'characters',
+            ]
+        );
+    }
+
+    private function textarea_field($id, $name, $required)
+    {
+        return array_merge(
+            $this->field_template('textarea', $id, $name, $required),
+            [
+                'limit_count' => '1',
+                'limit_mode' => 'characters',
+            ]
+        );
+    }
+
+    private function options_field($id, $name, $required, $options, $is_multi)
+    {
+        $choices = array_map(function ($opt) {
+            return [
+                'label' => esc_html($opt['label']),
+                'value' => sanitize_text_field($opt['value']),
+                'image' => '',
+                'icon' => '',
+                'icon_style' => 'regular',
+            ];
+        }, $options);
+
+        if ($is_multi) {
+            return array_merge(
+                $this->field_template('checkbox', $id, $name, $required),
+                [
+                    'choices' => $choices,
+                    'choices_images_style' => 'modern',
+                    'choices_icon_color' => '#066aab',
+                    'choices_icon_size' => 'large',
+                    'choices_icon_style' => 'default',
+                    'choices_limit' => '',
+                    'dynamic_choices' => '',
+                ]
+            );
+        } else {
+            return array_merge(
+                $this->field_template('select', $id, $name, $required),
+                [
+                    'choices' => $choices,
+                    'dynamic_choices' => '',
+                    'style' => 'classic',
+                ]
+            );
+        }
+    }
+
+    private function hidden_field($id, $name, $required, $value)
+    {
+        return array_merge(
+            $this->field_template('hidden', $id, $name, $required),
+            [
+                'default_value' => $value,
+            ]
+        );
+    }
+
+    private function file_field($id, $name, $required, $filetypes)
+    {
+        return array_merge(
+            $this->field_template('file-upload', $id, $name, $required),
+            [
+                'max_size' => '',
+                'max_file_number' => '1',
+                'style' => 'modern',
+                'extensions' => $filetypes,
+            ]
+        );
     }
 }

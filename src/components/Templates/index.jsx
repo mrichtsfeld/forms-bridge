@@ -47,6 +47,12 @@ export default function Templates({ Wizard }) {
     }
   }, [integrations]);
 
+  useEffect(() => {
+    if (!isOpen) {
+      setTemplate(null);
+    }
+  }, [isOpen]);
+
   if (!templates.length || !integrations.length) return;
 
   return (

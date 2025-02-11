@@ -276,6 +276,7 @@ class Form_Hook_Template
                             ],
                             'is_file' => ['type' => 'boolean'],
                             'is_multi' => ['type' => 'boolean'],
+                            'filetypes' => ['type' => 'string'],
                         ],
                         'required' => ['name', 'type'],
                     ],

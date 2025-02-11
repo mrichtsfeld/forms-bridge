@@ -47,7 +47,7 @@ abstract class Integration extends Singleton
                 $plugin = 'gravityforms/gravityforms.php';
                 break;
             case 'wpforms':
-                $plugin = 'wpforms-lite/wpforms.php';
+                $plugin = ['wpforms-lite/wpforms.php', 'wpforms/wpforms.php'];
                 break;
             case 'ninja':
                 $plugin = 'ninja-forms/ninja-forms.php';
@@ -62,7 +62,19 @@ abstract class Integration extends Singleton
                 $plugin = null;
         }
 
-        return Forms_Bridge::is_plugin_active($plugin);
+        if (!is_array($plugin)) {
+            $plugin = [$plugin];
+        }
+
+        $is_active = false;
+        foreach ($plugin as $p) {
+            $is_active = Forms_Bridge::is_plugin_active($p);
+            if ($is_active) {
+                break;
+            }
+        }
+
+        return $is_active;
     }
 
     /**
