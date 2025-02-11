@@ -1,5 +1,6 @@
 // source
 import NewFormHook from "../../../../src/components/FormHooks/NewFormHook";
+import RestTemplateWizard from "./TemplateWizard";
 
 const { TextControl, SelectControl } = wp.components;
 const { __ } = wp.i18n;
@@ -29,7 +30,7 @@ const methodOptions = [
 
 export default function NewRestFormHook({ add, schema }) {
   return (
-    <NewFormHook add={add} schema={schema}>
+    <NewFormHook add={add} schema={schema} Wizard={RestTemplateWizard}>
       {({ data, update }) => (
         <>
           <div style={{ flex: 1, minWidth: "150px", maxWidth: "250px" }}>

@@ -28,7 +28,7 @@ export default function StoreProvider({ children }) {
       .finally(() => wpfb.emit("loading", true));
   };
 
-  const onFlush = useRef(() => fetchSettings()).current;
+  const onFlush = useRef(() => fetchForms().then(fetchSettings)).current;
 
   useEffect(() => {
     fetchForms().then(fetchSettings);

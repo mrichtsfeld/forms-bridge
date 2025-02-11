@@ -15,13 +15,13 @@ class Rest_Form_Hook_Template extends Form_Hook_Template
      */
     protected static $default = [
         'fields' => [
-            [
-                'ref' => '#hook',
-                'name' => 'backend',
-                'label' => 'Backend',
-                'type' => 'string',
-                'required' => true,
-            ],
+            // [
+            //     'ref' => '#hook',
+            //     'name' => 'backend',
+            //     'label' => 'Backend',
+            //     'type' => 'string',
+            //     'required' => true,
+            // ],
             [
                 'ref' => '#hook',
                 'name' => 'endpoint',
@@ -81,6 +81,21 @@ class Rest_Form_Hook_Template extends Form_Hook_Template
         );
 
         parent::__construct($file, $config, $api);
+
+        add_filter(
+            'forms_bridge_template_data',
+            function ($data, $template_name) {
+                if ($template_name === $this->name) {
+                    if (!empty($data['backend']['name'])) {
+                        $data['hook']['backend'] = $data['backend']['name'];
+                    }
+                }
+
+                return $data;
+            },
+            10,
+            2
+        );
     }
 
     /**

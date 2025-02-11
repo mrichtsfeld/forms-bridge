@@ -237,6 +237,7 @@ class Form_Hook_Template
                                 'type' => 'string',
                                 'enum' => [
                                     'text',
+                                    'textarea',
                                     'number',
                                     'url',
                                     'email',

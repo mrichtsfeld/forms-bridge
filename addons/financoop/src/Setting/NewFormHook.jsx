@@ -1,13 +1,13 @@
 // source
 import NewFormHook from "../../../../src/components/FormHooks/NewFormHook";
-import TemplateWizard from "./TemplateWizard";
+import FinanCoopTemplateWizard from "./TemplateWizard";
 
 const { TextControl } = wp.components;
 const { __ } = wp.i18n;
 
 export default function NewFinanCoopFormHook({ add, schema }) {
   return (
-    <NewFormHook add={add} schema={schema} Wizard={TemplateWizard}>
+    <NewFormHook add={add} schema={schema} Wizard={FinanCoopTemplateWizard}>
       {({ data, update }) => (
         <div style={{ flex: 1, minWidth: "150px", maxWidth: "250px" }}>
           <TextControl
