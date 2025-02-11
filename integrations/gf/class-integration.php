@@ -106,7 +106,22 @@ class Integration extends BaseIntegration
             return;
         }
 
-        $data['fields'] = $this->prepare_fields($data['fields']);
+        $data = array_merge($data, [
+            'id' => 1,
+            'fields' => $this->prepare_fields($data['fields']),
+            'labelPlacement' => 'top_label',
+            'useCurrentUserAsAuthor' => '1',
+            'postAuthor' => '1',
+            'postCategory' => '1',
+            'postStatus' => 'publish',
+            'button' => [
+                'type' => 'text',
+                'text' => esc_html__('Submit', 'forms-bridge'),
+                'imageUrl' => '',
+                'conditionalLogic' => null,
+            ],
+            'version' => '2.7',
+        ]);
 
         $form_id = GFAPI::add_form($data);
 
@@ -507,25 +522,231 @@ class Integration extends BaseIntegration
 
     private function prepare_fields($fields)
     {
-        return array_map(function ($field) {
-            $field = array_merge($field, [
-                'isRequired' => $field['required'] ?? false,
-                'allowPopulate' => true,
-                'inputName' => $field['name'],
-            ]);
+        $gf_fields = [];
+        for ($i = 0; $i <= count($fields); $i++) {
+            $id = $i + 1;
+            $field = $fields[$i];
+            $args = [
+                $id,
+                $field['name'],
+                $field['label'] ?? '',
+                $field['required'] ?? false,
+            ];
 
-            if (isset($field['value'])) {
-                $field['defaultValue'] = $field['value'];
-            }
-
-            // TODO: Map forms bridge field types to gf field types
             switch ($field['type']) {
-                case 'url':
-                    $field['type'] = 'website';
+                case 'hidden':
+                    $args[] = $field['value'] ?? '';
+                    $gf_fields[] = $this->hidden_field(...$args);
                     break;
+                case 'number':
+                    $gf_fields[] = $this->number_field(...$args);
+                    break;
+                case 'email':
+                    $gf_fields[] = $this->email_field(...$args);
+                    break;
+                case 'options':
+                    $args[] = $field['options'] ?? [];
+                    $args[] = $field['is_multi'] ?? false;
+                    $gf_fields[] = $this->options_field(...$args);
+                    break;
+                case 'textarea':
+                    $gf_fields[] = $this->textarea_field(...$args);
+                    break;
+                case 'url':
+                    $gf_fields[] = $this->url_field(...$args);
+                    break;
+                case 'file':
+                    $args[] = $field['is_multi'] ?? false;
+                    $args[] = $field['filetypes'] ?? '';
+                    $gf_fields[] = $this->file_field(...$args);
+                    break;
+                case 'text':
+                default:
+                    $gf_fieds[] = $this->text_field(...$args);
+            }
+        }
+
+        return $gf_fields;
+    }
+
+    private function field_template($type, $id, $name, $label, $required)
+    {
+        return [
+            'type' => $type,
+            'id' => (int) $id,
+            'isRequired' => (bool) $required,
+            'size' => 'large',
+            'errorMessage' => __('please supply a valid value', 'forms-bridge'),
+            'label' => $label,
+            'formId' => 84,
+            'inputType' => '',
+            'displayOnly' => '',
+            'inputs' => null,
+            'choices' => '',
+            'conditionalLogic' => '',
+            'labelPlacement' => '',
+            'descriptionPlacement' => '',
+            'subLabelPlacement' => '',
+            'placeholder' => '',
+            'multipleFiles' => false,
+            'maxFiles' => '',
+            'calculationFormula' => '',
+            'calculationRounding' => '',
+            'enableCalculation' => '',
+            'disableQuantity' => false,
+            'displayAllCategories' => false,
+            'inputMask' => false,
+            'inputMaskValue' => '',
+            'allowsPrepopulate' => false,
+            'useRichTextEditor' => false,
+            'visibility' => 'visible',
+            'fields' => '',
+            'inputMaskIsCustom' => false,
+            'layoutGroupId' => '17f293c9',
+            'autocompleteAttribute' => '',
+            'emailConfirmEnabled' => false,
+            'adminLabel' => '',
+            'description' => '',
+            'maxLength' => '',
+            'cssClass' => '',
+            'inputName' => $name,
+            'noDuplicates' => false,
+            'defaultValue' => '',
+            'enableAutocomplete' => false,
+        ];
+    }
+
+    private function email_field($id, $name, $label, $required)
+    {
+        return array_merge(
+            $this->field_template('email', $id, $name, $label, $required),
+            [
+                'inputs' => [
+                    [
+                        'id' => (int) $id,
+                        'label' => esc_html__('Enter Email', 'forms-bridge'),
+                        'name' => '',
+                        'autocompleteAttribute' => 'email',
+                    ],
+                ],
+                'errorMessage' => __(
+                    'please supply a valid email address',
+                    'forms-bridge'
+                ),
+                'enableAutocomplete' => true,
+            ]
+        );
+    }
+
+    private function textarea_field($id, $name, $label, $required)
+    {
+        return $this->field_template('textarea', $id, $name, $label, $required);
+    }
+
+    private function options_field(
+        $id,
+        $name,
+        $label,
+        $required,
+        $options,
+        $is_multi
+    ) {
+        $choices = array_map(function ($opt) {
+            return [
+                'text' => esc_html($opt['label']),
+                'value' => $opt['value'],
+                'isSelected' => false,
+                'price' => '',
+            ];
+        }, $options);
+
+        if ($is_multi) {
+            $inputs = [];
+            for ($i = 0; $i < count($choices); $i++) {
+                $input_id = $i + 1;
+                $inputs[] = [
+                    'id' => $id . '.' . $input_id,
+                    'label' => $choices[$i]['label'],
+                    'name' => '',
+                ];
             }
 
-            return $field;
-        }, $fields);
+            return array_merge(
+                $this->field_template(
+                    'checkbox',
+                    $id,
+                    $name,
+                    $label,
+                    $required
+                ),
+                [
+                    'choices' => $choices,
+                    'inputs' => $inputs,
+                    'enableChoiceValue' => true,
+                ]
+            );
+        } else {
+            return array_merge(
+                $this->field_template('select', $id, $name, $label, $required),
+                [
+                    'choices' => $choices,
+                    'enableChoiceValue' => true,
+                ]
+            );
+        }
+    }
+
+    private function file_field(
+        $id,
+        $name,
+        $label,
+        $required,
+        $is_multi,
+        $filetypes
+    ) {
+        return array_merge(
+            $this->field_template('fileupload', $id, $name, $label, $required),
+            [
+                'allowedExtensions' => (string) $filetypes,
+                'multipleFiles' => (bool) $is_multi,
+            ]
+        );
+    }
+
+    private function hidden_field($id, $name, $label, $required, $value)
+    {
+        return array_merge(
+            $this->field_template('hidden', $id, $name, $name, true),
+            [
+                'inputType' => 'hidden',
+                'defaultValue' => $value,
+            ]
+        );
+    }
+
+    private function url_field($id, $name, $label, $required)
+    {
+        return $this->field_template('website', $id, $name, $label, $required);
+    }
+
+    private function text_field($id, $name, $label, $required)
+    {
+        return array_merge(
+            $this->field_template('text', $id, $name, $label, $required),
+            [
+                'inputType' => 'text',
+            ]
+        );
+    }
+
+    private function number_field($id, $name, $label, $required)
+    {
+        return array_merge(
+            $this->field_template('number', $id, $name, $label, $required),
+            [
+                'inputType' => 'number',
+                'numberFormat' => 'decimal_dot',
+            ]
+        );
     }
 }
