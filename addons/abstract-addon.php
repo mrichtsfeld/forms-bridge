@@ -197,7 +197,10 @@ abstract class Addon extends Singleton
                 $form_hooks = static::setting()->form_hooks;
                 foreach ($form_hooks as $hook_data) {
                     if ($hook_data['name'] === $hook_name) {
-                        return new static::$hook_class($hook_data, static::$api);
+                        return new static::$hook_class(
+                            $hook_data,
+                            static::$api
+                        );
                     }
                 }
             },
@@ -289,8 +292,6 @@ abstract class Addon extends Singleton
 
             $form_id = "{$integration}:{$id}";
         }
-
-        $api = static::get_instance()->api;
 
         return array_merge(
             $form_hooks,

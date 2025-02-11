@@ -31,7 +31,7 @@ return [
         // ],
         [
             'ref' => '#form/fields[]',
-            'name' => 'type',
+            'name' => 'priority',
             'label' => __('Lead priority', 'forms-bridge'),
             'type' => 'number',
             'min' => 0,
