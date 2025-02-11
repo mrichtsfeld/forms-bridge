@@ -97,8 +97,6 @@ class Integration extends BaseIntegration
      * @param array $data Form template data.
      *
      * @return int|null ID of the new form.
-     *
-     * @todo Implement this routine.
      */
     public function create_form($data)
     {
@@ -287,35 +285,35 @@ class Integration extends BaseIntegration
         ];
     }
 
-    private function norm_field_type($type)
-    {
-        switch ($type) {
-            case 'multi_choice':
-            case 'image_choice':
-            case 'multiselect':
-            case 'list':
-            case 'option':
-            case 'select':
-            case 'radio':
-            case 'checkbox':
-                return 'options';
-            case 'address':
-            case 'website':
-            case 'product':
-            case 'email':
-            case 'textarea':
-            case 'name':
-            case 'shipping':
-                return 'text';
-            case 'total':
-            case 'quantity':
-                return 'number';
-            case 'fileupload':
-                return 'file';
-            default:
-                return $type;
-        }
-    }
+    // private function norm_field_type($type)
+    // {
+    //     switch ($type) {
+    //         case 'multi_choice':
+    //         case 'image_choice':
+    //         case 'multiselect':
+    //         case 'list':
+    //         case 'option':
+    //         case 'select':
+    //         case 'radio':
+    //         case 'checkbox':
+    //             return 'options';
+    //         case 'address':
+    //         case 'website':
+    //         case 'product':
+    //         case 'email':
+    //         case 'textarea':
+    //         case 'name':
+    //         case 'shipping':
+    //             return 'text';
+    //         case 'total':
+    //         case 'quantity':
+    //             return 'number';
+    //         case 'fileupload':
+    //             return 'file';
+    //         default:
+    //             return $type;
+    //     }
+    // }
 
     /**
      * Serializes the current form's submission data.
@@ -376,6 +374,7 @@ class Integration extends BaseIntegration
                                 $field,
                                 $input
                             );
+
                             if ($value !== null) {
                                 $values[] = $value;
                             }
@@ -520,6 +519,13 @@ class Integration extends BaseIntegration
         return isset($_POST[$key]);
     }
 
+    /**
+     * Decorate forms bridge form tempalte fields data to be created as gf fields.
+     *
+     * @param array $fields Array with forms bridge fields data.
+     *
+     * @return array Decorated array of fields.
+     */
     private function prepare_fields($fields)
     {
         $gf_fields = [];
@@ -560,7 +566,7 @@ class Integration extends BaseIntegration
                     $args[] = $field['filetypes'] ?? '';
                     $gf_fields[] = $this->file_field(...$args);
                     break;
-                case 'text':
+                // case 'text':
                 default:
                     $gf_fieds[] = $this->text_field(...$args);
             }
@@ -569,6 +575,17 @@ class Integration extends BaseIntegration
         return $gf_fields;
     }
 
+    /**
+     * Returns a default field array data. Used as template for the field creation methods.
+     *
+     * @param string $type Field type.
+     * @param int $id Field id.
+     * @param string $name Input name.
+     * @param string $label Field label.
+     * @param boolean $required Is field required.
+     *
+     * @return array
+     */
     private function field_template($type, $id, $name, $label, $required)
     {
         return [
@@ -616,6 +633,16 @@ class Integration extends BaseIntegration
         ];
     }
 
+    /**
+     * Returns a valid email field data.
+     *
+     * @param int $id Field id.
+     * @param string $name Input name.
+     * @param string $label Field label.
+     * @param boolean $required Is field required.
+     *
+     * @return array
+     */
     private function email_field($id, $name, $label, $required)
     {
         return array_merge(
@@ -638,11 +665,34 @@ class Integration extends BaseIntegration
         );
     }
 
+    /**
+     * Returns a valid textarea field data.
+     *
+     * @param int $id Field id.
+     * @param string $name Input name.
+     * @param string $label Field label.
+     * @param boolean $required Is field required.
+     *
+     * @return array
+     */
     private function textarea_field($id, $name, $label, $required)
     {
         return $this->field_template('textarea', $id, $name, $label, $required);
     }
 
+    /**
+     * Returns a valid multi options field data, as a select field if is single, as
+     * a checkbox field if is multiple.
+     *
+     * @param int $id Field id.
+     * @param string $name Input name.
+     * @param string $label Field label.
+     * @param boolean $required Is field required.
+     * @param array $options Options data.
+     * @param boolean $is_multi Is field multi value
+     *
+     * @return array
+     */
     private function options_field(
         $id,
         $name,
@@ -696,6 +746,18 @@ class Integration extends BaseIntegration
         }
     }
 
+    /**
+     * Returns a valid file-upload field data.
+     *
+     * @param int $id Field id.
+     * @param string $name Input name.
+     * @param string $label Field label.
+     * @param boolean $required Is field required.
+     * @param boolean $is_mulit Is field multi value?
+     * @param string $filetypes String with allowed file extensions separated by commas.
+     *
+     * @return array
+     */
     private function file_field(
         $id,
         $name,
@@ -713,6 +775,17 @@ class Integration extends BaseIntegration
         );
     }
 
+    /**
+     * Returns a valid hidden field data.
+     *
+     * @param int $id Field id.
+     * @param string $name Input name.
+     * @param string $label Field label (unused).
+     * @param boolean $required Is field required (unused).
+     * @param string $value Field's default value.
+     *
+     * @return array
+     */
     private function hidden_field($id, $name, $label, $required, $value)
     {
         return array_merge(
@@ -724,11 +797,31 @@ class Integration extends BaseIntegration
         );
     }
 
+    /**
+     * Returns a valid hidden field data.
+     *
+     * @param int $id Field id.
+     * @param string $name Input name.
+     * @param string $label Field label.
+     * @param boolean $required Is field required.
+     *
+     * @return array
+     */
     private function url_field($id, $name, $label, $required)
     {
         return $this->field_template('website', $id, $name, $label, $required);
     }
 
+    /**
+     * Returns a valid hidden field data.
+     *
+     * @param int $id Field id.
+     * @param string $name Input name.
+     * @param string $label Field label.
+     * @param boolean $required Is field required.
+     *
+     * @return array
+     */
     private function text_field($id, $name, $label, $required)
     {
         return array_merge(
@@ -739,6 +832,16 @@ class Integration extends BaseIntegration
         );
     }
 
+    /**
+     * Returns a valid hidden field data.
+     *
+     * @param int $id Field id.
+     * @param string $name Input name.
+     * @param string $label Field label.
+     * @param boolean $required Is field required.
+     *
+     * @return array
+     */
     private function number_field($id, $name, $label, $required)
     {
         return array_merge(
