@@ -529,7 +529,7 @@ class Integration extends BaseIntegration
     private function prepare_fields($fields)
     {
         $gf_fields = [];
-        for ($i = 0; $i <= count($fields); $i++) {
+        for ($i = 0; $i < count($fields); $i++) {
             $id = $i + 1;
             $field = $fields[$i];
             $args = [
@@ -568,7 +568,7 @@ class Integration extends BaseIntegration
                     break;
                 // case 'text':
                 default:
-                    $gf_fieds[] = $this->text_field(...$args);
+                    $gf_fields[] = $this->text_field(...$args);
             }
         }
 
@@ -648,14 +648,6 @@ class Integration extends BaseIntegration
         return array_merge(
             $this->field_template('email', $id, $name, $label, $required),
             [
-                'inputs' => [
-                    [
-                        'id' => (int) $id,
-                        'label' => esc_html__('Enter Email', 'forms-bridge'),
-                        'name' => '',
-                        'autocompleteAttribute' => 'email',
-                    ],
-                ],
                 'errorMessage' => __(
                     'please supply a valid email address',
                     'forms-bridge'
