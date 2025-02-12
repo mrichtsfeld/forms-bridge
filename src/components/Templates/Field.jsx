@@ -1,3 +1,4 @@
+const { useEffect } = wp.element;
 const { __ } = wp.i18n;
 
 function Field({ data, error }) {
@@ -107,11 +108,46 @@ function NumberField({
   );
 }
 
+function OptionsField({ name, value, onChange, required, options, error }) {
+  const constraints = {};
+  if (required) constraints.required = true;
+
+  const style = { width: "100%" };
+  if (error) {
+    style.border = "1px solid red";
+  }
+
+  useEffect(() => {
+    if (!options.length) return;
+    onChange(options[0].value);
+  }, [options]);
+
+  return (
+    <>
+      <select
+        name={name}
+        value={value || ""}
+        onChange={({ target }) => onChange(target.value)}
+        style={style}
+        {...constraints}
+      >
+        {options.map(({ label, value }) => (
+          <option value={value}>{label}</option>
+        ))}
+      </select>
+    </>
+  );
+}
+
 export default function TemplateField({ data, error }) {
   return (
     <label style={{ margin: "0.5rem 0" }} for={data.name}>
       {data.label}
-      <br />
+      {(data.description && (
+        <p style={{ marginTop: 0, opacity: 0.8 }}>
+          <em>{data.description}</em>
+        </p>
+      )) || <br />}
       <Field data={data} error={error} />
     </label>
   );

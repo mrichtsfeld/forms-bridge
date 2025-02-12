@@ -354,6 +354,7 @@ abstract class Integration extends Singleton
                     $payload,
                     $attachments
                 );
+
                 if ($skip) {
                     continue;
                 }
