@@ -877,7 +877,7 @@ class Form_Hook_Template
         do_action('forms_bridge_before_template_backend', $data, $this->name);
 
         $setting->backends = array_merge($backends, [$data]);
-        $setting->refresh();
+        $setting->flush();
 
         $is_valid = $this->backend_exists($data['name']);
 
@@ -928,7 +928,7 @@ class Form_Hook_Template
         do_action('forms_bridge_before_template_hook', $data, $this->name);
 
         $setting->form_hooks = array_merge($form_hooks, [$data]);
-        $setting->refresh();
+        $setting->flush();
 
         $is_valid =
             array_search(

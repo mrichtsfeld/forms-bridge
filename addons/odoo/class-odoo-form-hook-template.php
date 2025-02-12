@@ -235,7 +235,7 @@ class Odoo_Form_Hook_Template extends Form_Hook_Template
         do_action('forms_bridge_before_template_database', $data, $this->name);
 
         $setting->databases = array_merge($databases, [$data]);
-        $setting->refresh();
+        $setting->flush();
 
         $is_valid = $this->database_exists($data['name']);
 
