@@ -52,7 +52,7 @@ return [
         ],
     ],
     'hook' => [
-        'endpoint' => '/api/campaign/campaign_id/subscription_request',
+        'endpoint' => '/api/campaign/{campaign_id}/subscription_request',
         'pipes' => [
             [
                 'from' => 'submission_id',

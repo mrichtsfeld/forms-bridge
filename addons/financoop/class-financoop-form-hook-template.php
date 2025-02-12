@@ -89,7 +89,7 @@ class Finan_Coop_Form_Hook_Template extends Form_Hook_Template
         ],
         'hook' => [
             'backend' => 'FinanCoop',
-            'endpoint' => '',
+            'endpoint' => '/api/campaign/{campaign_id}',
         ],
         'backend' => [
             'name' => 'FinanCoop',
@@ -153,13 +153,13 @@ class Finan_Coop_Form_Hook_Template extends Form_Hook_Template
 
                     $index = array_search(
                         'campaign_id',
-                        array_column($data['form']['fields'], 'name')
+                        array_column($data['fields'], 'name')
                     );
 
                     if ($index !== false) {
-                        $campaign_id = $data['form']['fields'][$index]['value'];
+                        $campaign_id = $data['fields'][$index]['value'];
                         $data['hook']['endpoint'] = preg_replace(
-                            '/campaign_id/',
+                            '/\{campaign_id\}/',
                             $campaign_id,
                             $data['hook']['endpoint']
                         );
