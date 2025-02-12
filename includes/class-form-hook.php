@@ -86,7 +86,7 @@ class Form_Hook
                 $config = json_decode($content, true);
             }
 
-            if ($config) {
+            if (is_array($config)) {
                 static::$templates[] = new static::$template_class(
                     $template_file,
                     $config,

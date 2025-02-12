@@ -16,14 +16,14 @@ class Google_Sheets_Form_Hook_Template extends Form_Hook_Template
     protected static $default = [
         'fields' => [
             [
-                'ref' => '#hook',
-                'name' => 'spreadsheet',
+                'ref' => '#spreadsheet',
+                'name' => 'id',
                 'label' => 'Spreadsheet',
                 'type' => 'string',
                 'required' => true,
             ],
             [
-                'ref' => '#hook',
+                'ref' => '#spreadsheet',
                 'name' => 'tab',
                 'label' => 'Tab',
                 'type' => 'string',
@@ -32,6 +32,10 @@ class Google_Sheets_Form_Hook_Template extends Form_Hook_Template
         ],
         'hook' => [
             'spreadsheet' => '',
+            'tab' => '',
+        ],
+        'spreadsheet' => [
+            'id' => '',
             'tab' => '',
         ],
     ];
@@ -60,6 +64,22 @@ class Google_Sheets_Form_Hook_Template extends Form_Hook_Template
         );
 
         parent::__construct($file, $config, $api);
+
+        add_filter(
+            'forms_bridge_template_data',
+            function ($data, $template_name) {
+                if ($template_name === $this->name) {
+                    $data['hook'] = array_merge(
+                        $data['hook'],
+                        $data['spreadsheet']
+                    );
+                }
+
+                return $data;
+            },
+            10,
+            2
+        );
     }
 
     /**

@@ -303,7 +303,7 @@ class Form_Hook_Template
         $schema = [
             '$schema' => 'https://json-schema.org/draft/2020-12/schema',
             'type' => 'object',
-            'additionalProperties' => false,
+            // 'additionalProperties' => true,
             'properties' => apply_filters(
                 'forms_bridge_template_schema',
                 static::$schema,
