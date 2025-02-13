@@ -104,13 +104,13 @@ return [
             ],
             [
                 'name' => 'fname',
-                'label' => __('Your firstname', 'forms-bridge'),
+                'label' => __('Your first name', 'forms-bridge'),
                 'type' => 'text',
                 'required' => false,
             ],
             [
                 'name' => 'lname',
-                'label' => __('Your lastname', 'forms-bridge'),
+                'label' => __('Your last name', 'forms-bridge'),
                 'type' => 'text',
             ],
         ],
