@@ -353,8 +353,7 @@ abstract class Integration extends Singleton
                         Logger::log(
                             'Submission payload after attachments stringify'
                         );
-                        Logger:
-                        log($payload);
+                        Logger::log($payload);
                     }
                 }
 
