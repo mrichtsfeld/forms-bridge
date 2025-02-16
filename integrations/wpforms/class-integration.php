@@ -5,6 +5,7 @@ namespace FORMS_BRIDGE\WPFORMS;
 use FORMS_BRIDGE\Integration as BaseIntegration;
 use WP_Post;
 use WP_Query;
+use WPForms_Field_File_Upload;
 
 if (!defined('ABSPATH')) {
     exit();
@@ -201,7 +202,7 @@ class Integration extends BaseIntegration
      */
     public function uploads()
     {
-        $submission = $this->submission();
+        $submission = self::$submission;
         if (!$submission) {
             return null;
         }
@@ -255,7 +256,19 @@ class Integration extends BaseIntegration
     private function serialize_field($field)
     {
         // $type = $this->norm_field_type($field['type']);
-        if (in_array($field['type'], ['submit'])) {
+        if (
+            in_array($field['type'], [
+                'submit',
+                'repeater',
+                'pagebreak',
+                'layout',
+                'captcha',
+                'content',
+                'entry-preview',
+                'html',
+                'divider',
+            ])
+        ) {
             return;
         }
 
@@ -267,7 +280,7 @@ class Integration extends BaseIntegration
             'required' =>
                 isset($field['required']) && $field['required'] === '1',
             'options' => isset($field['choices']) ? $field['choices'] : [],
-            'is_file' => false, // $field['type'] === 'file',
+            'is_file' => $field['type'] === 'file-upload',
             'is_multi' =>
                 strstr($field['type'], 'checkbox') ||
                 ($field['type'] === 'select' &&
@@ -315,14 +328,25 @@ class Integration extends BaseIntegration
         $data = [];
 
         foreach ($submission['fields'] as $field) {
+            if ($field['type'] === 'file-upload') {
+                continue;
+            }
+
             $i = array_search(
                 $field['name'],
                 array_column($form_data['fields'], 'name')
             );
             $field_data = $form_data['fields'][$i];
 
-            if ($field_data['type'] === 'file') {
-                continue;
+            // Prevent repeater name collissions
+            if (
+                $field_data['id'] !== $field['id'] &&
+                preg_match('/_\d+$/', $field['id'])
+            ) {
+                [, $n] = explode('_', $field['id']);
+                $field_name = sprintf('%s (%s)', $field_data['name'], $n);
+            } else {
+                $field_name = $field_data['name'];
             }
 
             if (strstr($field['type'], 'payment')) {
@@ -332,33 +356,36 @@ class Integration extends BaseIntegration
             if ($field_data['type'] === 'hidden') {
                 $number_val = (float) $field['value'];
                 if (strval($number_val) === $field['value']) {
-                    $data[$field_data['name']] = $number_val;
+                    $data[$field_name] = $number_val;
                 } else {
-                    $data[$field_data['name']] = $field['value'];
+                    $data[$field_name] = $field['value'];
                 }
             } elseif ($field_data['type'] === 'number') {
                 if (isset($field['amount'])) {
-                    $data[$field_data['name']] = (float) $field['amount'];
+                    $data[$field_name] = (float) $field['amount'];
                     if (isset($field['currency'])) {
-                        $data[$field_data['name']] .= ' ' . $field['currency'];
+                        $data[$field_name] .= ' ' . $field['currency'];
                     }
                 } else {
-                    $data[$field_data['name']] = (float) preg_replace(
+                    $data[$field_name] = (float) preg_replace(
                         '/[^0-9\.,]/',
                         '',
                         $field['value']
                     );
                 }
-            } elseif ($field_data['type'] === 'options') {
+            } elseif (
+                $field_data['type'] === 'select' ||
+                $field_data['type'] === 'checkbox'
+            ) {
                 if ($field_data['is_multi']) {
-                    $data[$field_data['name']] = array_map(function ($value) {
+                    $data[$field_name] = array_map(function ($value) {
                         return trim($value);
                     }, explode("\n", $field['value']));
                 } else {
-                    $data[$field_data['name']] = $field['value'];
+                    $data[$field_name] = $field['value'];
                 }
             } else {
-                $data[$field_data['name']] = $field['value'];
+                $data[$field_name] = $field['value'];
             }
         }
 
@@ -377,37 +404,32 @@ class Integration extends BaseIntegration
      */
     protected function submission_uploads($submission, $form_data)
     {
-        $fields = wpforms_get_form_fields((int) $form_data['id'], [
+        $form_fields = wpforms_get_form_fields((int) $form_data['id'], [
             'file-upload',
         ]);
 
-        // phpcs:ignore WordPress.Security.NonceVerification.Missing
-        if (empty($fields) || empty($_FILES)) {
+        if (empty($form_fields)) {
             return [];
         }
 
-        // Get $_FILES keys generated by WPForms only.
-        $files_keys = preg_filter(
-            '/^/',
-            'wpforms_' . $form_data['id'] . '_',
-            array_keys($fields)
-        );
-
-        // Filter uploads without errors. Individual errors are handled by WPForms_Field_File_Upload class.
-        // phpcs:ignore WordPress.Security.NonceVerification.Missing
-        $files = wp_list_filter(wp_array_slice_assoc($_FILES, $files_keys), [
-            'error' => 0,
-        ]);
+        $fields = [];
+        foreach ($form_fields as $form_field) {
+            foreach ($submission['fields'] as $submission_field) {
+                if ($submission_field['id'] == $form_field['id']) {
+                    $fields[] = $submission_field;
+                }
+            }
+        }
 
         $uploads = [];
-        foreach ($files as $file) {
-            if (empty($file)) {
-                continue;
-            }
-
-            $is_multi = sizeof($file) > 1;
-            $uploads[$file['name']] = [
-                'path' => $is_multi ? $file : $file[0],
+        foreach ($fields as $field) {
+            $is_multi = count($field['value_raw']) > 1;
+            $paths = WPForms_Field_File_Upload::get_entry_field_file_paths(
+                $form_data['id'],
+                $field
+            );
+            $uploads[$field['name']] = [
+                'path' => $is_multi ? $paths : $paths[0],
                 'is_multi' => $is_multi,
             ];
         }
