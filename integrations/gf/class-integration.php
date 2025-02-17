@@ -381,6 +381,12 @@ class Integration extends BaseIntegration
 
                     if ($field['type'] === 'consent') {
                         $data[$input_name] = $values[0] ?? false;
+                    } elseif ($field['type'] === 'name') {
+                        $data[$input_name] = implode(' ', $values);
+                    } elseif ($field['type'] === 'product') {
+                        $data[$input_name] = $values[0];
+                    } elseif ($field['type'] === 'address') {
+                        $data[$input_name] = implode(', ', $values);
                     } else {
                         $data[$input_name] = $values;
                     }
@@ -432,26 +438,17 @@ class Integration extends BaseIntegration
                     break;
                 case 'number':
                     return (float) preg_replace('/[^0-9\.,]/', '', $value);
-                case 'text':
-                    return (string) $value;
-                case 'options':
-                    if ($field['is_multi']) {
-                        $unserlialized = maybe_unserialize($value);
-                        if ($unserlialized !== $value) {
-                            return $unserlialized;
-                        }
-
-                        $decoded = json_decode($value);
-                        if (is_array($decoded)) {
-                            return $decoded;
-                        }
+                case 'list':
+                    return maybe_unserialize($value);
+                case 'multiselect':
+                    return json_decode($value);
+                case 'option':
+                case 'shipping':
+                    if (preg_match('/\|(.+$)/', $value, $matches)) {
+                        return $matches[1];
                     }
-
-                    return $value;
             }
-        } catch (TypeError $e) {
-            // do nothing
-        } catch (Exception $e) {
+        } catch (TypeError) {
             // do nothing
         }
 
