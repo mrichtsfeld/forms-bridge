@@ -42,15 +42,22 @@ export default function SettingsProvider({ children, handle = ["general"] }) {
     initialState.current = { ...newState };
     if (previousState === null) return;
 
-    const reload = Object.keys(newState.general.addons).reduce(
-      (changed, addon) => {
-        return (
+    const reload =
+      Object.keys(newState.general.addons).reduce(
+        (changed, addon) =>
           changed ||
-          newState.general.addons[addon] !== previousState.general.addons[addon]
-        );
-      },
-      false
-    );
+          newState.general.addons[addon] !==
+            previousState.general.addons[addon],
+        false
+      ) ||
+      Object.keys(newState.general.integrations).reduce(
+        (changed, integration) =>
+          changed ||
+          newState.general.integrations[integration] !==
+            previousState.general.integrations[integration],
+        false
+      );
+
     setReload(reload);
   }).current;
 
