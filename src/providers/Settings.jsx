@@ -20,6 +20,7 @@ export default function SettingsProvider({ children, handle = ["general"] }) {
   const currentState = useRef(defaults);
   const [state, setState] = useState(defaults);
   const [reload, setReload] = useState(false);
+  const [flush, setFlush] = useState(false);
   currentState.current = state;
 
   const onPatch = useRef((state) => setState(state)).current;
@@ -42,14 +43,17 @@ export default function SettingsProvider({ children, handle = ["general"] }) {
     initialState.current = { ...newState };
     if (previousState === null) return;
 
-    const reload =
-      Object.keys(newState.general.addons).reduce(
-        (changed, addon) =>
-          changed ||
-          newState.general.addons[addon] !==
-            previousState.general.addons[addon],
-        false
-      ) ||
+    const reload = Object.keys(newState.general.addons).reduce(
+      (changed, addon) =>
+        changed ||
+        newState.general.addons[addon] !== previousState.general.addons[addon],
+      false
+    );
+
+    setReload(reload);
+
+    const flush =
+      !reload &&
       Object.keys(newState.general.integrations).reduce(
         (changed, integration) =>
           changed ||
@@ -58,7 +62,7 @@ export default function SettingsProvider({ children, handle = ["general"] }) {
         false
       );
 
-    setReload(reload);
+    setFlush(flush);
   }).current;
 
   const onSubmit = useRef((bus) => {
@@ -101,6 +105,20 @@ export default function SettingsProvider({ children, handle = ["general"] }) {
       window.location.reload();
     }
   }, [reload]);
+
+  useEffect(() => {
+    if (flush && !window.__wpfbFlushing) {
+      window.__wpfbFlushing = true;
+      wpfb.emit("flushStore");
+      setFlush(false);
+    }
+
+    return () => {
+      if (flush) {
+        window.__wpfbFlushing = false;
+      }
+    };
+  }, [flush]);
 
   const patchState = (partial) => wpfb.emit("patch", { ...state, ...partial });
 
