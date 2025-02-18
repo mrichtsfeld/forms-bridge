@@ -24,12 +24,6 @@ class Odoo_Form_Bridge_Template extends Form_Bridge_Template
                 'type' => 'string',
                 'required' => true,
             ],
-            // [
-            //     'ref' => '#database',
-            //     'name' => 'backend',
-            //     'label' => 'Backend',
-            //     'type' => 'string',
-            // ],
             [
                 'ref' => '#database',
                 'name' => 'user',
@@ -42,20 +36,6 @@ class Odoo_Form_Bridge_Template extends Form_Bridge_Template
                 'label' => 'Password',
                 'type' => 'string',
             ],
-            // [
-            //     'ref' => '#bridge',
-            //     'name' => 'database',
-            //     'label' => 'Database',
-            //     'type' => 'string',
-            //     'required' => true,
-            // ],
-            // [
-            //     'ref' => '#bridge',
-            //     'name' => 'model',
-            //     'label' => 'Model',
-            //     'type' => 'string',
-            //     'required' => true,
-            // ],
             [
                 'ref' => '#backend',
                 'name' => 'name',
@@ -158,7 +138,7 @@ class Odoo_Form_Bridge_Template extends Form_Bridge_Template
                         throw new Form_Bridge_Template_Exception(
                             'database_creation_error',
                             __(
-                                'Forms bridge can\'t create the database',
+                                'Forms Bridge can\'t create the database',
                                 'forms-bridge'
                             )
                         );

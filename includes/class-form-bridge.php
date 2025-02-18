@@ -189,7 +189,13 @@ abstract class Form_Bridge
      */
     protected function content_type()
     {
-        return $this->backend()->content_type;
+        $backend = $this->backend();
+
+        if (empty($backend)) {
+            return;
+        }
+
+        return $backend->content_type;
     }
 
     /**
@@ -200,7 +206,7 @@ abstract class Form_Bridge
      *
      * @return array|WP_Error Http request response.
      */
-    public function submit($payload, $attachments = [])
+    final public function submit($payload, $attachments = [])
     {
         do_action('forms_bridge_before_submit', $payload, $attachments, $this);
 

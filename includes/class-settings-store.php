@@ -106,7 +106,6 @@ class Settings_Store extends Base_Settings_Store
         );
 
         unset($data['backends']);
-        unset($data['templates']);
 
         return $data;
     }
