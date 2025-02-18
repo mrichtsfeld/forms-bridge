@@ -840,7 +840,9 @@ class Form_Bridge_Template
     private function remove_backend($name)
     {
         $setting = \HTTP_BRIDGE\Settings_Store::setting('general');
-        $setting->backends = array_filter($setting->backends, function (
+        $backends = $setting->backends ?: [];
+
+        $setting->backends = array_filter($backends, static function (
             $backend
         ) use ($name) {
             return $backend['name'] !== $name;
@@ -856,9 +858,8 @@ class Form_Bridge_Template
      */
     final protected function backend_exists($name)
     {
-        $setting = \HTTP_BRIDGE\Settings_Store::setting('general');
-        $backends = $setting->backends;
-
+        $backends =
+            \HTTP_BRIDGE\Settings_Store::setting('general')->backends ?: [];
         return array_search($name, array_column($backends, 'name')) !== false;
     }
 
@@ -872,7 +873,7 @@ class Form_Bridge_Template
     private function create_backend($data)
     {
         $setting = \HTTP_BRIDGE\Settings_Store::setting('general');
-        $backends = $setting->backends;
+        $backends = $setting->backends ?: [];
 
         do_action('forms_bridge_before_template_backend', $data, $this->name);
 
@@ -898,7 +899,9 @@ class Form_Bridge_Template
     private function remove_bridge($name)
     {
         $setting = Forms_Bridge::setting($this->api);
-        $setting->bridges = array_filter($setting->bridges, function (
+        $bridges = $setting->bridges ?: [];
+
+        $setting->bridges = array_filter($bridges, static function (
             $bridge
         ) use ($name) {
             return $bridge['name'] !== $name;
@@ -914,28 +917,20 @@ class Form_Bridge_Template
      */
     private function create_bridge($data)
     {
-        $setting = Forms_Bridge::setting($this->api);
-        $bridges = $setting->bridges;
-
-        $name_conflict =
-            array_search($data['name'], array_column($bridges, 'name')) !==
-            false;
-
+        $name_conflict = $this->bridge_exists($data['name']);
         if ($name_conflict) {
             return;
         }
+
+        $setting = Forms_Bridge::setting($this->api);
+        $bridges = $setting->bridges ?: [];
 
         do_action('forms_bridge_before_template_bridge', $data, $this->name);
 
         $setting->bridges = array_merge($bridges, [$data]);
         $setting->flush();
 
-        $is_valid =
-            array_search(
-                $data['name'],
-                array_column($setting->bridges, 'name')
-            ) !== false;
-
+        $is_valid = $this->bridge_exists($data['name']);
         if (!$is_valid) {
             return;
         }
@@ -943,5 +938,11 @@ class Form_Bridge_Template
         do_action('forms_bridge_template_bridge', $data, $this->name);
 
         return true;
+    }
+
+    private function bridge_exists($name)
+    {
+        $bridges = Forms_Bridge::setting($this->api)->bridges ?: [];
+        return array_search($name, array_column($bridges, 'name')) !== false;
     }
 }
