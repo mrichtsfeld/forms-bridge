@@ -119,14 +119,7 @@ export default function SettingsPage({ addons }) {
           {error}
         </Notice>
       )}
-      <TabPanel
-        initialTabName={initalTab}
-        onSelect={setTab}
-        tabs={tabs.map(({ name, title }) => ({
-          name,
-          title,
-        }))}
-      >
+      <TabPanel initialTabName={initalTab} onSelect={setTab} tabs={tabs}>
         {(tab) => (
           <FormsProvider>
             <SettingsProvider handle={["general"]}>

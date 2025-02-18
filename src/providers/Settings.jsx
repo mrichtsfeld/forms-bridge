@@ -104,6 +104,12 @@ export default function SettingsProvider({ children, handle = ["general"] }) {
       window.__wpfbReloading = true;
       window.location.reload();
     }
+
+    return () => {
+      if (reload) {
+        window.__wpfbReloading = false;
+      }
+    };
   }, [reload]);
 
   useEffect(() => {

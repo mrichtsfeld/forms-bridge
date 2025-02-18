@@ -66,8 +66,3 @@ export function useStoreSubmit() {
   const { submit } = useContext(StoreContext);
   return submit;
 }
-
-export function useStoreFetch() {
-  const { fetch } = useContext(StoreContext);
-  return fetch;
-}
