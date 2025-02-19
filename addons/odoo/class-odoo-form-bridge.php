@@ -2,6 +2,7 @@
 
 namespace FORMS_BRIDGE;
 
+use HTTP_BRIDGE\Http_Client;
 use WP_Error;
 
 if (!defined('ABSPATH')) {
@@ -70,6 +71,21 @@ class Odoo_Form_Bridge extends Form_Bridge
     {
         if (is_wp_error($res)) {
             return $res;
+        }
+
+        if (empty($res['data'])) {
+            $content_type =
+                Http_Client::get_content_type($res['headers']) ?? 'undefined';
+
+            return new WP_Error(
+                'unkown_content_type',
+                /* translators: %s: Content-Type header value */
+                sprintf(
+                    __('Unkown HTTP response content type %s', 'forms-bridge'),
+                    sanitize_text_field($content_type)
+                ),
+                $res
+            );
         }
 
         if (isset($res['data']['error'])) {
