@@ -2,18 +2,30 @@
 
 namespace FORMS_BRIDGE;
 
+use WP_Error;
+
 if (!defined('ABSPATH')) {
     exit();
 }
-
-use WP_Error;
 
 /**
  * Form bridge implementation for the Odoo JSON-RPC api.
  */
 class Odoo_Form_Bridge extends Form_Bridge
 {
+    /**
+     * Handles the Odoo JSON-RPC well known endpoint.
+     *
+     * @var string
+     */
     private const endpoint = '/jsonrpc';
+
+    /**
+     * Handles active RPC session data.
+     *
+     * @var array Tuple with session and user ids.
+     */
+    private static $session;
 
     /**
      * Handles the bridge's template class.
@@ -90,6 +102,10 @@ class Odoo_Form_Bridge extends Form_Bridge
      */
     private static function rpc_login($db)
     {
+        if (self::$session) {
+            return self::$session;
+        }
+
         $session_id = Forms_Bridge::slug() . '-' . time();
         $backend = $db->backend;
 
@@ -99,11 +115,7 @@ class Odoo_Form_Bridge extends Form_Bridge
             $db->password,
         ]);
 
-        do_action('forms_bridge_before_odoo_rpc_login', $payload, $db);
-
         $response = $backend->post(self::endpoint, $payload);
-
-        do_action('forms_bridge_odoo_rpc_login', $response, $db);
 
         $user_id = self::rpc_response($response);
 
@@ -111,11 +123,12 @@ class Odoo_Form_Bridge extends Form_Bridge
             return $user_id;
         }
 
-        return [$session_id, $user_id];
+        self::$session = [$session_id, $user_id];
+        return self::$session;
     }
 
     /**
-     * Parent getter interceptor ti short circtuit database access.
+     * Parent getter interceptor to short circtuit database access.
      *
      * @param string $name Attribute name.
      *
@@ -123,11 +136,12 @@ class Odoo_Form_Bridge extends Form_Bridge
      */
     public function __get($name)
     {
-        if ($name === 'database') {
-            return $this->database();
+        switch ($name) {
+            case 'database':
+                return $this->database();
+            default:
+                return parent::__get($name);
         }
-
-        return parent::__get($name);
     }
 
     /**
@@ -165,17 +179,25 @@ class Odoo_Form_Bridge extends Form_Bridge
         }
     }
 
+    /**
+     * Submits submission to the backend.
+     *
+     * @param array $payload Submission data.
+     * @param array $attachments Submission's attached files.
+     *
+     * @return array|WP_Error Http request response.
+     */
     protected function do_submit($payload, $attachments = [])
     {
         $db = $this->database();
 
-        $login = self::rpc_login($db);
+        $session = self::rpc_login($db);
 
-        if (is_wp_error($login)) {
-            return $login;
+        if (is_wp_error($session)) {
+            return $session;
         }
 
-        [$sid, $uid] = $login;
+        [$sid, $uid] = $session;
 
         $payload = self::rpc_payload($sid, 'object', 'execute', [
             $db->name,
@@ -186,7 +208,7 @@ class Odoo_Form_Bridge extends Form_Bridge
             $payload,
         ]);
 
-        $response = $this->backend->post(self::endpoint, $payload);
+        $response = $this->backend()->post(self::endpoint, $payload);
 
         $result = self::rpc_response($response);
         if (is_wp_error($result)) {
