@@ -170,8 +170,8 @@ class Rest_Addon extends Addon
                 $bridge['pipes'] = array_values(
                     array_filter($bridge['pipes'], function ($pipe) {
                         return !(
-                            empty($pipe['from']) &&
-                            empty($pipe['to']) &&
+                            empty($pipe['from']) ||
+                            empty($pipe['to']) ||
                             empty($pipe['cast'])
                         );
                     })
