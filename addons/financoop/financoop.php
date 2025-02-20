@@ -162,6 +162,16 @@ class Finan_Coop_Addon extends Addon
                     in_array($bridge['template'], $templates));
 
             if ($is_valid) {
+                $bridge['pipes'] = array_values(
+                    array_filter($bridge['pipes'], function ($pipe) {
+                        return !(
+                            empty($pipe['from']) &&
+                            empty($pipe['to']) &&
+                            empty($pipe['cast'])
+                        );
+                    })
+                );
+
                 $valid_bridges[] = $bridge;
             }
         }
