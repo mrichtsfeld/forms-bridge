@@ -162,7 +162,7 @@ class Forms_Bridge extends Base_Plugin
             static function ($upgrader, $extra) {
                 if (
                     $extra['type'] === 'plugin' &&
-                    in_array(self::index(), $extra['plugins'])
+                    in_array(self::index(), $extra['plugins'] ?? [], true)
                 ) {
                     self::do_migrations();
                 }
