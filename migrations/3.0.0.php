@@ -4,12 +4,12 @@ $setting_names = ['rest-api', 'odoo', 'financoop', 'google-sheets'];
 
 foreach ($setting_names as $setting_name) {
     $option = 'forms-bridge_' . $setting_name;
-    $deprecated_opton = $option . '-api';
+    $deprecated_option = $option . '-api';
 
-    $data = get_option($deprecated_name);
+    $data = get_option($deprecated_option);
     if (is_array($data)) {
         update_option($option, $data);
-        delete_option($deprecated_opton);
+        delete_option($deprecated_option);
     }
 
     $data = get_option($option, []);
