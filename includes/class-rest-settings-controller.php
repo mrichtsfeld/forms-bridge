@@ -68,6 +68,16 @@ class REST_Settings_Controller extends Base_Controller
                     'permission_callback' => static function () {
                         return self::permission_callback();
                     },
+                    'args' => [
+                        'name' => [
+                            'description' => __(
+                                'Name of the template',
+                                'forms-bridge'
+                            ),
+                            'type' => 'string',
+                            'required' => true,
+                        ],
+                    ],
                 ],
                 [
                     'methods' => WP_REST_Server::CREATABLE,
@@ -80,7 +90,7 @@ class REST_Settings_Controller extends Base_Controller
                     'args' => [
                         'name' => [
                             'description' => __(
-                                'Name of the template to use',
+                                'Name of the template',
                                 'forms-bridge'
                             ),
                             'type' => 'string',
