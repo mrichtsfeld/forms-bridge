@@ -90,7 +90,7 @@ export default function Backends({ backends, setBackends, Backend }) {
     const copy = { ...backend };
 
     let isUnique = false;
-    if (!isUnique) {
+    while (!isUnique) {
       copy.name += "-copy";
       isUnique =
         backends.find((backend) => backend.name === copy.name) === undefined;

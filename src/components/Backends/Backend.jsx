@@ -84,7 +84,6 @@ export default function Backend({ update, remove, ...data }) {
 
   const [name, setName] = useState(data.name);
   const initialName = useRef(data.name);
-  const nameInput = useRef();
 
   const backendNames = useBackendNames();
   const [nameConflict, setNameConflict] = useState(false);
@@ -124,7 +123,6 @@ export default function Backend({ update, remove, ...data }) {
         }}
       >
         <TextControl
-          ref={nameInput}
           label={__("Backend name", "forms-bridge")}
           help={
             nameConflict
