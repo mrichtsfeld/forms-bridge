@@ -747,10 +747,6 @@ msgstr ""
 msgid "Next"
 msgstr ""
 
-#: addons/financoop/assets/addon.bundle.js:2057
-msgid "financoop"
-msgstr ""
-
 #: addons/google-sheets/assets/addon.bundle.js:1942
 #: addons/odoo/assets/addon.bundle.js:1997
 #: addons/odoo/assets/addon.bundle.js:2133
@@ -804,10 +800,6 @@ msgstr ""
 msgid "Follow <a href='https://github.com/juampynr/google-spreadsheet-reader?tab=readme-ov-file' target='_blank'>example</a> if do you need help with the process."
 msgstr ""
 
-#: addons/google-sheets/assets/addon.bundle.js:2322
-msgid "google-sheets"
-msgstr ""
-
 #: addons/odoo/assets/addon.bundle.js:1998
 msgid "Configure the Odoo database connection"
 msgstr ""
@@ -837,14 +829,6 @@ msgstr ""
 
 #: addons/odoo/assets/addon.bundle.js:2618
 msgid "Databases"
-msgstr ""
-
-#: addons/odoo/assets/addon.bundle.js:2686
-msgid "odoo"
-msgstr ""
-
-#: addons/rest-api/assets/addon.bundle.js:2124
-msgid "rest-api"
 msgstr ""
 
 #: assets/plugin.bundle.js:517
@@ -1000,17 +984,21 @@ msgid "gf"
 msgstr "Gravity Forms"
 
 #: assets/plugin.bundle.js
+#: addons/financoop/assets/addon.bundle.js:2057
 msgid "financoop"
 msgstr "FinanCoop"
 
 #: assets/plugin.bundle.js
+#: addons/rest-api/assets/addon.bundle.js:2124
 msgid "rest-api"
 msgstr "REST API"
 
 #: assets/plugin.bundle.js
+#: addons/google-sheets/assets/addon.bundle.js:2322
 msgid "google-sheets"
 msgstr "Google Sheets"
 
 #: assets/plugin.bundle.js
+#: addons/odoo/assets/addon.bundle.js:2686
 msgid "odoo"
 msgstr "Odoo JSON RPC"

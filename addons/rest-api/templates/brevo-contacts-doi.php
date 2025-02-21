@@ -7,11 +7,19 @@ if (!defined('ABSPATH')) {
 add_filter(
     'forms_bridge_payload',
     function ($payload, $bridge) {
-        if ($bridge->template === 'brevo-contacts') {
-            $payload['listIds'] = array_map(
+        if ($bridge->template === 'brevo-contacts-doi') {
+            $payload['includeListIds'] = array_map(
                 'intval',
-                explode(',', $payload['listIds'])
+                explode(',', $payload['includeListIds'])
             );
+
+            $url = parse_url($payload['redirectionUrl']);
+            if (!isset($url['host'])) {
+                $payload['redirectionUrl'] =
+                    get_site_url() .
+                    '/' .
+                    preg_replace('/^\//', '', $payload['redirectionUrl']);
+            }
         }
 
         return $payload;
@@ -21,7 +29,7 @@ add_filter(
 );
 
 return [
-    'title' => __('Brevo Contacts', 'forms-bridge'),
+    'title' => __('Brevo Contacts DOI', 'forms-bridge'),
     'fields' => [
         [
             'ref' => '#backend',
@@ -52,7 +60,7 @@ return [
             'name' => 'endpoint',
             'label' => __('Bridge endpoint', 'forms-bridge'),
             'type' => 'string',
-            'value' => '/v3/contacts',
+            'value' => '/v3/contacts/doubleOptinConfirmation',
         ],
         [
             'ref' => '#backend/headers[]',
@@ -67,7 +75,7 @@ return [
         ],
         [
             'ref' => '#form/fields[]',
-            'name' => 'listIds',
+            'name' => 'includeListIds',
             'label' => __('Segment IDs', 'forms-bridge'),
             'type' => 'string',
             'description' => __(
@@ -75,12 +83,42 @@ return [
                 'forms-bridge'
             ),
         ],
+        [
+            'ref' => '#form/fields[]',
+            'name' => 'templateId',
+            'label' => __('Double opt-in template ID', 'forms-bridge'),
+            'type' => 'string',
+            'description' => __(
+                'List IDs separated by commas. Leave it empty if you don\'t want to subscrive contact to any list',
+                'forms-bridge'
+            ),
+        ],
+        [
+            'ref' => '#form/fields[]',
+            'name' => 'redirectionUrl',
+            'label' => __('Redirection URL', 'forms-bridge'),
+            'type' => 'string',
+            'description' => __(
+                'URL of the web page that user will be redirected to after clicking on the double opt in URL',
+                'forms-bridge'
+            ),
+        ],
     ],
     'form' => [
-        'title' => __('Brevo Contacts', 'forms-bridge'),
+        'title' => __('Brevo Contacts DOI', 'forms-bridge'),
         'fields' => [
             [
-                'name' => 'listIds',
+                'name' => 'includeListIds',
+                'type' => 'hidden',
+                'required' => true,
+            ],
+            [
+                'name' => 'templateId',
+                'type' => 'hidden',
+                'required' => true,
+            ],
+            [
+                'name' => 'redirectionUrl',
                 'type' => 'hidden',
                 'required' => true,
             ],
@@ -114,8 +152,13 @@ return [
     ],
     'bridge' => [
         'method' => 'POST',
-        'endpoint' => '/v3/contacts',
+        'endpoint' => '/v3/contacts/doubleOptinConfirmation',
         'pipes' => [
+            [
+                'from' => 'templateId',
+                'to' => 'templateId',
+                'cast' => 'integer',
+            ],
             [
                 'from' => 'fname',
                 'to' => 'attributes.FNAME',
