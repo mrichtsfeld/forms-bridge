@@ -181,7 +181,6 @@ class Integration extends BaseIntegration
             'bridges' => apply_filters(
                 'forms_bridge_bridges',
                 [],
-                null,
                 'wpcf7:' . $form_id
             ),
             'fields' => array_values(

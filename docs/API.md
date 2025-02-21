@@ -58,8 +58,8 @@ Get available bridges for the current form.
 #### Arguments
 
 1. `array $bridges`: Initial value.
-2. `string $api`: If declared, filters bridges by api name.
 2. `string|integer $form_id`: If declared, try to return bridges from the form with this id. This id should includes the integration prefix if there is more than one active integration.
+2. `string $api`: If declared, filters bridges by api name.
 
 #### Returns
 
@@ -68,7 +68,7 @@ Get available bridges for the current form.
 #### Example
 
 ```php
-$bridges = apply_filters('forms_bridge_bridges', [], 12);
+$bridges = apply_filters('forms_bridge_bridges', [], 'wpcf7:12');
 foreach ($bridges as $bridge) {
 	// do something
 }
