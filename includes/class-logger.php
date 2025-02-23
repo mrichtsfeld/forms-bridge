@@ -110,7 +110,7 @@ class Logger extends Singleton
 
         fclose($socket);
 
-        return preg_split('/(\n|\r)+/', $content);
+        return (array) preg_split('/(\n|\r)+/', $content);
     }
 
     /**
