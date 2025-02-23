@@ -10,7 +10,7 @@
  * License URI:         http://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain:         forms-bridge
  * Domain Path:         /languages
- * Version:             3.0.2
+ * Version:             3.0.1
  * Requires PHP:        8.0
  * Requires at least:   6.7
  */
@@ -48,7 +48,14 @@ require_once 'addons/abstract-addon.php';
 class Forms_Bridge extends Base_Plugin
 {
     /**
-     * Handle plugin settings class name.
+     * Handles the plugin upgrade flag transient name.
+     *
+     * @var string
+     */
+    private const upgraded_flag = 'forms_bridge_upgraded_flag';
+
+    /**
+     * Handles plugin settings class name.
      *
      * @var string
      */
@@ -82,6 +89,17 @@ class Forms_Bridge extends Base_Plugin
             90,
             4
         );
+    }
+
+    /**
+     * Init hook callabck. Checks if comes from an upgrade and run db migrations.
+     */
+    protected static function init()
+    {
+        $do_migrations = get_transient(self::upgraded_flag) || false;
+        if ($do_migrations) {
+            self::do_migrations();
+        }
     }
 
     /**
@@ -164,7 +182,7 @@ class Forms_Bridge extends Base_Plugin
                     $extra['type'] === 'plugin' &&
                     in_array(self::index(), $extra['plugins'] ?? [], true)
                 ) {
-                    self::do_migrations();
+                    set_transient(self::upgraded_flag, true, 60);
                 }
             },
             10,
