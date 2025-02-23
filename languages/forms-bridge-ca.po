@@ -162,7 +162,7 @@ msgstr "Fet"
 
 #: assets/plugin.bundle.js:1364
 msgid "Download config"
-msgstr "Descarregar configuració"
+msgstr "Exportar config"
 
 #: addons/financoop/assets/addon.bundle.js:773
 #: addons/google-sheets/assets/addon.bundle.js:800
@@ -306,7 +306,7 @@ msgstr ""
 
 #: assets/plugin.bundle.js:1373
 msgid "Import config"
-msgstr "Importar configuració"
+msgstr "Importar config"
 
 #: assets/plugin.bundle.js:1368
 msgid "Import Forms Bridge JSON config"

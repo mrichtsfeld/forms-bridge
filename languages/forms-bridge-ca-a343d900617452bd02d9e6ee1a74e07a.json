@@ -27,7 +27,7 @@
       "Continue with the import": ["Continuar amb la importaci\u00f3"],
       "Custom encoding": ["Codificaci\u00f3 personalitzada"],
       "Debug": ["Depurar"],
-      "Download config": ["Descarregar configuraci\u00f3"],
+      "Download config": ["Exportar config"],
       "Drop": ["Descartar"],
       "Export Forms Bridge config as JSON": [
         "Exporta la configuraci\u00f3 com a JSON"
@@ -37,11 +37,11 @@
       "If your backend uses custom encoding, Forms Bridge will need a string payload. You can use the `forms_bridge_payload` hook to encode your form submission as string.": [
         "Si el teu backend fa servir una codificaci\u00f3 personalitzada, Forms Bridge necessitar\u00e0 una cadena de text com a cos del missatge. Pots fer \u00fas del hook `forms_bridge_payload` per codificar les dades."
       ],
-      "Import \/ Export": ["Importa \/ Exporta"],
+      "Import \/ Export": ["Importar \/ Exportar"],
       "Import a new configuration is a destructive action. Your current configuration will be replaced with the new one. If there are some errors on the new config, Forms Bridge will filter it to avoid bugs.": [
         "La importaci\u00f3 de nova configuraci\u00f3 \u00e9s una acci\u00f3 destructiva. La teva configuraci\u00f3 actual ser\u00e0 reempla\u00e7ada per la nova. Si es dona algun error amb la nova configuraci\u00f3, Forms Bridge la netejar\u00e0 per tal d'evitar problemes."
       ],
-      "Import config": ["Importar configuraci\u00f3"],
+      "Import config": ["Importar config"],
       "Import Forms Bridge JSON config": ["Importa configuraci\u00f3 JSON"],
       "Integrations": ["Integracions"],
       "It has been an error on config import": [
