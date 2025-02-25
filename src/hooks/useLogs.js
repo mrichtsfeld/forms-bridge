@@ -23,7 +23,7 @@ export default function useLogs({ debug }) {
 
     fetch();
 
-    interval.current = setInterval(() => fetch(), 3e4);
+    interval.current = setInterval(() => fetch(), 1e4);
     return () => {
       clearInterval(interval.current);
     };
