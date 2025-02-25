@@ -48,11 +48,11 @@ require_once 'addons/abstract-addon.php';
 class Forms_Bridge extends Base_Plugin
 {
     /**
-     * Handles the plugin upgrade flag transient name.
+     * Handles the plugin db version option name.
      *
      * @var string
      */
-    private const upgraded_flag = 'forms_bridge_upgraded_flag';
+    private const db_version = 'forms-bridge-version';
 
     /**
      * Handles plugin settings class name.
@@ -92,12 +92,25 @@ class Forms_Bridge extends Base_Plugin
     }
 
     /**
-     * Init hook callabck. Checks if comes from an upgrade and run db migrations.
+     * Plugin activation callback. Stores the plugin version on the database
+     * if it doesn't exists.
+     */
+    public static function activate()
+    {
+        $version = get_option(self::db_version);
+        if ($version === false) {
+            update_option(self::db_version, self::version(), true);
+        }
+    }
+
+    /**
+     * Init hook callabck. Checks if the stored db version mismatch the current plugin version
+     * and, if it is, performs db migrations.
      */
     protected static function init()
     {
-        $do_migrations = get_transient(self::upgraded_flag) || false;
-        if ($do_migrations) {
+        $db_version = get_option(self::db_version);
+        if ($db_version !== self::version()) {
             self::do_migrations();
         }
     }
@@ -174,20 +187,6 @@ class Forms_Bridge extends Base_Plugin
         add_action('admin_enqueue_scripts', static function ($admin_page) {
             self::admin_enqueue_scripts($admin_page);
         });
-
-        add_action(
-            'upgrader_process_complete',
-            static function ($upgrader, $extra) {
-                if (
-                    $extra['type'] === 'plugin' &&
-                    in_array(self::index(), $extra['plugins'] ?? [], true)
-                ) {
-                    set_transient(self::upgraded_flag, true, 60);
-                }
-            },
-            10,
-            2
-        );
     }
 
     /**
@@ -510,7 +509,7 @@ class Forms_Bridge extends Base_Plugin
      */
     private static function do_migrations()
     {
-        $from = get_option('forms-bridge-version', '1.0.0');
+        $from = get_option(self::db_version, '1.0.0');
 
         if (!preg_match('/^\d+\.\d+\.\d+$/', $from)) {
             Logger::log('Invalid db plugin version', Logger::ERROR);
@@ -551,7 +550,7 @@ class Forms_Bridge extends Base_Plugin
             include $migrations_path . '/' . $migration;
         }
 
-        update_option('forms-bridge-version', $to);
+        update_option(self::db_version, $to);
     }
 }
 
