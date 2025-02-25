@@ -24,7 +24,7 @@ export default function Logger() {
         <ToggleControl
           label={__("Logging", "forms-bridge")}
           help={__(
-            "When logging is activated, logs will be write to `wp-content/debug.log` and read from them. If your server is not hardened, this file could be public to the web with confidencial data. Make sure to deactivate debugging once you've done.",
+            "When logging is activated, logs will be write to `wp-content/uploads/.forms-bridge.log` and read from them. If your server is not hardened, this file could be public to the web with confidencial data. Make sure to deactivate debugging once you've done.",
             "forms-bridge"
           )}
           checked={!!debug}
