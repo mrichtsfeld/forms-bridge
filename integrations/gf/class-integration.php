@@ -609,7 +609,7 @@ class Integration extends BaseIntegration
             'displayAllCategories' => false,
             'inputMask' => false,
             'inputMaskValue' => '',
-            'allowsPrepopulate' => false,
+            'allowsPrepopulate' => true,
             'useRichTextEditor' => false,
             'visibility' => 'visible',
             'fields' => '',
