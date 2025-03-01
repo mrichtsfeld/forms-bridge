@@ -272,8 +272,8 @@ class Forms_Bridge extends Base_Plugin
         foreach (array_values($bridges) as $bridge) {
             try {
                 // TODO: Exclude attachments from payload finger mangling
-                $payload = $bridge->apply_pipes($submission);
-                Logger::log('Submission payload after pipes');
+                $payload = $bridge->apply_mappers($submission);
+                Logger::log('Submission payload after mappers');
                 Logger::log($payload);
 
                 $prune_empties = apply_filters(
