@@ -79,13 +79,26 @@ return [
         ],
         [
             'ref' => '#backend/headers[]',
-            'name' => 'Authorization',
-            'label' => __('OAuth grant token', 'forms-bridge'),
+            'name' => 'client_id',
+            'label' => __('Client ID', 'forms-bridge'),
             'description' => __(
-                'Do you have to create a Self-Client Application on the Zoho Developer Console and generates a grant token without caducity',
+                'You have to create a Self-Client Application on the Zoho Developer Console and get the Client ID',
                 'forms-bridge'
             ),
             'type' => 'string',
+            'protected' => true,
+            'required' => true,
+        ],
+        [
+            'ref' => '#backend/headers[]',
+            'name' => 'client_secret',
+            'label' => __('Client Secret', 'forms-bridge'),
+            'description' => __(
+                'You have to create a Self-Client Application on the Zoho Developer Console and get the Client Secret',
+                'forms-bridge'
+            ),
+            'type' => 'string',
+            'protected' => true,
             'required' => true,
         ],
         [

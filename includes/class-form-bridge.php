@@ -208,14 +208,14 @@ abstract class Form_Bridge
      */
     final public function submit($payload, $attachments = [])
     {
-        do_action('forms_bridge_before_submit', $payload, $attachments, $this);
+        do_action('forms_bridge_before_submit', $this, $payload, $attachments);
 
         $response = $this->do_submit($payload, $attachments);
 
         if (is_wp_error($response)) {
-            do_action('forms_bridge_submit_error', $response, $this);
+            do_action('forms_bridge_submit_error', $this, $response);
         } else {
-            do_action('forms_bridge_submit', $response, $this);
+            do_action('forms_bridge_submit', $this, $response);
         }
 
         return $response;
