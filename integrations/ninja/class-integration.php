@@ -483,9 +483,9 @@ class Integration extends BaseIntegration
         $options,
         $is_multi
     ) {
-        $options = [];
+        $_options = [];
         for ($i = 0; $i < count($options); $i++) {
-            $options[] = [
+            $_options[] = [
                 'label' => $options[$i]['label'],
                 'value' => $options[$i]['value'],
                 'order' => (string) $i,
@@ -554,7 +554,7 @@ class Integration extends BaseIntegration
         return array_merge(
             $this->field_template($type, $order, $name, $label, $required),
             [
-                'options' => $options,
+                'options' => $_options,
             ]
         );
     }
