@@ -1,149 +1,8 @@
 <?php
 
-use FORMS_BRIDGE\Logger;
-
 if (!defined('ABSPATH')) {
     exit();
 }
-
-add_filter(
-    'http_request_args',
-    function ($args) {
-        if (
-            isset($args['headers']['Origin']) &&
-            $args['headers']['Origin'] === 'zoho-crm-leads'
-        ) {
-            unset($args['headers']['Origin']);
-        } elseif (
-            isset($args['headers']['origin']) &&
-            $args['headers']['origin'] === 'zoho-crm-leads'
-        ) {
-            unset($args['headers']['origin']);
-        }
-
-        return $args;
-    },
-    10,
-    1
-);
-
-add_filter(
-    'forms_bridge_payload',
-    function ($payload, $bridge) {
-        if ($bridge->template !== 'zoho-crm-leads') {
-            return $payload;
-        }
-
-        return ['data' => [$payload]];
-    },
-    90,
-    2
-);
-
-function forms_bridge_zoho_crm_leads_headers()
-{
-    remove_filter(
-        'http_bridge_backend_headers',
-        'forms_bridge_zoho_crm_leads_headers',
-        10,
-        0
-    );
-
-    $credentials = get_option('forms-bridge-zoho-credentials');
-
-    try {
-        $credentials = json_decode($credentials, true);
-    } catch (TypeError) {
-        $credentials = null;
-    }
-
-    $access_token = $credentials['access_token'] ?? '';
-
-    return [
-        'Origin' => 'zoho-crm-leads',
-        'Content-Type' => 'application/json',
-        'Accept' => 'application/json',
-        'Authorization' => 'Zoho-oauthtoken ' . $access_token,
-    ];
-}
-
-add_action(
-    'forms_bridge_before_submit',
-    function ($bridge) {
-        if ($bridge->template !== 'zoho-crm-leads') {
-            return;
-        }
-
-        $backend = $bridge->backend;
-        $headers = $backend->headers;
-
-        add_filter(
-            'http_bridge_backend_headers',
-            'forms_bridge_zoho_crm_leads_headers',
-            10,
-            0
-        );
-
-        $credentials = get_option('forms-bridge-zoho-credentials');
-
-        if ($credentials) {
-            try {
-                $credentials = json_decode($credentials, true);
-            } catch (TypeError) {
-                $credentials = false;
-            }
-        }
-
-        if (is_array($credentials) && isset($credentials['expires_at'])) {
-            if ($credentials['expires_at'] < time() - 10) {
-                // skip is access token is still valid
-                return;
-            }
-        }
-
-        $base_url = $backend->base_url;
-        $host = parse_url($base_url)['host'] ?? null;
-        if (!$host) {
-            return;
-        }
-        $region = null;
-        if (preg_match('/\.([a-z]{2,3}(\.[a-z]{2})?)$/', $host, $matches)) {
-            $region = $matches[1];
-        } else {
-            Logger::log('Invalid Zoho API URL', Logger::ERROR);
-            return;
-        }
-
-        $oauth_server = 'https://accounts.zoho.' . $region;
-        $url = $oauth_server . '/oauth/v2/token';
-
-        $query = http_build_query([
-            'client_id' => $headers['client_id'] ?? '',
-            'client_secret' => $headers['client_secret'] ?? '',
-            'grant_type' => 'client_credentials',
-            'scope' => 'ZohoCRM.modules.leads.CREATE',
-            'soid' => 'ZohoCRM.' . ($headers['organization_id'] ?? ''),
-        ]);
-
-        $response = http_bridge_post($url . '?' . $query);
-
-        if (is_wp_error($response)) {
-            Logger::log('Oauth response error', Logger::ERROR);
-            Logger::log($response, Logger::ERROR);
-            return;
-        }
-
-        $credentials = $response['data'];
-        $credentials['expires_at'] = $response['expires_in'] + time();
-
-        update_option(
-            'forms-bridge-zoho-credentials',
-            json_encode($credentials)
-        );
-    },
-    10,
-    1
-);
 
 add_filter(
     'forms_bridge_prune_empties',
@@ -223,13 +82,6 @@ return [
             'default' => 'Zoho CRM API',
         ],
         [
-            'ref' => '#backend',
-            'name' => 'base_url',
-            'label' => __('Backend base URL', 'forms-bridge'),
-            'type' => 'string',
-            'value' => 'https://www.zohoapis.com',
-        ],
-        [
             'ref' => '#backend/headers[]',
             'name' => 'organization_id',
             'label' => __('Organization ID', 'form-bridge'),
@@ -271,10 +123,10 @@ return [
         ],
         [
             'ref' => '#bridge',
-            'name' => 'method',
-            'label' => __('Method', 'forms-bridge'),
+            'name' => 'scope',
+            'label' => __('Scope', 'forms-bridge'),
             'type' => 'string',
-            'value' => 'POST',
+            'value' => 'ZohoCRM.modules.leads.CREATE',
         ],
     ],
     'form' => [
@@ -331,6 +183,7 @@ return [
     ],
     'bridge' => [
         'endpoint' => '/crm/v7/Leads',
+        'scope' => 'ZohoCRM.modules.leads.CREATE',
     ],
     'backend' => [
         'base_url' => 'https://www.zohoapis.com',

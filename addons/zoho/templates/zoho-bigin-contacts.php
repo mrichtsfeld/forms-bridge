@@ -1,0 +1,128 @@
+<?php
+
+if (!defined('ABSPATH')) {
+    exit();
+}
+
+add_filter(
+    'forms_bridge_prune_empties',
+    function ($prune, $bridge) {
+        if ($bridge->template === 'zoho-bigin-contacts') {
+            return true;
+        }
+
+        return $prune;
+    },
+    10,
+    2
+);
+
+return [
+    'title' => __('Zoho Bigin Contacts', 'forms-bridge'),
+    'fields' => [
+        [
+            'ref' => '#backend',
+            'name' => 'name',
+            'label' => __('Backend name', 'forms-bridge'),
+            'type' => 'string',
+            'default' => 'Zoho Bigin API',
+        ],
+        [
+            'ref' => '#backend/headers[]',
+            'name' => 'organization_id',
+            'label' => __('Organization ID', 'form-bridge'),
+            'description' => __(
+                'From your organization dashboard, expand the profile sidebar and click on the copy user ID icon to get your organization ID.',
+                'forms-bridge'
+            ),
+            'type' => 'string',
+            'required' => true,
+        ],
+        [
+            'ref' => '#backend/headers[]',
+            'name' => 'client_id',
+            'label' => __('Client ID', 'forms-bridge'),
+            'description' => __(
+                'You have to create a Self-Client Application on the Zoho Developer Console and get the Client ID',
+                'forms-bridge'
+            ),
+            'type' => 'string',
+            'required' => true,
+        ],
+        [
+            'ref' => '#backend/headers[]',
+            'name' => 'client_secret',
+            'label' => __('Client Secret', 'forms-bridge'),
+            'description' => __(
+                'You have to create a Self-Client Application on the Zoho Developer Console and get the Client Secret',
+                'forms-bridge'
+            ),
+            'type' => 'string',
+            'required' => true,
+        ],
+        [
+            'ref' => '#bridge',
+            'name' => 'endpoint',
+            'label' => __('Endpoint', 'forms-bridge'),
+            'type' => 'string',
+            'value' => '/bigin/v2/Contacts',
+        ],
+        [
+            'ref' => '#bridge',
+            'name' => 'scope',
+            'label' => __('Scope', 'forms-bridge'),
+            'type' => 'string',
+            'value' => 'ZohoBigin.modules.contacts.CREATE',
+        ],
+    ],
+    'form' => [
+        'fields' => [
+            [
+                'name' => 'First_Name',
+                'label' => __('First name', 'forms-bridge'),
+                'type' => 'text',
+                'required' => true,
+            ],
+            [
+                'name' => 'Last_Name',
+                'label' => __('Last name', 'forms-bridge'),
+                'type' => 'text',
+                'required' => true,
+            ],
+            [
+                'name' => 'Email',
+                'label' => __('Email', 'forms-bridge'),
+                'type' => 'email',
+                'required' => true,
+            ],
+            [
+                'name' => 'Phone',
+                'label' => __('Phone', 'forms-bridge'),
+                'type' => 'text',
+            ],
+            [
+                'name' => 'Mobile',
+                'label' => __('Mobile', 'forms-bridge'),
+                'type' => 'text',
+            ],
+            [
+                'name' => 'Description',
+                'label' => __('Comments', 'forms-bridge'),
+                'type' => 'textarea',
+            ],
+        ],
+    ],
+    'bridge' => [
+        'endpoint' => '/bigin/v2/Contacts',
+        'scope' => 'ZohoBigin.modules.contacts.CREATE',
+    ],
+    'backend' => [
+        'base_url' => 'https://www.zohoapis.com',
+        'headers' => [
+            [
+                'name' => 'Accept',
+                'value' => 'application/json',
+            ],
+        ],
+    ],
+];

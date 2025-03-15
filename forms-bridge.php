@@ -83,7 +83,7 @@ class Forms_Bridge extends Base_Plugin
 
         add_action(
             'forms_bridge_on_failure',
-            static function ($bridge, $error, $payload, $attachments) {
+            static function ($bridge, $error, $payload, $attachments = []) {
                 self::notify_error($bridge, $error, $payload, $attachments);
             },
             90,
@@ -475,7 +475,7 @@ class Forms_Bridge extends Base_Plugin
         $bridge,
         $error,
         $payload,
-        $attachments
+        $attachments = []
     ) {
         $email = Settings_Store::setting('general')->notification_receiver;
 
