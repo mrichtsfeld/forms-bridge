@@ -362,7 +362,11 @@ class Integration extends BaseIntegration
         if (!empty($field['value'])) {
             $type = 'hidden';
         } else {
-            $type = sanitize_text_field($field['type']);
+            if ($field['type'] === 'options') {
+                $type = 'select';
+            } else {
+                $type = sanitize_text_field($field['type']);
+            }
 
             if (($field['required'] ?? false) && $type !== 'hidden') {
                 $type .= '*';
@@ -382,11 +386,17 @@ class Integration extends BaseIntegration
             }
         }
 
-        if (!empty($field['value'])) {
+        if ($type === 'select') {
+            $options = array_map(function ($opt) {
+                return $opt['label'] . '|' . $opt['value'];
+            }, $field['options'] ?? []);
+
+            $value = implode('" "', $options);
+        } elseif (!empty($field['value'])) {
             $value = sanitize_text_field((string) $field['value']);
-            $tag .= "\"{$value}\"";
         }
 
+        $tag .= "\"{$value}\"";
         return $tag . ']';
     }
 
