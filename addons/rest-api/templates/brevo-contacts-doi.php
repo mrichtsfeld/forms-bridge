@@ -153,7 +153,7 @@ return [
     'bridge' => [
         'method' => 'POST',
         'endpoint' => '/v3/contacts/doubleOptinConfirmation',
-        'pipes' => [
+        'mappers' => [
             [
                 'from' => 'templateId',
                 'to' => 'templateId',

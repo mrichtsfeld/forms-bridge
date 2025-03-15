@@ -115,7 +115,7 @@ return [
     'bridge' => [
         'method' => 'POST',
         'endpoint' => '/v3/contacts',
-        'pipes' => [
+        'mappers' => [
             [
                 'from' => 'fname',
                 'to' => 'attributes.FNAME',

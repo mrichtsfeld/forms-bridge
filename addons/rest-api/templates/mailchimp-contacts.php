@@ -238,7 +238,7 @@ return [
     'bridge' => [
         'method' => 'POST',
         'endpoint' => '/v3/contacts',
-        'pipes' => [
+        'mappers' => [
             [
                 'from' => 'datacenter',
                 'to' => 'datacenter',
