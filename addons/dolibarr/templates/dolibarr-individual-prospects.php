@@ -54,6 +54,14 @@ return [
             'value' => '/api/index.php/thirdparties',
         ],
         [
+            'ref' => '#form',
+            'name' => 'title',
+            'label' => __('Form title', 'forms-bridge'),
+            'required' => true,
+            'type' => 'string',
+            'default' => __('Individual Leads', 'forms-bridge'),
+        ],
+        [
             'ref' => '#form/fields[]',
             'name' => 'stcomm_id',
             'label' => __('Prospect status', 'forms-bridge'),
@@ -85,7 +93,7 @@ return [
         ],
     ],
     'form' => [
-        'title' => __('Leads', 'forms-bridge'),
+        'title' => __('Individual Leads', 'forms-bridge'),
         'fields' => [
             [
                 'name' => 'status',

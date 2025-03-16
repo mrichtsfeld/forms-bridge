@@ -37,6 +37,11 @@ return [
             'value' => '/api/index.php/contacts',
         ],
         [
+            'ref' => '#form',
+            'name' => 'title',
+            'default' => __('Contacts', 'forms-bridge'),
+        ],
+        [
             'ref' => '#form/fields[]',
             'name' => 'no_email',
             'label' => __('Subscrive to email', 'forms-bridge'),

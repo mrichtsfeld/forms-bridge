@@ -109,7 +109,7 @@ add_action(
 );
 
 return [
-    'title' => __('Dolibarr company prospects', 'forms-bridge'),
+    'title' => __('Dolibarr Company Prospects', 'forms-bridge'),
     'fields' => [
         [
             'ref' => '#bridge',
@@ -118,6 +118,14 @@ return [
             'type' => 'string',
             'required' => true,
             'value' => '/api/index.php/thirdparties',
+        ],
+        [
+            'ref' => '#form',
+            'name' => 'title',
+            'label' => __('Form title', 'forms-bridge'),
+            'required' => true,
+            'type' => 'string',
+            'default' => __('Company Leads', 'forms-bridge'),
         ],
         [
             'ref' => '#form/fields[]',
@@ -151,7 +159,7 @@ return [
         ],
     ],
     'form' => [
-        'title' => __('Company leads', 'forms-bridge'),
+        'title' => __('Company Leads', 'forms-bridge'),
         'fields' => [
             [
                 'name' => 'status',
