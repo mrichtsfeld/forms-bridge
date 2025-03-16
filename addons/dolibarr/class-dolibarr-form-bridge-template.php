@@ -28,24 +28,26 @@ class Dolibarr_Form_Bridge_Template extends Form_Bridge_Template
                 'label' => 'Name',
                 'type' => 'string',
                 'required' => true,
+                'default' => 'Dolibarr',
             ],
             [
                 'ref' => '#backend',
                 'name' => 'base_url',
                 'label' => 'Base URL',
                 'type' => 'string',
+                'required' => true,
             ],
             [
                 'ref' => '#backend/headers[]',
                 'name' => 'DOLAPIKEY',
                 'label' => 'DOLAPIKEY',
                 'type' => 'string',
+                'required' => true,
             ],
         ],
         'bridge' => [
             'backend' => '',
             'endpoint' => '',
-            'method' => 'POST',
         ],
     ];
 

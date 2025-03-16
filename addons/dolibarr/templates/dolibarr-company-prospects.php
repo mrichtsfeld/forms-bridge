@@ -12,7 +12,7 @@ $forms_bridge_dolibarr_company_contact_data = null;
 add_filter(
     'forms_bridge_payload',
     function ($payload, $bridge) {
-        if ($bridge->template !== 'dolibarr-company-leads') {
+        if ($bridge->template !== 'dolibarr-company-prospects') {
             return $payload;
         }
 
@@ -86,7 +86,7 @@ add_filter(
 add_action(
     'forms_bridge_submit',
     function ($bridge, $response) {
-        if ($bridge->template !== 'dolibarr-company-leads') {
+        if ($bridge->template !== 'dolibarr-company-prospects') {
             return;
         }
 
@@ -109,7 +109,7 @@ add_action(
 );
 
 return [
-    'title' => __('Dolibarr Company Leads', 'forms-bridge'),
+    'title' => __('Dolibarr company prospects', 'forms-bridge'),
     'fields' => [
         [
             'ref' => '#bridge',
@@ -122,7 +122,7 @@ return [
         [
             'ref' => '#form/fields[]',
             'name' => 'stcomm_id',
-            'label' => __('Lead status', 'forms-bridge'),
+            'label' => __('Prospect status', 'forms-bridge'),
             'required' => true,
             'type' => 'options',
             'options' => [
@@ -151,11 +151,17 @@ return [
         ],
     ],
     'form' => [
-        'title' => __('Dolibarr Leads', 'forms-bridge'),
+        'title' => __('Company leads', 'forms-bridge'),
         'fields' => [
             [
                 'name' => 'status',
                 'value' => '1',
+                'type' => 'hidden',
+                'required' => true,
+            ],
+            [
+                'name' => 'typent_id',
+                'value' => '2',
                 'type' => 'hidden',
                 'required' => true,
             ],
@@ -242,6 +248,11 @@ return [
             [
                 'from' => 'status',
                 'to' => 'status',
+                'cast' => 'string',
+            ],
+            [
+                'from' => 'typent_id',
+                'to' => 'typent_id',
                 'cast' => 'string',
             ],
             [
