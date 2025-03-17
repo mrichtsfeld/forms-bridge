@@ -256,6 +256,7 @@ class Integration extends BaseIntegration
                     return $this->_serialize_field($setting['id'], $setting);
                 }, $settings['fields'])
                 : [],
+            'format' => strtolower($settings['date_format'] ?? ''),
         ];
     }
 
@@ -366,6 +367,26 @@ class Integration extends BaseIntegration
             }
         } elseif ($type === 'number') {
             return (float) $value;
+        } elseif ($type === 'date') {
+            if (is_String($value)) {
+                return $value;
+            }
+
+            $_value = '';
+
+            if (isset($value['date'])) {
+                $_value .= $value['date'] . ' ';
+            }
+
+            if (isset($value['hour'])) {
+                $_value .= "{$value['hour']}:{$value['minute']}";
+
+                if (isset($value['ampm'])) {
+                    $_value .= ' ' . $value['ampm'];
+                }
+            }
+
+            return trim($_value);
         } else {
             return $value;
         }
@@ -399,7 +420,25 @@ class Integration extends BaseIntegration
                 $field['label'] ?? $field['name'],
                 $field['required'] ?? false,
             ];
+
             switch ($field['type']) {
+                case 'number':
+                    $constraints = [];
+                    if (isset($field['min'])) {
+                        $constraints['num_min'] = $field['min'];
+                    }
+
+                    if (isset($field['max'])) {
+                        $constraints['num_max'] = $field['max'];
+                    }
+
+                    if (isset($field['step'])) {
+                        $constraints['num_step'] = $field['step'];
+                    }
+
+                    $args[] = $constraints;
+                    $nf_fields[] = $this->number_field(...$args);
+                    break;
                 case 'text':
                     $nf_fields[] = $this->text_field(...$args);
                     break;
@@ -409,9 +448,15 @@ class Integration extends BaseIntegration
                 case 'email':
                     $nf_fields[] = $this->email_field(...$args);
                     break;
+                case 'date':
+                    $nf_fields[] = $this->date_field(...$args);
+                    break;
                 case 'hidden':
-                    $args[] = $field['value'] ?? '';
-                    $nf_fields[] = $this->hidden_field(...$args);
+                    if (!empty($field['value'])) {
+                        $args[] = $field['value'];
+                        $nf_fields[] = $this->hidden_field(...$args);
+                    }
+
                     break;
                 case 'options':
                     $args[] = $field['options'] ?? [];
@@ -483,9 +528,9 @@ class Integration extends BaseIntegration
         $options,
         $is_multi
     ) {
-        $options = [];
+        $_options = [];
         for ($i = 0; $i < count($options); $i++) {
-            $options[] = [
+            $_options[] = [
                 'label' => $options[$i]['label'],
                 'value' => $options[$i]['value'],
                 'order' => (string) $i,
@@ -554,7 +599,7 @@ class Integration extends BaseIntegration
         return array_merge(
             $this->field_template($type, $order, $name, $label, $required),
             [
-                'options' => $options,
+                'options' => $_options,
             ]
         );
     }
@@ -569,6 +614,19 @@ class Integration extends BaseIntegration
                 'drawerDisabled' => false,
                 'manual_key' => false,
             ]
+        );
+    }
+
+    private function number_field(
+        $order,
+        $name,
+        $label,
+        $required,
+        $constraints
+    ) {
+        return array_merge(
+            $this->field_template('number', $order, $name, $label, $required),
+            $constraints
         );
     }
 
@@ -590,6 +648,22 @@ class Integration extends BaseIntegration
         return array_merge(
             $this->field_template('email', $order, $name, $label, $required),
             []
+        );
+    }
+
+    private function date_field($order, $name, $label, $required)
+    {
+        return array_merge(
+            $this->field_template('date', $order, $name, $label, $required),
+            [
+                'date_format' => 'DD/MM/YYYY',
+                'date_mode' => 'date_only',
+                'date_default' => 1,
+                'hours_24' => 0,
+                'year_range_start' => '',
+                'year_range_end' => '',
+                'minute_increment' => 5,
+            ]
         );
     }
 

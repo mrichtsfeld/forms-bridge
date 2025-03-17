@@ -10,7 +10,7 @@
  * License URI:         http://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain:         forms-bridge
  * Domain Path:         /languages
- * Version:             3.0.5
+ * Version:             3.0.6
  * Requires PHP:        8.0
  * Requires at least:   6.7
  */
@@ -75,7 +75,13 @@ class Forms_Bridge extends Base_Plugin
     {
         parent::construct(...$args);
 
-        Addon::load();
+        if (
+            Menu::is_admin_current_page() ||
+            REST_Settings_Controller::is_doing_rest()
+        ) {
+            Addon::load();
+        }
+
         Integration::load();
 
         self::http_hooks();
@@ -243,6 +249,8 @@ class Forms_Bridge extends Base_Plugin
      */
     public static function do_submission()
     {
+        Addon::lazy_load();
+
         $form_data = apply_filters('forms_bridge_form', null);
         if (!$form_data) {
             return;

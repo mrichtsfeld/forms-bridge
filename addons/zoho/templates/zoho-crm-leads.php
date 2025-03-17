@@ -128,6 +128,11 @@ return [
             'type' => 'string',
             'value' => 'ZohoCRM.modules.leads.CREATE',
         ],
+        [
+            'ref' => '#form',
+            'name' => 'title',
+            'default' => __('CRM Leads', 'forms-bridge'),
+        ],
     ],
     'form' => [
         'fields' => [

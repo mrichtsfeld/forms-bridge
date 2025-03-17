@@ -74,6 +74,11 @@ return [
             'type' => 'string',
             'value' => 'ZohoBigin.modules.contacts.CREATE',
         ],
+        [
+            'ref' => '#form',
+            'name' => 'title',
+            'default' => __('Contacts', 'forms-bridge'),
+        ],
     ],
     'form' => [
         'fields' => [
