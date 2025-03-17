@@ -187,6 +187,11 @@ return [
             'value' =>
                 'ZohoBigin.modules.accounts.CREATE,ZohoBigin.modules.contacts.CREATE',
         ],
+        [
+            'ref' => '#form',
+            'name' => 'title',
+            'default' => __('Companies', 'forms-bridge'),
+        ],
     ],
     'form' => [
         'fields' => [

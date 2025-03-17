@@ -1,5 +1,7 @@
 <?php
 
+use FORMS_BRIDGE\Zoho_Form_Bridge;
+
 if (!defined('ABSPATH')) {
     exit();
 }
@@ -7,84 +9,65 @@ if (!defined('ABSPATH')) {
 add_filter(
     'forms_bridge_prune_empties',
     function ($prune, $bridge) {
-        if ($bridge->template === 'dolibarr-schedules') {
+        if ($bridge->template === 'zoho-bigin-schedules') {
             return true;
         }
 
         return $prune;
     },
-    9,
+    10,
     2
 );
 
 add_filter(
     'forms_bridge_payload',
     function ($payload, $bridge) {
-        if ($bridge->template !== 'dolibarr-schedules') {
+        if ($bridge->template !== 'zoho-bigin-schedules') {
             return $payload;
         }
 
-        $backend = $bridge->backend;
-        $response = $backend->get('/api/index.php/contacts', [
-            'sortfield' => 't.rowid',
-            'sortorder' => 'ASC',
-            'limit' => '1',
-            'sqlfilters' => "(t.firstname:like:'{$payload['firstname']}') and (t.lastname:like:'{$payload['lastname']}') and (t.email:=:'{$payload['email']}')",
-        ]);
-
-        if (is_wp_error($response)) {
-            $error_data = $response->get_error_data();
-            $response_code = $error_data['response']['response']['code'];
-
-            if ($response_code !== 404) {
-                do_action(
-                    'forms_bridge_on_failure',
-                    $bridge,
-                    $response,
-                    $payload
-                );
-
-                return;
-            }
-        }
-
-        if (is_wp_error($response)) {
-            $name = "{$payload['firstname']} {$payload['lastname']}";
-            $response = $backend->post('/api/index.php/contacts', [
-                'name' => $name,
-                'firstname' => $payload['firstname'],
-                'lastname' => $payload['lastname'],
-                'email' => $payload['email'],
-            ]);
-
-            if (is_wp_error($response)) {
-                do_action(
-                    'forms_bridge_on_failure',
-                    $bridge,
-                    $response,
-                    $payload
-                );
-
-                return;
-            }
-
-            $contact_id = $response['body'];
-        } else {
-            $contact_id = $response['data'][0]['id'];
-        }
-
-        $payload['socpeopleassigned'] = [
-            $contact_id => [
-                'id' => $contact_id,
-                'mandatory' => '0',
-                'answer_status' => '0',
-                'transparency' => '0',
+        $contact_bridge = new Zoho_Form_Bridge(
+            [
+                'name' => '__event_contact',
+                'endpoint' => '/bigin/v2/Contacts',
+                'scope' => $bridge->scope,
+                'backend' => $bridge->backend->name,
             ],
+            'zoho'
+        );
+
+        $contact = [
+            'First_Name' => $payload['First_Name'],
+            'Last_Name' => $payload['Last_Name'],
+            'Email' => $payload['Email'],
         ];
 
-        unset($payload['firstname']);
-        unset($payload['lastname']);
-        unset($payload['email']);
+        $response = $contact_bridge->do_submit($contact);
+        if (is_wp_error($response)) {
+            $data = json_decode(
+                $response->get_error_data()['response']['body'],
+                true
+            );
+
+            if ($data['data'][0]['code'] !== 'DUPLICATE_DATA') {
+                do_action(
+                    'forms_bridge_on_failure',
+                    $bridge,
+                    $response,
+                    $payload
+                );
+
+                return;
+            }
+
+            $contact_id = $data['data'][0]['details']['duplicate_record']['id'];
+        } else {
+            $contact_id = $response['data'][0]['details']['id'];
+        }
+
+        foreach (array_keys($contact) as $field) {
+            unset($payload[$field]);
+        }
 
         $date = $payload['date'];
         $hour = $payload['h'];
@@ -143,8 +126,26 @@ add_filter(
             return;
         }
 
-        $payload['datep'] = (string) $time;
-        $payload['datef'] = (string) $time;
+        $payload['Start_DateTime'] = date('c', $time);
+        $payload['End_DateTime'] = date('c', $time + 3600);
+
+        $payload['Remind_At'] = [
+            [
+                'unit' => 1,
+                'period' => 'hours',
+            ],
+            [
+                'unit' => 30,
+                'period' => 'minutes',
+            ],
+        ];
+
+        $payload['Participants'] = [
+            [
+                'type' => 'contact',
+                'participant' => $contact_id,
+            ],
+        ];
 
         return $payload;
     },
@@ -153,15 +154,62 @@ add_filter(
 );
 
 return [
-    'title' => __('Dolibarr Schedules', 'forms-bridge'),
+    'title' => __('Zoho Bigin Schedules', 'forms-bridge'),
     'fields' => [
+        [
+            'ref' => '#backend',
+            'name' => 'name',
+            'label' => __('Backend name', 'forms-bridge'),
+            'type' => 'string',
+            'default' => 'Zoho Bigin API',
+        ],
+        [
+            'ref' => '#backend/headers[]',
+            'name' => 'organization_id',
+            'label' => __('Organization ID', 'form-bridge'),
+            'description' => __(
+                'From your organization dashboard, expand the profile sidebar and click on the copy user ID icon to get your organization ID.',
+                'forms-bridge'
+            ),
+            'type' => 'string',
+            'required' => true,
+        ],
+        [
+            'ref' => '#backend/headers[]',
+            'name' => 'client_id',
+            'label' => __('Client ID', 'forms-bridge'),
+            'description' => __(
+                'You have to create a Self-Client Application on the Zoho Developer Console and get the Client ID',
+                'forms-bridge'
+            ),
+            'type' => 'string',
+            'required' => true,
+        ],
+        [
+            'ref' => '#backend/headers[]',
+            'name' => 'client_secret',
+            'label' => __('Client Secret', 'forms-bridge'),
+            'description' => __(
+                'You have to create a Self-Client Application on the Zoho Developer Console and get the Client Secret',
+                'forms-bridge'
+            ),
+            'type' => 'string',
+            'required' => true,
+        ],
         [
             'ref' => '#bridge',
             'name' => 'endpoint',
             'label' => __('Endpoint', 'forms-bridge'),
             'type' => 'string',
-            'required' => true,
-            'value' => '/api/index.php/agendaevents',
+            'value' => '/bigin/v2/Events',
+        ],
+        [
+            'ref' => '#bridge',
+            'name' => 'scope',
+            'label' => __('Scope', 'forms-bridge'),
+            'type' => 'string',
+            'value' =>
+                'ZohoBigin.modules.contacts.CREATE,ZohoBigin.modules.events.CREATE',
         ],
         [
             'ref' => '#form',
@@ -170,99 +218,45 @@ return [
         ],
         [
             'ref' => '#form/fields[]',
-            'name' => 'type_code',
-            'label' => __('Event type', 'forms-bridge'),
-            'type' => 'options',
-            'options' => [
-                [
-                    'label' => __('Meeting', 'forms-bridge'),
-                    'value' => 'AC_RDV',
-                ],
-                [
-                    'label' => __('Phone call', 'forms-bridge'),
-                    'value' => 'AC_TEL',
-                ],
-                [
-                    'label' => __('Intervention on site', 'forms-bridge'),
-                    'value' => 'AC_INT',
-                ],
-                [
-                    'label' => __('Other', 'forms-bridge'),
-                    'value' => 'AC_OTH',
-                ],
-            ],
-            'default' => true,
-            'required' => true,
-        ],
-        [
-            'ref' => '#form/fields[]',
-            'name' => 'label',
-            'label' => __('Event label', 'forms-bridge'),
+            'name' => 'Event_Title',
+            'label' => __('Event title', 'forms-bridge'),
             'type' => 'string',
             'required' => true,
         ],
         [
             'ref' => '#form/fields[]',
-            'name' => 'fulldayevent',
+            'name' => 'All_day',
             'label' => __('Is all day event?', 'forms-bridge'),
             'type' => 'boolean',
             'default' => false,
         ],
-        [
-            'ref' => '#form/fields[]',
-            'name' => 'location',
-            'label' => __('Location (optional)', 'forms-bridge'),
-            'type' => 'string',
-        ],
-        [
-            'ref' => '#form/fields[]',
-            'name' => 'userownerid',
-            'label' => __('Owen user ID (optional)', 'forms-bridge'),
-            'type' => 'number',
-        ],
     ],
     'form' => [
-        'title' => __('Schedules', 'forms-bridge'),
         'fields' => [
             [
-                'name' => 'type_code',
+                'name' => 'Event_Title',
                 'type' => 'hidden',
                 'required' => true,
             ],
             [
-                'name' => 'label',
+                'name' => 'All_day',
                 'type' => 'hidden',
                 'required' => true,
             ],
             [
-                'name' => 'fulldayevent',
-                'type' => 'hidden',
-                'required' => true,
-            ],
-            [
-                'name' => 'location',
-                'type' => 'hidden',
-                'required' => true,
-            ],
-            [
-                'name' => 'userownerid',
-                'type' => 'hidden',
-                'required' => true,
-            ],
-            [
-                'name' => 'firstname',
+                'name' => 'First_Name',
                 'label' => __('First name', 'forms-bridge'),
                 'type' => 'text',
                 'required' => true,
             ],
             [
-                'name' => 'lastname',
+                'name' => 'Last_Name',
                 'label' => __('Last name', 'forms-bridge'),
                 'type' => 'text',
                 'required' => true,
             ],
             [
-                'name' => 'email',
+                'name' => 'Email',
                 'label' => __('Email', 'forms-bridge'),
                 'type' => 'email',
                 'required' => true,
@@ -277,7 +271,6 @@ return [
                 'name' => 'h',
                 'label' => __('Hour', 'forms-bridge'),
                 'type' => 'options',
-                'required' => true,
                 'options' => [
                     [
                         'label' => __('1 AM', 'forms-bridge'),
@@ -376,12 +369,12 @@ return [
                         'value' => '24',
                     ],
                 ],
+                'required' => 'true',
             ],
             [
                 'name' => 'm',
                 'label' => __('Minute', 'forms-bridge'),
                 'type' => 'options',
-                'required' => true,
                 'options' => [
                     ['label' => '00', 'value' => '00'],
                     ['label' => '05', 'value' => '05'],
@@ -396,33 +389,21 @@ return [
                     ['label' => '50', 'value' => '50'],
                     ['label' => '55', 'value' => '55'],
                 ],
+                'required' => true,
             ],
-        ],
-    ],
-    'backend' => [
-        'headers' => [
-            'name' => 'Accept',
-            'value' => 'application/json',
         ],
     ],
     'bridge' => [
-        'endpoint' => '/api/index.php/agendaevents',
-        'method' => 'POST',
-        'mappers' => [
+        'endpoint' => '/bigin/v2/Events',
+        'scope' =>
+            'ZohoBigin.modules.contacts.CREATE,ZohoBigin.modules.events.CREATE',
+    ],
+    'backend' => [
+        'base_url' => 'https://www.zohoapis.com',
+        'headers' => [
             [
-                'from' => 'type_code',
-                'to' => 'type_code',
-                'cast' => 'string',
-            ],
-            [
-                'from' => 'fulldayevent',
-                'to' => 'fulldayevent',
-                'cast' => 'string',
-            ],
-            [
-                'from' => 'userownerid',
-                'to' => 'userownerid',
-                'cast' => 'string',
+                'name' => 'Accept',
+                'value' => 'application/json',
             ],
         ],
     ],
