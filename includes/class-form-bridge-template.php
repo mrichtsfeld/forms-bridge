@@ -280,6 +280,10 @@ class Form_Bridge_Template
                             'is_file' => ['type' => 'boolean'],
                             'is_multi' => ['type' => 'boolean'],
                             'filetypes' => ['type' => 'string'],
+                            'min' => ['type' => 'number'],
+                            'max' => ['type' => 'number'],
+                            'step' => ['type' => 'number'],
+                            'format' => ['type' => 'string'],
                         ],
                         'required' => ['name', 'type'],
                     ],
@@ -425,6 +429,10 @@ class Form_Bridge_Template
                 $col_item = null;
                 for ($i = 0; $i < count($collection); $i++) {
                     $col_item = $collection[$i];
+
+                    if (!isset($col_item['name'])) {
+                        continue;
+                    }
 
                     if (
                         $col_item['name'] === $default_item['name'] &&

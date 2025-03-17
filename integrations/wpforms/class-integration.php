@@ -274,6 +274,15 @@ class Integration extends BaseIntegration
             return;
         }
 
+        $format = $field['date_format'] ?? '';
+        if ($format) {
+            $format =
+                [
+                    'd/m/Y' => 'dd/mm/yyyy',
+                    'm/d/Y' => 'mm/dd/yyyy',
+                ][$format] ?? '';
+        }
+
         return [
             'id' => (int) ($field['id'] ?? 0),
             'type' => $field['type'],
@@ -290,6 +299,7 @@ class Integration extends BaseIntegration
                 ($field['type'] === 'file-upload' &&
                     ($field['max_file_number'] ?? '1') !== '1'),
             'conditional' => false,
+            'format' => $format,
         ];
     }
 
@@ -458,8 +468,11 @@ class Integration extends BaseIntegration
                     $wp_fields[strval($id)] = $this->textarea_field(...$args);
                     break;
                 case 'hidden':
-                    $args[] = $field['value'] ?? '';
-                    $wp_fields[strval($id)] = $this->hidden_field(...$args);
+                    if (!empty($field['value'])) {
+                        $args[] = $field['value'];
+                        $wp_fields[strval($id)] = $this->hidden_field(...$args);
+                    }
+
                     break;
                 case 'options':
                     $args[] = $field['options'] ?? [];
@@ -470,8 +483,22 @@ class Integration extends BaseIntegration
                     $args[] = $field['filetypes'] ?? '';
                     $wp_fields[strval($id)] = $this->file_field(...$args);
                     break;
+                case 'date':
+                    $wp_fields[strval($id)] = $this->date_field(...$args);
+                    break;
                 case 'text':
                     $wp_fields[strval($id)] = $this->text_field(...$args);
+                    break;
+                case 'number':
+                    $constraints = [
+                        'default_value' => intval($field['default'] ?? 0),
+                        'min' => $field['min'] ?? '',
+                        'max' => $field['max'] ?? '',
+                        'step' => $field['step'] ?? '1',
+                    ];
+
+                    $args[] = $constraints;
+                    $wp_fields[strval($id)] = $this->number_field(...$args);
                     break;
                 // case 'url':
                 // case 'email':
@@ -559,6 +586,45 @@ class Integration extends BaseIntegration
             [
                 'limit_count' => '1',
                 'limit_mode' => 'characters',
+            ]
+        );
+    }
+
+    /**
+     * Returns a valid number field data.
+     *
+     * @param int $id Field id.
+     * @param string $name Field name (label).
+     * @param boolean $required Is field required.
+     * @param array $constraints Field constraints.
+     *
+     * @return array
+     */
+    private function number_field($id, $name, $required, $constraints)
+    {
+        return array_merge(
+            $this->field_template('number-slider', $id, $name, $required),
+            $constraints
+        );
+    }
+
+    /**
+     * Returns a valid text field data.
+     *
+     * @param int $id Field id.
+     * @param string $name Field name (label).
+     * @param boolean $required Is field required.
+     *
+     * @return array
+     */
+    private function date_field($id, $name, $required)
+    {
+        return array_merge(
+            $this->field_template('date-time', $id, $name, $required),
+            [
+                'format' => 'date',
+                'date_type' => 'datepicker',
+                'date_format' => 'd/m/Y',
             ]
         );
     }

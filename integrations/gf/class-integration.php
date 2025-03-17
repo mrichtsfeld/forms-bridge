@@ -292,6 +292,7 @@ class Integration extends BaseIntegration
             'conditional' =>
                 is_array($field->conditionalLogic) &&
                 $field->conditionalLogic['enabled'],
+            'format' => $field->type === 'date' ? 'yyyy-mm-dd' : '',
         ];
     }
 
@@ -546,10 +547,23 @@ class Integration extends BaseIntegration
 
             switch ($field['type']) {
                 case 'hidden':
-                    $args[] = $field['value'] ?? '';
-                    $gf_fields[] = $this->hidden_field(...$args);
+                    if (!empty($field['value'])) {
+                        $args[] = $field['value'];
+                        $gf_fields[] = $this->hidden_field(...$args);
+                    }
+
                     break;
                 case 'number':
+                    $constraints = [];
+                    if (isset($field['min'])) {
+                        $constraints['rangeMin'] = $field['min'];
+                    }
+
+                    if (isset($field['max'])) {
+                        $constraints['rangeMax'] = $field['max'];
+                    }
+
+                    $args[] = $constraints;
                     $gf_fields[] = $this->number_field(...$args);
                     break;
                 case 'email':
@@ -565,6 +579,9 @@ class Integration extends BaseIntegration
                     break;
                 case 'url':
                     $gf_fields[] = $this->url_field(...$args);
+                    break;
+                case 'date':
+                    $gf_fields[] = $this->date_field(...$args);
                     break;
                 case 'file':
                     $args[] = $field['is_multi'] ?? false;
@@ -829,6 +846,19 @@ class Integration extends BaseIntegration
         );
     }
 
+    private function date_field($id, $name, $label, $required)
+    {
+        return array_merge(
+            $this->field_template('date', $id, $name, $label, $required),
+            [
+                'dateType' => 'datepicker',
+                'calendarIconType' => 'none',
+                'dateFormatPlacement' => 'below',
+                'dateFormat' => 'mdy',
+            ]
+        );
+    }
+
     /**
      * Returns a valid hidden field data.
      *
@@ -839,14 +869,14 @@ class Integration extends BaseIntegration
      *
      * @return array
      */
-    private function number_field($id, $name, $label, $required)
+    private function number_field($id, $name, $label, $required, $constraints)
     {
         return array_merge(
             $this->field_template('number', $id, $name, $label, $required),
-            [
+            array_merge($constraints, [
                 'inputType' => 'number',
                 'numberFormat' => 'decimal_dot',
-            ]
+            ])
         );
     }
 }

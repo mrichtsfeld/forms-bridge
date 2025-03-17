@@ -226,6 +226,8 @@ class Integration extends BaseIntegration
             }
         }
 
+        $format = $type === 'date' ? 'yyyy-mm-dd' : '';
+
         return [
             'id' => $field->get_id_option(),
             'type' => $type,
@@ -242,6 +244,7 @@ class Integration extends BaseIntegration
             'conditional' =>
                 $field->basetype === 'conditional' ||
                 $field->basetype === 'fileconditional',
+            'format' => $format,
         ];
     }
 
