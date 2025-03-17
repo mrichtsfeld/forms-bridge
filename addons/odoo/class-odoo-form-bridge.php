@@ -224,6 +224,8 @@ class Odoo_Form_Bridge extends Form_Bridge
             $payload,
         ]);
 
+        $payload = apply_filters('forms_bridge_rpc_payload', $payload, $this);
+
         $response = $this->backend()->post(self::endpoint, $payload);
 
         $result = self::rpc_response($response);

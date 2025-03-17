@@ -160,6 +160,7 @@ class Google_Sheets_Addon extends Addon
                                     'required' => ['from', 'to', 'cast'],
                                 ],
                             ],
+                            'template' => ['type' => 'string'],
                         ],
                         'required' => [
                             'name',

@@ -10,6 +10,8 @@ require_once 'class-odoo-db.php';
 require_once 'class-odoo-form-bridge.php';
 require_once 'class-odoo-form-bridge-template.php';
 
+require_once 'country-codes.php';
+
 /**
  * Odoo Addon class.
  */
@@ -147,6 +149,7 @@ class Odoo_Addon extends Addon
                                     'required' => ['from', 'to', 'cast'],
                                 ],
                             ],
+                            'template' => ['type' => 'string'],
                         ],
                         'required' => [
                             'name',
