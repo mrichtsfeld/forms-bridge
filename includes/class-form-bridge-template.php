@@ -94,6 +94,7 @@ class Form_Bridge_Template
      */
     private static $schema = [
         'title' => ['type' => 'string'],
+        'description' => ['type' => 'string'],
         'integrations' => [
             'type' => 'array',
             'items' => ['type' => 'string'],
@@ -341,6 +342,7 @@ class Form_Bridge_Template
         $default = self::merge_array(
             static::$default,
             [
+                'description' => '',
                 'fields' => [
                     [
                         'ref' => '#form',
