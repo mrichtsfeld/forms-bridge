@@ -71,7 +71,14 @@ add_filter(
 );
 
 return [
-    'title' => __('FinanCoop Subscription Request', 'forms-bridge'),
+    'title' => __('Subscription Requests', 'forms-bridge'),
+    'fields' => [
+        [
+            'ref' => '#form',
+            'name' => 'title',
+            'default' => __('Subscription Requests', 'forms-bridge'),
+        ],
+    ],
     'bridge' => [
         'endpoint' => '/api/campaign/{campaign_id}/subscription_request',
         'mappers' => [

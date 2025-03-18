@@ -79,7 +79,14 @@ add_filter(
 );
 
 return [
-    'title' => __('FinanCoop Loan Request', 'forms-bridge'),
+    'title' => __('Loan Requests', 'forms-bridge'),
+    'fields' => [
+        [
+            'ref' => '#form',
+            'name' => 'title',
+            'default' => __('Loan Requests', 'forms-bridge'),
+        ],
+    ],
     'bridge' => [
         'endpoint' => '/api/campaign/{campaign_id}/loan_request',
         'mappers' => [
@@ -148,12 +155,6 @@ return [
                 'type' => 'text',
                 'required' => true,
             ],
-            // [
-            //     'label' => __('City', 'forms-bridge'),
-            //     'name' => 'city',
-            //     'type' => 'text',
-            //     'required' => true,
-            // ],
             [
                 'label' => __('Zip code', 'forms-bridge'),
                 'name' => 'zip_code',
