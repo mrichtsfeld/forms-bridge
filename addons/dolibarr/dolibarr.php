@@ -6,6 +6,7 @@ if (!defined('ABSPATH')) {
     exit();
 }
 
+require_once 'class-dolibarr-api-key.php';
 require_once 'class-dolibarr-form-bridge.php';
 require_once 'class-dolibarr-form-bridge-template.php';
 
@@ -37,6 +38,68 @@ class Dolibarr_Addon extends Addon
      * @var string
      */
     protected static $bridge_class = '\FORMS_BRIDGE\Dolibarr_Form_Bridge';
+
+    /**
+     * Addon constructor. Inherits from the abstract addon and initialize interceptos
+     * and custom hooks.
+     */
+    protected function construct(...$args)
+    {
+        parent::construct(...$args);
+        self::custom_hooks();
+    }
+
+    /**
+     * Addon custom hooks.
+     */
+    private static function custom_hooks()
+    {
+        add_filter(
+            'forms_bridge_dolibarr_api_keys',
+            static function ($api_keys) {
+                if (!wp_is_numeric_array($api_keys)) {
+                    $api_keys = [];
+                }
+
+                return array_merge($api_keys, self::api_keys());
+            },
+            10,
+            1
+        );
+
+        add_filter(
+            'forms_bridge_dolibarr_api_key',
+            static function ($api_key, $name) {
+                if ($api_key instanceof Dolibarr_API_Key) {
+                    return $api_key;
+                }
+
+                $api_keys = self::api_keys();
+                foreach ($api_keys as $api_key) {
+                    if ($api_key->name === $name) {
+                        return $api_key;
+                    }
+                }
+            },
+            10,
+            2
+        );
+    }
+
+    /**
+     * Addon databases instances getter.
+     *
+     * @return array List with available databases instances.
+     */
+    private static function api_keys()
+    {
+        return array_map(
+            static function ($data) {
+                return new Dolibarr_API_Key($data);
+            },
+            self::setting()->api_keys ?: []
+        );
+    }
 
     /**
      * Registers the setting and its fields.
@@ -126,10 +189,15 @@ class Dolibarr_Addon extends Addon
      */
     protected static function validate_setting($data, $setting)
     {
-        $data['api_keys'] = self::validate_api_keys($data['api_keys']);
+        $backends =
+            \HTTP_BRIDGE\Settings_Store::setting('general')->backends ?: [];
+        $data['api_keys'] = self::validate_api_keys(
+            $data['api_keys'],
+            $backends
+        );
         $data['bridges'] = self::validate_bridges(
             $data['bridges'],
-            \HTTP_BRIDGE\Settings_Store::setting('general')->backends ?: []
+            $data['api_keys']
         );
 
         return $data;
@@ -140,21 +208,19 @@ class Dolibarr_Addon extends Addon
      * based on the Http_Bridge's backends store state.
      *
      * @param array $api_keys Collection of api key arrays.
+     * @param array $backends
      *
      * @return array Validated API keys.
      */
-    private static function validate_api_keys($api_keys)
+    private static function validate_api_keys($api_keys, $backends)
     {
         if (!wp_is_numeric_array($api_keys)) {
             return [];
         }
 
-        $backends = array_map(
-            function ($backend) {
-                return $backend['name'];
-            },
-            \HTTP_BRIDGE\Settings_Store::setting('general')->backends ?: []
-        );
+        $backend_names = array_map(function ($backend) {
+            return $backend['name'];
+        }, $backends);
 
         $uniques = [];
         $validated = [];
@@ -167,7 +233,7 @@ class Dolibarr_Addon extends Addon
                 continue;
             }
 
-            if (!in_array($api_keys['backend'] ?? null, $backends)) {
+            if (!in_array($api_key['backend'] ?? null, $backend_names)) {
                 $api_key['backend'] = '';
             }
 

@@ -44,13 +44,18 @@ add_filter(
         }
 
         $backend = $bridge->backend;
+        $dolapikey = $bridge->api_key->key;
 
         $payload['owner'] = base64_decode($payload['owner']);
 
-        $response = $backend->get('/api/index.php/users', [
-            'limit' => '1',
-            'sqlfilters' => "(t.email:=:'{$payload['owner']}')",
-        ]);
+        $response = $backend->get(
+            '/api/index.php/users',
+            [
+                'limit' => '1',
+                'sqlfilters' => "(t.email:=:'{$payload['owner']}')",
+            ],
+            ['DOLAPIKEY' => $dolapikey]
+        );
 
         if (is_wp_error($response)) {
             do_action('forms_bridge_on_failure', $bridge, $response, $payload);
@@ -60,10 +65,14 @@ add_filter(
         $payload['userownerid'] = $response['data'][0]['id'];
         unset($payload['owner']);
 
-        $response = $backend->get('/api/index.php/contacts', [
-            'limit' => '1',
-            'sqlfilters' => "(t.firstname:like:'{$payload['firstname']}') and (t.lastname:like:'{$payload['lastname']}') and (t.email:=:'{$payload['email']}')",
-        ]);
+        $response = $backend->get(
+            '/api/index.php/contacts',
+            [
+                'limit' => '1',
+                'sqlfilters' => "(t.firstname:like:'{$payload['firstname']}') and (t.lastname:like:'{$payload['lastname']}') and (t.email:=:'{$payload['email']}')",
+            ],
+            ['DOLAPIKEY' => $dolapikey]
+        );
 
         if (is_wp_error($response)) {
             $error_data = $response->get_error_data();
@@ -83,12 +92,16 @@ add_filter(
 
         if (is_wp_error($response)) {
             $name = "{$payload['firstname']} {$payload['lastname']}";
-            $response = $backend->post('/api/index.php/contacts', [
-                'name' => $name,
-                'firstname' => $payload['firstname'],
-                'lastname' => $payload['lastname'],
-                'email' => $payload['email'],
-            ]);
+            $response = $backend->post(
+                '/api/index.php/contacts',
+                [
+                    'name' => $name,
+                    'firstname' => $payload['firstname'],
+                    'lastname' => $payload['lastname'],
+                    'email' => $payload['email'],
+                ],
+                ['DOLAPIKEY' => $dolapikey]
+            );
 
             if (is_wp_error($response)) {
                 do_action(
@@ -454,11 +467,6 @@ return [
             [
                 'from' => 'fulldayevent',
                 'to' => 'fulldayevent',
-                'cast' => 'string',
-            ],
-            [
-                'from' => 'userownerid',
-                'to' => 'userownerid',
                 'cast' => 'string',
             ],
             [

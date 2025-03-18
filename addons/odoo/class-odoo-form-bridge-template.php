@@ -186,16 +186,16 @@ class Odoo_Form_Bridge_Template extends Form_Bridge_Template
     }
 
     /**
-     * Checks if a backend with the given name exists on the settings store.
+     * Checks if a database with the given name exists on the settings store.
      *
-     * @param string $name Backend name.
+     * @param string $name Database name.
      *
      * @return boolean
      */
     private function database_exists($name)
     {
         $setting = Forms_Bridge::setting($this->api);
-        $databases = $setting->databases;
+        $databases = $setting->databases ?: [];
 
         return array_search($name, array_column($databases, 'name')) !== false;
     }
@@ -220,7 +220,7 @@ class Odoo_Form_Bridge_Template extends Form_Bridge_Template
         $is_valid = $this->database_exists($data['name']);
 
         if (!$is_valid) {
-            return;
+            return false;
         }
 
         do_action('forms_bridge_template_database', $data, $this->name);

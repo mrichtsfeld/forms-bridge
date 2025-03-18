@@ -23,7 +23,7 @@ export default function OdooBridge({ data, update, remove }) {
       template={({ add, schema }) => (
         <NewOdooBridge add={add} schema={schema} />
       )}
-      schema={["name", "form_id", "model", "database"]}
+      schema={["name", "form_id", "database", "model"]}
     >
       {({ data, update }) => (
         <>

@@ -53,13 +53,18 @@ class Odoo_Addon extends Addon
      */
     private static function custom_hooks()
     {
-        add_filter('forms_bridge_odoo_dbs', static function ($dbs) {
-            if (!wp_is_numeric_array($dbs)) {
-                $dbs = [];
-            }
+        add_filter(
+            'forms_bridge_odoo_dbs',
+            static function ($dbs) {
+                if (!wp_is_numeric_array($dbs)) {
+                    $dbs = [];
+                }
 
-            return array_merge($dbs, self::databases());
-        });
+                return array_merge($dbs, self::databases());
+            },
+            10,
+            1
+        );
 
         add_filter(
             'forms_bridge_odoo_db',
@@ -87,9 +92,12 @@ class Odoo_Addon extends Addon
      */
     private static function databases()
     {
-        return array_map(static function ($db_data) {
-            return new Odoo_DB($db_data);
-        }, self::setting()->databases);
+        return array_map(
+            static function ($data) {
+                return new Odoo_DB($data);
+            },
+            self::setting()->databases ?: []
+        );
     }
 
     /**
@@ -180,7 +188,12 @@ class Odoo_Addon extends Addon
      */
     protected static function validate_setting($data, $setting)
     {
-        $data['databases'] = self::validate_databases($data['databases']);
+        $backends =
+            \HTTP_BRIDGE\Settings_Store::setting('general')->backends ?: [];
+        $data['databases'] = self::validate_databases(
+            $data['databases'],
+            $backends
+        );
         $data['bridges'] = self::validate_bridges(
             $data['bridges'],
             $data['databases']
@@ -194,21 +207,19 @@ class Odoo_Addon extends Addon
      * based on the Http_Bridge's backends store state.
      *
      * @param array $databases Databases data.
+     * @param array $backends Backends data.
      *
      * @return array Validated databases data.
      */
-    private static function validate_databases($databases)
+    private static function validate_databases($databases, $backends)
     {
         if (!wp_is_numeric_array($databases)) {
             return [];
         }
 
-        $backends = array_map(
-            function ($backend) {
-                return $backend['name'];
-            },
-            \HTTP_BRIDGE\Settings_Store::setting('general')->backends ?: []
-        );
+        $backends = array_map(function ($backend) {
+            return $backend['name'];
+        }, $backends);
 
         $uniques = [];
         $validated = [];

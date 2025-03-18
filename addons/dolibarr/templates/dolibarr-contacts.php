@@ -30,10 +30,17 @@ add_filter(
             return $payload;
         }
 
-        $response = $bridge->backend->get($bridge->endpoint, [
-            'limit' => '1',
-            'sqlfilters' => "(t.firstname:like:'{$payload['firstname']}') and (t.lastname:like:'{$payload['lastname']}') and (t.email:=:'{$payload['email']}')",
-        ]);
+        $backend = $bridge->backend;
+        $dolapikey = $bridge->api_key->key;
+
+        $response = $backend->get(
+            $bridge->endpoint,
+            [
+                'limit' => '1',
+                'sqlfilters' => "(t.firstname:like:'{$payload['firstname']}') and (t.lastname:like:'{$payload['lastname']}') and (t.email:=:'{$payload['email']}')",
+            ],
+            ['DOLAPIKEY' => $dolapikey]
+        );
 
         if (is_wp_error($response)) {
             $response_code = $response->get_error_data()['response'][

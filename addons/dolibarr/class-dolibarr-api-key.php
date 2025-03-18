@@ -7,12 +7,12 @@ if (!defined('ABSPATH')) {
 }
 
 /**
- * Odoo addon database
+ * Dolibarr addon API key
  */
-class Odoo_DB
+class Dolibarr_API_Key
 {
     /**
-     * Handles database settings data.
+     * Handles API key settings data.
      *
      * @var array|null
      */
@@ -27,7 +27,7 @@ class Odoo_DB
     }
 
     /**
-     * Proxies class attributes to the database settings data.
+     * Proxies class attributes to the API key settings data.
      *
      * @param string $name Attribute name.
      *
@@ -44,7 +44,7 @@ class Odoo_DB
     }
 
     /**
-     * Database's backend instance getter.
+     * API key's backend instance getter.
      *
      * @return Http_Backend Http Backend instance.
      */

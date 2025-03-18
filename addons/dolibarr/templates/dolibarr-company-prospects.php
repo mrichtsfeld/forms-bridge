@@ -36,13 +36,18 @@ add_filter(
         }
 
         $backend = $bridge->backend;
+        $dolapikey = $bridge->api_key->key;
 
-        $response = $backend->get('/api/index.php/thirdparties', [
-            'sortfield' => 't.rowid',
-            'sortorder' => 'ASC',
-            'limit' => '1',
-            'sqlfilters' => "(t.siren:=:'{$payload['idprof1']}')",
-        ]);
+        $response = $backend->get(
+            '/api/index.php/thirdparties',
+            [
+                'sortfield' => 't.rowid',
+                'sortorder' => 'ASC',
+                'limit' => '1',
+                'sqlfilters' => "(t.siren:=:'{$payload['idprof1']}')",
+            ],
+            ['DOLAPIKEY' => $dolapikey]
+        );
 
         if (is_wp_error($response)) {
             $error_data = $response->get_error_data();
@@ -61,11 +66,15 @@ add_filter(
         }
 
         if (is_wp_error($response)) {
-            $response = $backend->get('/api/index.php/thirdparties', [
-                'sortfield' => 't.rowid',
-                'sortorder' => 'DESC',
-                'limit' => 1,
-            ]);
+            $response = $backend->get(
+                '/api/index.php/thirdparties',
+                [
+                    'sortfield' => 't.rowid',
+                    'sortorder' => 'DESC',
+                    'limit' => 1,
+                ],
+                ['DOLAPIKEY' => $dolapikey]
+            );
 
             if (is_wp_error($response)) {
                 do_action(
@@ -102,7 +111,11 @@ add_filter(
                 'country_id' => $payload['country_id'],
             ];
 
-            $response = $backend->post('/api/index.php/thirdparties', $company);
+            $response = $backend->post(
+                '/api/index.php/thirdparties',
+                $company,
+                ['DOLAPIKEY' => $dolapikey]
+            );
 
             if (is_wp_error($response)) {
                 do_action(
@@ -118,10 +131,14 @@ add_filter(
         } else {
             $company_id = $response['data'][0]['id'];
 
-            $response = $backend->get('/api/index.php/contacts', [
-                'limit' => '1',
-                'sqlfilters' => "(t.email:=:'{$payload['email']}') and (t.fk_soc:=:{$company_id})",
-            ]);
+            $response = $backend->get(
+                '/api/index.php/contacts',
+                [
+                    'limit' => '1',
+                    'sqlfilters' => "(t.email:=:'{$payload['email']}') and (t.fk_soc:=:{$company_id})",
+                ],
+                ['DOLAPIKEY' => $dolapikey]
+            );
 
             if (!is_wp_error($response)) {
                 return;

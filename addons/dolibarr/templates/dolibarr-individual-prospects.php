@@ -14,11 +14,16 @@ add_filter(
         $payload['name'] = "{$payload['firstname']} {$payload['lastname']}";
 
         $backend = $bridge->backend;
+        $dolapikey = $bridge->api_key->key;
 
-        $response = $backend->get('/api/index.php/thirdparties', [
-            'limit' => '1',
-            'sqlfilters' => "(t.fk_typent:=:8) and (t.email:=:'{$payload['email']}')",
-        ]);
+        $response = $backend->get(
+            '/api/index.php/thirdparties',
+            [
+                'limit' => '1',
+                'sqlfilters' => "(t.fk_typent:=:8) and (t.email:=:'{$payload['email']}')",
+            ],
+            ['DOLAPIKEY' => $dolapikey]
+        );
 
         if (is_wp_error($response)) {
             $error_code = $response->get_error_data()['response']['response'][
@@ -41,11 +46,15 @@ add_filter(
             return;
         }
 
-        $response = $backend->get('/api/index.php/thirdparties', [
-            'sortfield' => 't.rowid',
-            'sortorder' => 'DESC',
-            'limit' => 1,
-        ]);
+        $response = $backend->get(
+            '/api/index.php/thirdparties',
+            [
+                'sortfield' => 't.rowid',
+                'sortorder' => 'DESC',
+                'limit' => 1,
+            ],
+            ['DOLAPIKEY' => $dolapikey]
+        );
 
         if (is_wp_error($response)) {
             do_action('forms_bridge_on_failure', $bridge, $response, $payload);

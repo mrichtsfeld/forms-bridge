@@ -187,12 +187,11 @@ class Odoo_Form_Bridge extends Form_Bridge
      */
     private function database()
     {
-        $dbs = Forms_Bridge::setting('odoo')->databases;
-        foreach ($dbs as $db) {
-            if ($db['name'] === $this->data['database']) {
-                return new Odoo_DB($db);
-            }
-        }
+        return apply_filters(
+            'forms_bridge_odoo_db',
+            null,
+            $this->data['database'] ?? null
+        );
     }
 
     /**
