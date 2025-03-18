@@ -68,6 +68,7 @@ class Finan_Coop_Form_Bridge_Template extends Rest_Form_Bridge_Template
         'bridge' => [
             'backend' => 'FinanCoop',
             'endpoint' => '/api/campaign/{campaign_id}',
+            'method' => 'POST',
         ],
     ];
 

@@ -142,14 +142,7 @@ class Form_Bridge_Template
                             'type' => 'object',
                             'properties' => [
                                 'label' => ['type' => 'string'],
-                                'value' => [
-                                    'type' => [
-                                        'integer',
-                                        'number',
-                                        'string',
-                                        'boolean',
-                                    ],
-                                ],
+                                'value' => ['type' => 'string'],
                             ],
                         ],
                         'uniqueItems' => true,
