@@ -3,7 +3,7 @@ Contributors: codeccoop
 Tags: forms, contact forms, bridge, api, http
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
-Stable Tag: 3.0.6
+Stable Tag: 3.0.7
 Tested up to: 6.7
 
 Bridge WP form builder plugins to any backend or service over HTTP requests.
@@ -14,7 +14,7 @@ Forms Bridge has integrations for [GravityForms](https://www.gravityforms.com), 
 
 == Addons ==
 
-Forms Bridge has core support for REST API connexions and addons for [Odoo JSON-RPC](https://www.odoo.com/) and [Google Spreadsheets](https://workspace.google.com/products/sheets/).
+Forms Bridge has core support for REST API connexions and addons for [Odoo JSON-RPC](https://www.odoo.com/), [Google Spreadsheets](https://workspace.google.com/products/sheets/), [Dolibarr REST API](https://wiki.dolibarr.org/index.php/Module_Web_Services_API_REST_(developer)) and [Zoho REST APIs](https://www.zoho.com/developer/rest-api.html).
 
 == Docs ==
 
