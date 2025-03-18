@@ -105,7 +105,7 @@ class Rest_Form_Bridge_Template extends Form_Bridge_Template
      *
      * @return array
      */
-    private function extend_schema($schema)
+    protected function extend_schema($schema)
     {
         $schema['bridge']['properties'] = array_merge(
             $schema['bridge']['properties'],

@@ -26,6 +26,11 @@ if (!defined('ABSPATH')) {
     exit();
 }
 
+define('FORMS_BRIDGE_INDEX', __FILE__);
+define('FORMS_BRIDGE_DIR', dirname(__FILE__));
+define('FORMS_BRIDGE_INTEGRATIONS_DIR', FORMS_BRIDGE_DIR . '/integrations');
+define('FORMS_BRIDGE_ADDONS_DIR', FORMS_BRIDGE_DIR . '/addons');
+
 require_once 'abstracts/class-plugin.php';
 
 require_once 'deps/http/http-bridge.php';
@@ -278,6 +283,13 @@ class Forms_Bridge extends Base_Plugin
         Logger::log($uploads);
 
         foreach (array_values($bridges) as $bridge) {
+            if (!$bridge->is_valid) {
+                Logger::log(
+                    'Skip submission for invalid bridge ' . $bridge->name
+                );
+                continue;
+            }
+
             try {
                 // TODO: Exclude attachments from payload finger mangling
                 $payload = $bridge->apply_mappers($submission);

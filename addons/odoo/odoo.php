@@ -150,6 +150,7 @@ class Odoo_Addon extends Addon
                                 ],
                             ],
                             'template' => ['type' => 'string'],
+                            'is_valid' => ['type' => 'boolean'],
                         ],
                         'required' => [
                             'name',
@@ -157,6 +158,7 @@ class Odoo_Addon extends Addon
                             'form_id',
                             'model',
                             'mappers',
+                            'is_valid',
                         ],
                     ],
                 ],
@@ -188,15 +190,16 @@ class Odoo_Addon extends Addon
     }
 
     /**
-     * Database setting field validation.
+     * Database setting field validation. Filters inconsistent databases
+     * based on the Http_Bridge's backends store state.
      *
-     * @param array $dbs Databases data.
+     * @param array $databases Databases data.
      *
      * @return array Validated databases data.
      */
-    private static function validate_databases($dbs)
+    private static function validate_databases($databases)
     {
-        if (!wp_is_numeric_array($dbs)) {
+        if (!wp_is_numeric_array($databases)) {
             return [];
         }
 
@@ -207,9 +210,30 @@ class Odoo_Addon extends Addon
             \HTTP_BRIDGE\Settings_Store::setting('general')->backends ?: []
         );
 
-        return array_filter($dbs, function ($db_data) use ($backends) {
-            return in_array($db_data['backend'] ?? null, $backends);
-        });
+        $uniques = [];
+        $validated = [];
+        foreach ($databases as $database) {
+            if (empty($database['name'])) {
+                continue;
+            }
+
+            if (in_array($database['name'], $uniques)) {
+                continue;
+            } else {
+                $uniques[] = $database['name'];
+            }
+
+            if (!in_array($database['backend'] ?? null, $backends)) {
+                $database['backend'] = '';
+            }
+
+            $database['user'] = $database['user'] ?? '';
+            $database['password'] = $database['password'] ?? '';
+
+            $validated[] = $database;
+        }
+
+        return $validated;
     }
 
     /**
@@ -217,17 +241,17 @@ class Odoo_Addon extends Addon
      * current store state.
      *
      * @param array $bridges Array with bridge configurations.
-     * @param array $dbs Array with databases data.
+     * @param array $databases Array with databases data.
      *
-     * @return array Array with valid bridge configurations.
+     * @return array Validated bridge configurations.
      */
-    private static function validate_bridges($bridges, $dbs)
+    private static function validate_bridges($bridges, $databases)
     {
         if (!wp_is_numeric_array($bridges)) {
             return [];
         }
 
-        $_ids = array_reduce(
+        $form_ids = array_reduce(
             apply_filters('forms_bridge_forms', []),
             static function ($form_ids, $form) {
                 return array_merge($form_ids, [$form['_id']]);
@@ -235,44 +259,58 @@ class Odoo_Addon extends Addon
             []
         );
 
-        $templates = array_map(function ($template) {
-            return $template['name'];
-        }, apply_filters('forms_bridge_templates', [], 'odoo'));
+        $db_names = array_map(function ($database) {
+            return $database['name'];
+        }, $databases);
 
-        $valid_bridges = [];
-        for ($i = 0; $i < count($bridges); $i++) {
-            $bridge = $bridges[$i];
-
-            // Valid only if database and form id exists
-            $is_valid =
-                array_reduce(
-                    $dbs,
-                    static function ($is_valid, $db) use ($bridge) {
-                        return $bridge['database'] === $db['name'] || $is_valid;
-                    },
-                    false
-                ) &&
-                in_array($bridge['form_id'], $_ids) &&
-                (empty($bridge['template']) ||
-                    empty($templates) ||
-                    in_array($bridge['template'], $templates));
-
-            if ($is_valid) {
-                $bridge['mappers'] = array_values(
-                    array_filter((array) $bridge['mappers'], function ($pipe) {
-                        return !(
-                            empty($pipe['from']) ||
-                            empty($pipe['to']) ||
-                            empty($pipe['cast'])
-                        );
-                    })
-                );
-
-                $valid_bridges[] = $bridge;
+        $uniques = [];
+        $validated = [];
+        foreach ($bridges as $bridge) {
+            if (empty($bridge['name'])) {
+                continue;
             }
+
+            if (in_array($bridge['name'], $uniques)) {
+                continue;
+            } else {
+                $uniques[] = $bridge['name'];
+            }
+
+            if (!in_array($bridge['database'], $db_names)) {
+                $bridge['database'] = '';
+            }
+
+            if (!in_array($bridge['form_id'], $form_ids)) {
+                $bridge['form_id'] = '';
+            }
+
+            $bridge['model'] = $bridge['model'] ?? '';
+
+            $bridge['mappers'] = array_values(
+                array_filter((array) $bridge['mappers'], function ($pipe) {
+                    return !(
+                        empty($pipe['from']) ||
+                        empty($pipe['to']) ||
+                        empty($pipe['cast'])
+                    );
+                })
+            );
+
+            $is_valid = true;
+            unset($bridge['is_valid']);
+            foreach ($bridge as $field => $value) {
+                if ($field === 'mappers') {
+                    continue;
+                }
+
+                $is_valid = $is_valid && !empty($value);
+            }
+
+            $bridge['is_valid'] = $is_valid;
+            $validated[] = $bridge;
         }
 
-        return $valid_bridges;
+        return $validated;
     }
 }
 

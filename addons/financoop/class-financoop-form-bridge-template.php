@@ -6,7 +6,7 @@ if (!defined('ABSPATH')) {
     exit();
 }
 
-class Finan_Coop_Form_Bridge_Template extends Form_Bridge_Template
+class Finan_Coop_Form_Bridge_Template extends Rest_Form_Bridge_Template
 {
     /**
      * Handles the template default values.
@@ -81,19 +81,6 @@ class Finan_Coop_Form_Bridge_Template extends Form_Bridge_Template
      */
     public function __construct($file, $config, $api)
     {
-        add_filter(
-            'forms_bridge_template_schema',
-            function ($schema, $template_name) {
-                if ($template_name === $this->name) {
-                    $schema = $this->extend_schema($schema);
-                }
-
-                return $schema;
-            },
-            10,
-            2
-        );
-
         parent::__construct($file, $config, $api);
 
         add_filter(
@@ -160,26 +147,10 @@ class Finan_Coop_Form_Bridge_Template extends Form_Bridge_Template
         );
     }
 
-    /**
-     * Extends the common schema and adds custom properties.
-     *
-     * @param array $schema Common template data schema.
-     *
-     * @return array
-     */
-    private function extend_schema($schema)
+    protected function extend_schema($schema)
     {
-        $schema['bridge']['properties'] = array_merge(
-            $schema['bridge']['properties'],
-            [
-                'backend' => ['type' => 'string'],
-                'endpoint' => ['type' => 'string'],
-            ]
-        );
-
-        $schema['bridge']['required'][] = 'backend';
-        $schema['bridge']['required'][] = 'endpoint';
-
+        $schema = parent::extend_schema($schema);
+        $schema['bridge']['properties']['method']['enum'] = ['POST'];
         return $schema;
     }
 }

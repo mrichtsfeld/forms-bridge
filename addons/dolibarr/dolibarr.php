@@ -38,27 +38,6 @@ class Dolibarr_Addon extends Addon
      */
     protected static $bridge_class = '\FORMS_BRIDGE\Dolibarr_Form_Bridge';
 
-    protected function construct(...$args)
-    {
-        parent::construct(...$args);
-
-        add_filter(
-            'wpcf7_form_tag_data_option',
-            static function ($data, $options) {
-                if (in_array('dolibarr-countries', (array) $options)) {
-                    global $forms_bridge_dolibarr_countries;
-                    return array_values($forms_bridge_dolibarr_countries);
-                } elseif (in_array('dolibarr-states', (array) $options)) {
-                    global $forms_bridge_dolibarr_states;
-                    return array_values($forms_bridge_dolibarr_states);
-                }
-
-                return $data;
-            },
-            10,
-            2
-        );
-    }
     /**
      * Registers the setting and its fields.
      *
@@ -69,6 +48,19 @@ class Dolibarr_Addon extends Addon
         return [
             self::$api,
             [
+                'api_keys' => [
+                    'type' => 'array',
+                    'items' => [
+                        'type' => 'object',
+                        'additionalProperties' => false,
+                        'properties' => [
+                            'name' => ['type' => 'string'],
+                            'key' => ['type' => 'string'],
+                            'backend' => ['type' => 'string'],
+                        ],
+                        'required' => ['name', 'key', 'backend'],
+                    ],
+                ],
                 'bridges' => [
                     'type' => 'array',
                     'items' => [
@@ -76,13 +68,9 @@ class Dolibarr_Addon extends Addon
                         'additionalProperties' => false,
                         'properties' => [
                             'name' => ['type' => 'string'],
-                            'backend' => ['type' => 'string'],
+                            'api_key' => ['type' => 'string'],
                             'form_id' => ['type' => 'string'],
                             'endpoint' => ['type' => 'string'],
-                            'method' => [
-                                'type' => 'string',
-                                'enum' => ['GET', 'POST', 'PUT', 'DELETE'],
-                            ],
                             'mappers' => [
                                 'type' => 'array',
                                 'items' => [
@@ -109,19 +97,21 @@ class Dolibarr_Addon extends Addon
                                 ],
                             ],
                             'template' => ['type' => 'string'],
+                            'is_valid' => ['type' => 'boolean'],
                         ],
                         'required' => [
                             'name',
-                            'backend',
+                            'api_key',
                             'form_id',
                             'endpoint',
-                            'method',
                             'mappers',
+                            'is_valid',
                         ],
                     ],
                 ],
             ],
             [
+                'api_keys' => [],
                 'bridges' => [],
             ],
         ];
@@ -136,6 +126,7 @@ class Dolibarr_Addon extends Addon
      */
     protected static function validate_setting($data, $setting)
     {
+        $data['api_keys'] = self::validate_api_keys($data['api_keys']);
         $data['bridges'] = self::validate_bridges(
             $data['bridges'],
             \HTTP_BRIDGE\Settings_Store::setting('general')->backends ?: []
@@ -145,21 +136,66 @@ class Dolibarr_Addon extends Addon
     }
 
     /**
+     * API keys setting field validation. Filters inconsistent keys
+     * based on the Http_Bridge's backends store state.
+     *
+     * @param array $api_keys Collection of api key arrays.
+     *
+     * @return array Validated API keys.
+     */
+    private static function validate_api_keys($api_keys)
+    {
+        if (!wp_is_numeric_array($api_keys)) {
+            return [];
+        }
+
+        $backends = array_map(
+            function ($backend) {
+                return $backend['name'];
+            },
+            \HTTP_BRIDGE\Settings_Store::setting('general')->backends ?: []
+        );
+
+        $uniques = [];
+        $validated = [];
+        foreach ($api_keys as $api_key) {
+            if (empty($api_key['name'])) {
+                continue;
+            }
+
+            if (in_array($api_key['name'], $uniques)) {
+                continue;
+            }
+
+            if (!in_array($api_keys['backend'] ?? null, $backends)) {
+                $api_key['backend'] = '';
+            }
+
+            $api_key['key'] = $api_key['key'] ?? '';
+
+            $validated[] = $api_key;
+            $uniques[] = $api_key['name'];
+        }
+
+        return $validated;
+    }
+
+    /**
      * Validate bridge settings. Filters bridges with inconsistencies with
      * current store state.
      *
      * @param array $bridges Array with bridge configurations.
-     * @param array $backends Array with backends data.
+     * @param array $api_keys Array with API keys data.
      *
-     * @return array Array with valid bridge configurations.
+     * @return array Validated bridge configurations.
      */
-    private static function validate_bridges($bridges, $backends)
+    private static function validate_bridges($bridges, $api_keys)
     {
         if (!wp_is_numeric_array($bridges)) {
             return [];
         }
 
-        $_ids = array_reduce(
+        $form_ids = array_reduce(
             apply_filters('forms_bridge_forms', []),
             static function ($form_ids, $form) {
                 return array_merge($form_ids, [$form['_id']]);
@@ -167,45 +203,58 @@ class Dolibarr_Addon extends Addon
             []
         );
 
-        $templates = array_map(function ($template) {
-            return $template['name'];
-        }, apply_filters('forms_bridge_templates', [], 'dolibarr'));
+        $key_names = array_map(function ($api_key) {
+            return $api_key['name'];
+        }, $api_keys);
 
-        $valid_bridges = [];
-        for ($i = 0; $i < count($bridges); $i++) {
-            $bridge = $bridges[$i];
-
-            // Valid only if backend, form id and template exists
-            $is_valid =
-                array_reduce(
-                    $backends,
-                    static function ($is_valid, $backend) use ($bridge) {
-                        return $bridge['backend'] === $backend['name'] ||
-                            $is_valid;
-                    },
-                    false
-                ) &&
-                in_array($bridge['form_id'], $_ids) &&
-                (empty($bridge['template']) ||
-                    empty($templates) ||
-                    in_array($bridge['template'], $templates));
-
-            if ($is_valid) {
-                $bridge['mappers'] = array_values(
-                    array_filter((array) $bridge['mappers'], function ($pipe) {
-                        return !(
-                            empty($pipe['from']) ||
-                            empty($pipe['to']) ||
-                            empty($pipe['cast'])
-                        );
-                    })
-                );
-
-                $valid_bridges[] = $bridge;
+        $uniques = [];
+        $validated = [];
+        foreach ($bridges as $bridge) {
+            if (empty($bridge['name'])) {
+                continue;
             }
+
+            if (in_array($bridge['name'], $uniques, true)) {
+                continue;
+            } else {
+                $uniques[] = $bridge['name'];
+            }
+
+            if (!in_array($bridge['api_key'], $key_names, true)) {
+                $bridge['api_key'] = '';
+            }
+
+            if (!in_array($bridge['form_id'], $form_ids, true)) {
+                $bridge['form_id'] = '';
+            }
+
+            $bridge['endpoint'] = $bridge['endpoint'] ?? '';
+
+            $bridge['mappers'] = array_values(
+                array_filter((array) $bridge['mappers'], function ($pipe) {
+                    return !(
+                        empty($pipe['from']) ||
+                        empty($pipe['to']) ||
+                        empty($pipe['cast'])
+                    );
+                })
+            );
+
+            $is_valid = true;
+            unset($bridge['is_valid']);
+            foreach ($bridge as $field => $value) {
+                if ($field === 'mappers') {
+                    continue;
+                }
+
+                $is_valid = $is_valid && !empty($value);
+            }
+
+            $bridge['is_valid'] = $is_valid;
+            $validated[] = $bridge;
         }
 
-        return $valid_bridges;
+        return $validated;
     }
 }
 

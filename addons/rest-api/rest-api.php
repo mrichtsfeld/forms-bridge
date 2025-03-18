@@ -43,7 +43,7 @@ class Rest_Addon extends Addon
     protected static function setting_config()
     {
         return [
-            self::$api,
+            static::$api,
             [
                 'bridges' => [
                     'type' => 'array',
@@ -85,6 +85,7 @@ class Rest_Addon extends Addon
                                 ],
                             ],
                             'template' => ['type' => 'string'],
+                            'is_valid' => ['type' => 'boolean'],
                         ],
                         'required' => [
                             'name',
@@ -93,6 +94,7 @@ class Rest_Addon extends Addon
                             'endpoint',
                             'method',
                             'mappers',
+                            'is_valid',
                         ],
                     ],
                 ],
@@ -135,7 +137,7 @@ class Rest_Addon extends Addon
             return [];
         }
 
-        $_ids = array_reduce(
+        $form_ids = array_reduce(
             apply_filters('forms_bridge_forms', []),
             static function ($form_ids, $form) {
                 return array_merge($form_ids, [$form['_id']]);
@@ -143,45 +145,64 @@ class Rest_Addon extends Addon
             []
         );
 
-        $templates = array_map(function ($template) {
-            return $template['name'];
-        }, apply_filters('forms_bridge_templates', [], 'rest-api'));
+        $backend_names = array_map(function ($backend) {
+            return $backend['name'];
+        }, $backends);
 
-        $valid_bridges = [];
-        for ($i = 0; $i < count($bridges); $i++) {
-            $bridge = $bridges[$i];
+        $http_methods = static::$bridge_class::allowed_methods;
 
-            // Valid only if backend, form id and template exists
-            $is_valid =
-                array_reduce(
-                    $backends,
-                    static function ($is_valid, $backend) use ($bridge) {
-                        return $bridge['backend'] === $backend['name'] ||
-                            $is_valid;
-                    },
-                    false
-                ) &&
-                in_array($bridge['form_id'], $_ids) &&
-                (empty($bridge['template']) ||
-                    empty($templates) ||
-                    in_array($bridge['template'], $templates));
-
-            if ($is_valid) {
-                $bridge['mappers'] = array_values(
-                    array_filter((array) $bridge['mappers'], function ($pipe) {
-                        return !(
-                            empty($pipe['from']) ||
-                            empty($pipe['to']) ||
-                            empty($pipe['cast'])
-                        );
-                    })
-                );
-
-                $valid_bridges[] = $bridge;
+        $uniques = [];
+        $validated = [];
+        foreach ($bridges as $bridge) {
+            if (empty($bridge['name'])) {
+                continue;
             }
+
+            if (in_array($bridge['name'], $uniques)) {
+                continue;
+            } else {
+                $uniques[] = $bridge['name'];
+            }
+
+            if (!in_array($bridge['backend'], $backend_names)) {
+                $bridge['backend'] = '';
+            }
+
+            if (!in_array($bridge['form_id'], $form_ids)) {
+                $bridge['form_id'] = '';
+            }
+
+            if (!in_array($bridge['method'], $http_methods)) {
+                $bridge['method'] = 'POST';
+            }
+
+            $bridge['endpoint'] = $bridge['endpoint'] ?? '';
+
+            $bridge['mappers'] = array_values(
+                array_filter((array) $bridge['mappers'], function ($pipe) {
+                    return !(
+                        empty($pipe['from']) ||
+                        empty($pipe['to']) ||
+                        empty($pipe['cast'])
+                    );
+                })
+            );
+
+            $is_valid = true;
+            unset($bridge['is_valid']);
+            foreach ($bridge as $field => $value) {
+                if ($field === 'mappers') {
+                    continue;
+                }
+
+                $is_valid = $is_valid && !empty($value);
+            }
+
+            $bridge['is_valid'] = $is_valid;
+            $validated[] = $bridge;
         }
 
-        return $valid_bridges;
+        return $validated;
     }
 }
 

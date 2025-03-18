@@ -10,13 +10,15 @@ if (!defined('ABSPATH')) {
     exit();
 }
 
+require_once FORMS_BRIDGE_ADDONS_DIR . '/rest-api/rest-api.php';
+
 require_once 'class-financoop-form-bridge.php';
 require_once 'class-financoop-form-bridge-template.php';
 
 /**
  * FinanCoop Addon class.
  */
-class Finan_Coop_Addon extends Addon
+class Finan_Coop_Addon extends Rest_Addon
 {
     /**
      * Handles the addon name.
@@ -78,149 +80,13 @@ class Finan_Coop_Addon extends Addon
     }
 
     /**
-     * Registers the setting and its fields.
+     * Backend instance getter. If backend isn't registered, add a
+     * ephemeral entry on the backends registry.
      *
-     * @return array Addon's settings configuration.
+     * @param array $params Backend data.
+     *
+     * @return Http_Backend
      */
-    protected static function setting_config()
-    {
-        return [
-            self::$api,
-            [
-                'bridges' => [
-                    'type' => 'array',
-                    'items' => [
-                        'type' => 'object',
-                        'additionalProperties' => false,
-                        'properties' => [
-                            'name' => ['type' => 'string'],
-                            'backend' => ['type' => 'string'],
-                            'form_id' => ['type' => 'string'],
-                            'endpoint' => ['type' => 'string'],
-                            'mappers' => [
-                                'type' => 'array',
-                                'items' => [
-                                    'type' => 'object',
-                                    'additionalProperties' => false,
-                                    'properties' => [
-                                        'from' => ['type' => 'string'],
-                                        'to' => ['type' => 'string'],
-                                        'cast' => [
-                                            'type' => 'string',
-                                            'enum' => [
-                                                'boolean',
-                                                'string',
-                                                'integer',
-                                                'float',
-                                                'json',
-                                                'csv',
-                                                'concat',
-                                                'null',
-                                            ],
-                                        ],
-                                    ],
-                                    'required' => ['from', 'to', 'cast'],
-                                ],
-                            ],
-                            'template' => ['type' => 'string'],
-                        ],
-                        'required' => [
-                            'name',
-                            'backend',
-                            'form_id',
-                            'endpoint',
-                            'mappers',
-                        ],
-                    ],
-                ],
-            ],
-            [
-                'bridges' => [],
-            ],
-        ];
-    }
-
-    /**
-     * Apply settings' data validations before db updates.
-     *
-     * @param array $data Setting data.
-     *
-     * @return array Validated setting data.
-     */
-    protected static function validate_setting($data, $setting)
-    {
-        $data['bridges'] = self::validate_bridges(
-            $data['bridges'],
-            \HTTP_BRIDGE\Settings_Store::setting('general')->backends ?: []
-        );
-
-        return $data;
-    }
-
-    /**
-     * Validate bridges' settings. Filters bridges with inconsistencies with
-     * the current store state.
-     *
-     * @param array $bridges Array with bridges configurations.
-     * @param array $backends Array with backends data.
-     *
-     * @return array Array with valid bridges configurations.
-     */
-    private static function validate_bridges($bridges, $backends)
-    {
-        if (!wp_is_numeric_array($bridges)) {
-            return [];
-        }
-
-        $_ids = array_reduce(
-            apply_filters('forms_bridge_forms', []),
-            static function ($form_ids, $form) {
-                return array_merge($form_ids, [$form['_id']]);
-            },
-            []
-        );
-
-        $templates = array_map(function ($template) {
-            return $template['name'];
-        }, apply_filters('forms_bridge_templates', [], 'financoop'));
-
-        $valid_bridges = [];
-        for ($i = 0; $i < count($bridges); $i++) {
-            $bridge = $bridges[$i];
-
-            // Valid only if backend, form id and template exists
-            $is_valid =
-                array_reduce(
-                    $backends,
-                    static function ($is_valid, $backend) use ($bridge) {
-                        return $bridge['backend'] === $backend['name'] ||
-                            $is_valid;
-                    },
-                    false
-                ) &&
-                in_array($bridge['form_id'], $_ids) &&
-                (empty($bridge['template']) ||
-                    empty($templates) ||
-                    in_array($bridge['template'], $templates));
-
-            if ($is_valid) {
-                $bridge['mappers'] = array_values(
-                    array_filter((array) $bridge['mappers'], function ($pipe) {
-                        return !(
-                            empty($pipe['from']) ||
-                            empty($pipe['to']) ||
-                            empty($pipe['cast'])
-                        );
-                    })
-                );
-
-                $valid_bridges[] = $bridge;
-            }
-        }
-
-        return $valid_bridges;
-    }
-
     private static function get_backend($params)
     {
         if (isset($params['backend'])) {

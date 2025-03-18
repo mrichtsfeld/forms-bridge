@@ -18,7 +18,7 @@ class Rest_Form_Bridge extends Form_Bridge
      *
      * @var array
      */
-    protected const allowed_methods = ['GET', 'POST', 'PUT', 'DELETE'];
+    public const allowed_methods = ['GET', 'POST', 'PUT', 'DELETE'];
 
     /**
      * Handles the form bridge's template class.

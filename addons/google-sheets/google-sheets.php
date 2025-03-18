@@ -193,11 +193,12 @@ class Google_Sheets_Addon extends Addon
     }
 
     /**
-     * Validates setting's bridges data.
+     * Validate bridge settings. Filters bridges with inconsistencies with
+     * current store state.
      *
-     * @param array $bridges List with bridges data.
+     * @param array $bridges Array with bridge configurations.
      *
-     * @return array Validated list with bridges data.
+     * @return array Array with valid bridge configurations.
      */
     private static function validate_bridges($bridges)
     {
@@ -205,7 +206,7 @@ class Google_Sheets_Addon extends Addon
             return [];
         }
 
-        $_ids = array_reduce(
+        $form_ids = array_reduce(
             apply_filters('forms_bridge_forms', []),
             static function ($form_ids, $form) {
                 return array_merge($form_ids, [$form['_id']]);
@@ -213,37 +214,51 @@ class Google_Sheets_Addon extends Addon
             []
         );
 
-        $templates = array_map(function ($template) {
-            return $template['name'];
-        }, apply_filters('forms_bridge_templates', [], 'google-sheets'));
-
-        $valid_bridges = [];
-        for ($i = 0; $i < count($bridges); $i++) {
-            $bridge = $bridges[$i];
-
-            // Valid only if database and form id exists
-            $is_valid =
-                in_array($bridge['form_id'], $_ids) &&
-                (empty($bridge['template']) ||
-                    empty($templates) ||
-                    in_array($bridge['template'], $templates));
-
-            if ($is_valid) {
-                $bridge['mappers'] = array_values(
-                    array_filter((array) $bridge['mappers'], function ($pipe) {
-                        return !(
-                            empty($pipe['from']) ||
-                            empty($pipe['to']) ||
-                            empty($pipe['cast'])
-                        );
-                    })
-                );
-
-                $valid_bridges[] = $bridge;
+        $uniques = [];
+        $validated = [];
+        foreach ($bridges as $bridge) {
+            if (empty($bridge['name'])) {
+                continue;
             }
+
+            if (in_array($bridge['name'], $uniques)) {
+                continue;
+            } else {
+                $uniques[] = $bridge['name'];
+            }
+
+            if (!in_array($bridge['form_id'] ?? null, $form_ids)) {
+                $bridge['form_id'] = '';
+            }
+
+            $bridge['spreadsheet'] = $bridge['spreadsheet'] ?? '';
+            $bridge['tab'] = $bridge['tab'] ?? '';
+
+            $bridge['mappers'] = array_values(
+                array_filter((array) $bridge['mappers'], function ($pipe) {
+                    return !(
+                        empty($pipe['from']) ||
+                        empty($pipe['to']) ||
+                        empty($pipe['cast'])
+                    );
+                })
+            );
+
+            $is_valid = true;
+            unset($bridge['is_valid']);
+            foreach ($bridge as $field => $value) {
+                if ($field === 'mappers') {
+                    continue;
+                }
+
+                $is_valid = $is_valid && !empty($value);
+            }
+
+            $bridge['is_valid'] = $is_valid;
+            $validated[] = $bridge;
         }
 
-        return $valid_bridges;
+        return $validated;
     }
 }
 
