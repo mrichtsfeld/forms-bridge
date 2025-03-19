@@ -505,6 +505,8 @@ class Forms_Bridge extends Base_Plugin
 
         $form_data = $bridge->form;
         $error = print_r($error->get_error_data(), true);
+        Logger::log($error, Logger::ERROR);
+
         $to = $email;
         $subject = 'Forms Bridge Error';
         $body = "Form ID: {$form_data['id']}\n";
