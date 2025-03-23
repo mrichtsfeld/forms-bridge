@@ -5,19 +5,6 @@ if (!defined('ABSPATH')) {
 }
 
 add_filter(
-    'forms_bridge_prune_empties',
-    function ($prune, $bridge) {
-        if ($bridge->template === 'dolibarr-appointments') {
-            return true;
-        }
-
-        return $prune;
-    },
-    9,
-    2
-);
-
-add_filter(
     'forms_bridge_template_data',
     function ($data, $template_name) {
         if ($template_name === 'dolibarr-appointments') {
@@ -33,177 +20,6 @@ add_filter(
         return $data;
     },
     10,
-    2
-);
-
-add_filter(
-    'forms_bridge_payload',
-    function ($payload, $bridge) {
-        if ($bridge->template !== 'dolibarr-appointments') {
-            return $payload;
-        }
-
-        $backend = $bridge->backend;
-        $dolapikey = $bridge->api_key->key;
-
-        if (isset($payload['owner'])) {
-            $payload['owner'] = base64_decode($payload['owner']);
-
-            $response = $backend->get(
-                '/api/index.php/users',
-                [
-                    'limit' => '1',
-                    'sqlfilters' => "(t.email:=:'{$payload['owner']}')",
-                ],
-                ['DOLAPIKEY' => $dolapikey]
-            );
-
-            if (is_wp_error($response)) {
-                do_action(
-                    'forms_bridge_on_failure',
-                    $bridge,
-                    $response,
-                    $payload
-                );
-                return;
-            }
-
-            $payload['userownerid'] = $response['data'][0]['id'];
-            unset($payload['owner']);
-        }
-
-        $response = $backend->get(
-            '/api/index.php/contacts',
-            [
-                'limit' => '1',
-                'sqlfilters' => "(t.firstname:like:'{$payload['firstname']}') and (t.lastname:like:'{$payload['lastname']}') and (t.email:=:'{$payload['email']}')",
-            ],
-            ['DOLAPIKEY' => $dolapikey]
-        );
-
-        if (is_wp_error($response)) {
-            $error_data = $response->get_error_data();
-            $response_code = $error_data['response']['response']['code'];
-
-            if ($response_code !== 404) {
-                do_action(
-                    'forms_bridge_on_failure',
-                    $bridge,
-                    $response,
-                    $payload
-                );
-
-                return;
-            }
-        }
-
-        if (is_wp_error($response)) {
-            $name = "{$payload['firstname']} {$payload['lastname']}";
-            $response = $backend->post(
-                '/api/index.php/contacts',
-                [
-                    'name' => $name,
-                    'firstname' => $payload['firstname'],
-                    'lastname' => $payload['lastname'],
-                    'email' => $payload['email'],
-                ],
-                ['DOLAPIKEY' => $dolapikey]
-            );
-
-            if (is_wp_error($response)) {
-                do_action(
-                    'forms_bridge_on_failure',
-                    $bridge,
-                    $response,
-                    $payload
-                );
-
-                return;
-            }
-
-            $contact_id = $response['body'];
-        } else {
-            $contact_id = $response['data'][0]['id'];
-        }
-
-        $payload['socpeopleassigned'] = $payload['socpeopleassigned'] ?? [];
-        $payload['socpeopleassigned'][$contact_id] = [
-            'id' => $contact_id,
-            'mandatory' => '0',
-            'answer_status' => '0',
-            'transparency' => '0',
-        ];
-
-        unset($payload['firstname']);
-        unset($payload['lastname']);
-        unset($payload['email']);
-
-        $date = $payload['date'];
-        $hour = $payload['h'];
-        $minute = $payload['m'];
-
-        $form_data = apply_filters('forms_bridge_form', null);
-        $date_index = array_search(
-            'date',
-            array_column($form_data['fields'], 'name')
-        );
-        $date_format = $form_data['fields'][$date_index]['format'] ?? '';
-
-        if (strstr($date_format, '-')) {
-            $separator = '-';
-        } elseif (strstr($date_format, '.')) {
-            $separator = '.';
-        } elseif (strstr($date_format, '/')) {
-            $separator = '/';
-        }
-
-        switch (substr($date_format, 0, 1)) {
-            case 'y':
-                [$year, $month, $day] = explode($separator, $date);
-                break;
-            case 'm':
-                [$month, $day, $year] = explode($separator, $date);
-                break;
-            case 'd':
-                [$day, $month, $year] = explode($separator, $date);
-                break;
-        }
-
-        $date = "{$year}-{$month}-{$day}";
-
-        if (preg_match('/(am|pm)/i', $hour, $matches)) {
-            $hour = (int) $hour;
-            if (strtolower($matches[0]) === 'pm') {
-                $hour += 12;
-            }
-        }
-
-        $time = strtotime("{$date} {$hour}:{$minute}");
-
-        if ($time === false) {
-            do_action(
-                'forms_bridge_on_failure',
-                $bridge,
-                new WP_Error('Invalid date format'),
-                $payload
-            );
-
-            return;
-        }
-
-        $payload['datep'] = (string) $time;
-
-        $payload['duration'] = floatval($payload['duration'] ?? 1);
-        $end = $payload['duration'] * 3600 + $time;
-        $payload['datef'] = (string) $end;
-
-        unset($payload['date']);
-        unset($payload['h']);
-        unset($payload['m']);
-
-        return $payload;
-    },
-    90,
     2
 );
 
@@ -481,6 +297,11 @@ return [
                 'to' => 'duration',
                 'cast' => 'float',
             ],
+        ],
+        'workflow' => [
+            'dolibarr-owner-by-email',
+            'dolibarr-appointment-attendee',
+            'dolibarr-appointment-dates',
         ],
     ],
 ];

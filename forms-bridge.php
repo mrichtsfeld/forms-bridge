@@ -43,6 +43,8 @@ require_once 'includes/class-rest-settings-controller.php';
 require_once 'includes/class-json-finger.php';
 require_once 'includes/class-form-bridge.php';
 require_once 'includes/class-form-bridge-template.php';
+require_once 'includes/class-workflow-job.php';
+require_once 'includes/json-schema-utils.php';
 
 require_once 'integrations/abstract-integration.php';
 require_once 'addons/abstract-addon.php';
@@ -290,6 +292,10 @@ class Forms_Bridge extends Base_Plugin
                 continue;
             }
 
+            if ($workflow = $bridge->workflow) {
+                $workflow->start();
+            }
+
             try {
                 // TODO: Exclude attachments from payload finger mangling
                 $payload = $bridge->apply_mappers($submission);
@@ -385,9 +391,9 @@ class Forms_Bridge extends Base_Plugin
                     do_action(
                         'forms_bridge_after_submission',
                         $bridge,
+                        $response,
                         $payload,
-                        $attachments,
-                        $response
+                        $attachments
                     );
                 }
             } catch (Error | Exception $e) {

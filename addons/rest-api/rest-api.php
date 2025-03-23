@@ -36,6 +36,13 @@ class Rest_Addon extends Addon
     protected static $bridge_class = '\FORMS_BRIDGE\Rest_Form_Bridge';
 
     /**
+     * Handles the addon's custom form bridge template class.
+     *
+     * @var string
+     */
+    protected static $bridge_template_class = '\FORMS_BRIDGE\Rest_Form_Bridge_Template';
+
+    /**
      * Registers the setting and its fields.
      *
      * @return array Addon's settings configuration.
@@ -44,61 +51,24 @@ class Rest_Addon extends Addon
     {
         return [
             static::$api,
-            [
+            self::merge_setting_config([
                 'bridges' => [
                     'type' => 'array',
                     'items' => [
                         'type' => 'object',
                         'additionalProperties' => false,
                         'properties' => [
-                            'name' => ['type' => 'string'],
                             'backend' => ['type' => 'string'],
-                            'form_id' => ['type' => 'string'],
                             'endpoint' => ['type' => 'string'],
                             'method' => [
                                 'type' => 'string',
                                 'enum' => ['GET', 'POST', 'PUT', 'DELETE'],
                             ],
-                            'mappers' => [
-                                'type' => 'array',
-                                'items' => [
-                                    'type' => 'object',
-                                    'additionalProperties' => false,
-                                    'properties' => [
-                                        'from' => ['type' => 'string'],
-                                        'to' => ['type' => 'string'],
-                                        'cast' => [
-                                            'type' => 'string',
-                                            'enum' => [
-                                                'boolean',
-                                                'string',
-                                                'integer',
-                                                'float',
-                                                'json',
-                                                'csv',
-                                                'concat',
-                                                'null',
-                                            ],
-                                        ],
-                                    ],
-                                    'required' => ['from', 'to', 'cast'],
-                                ],
-                            ],
-                            'template' => ['type' => 'string'],
-                            'is_valid' => ['type' => 'boolean'],
                         ],
-                        'required' => [
-                            'name',
-                            'backend',
-                            'form_id',
-                            'endpoint',
-                            'method',
-                            'mappers',
-                            'is_valid',
-                        ],
+                        'required' => ['backend', 'endpoint', 'method'],
                     ],
                 ],
-            ],
+            ]),
             [
                 'bridges' => [],
             ],

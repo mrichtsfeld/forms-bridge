@@ -30,13 +30,6 @@ class Zoho_Form_Bridge extends Form_Bridge
     private const token_transient = 'forms-bridge-zoho-oauth-access-token';
 
     /**
-     * Handles the form bridge's template class.
-     *
-     * @var string
-     */
-    protected static $template_class = '\FORMS_BRIDGE\Zoho_Form_Bridge_Template';
-
-    /**
      * Parent getter interceptor to short circtuit credentials access.
      *
      * @param string $name Attribute name.
@@ -165,6 +158,7 @@ class Zoho_Form_Bridge extends Form_Bridge
 
         return $response['data']['access_token'];
     }
+
     /**
      * Performs an http request to the Zoho API backend.
      *

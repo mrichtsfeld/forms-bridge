@@ -30,15 +30,22 @@ class Zoho_Addon extends Addon
     protected static $api = 'zoho';
 
     /**
-     * Handles the addom's custom bridge class.
+     * Handles the addon's custom bridge class.
      *
      * @var string
      */
     protected static $bridge_class = '\FORMS_BRIDGE\Zoho_Form_Bridge';
 
     /**
-     * Addon constructor. Inherits from the abstract addon and initialize interceptos
-     * and custom hooks.
+     * Handles the addon's custom form bridge template class.
+     *
+     * @var string
+     */
+    protected static $bridge_template_class = '\FORMS_BRIDGE\Zoho_Form_Bridge_Template';
+
+    /**
+     * Addon constructor. Inherits from the abstract addon and initializes
+     * custom hooks.
      */
     protected function construct(...$args)
     {
@@ -107,7 +114,7 @@ class Zoho_Addon extends Addon
     {
         return [
             self::$api,
-            [
+            self::merge_setting_config([
                 'credentials' => [
                     'type' => 'array',
                     'items' => [
@@ -135,51 +142,14 @@ class Zoho_Addon extends Addon
                         'type' => 'object',
                         'additionalProperties' => false,
                         'properties' => [
-                            'name' => ['type' => 'string'],
                             'credential' => ['type' => 'string'],
-                            'form_id' => ['type' => 'string'],
                             'endpoint' => ['type' => 'string'],
                             'scope' => ['type' => 'string'],
-                            'mappers' => [
-                                'type' => 'array',
-                                'items' => [
-                                    'type' => 'object',
-                                    'additionalProperties' => false,
-                                    'properties' => [
-                                        'from' => ['type' => 'string'],
-                                        'to' => ['type' => 'string'],
-                                        'cast' => [
-                                            'type' => 'string',
-                                            'enum' => [
-                                                'boolean',
-                                                'string',
-                                                'integer',
-                                                'float',
-                                                'json',
-                                                'csv',
-                                                'concat',
-                                                'null',
-                                            ],
-                                        ],
-                                    ],
-                                    'required' => ['from', 'to', 'cast'],
-                                ],
-                            ],
-                            'template' => ['type' => 'string'],
-                            'is_valid' => ['type' => 'boolean'],
                         ],
-                        'required' => [
-                            'name',
-                            'credential',
-                            'form_id',
-                            'endpoint',
-                            'scope',
-                            'mappers',
-                            'is_valid',
-                        ],
+                        'required' => ['credential', 'endpoint', 'scope'],
                     ],
                 ],
-            ],
+            ]),
             [
                 'credentials' => [],
                 'bridges' => [],

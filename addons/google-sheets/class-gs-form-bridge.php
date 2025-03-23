@@ -12,13 +12,6 @@ if (!defined('ABSPATH')) {
 class Google_Sheets_Form_Bridge extends Form_Bridge
 {
     /**
-     * Handles the form bridge's template class.
-     *
-     * @var string
-     */
-    protected static $template_class = '\FORMS_BRIDGE\Google_Sheets_Form_Bridge_Template';
-
-    /**
      * Performs a gRPC request to the Google Sheets API.
      *
      * @param array $payload Submission data.
@@ -26,7 +19,7 @@ class Google_Sheets_Form_Bridge extends Form_Bridge
      *
      * @return array|WP_Error Http request response.
      */
-    public function do_submit($payload, $attachments = [])
+    protected function do_submit($payload, $attachments = [])
     {
         $payload = self::flatten_payload($payload);
 

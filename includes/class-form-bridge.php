@@ -28,90 +28,6 @@ abstract class Form_Bridge
     protected $api;
 
     /**
-     * Handles the form bridge's template class.
-     *
-     * @var string
-     */
-    protected static $template_class = '\FORMS_BRIDGE\Form_Bridge_Template';
-
-    /**
-     * Handles available template instances.
-     *
-     * @var array
-     */
-    private static $templates = [];
-
-    /**
-     * Loads template configs from a given directory path.Allowed file formats
-     * are php and json.
-     *
-     * @param string $templates_path Source templates directory path.
-     * @param string $api API name.
-     */
-    final public static function load_templates($templates_path, $api)
-    {
-        if (!is_dir($templates_path)) {
-            $res = mkdir($templates_path);
-            if (!$res) {
-                return;
-            }
-        }
-
-        if (!is_readable($templates_path)) {
-            return;
-        }
-
-        $template_files = apply_filters(
-            'forms_bridge_template_files',
-            array_map(function ($template_file) use ($templates_path) {
-                return $templates_path . '/' . $template_file;
-            }, array_diff(scandir($templates_path), ['.', '..'])),
-            $api
-        );
-
-        foreach ($template_files as $template_path) {
-            if (!is_file($template_path) || !is_readable($template_path)) {
-                continue;
-            }
-
-            $template_file = basename($template_path);
-            $ext = pathinfo($template_file)['extension'];
-
-            $config = null;
-            if ($ext === 'php') {
-                $config = include $template_path;
-            } elseif ($ext === 'json') {
-                $content = file_get_contents($template_path);
-                $config = json_decode($content, true);
-            }
-
-            if (is_array($config)) {
-                static::$templates[] = new static::$template_class(
-                    $template_file,
-                    $config,
-                    $api
-                );
-            }
-        }
-    }
-
-    /**
-     * Gets a template instance by name.
-     *
-     * @param string $name Template name.
-     *
-     * @return Form_Bridge_Template|null
-     */
-    final public static function get_template($name)
-    {
-        foreach (static::$templates as $template) {
-            if ($template->name === $name) {
-                return $template;
-            }
-        }
-    }
-
-    /**
      * Stores the form bridge's data as a private attribute.
      */
     public function __construct($data, $api)
@@ -140,6 +56,8 @@ abstract class Form_Bridge
                 return $this->backend();
             case 'content_type':
                 return $this->content_type();
+            case 'workflow':
+                return $this->workflow();
             default:
                 return $this->data[$name] ?? null;
         }
@@ -199,6 +117,56 @@ abstract class Form_Bridge
     }
 
     /**
+     * Gets bridge's workflow instnace.
+     *
+     * @return Workflow_Job|null;
+     */
+    protected function workflow()
+    {
+        return Workflow_Job::from_workflow($this->data['workflow'] ?? []);
+    }
+
+    /**
+     * Bridge public submit method wrapped with hooks. Calls to the private
+     * do_submit method.
+     *
+     * @param array $payload Form submission data.
+     * @param array $attachments Form submission's attached files.
+     *
+     * @return array|WP_Error Http request response.
+     */
+    public function submit($payload, $attachments = [])
+    {
+        do_action(
+            'forms_bridge_before_bridge_submit',
+            $this,
+            $payload,
+            $attachments
+        );
+        $response = $this->do_submit($payload, $attachments);
+
+        if (is_wp_error($response)) {
+            do_action(
+                'forms_bridge_bridge_submit_error',
+                $this,
+                $response,
+                $payload,
+                $attachments
+            );
+        } else {
+            do_action(
+                'forms_bridge_after_bridge_submit',
+                $this,
+                $response,
+                $payload,
+                $attachments
+            );
+        }
+
+        return $response;
+    }
+
+    /**
      * Submits payload and attachments to the bridge's backend.
      *
      * @param array $payload Form submission data.
@@ -206,20 +174,7 @@ abstract class Form_Bridge
      *
      * @return array|WP_Error Http request response.
      */
-    final public function submit($payload, $attachments = [])
-    {
-        do_action('forms_bridge_before_submit', $this, $payload, $attachments);
-
-        $response = $this->do_submit($payload, $attachments);
-
-        if (is_wp_error($response)) {
-            do_action('forms_bridge_submit_error', $this, $response);
-        } else {
-            do_action('forms_bridge_submit', $this, $response);
-        }
-
-        return $response;
-    }
+    abstract protected function do_submit($payload, $attachments = []);
 
     /**
      * Returns a clone of the bridge instance with its data patched by
@@ -239,16 +194,6 @@ abstract class Form_Bridge
 
         return new static($data, $this->api);
     }
-
-    /**
-     * Submits submission to the backend.
-     *
-     * @param array $payload Submission data.
-     * @param array $attachments Submission's attached files.
-     *
-     * @return array|WP_Error Http request response.
-     */
-    abstract protected function do_submit($payload, $attachments);
 
     /**
      * Apply cast mappers to data.

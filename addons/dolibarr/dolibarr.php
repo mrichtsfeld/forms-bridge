@@ -40,8 +40,14 @@ class Dolibarr_Addon extends Addon
     protected static $bridge_class = '\FORMS_BRIDGE\Dolibarr_Form_Bridge';
 
     /**
-     * Addon constructor. Inherits from the abstract addon and initialize interceptos
-     * and custom hooks.
+     * Handles the addon's custom form bridge template class.
+     *
+     * @var string
+     */
+    protected static $bridge_template_class = '\FORMS_BRIDGE\Dolibarr_Form_Bridge_Template';
+
+    /**
+     * Addon constructor. Inherits from the abstract addon and sets up custom hooks.
      */
     protected function construct(...$args)
     {
@@ -130,46 +136,10 @@ class Dolibarr_Addon extends Addon
                         'type' => 'object',
                         'additionalProperties' => false,
                         'properties' => [
-                            'name' => ['type' => 'string'],
                             'api_key' => ['type' => 'string'],
-                            'form_id' => ['type' => 'string'],
                             'endpoint' => ['type' => 'string'],
-                            'mappers' => [
-                                'type' => 'array',
-                                'items' => [
-                                    'type' => 'object',
-                                    'additionalProperties' => false,
-                                    'properties' => [
-                                        'from' => ['type' => 'string'],
-                                        'to' => ['type' => 'string'],
-                                        'cast' => [
-                                            'type' => 'string',
-                                            'enum' => [
-                                                'boolean',
-                                                'string',
-                                                'integer',
-                                                'float',
-                                                'json',
-                                                'csv',
-                                                'concat',
-                                                'null',
-                                            ],
-                                        ],
-                                    ],
-                                    'required' => ['from', 'to', 'cast'],
-                                ],
-                            ],
-                            'template' => ['type' => 'string'],
-                            'is_valid' => ['type' => 'boolean'],
                         ],
-                        'required' => [
-                            'name',
-                            'api_key',
-                            'form_id',
-                            'endpoint',
-                            'mappers',
-                            'is_valid',
-                        ],
+                        'required' => ['api_key', 'endpoint'],
                     ],
                 ],
             ],

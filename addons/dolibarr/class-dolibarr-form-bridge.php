@@ -14,13 +14,6 @@ if (!defined('ABSPATH')) {
 class Dolibarr_Form_Bridge extends Form_Bridge
 {
     /**
-     * Handles the form bridge's template class.
-     *
-     * @var string
-     */
-    protected static $template_class = '\FORMS_BRIDGE\Dolibarr_Form_Bridge_Template';
-
-    /**
      * Parent getter interceptor to short circtuit API key access.
      *
      * @param string $name Attribute name.
@@ -79,7 +72,7 @@ class Dolibarr_Form_Bridge extends Form_Bridge
      *
      * @return array|WP_Error Http request response.
      */
-    public function do_submit($payload, $attachments = [])
+    protected function do_submit($payload, $attachments = [])
     {
         $api_key = $this->api_key();
 

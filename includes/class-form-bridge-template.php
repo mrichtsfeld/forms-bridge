@@ -59,13 +59,6 @@ class Form_Bridge_Template
     protected $api;
 
     /**
-     * Handles the template file name.
-     *
-     * @var string
-     */
-    private $file;
-
-    /**
      * Handles the template name.
      *
      * @var string
@@ -193,6 +186,10 @@ class Form_Bridge_Template
                         'required' => ['from', 'to', 'cast'],
                     ],
                 ],
+                'workflow' => [
+                    'type' => 'array',
+                    'items' => ['type' => 'string'],
+                ],
             ],
             'required' => ['name', /* 'form_id', */ 'mappers'],
             'additionalProperties' => false,
@@ -313,12 +310,7 @@ class Form_Bridge_Template
 
         $config = self::with_defaults($config, $schema);
 
-        $is_valid = rest_validate_value_from_schema($config, $schema);
-        if (is_wp_error($is_valid)) {
-            return $is_valid;
-        }
-
-        return rest_sanitize_value_from_schema($config, $schema);
+        return forms_bridge_validate_with_schema($config, $schema);
     }
 
     /**
@@ -332,7 +324,7 @@ class Form_Bridge_Template
     private static function with_defaults($config, $schema)
     {
         // merge template defaults with common defaults
-        $default = self::merge_array(
+        $default = forms_bridge_merge_object(
             static::$default,
             [
                 'description' => '',
@@ -356,6 +348,7 @@ class Form_Bridge_Template
                     'name' => '',
                     'form_id' => '',
                     'mappers' => [],
+                    'workflow' => [],
                 ],
                 'backend' => [
                     'name' => '',
@@ -376,7 +369,7 @@ class Form_Bridge_Template
         );
 
         // merge config with defaults
-        $config = self::merge_array($config, $default, $schema);
+        $config = forms_bridge_merge_object($config, $default, $schema);
 
         // add integrations to config
         return array_merge($config, [
@@ -385,174 +378,62 @@ class Form_Bridge_Template
     }
 
     /**
-     * Merge numeric arrays with default values and returns the union of
-     * the two arrays without repetitions.
-     *
-     * @param array $list Numeric array with values.
-     * @param array $default Default values for the list.
-     *
-     * @return array
-     */
-    private static function merge_list($list, $default)
-    {
-        return array_values(array_unique(array_merge($list, $default)));
-    }
-
-    /**
-     * Merge collection of arrays with its defaults, apply defaults to
-     * each item of the collection and return the collection without
-     * repetitions.
-     *
-     * @param array $collection Input collection of arrays.
-     * @param array $default Default values for the collection.
-     * @param array $schema JSON schema of the collection.
-     *
-     * @return array
-     */
-    private static function merge_collection($collection, $default, $schema)
-    {
-        if (!isset($schema['type'])) {
-            return $collection;
-        }
-
-        if (!in_array($schema['type'], ['array', 'object'])) {
-            return self::merge_list($collection, $default);
-        }
-
-        if ($schema['type'] === 'object') {
-            foreach ($default as $default_item) {
-                $col_item = null;
-                for ($i = 0; $i < count($collection); $i++) {
-                    $col_item = $collection[$i];
-
-                    if (!isset($col_item['name'])) {
-                        continue;
-                    }
-
-                    if (
-                        $col_item['name'] === $default_item['name'] &&
-                        ($col_item['ref'] ?? false) ===
-                            ($default_item['ref'] ?? false)
-                    ) {
-                        break;
-                    }
-                }
-
-                if ($i === count($collection)) {
-                    $collection[] = $default_item;
-                } else {
-                    $collection[$i] = self::merge_array(
-                        $col_item,
-                        $default_item,
-                        $schema
-                    );
-                }
-            }
-        } elseif ($schema['type'] === 'array') {
-            // TODO: Handle matrix case
-        }
-
-        return $collection;
-    }
-
-    /**
-     * Generic array default values merger. Switches between merge_collection and merge_list
-     * based on the list items' data type.
-     *
-     * @param array $array Input array.
-     * @param array $default Default array values.
-     * @param array $schema JSON schema of the array values.
-     *
-     * @return array Array fullfilled with defaults.
-     */
-    private static function merge_array($array, $default, $schema)
-    {
-        foreach ($default as $key => $default_value) {
-            if (empty($array[$key])) {
-                $array[$key] = $default_value;
-            } else {
-                $value = $array[$key];
-                $type = $schema['properties'][$key]['type'] ?? null;
-                if (!$type) {
-                    continue;
-                }
-
-                if ($type === 'object') {
-                    if (!is_array($value) || wp_is_numeric_array($value)) {
-                        $array[$key] = $default_value;
-                    } else {
-                        $array[$key] = self::merge_array(
-                            $value,
-                            $default_value,
-                            $schema['properties'][$key]
-                        );
-                    }
-                } elseif ($type === 'array') {
-                    if (!wp_is_numeric_array($value)) {
-                        $array[$key] = $default_value;
-                    } else {
-                        $array[$key] = self::merge_collection(
-                            $value,
-                            $default_value,
-                            $schema['properties'][$key]['items']
-                        );
-                    }
-                }
-            }
-        }
-
-        foreach ($array as $key => $value) {
-            if (!isset($schema['properties'][$key])) {
-                unset($array[$key]);
-            }
-        }
-
-        return $array;
-    }
-
-    /**
      * Store template attribute values, validates config data and binds the
      * instance to custom forms bridge template hooks.
      *
-     * @param string $file Source file path of the template config.
+     * @param string $name Template name.
      * @param array $config Template config data.
      * @param string $api Bridge API name.
      */
-    public function __construct($file, $config, $api)
+    public function __construct($name, $config, $api)
     {
         $this->api = $api;
-        $this->file = $file;
-        $this->name = pathinfo(basename($file))['filename'];
+        $this->name = $api . '-' . $name;
         $this->config = self::validate_config($this->name, $config);
 
         add_filter(
             'forms_bridge_templates',
             function ($templates, $api = null) {
-                if (!wp_is_numeric_array($templates)) {
-                    $templates = [];
-                }
-
-                if (empty($this->api)) {
-                    return $templates;
-                }
-
                 if ($api && $api !== $this->api) {
                     return $templates;
+                }
+
+                if (!wp_is_numeric_array($templates)) {
+                    $templates = [];
                 }
 
                 if (is_wp_error($this->config)) {
                     return $templates;
                 }
 
-                return array_merge($templates, [
-                    [
-                        'name' => $this->name,
-                        'title' => $this->config['title'],
-                    ],
-                ]);
+                $templates[] = $this;
+                return $templates;
             },
             10,
             2
+        );
+
+        add_filter(
+            'forms_bridge_template',
+            function ($template, $name, $api = null) {
+                if ($template instanceof Form_Bridge_Template) {
+                    return $template;
+                }
+
+                if ($api && $api !== $this->api) {
+                    return $template;
+                }
+
+                if (is_wp_error($this->config)) {
+                    return $template;
+                }
+
+                if ($name === $this->name) {
+                    return $this;
+                }
+            },
+            10,
+            3
         );
 
         add_action('forms_bridge_use_template', function ($data) {
@@ -574,13 +455,11 @@ class Form_Bridge_Template
         switch ($name) {
             case 'name':
                 return $this->name;
-            case 'file':
-                return $this->file;
             case 'config':
                 return $this->config;
+            default:
+                return $this->config[$name] ?? null;
         }
-
-        return $this->config[$name] ?? null;
     }
 
     /**
@@ -591,13 +470,14 @@ class Form_Bridge_Template
     public function to_json()
     {
         return [
+            'name' => $this->name,
+            'title' => $this->config['title'],
+            'description' => $this->config['description'] ?? '',
             'fields' => array_values(
                 array_filter($this->config['fields'], function ($field) {
                     return empty($field['value']);
                 })
             ),
-            'title' => $this->config['title'],
-            'name' => $this->name,
         ];
     }
 
@@ -623,7 +503,7 @@ class Form_Bridge_Template
             }
         }
 
-        $all_fields = self::merge_collection(
+        $all_fields = forms_bridge_merge_collection(
             $fields,
             $template['fields'],
             static::$schema['fields']['items']
@@ -645,7 +525,7 @@ class Form_Bridge_Template
 
         $data = $template;
         foreach ($fields as $field) {
-            $is_valid = rest_validate_value_from_schema($field, [
+            $field = forms_bridge_validate_with_schema($field, [
                 'type' => 'object',
                 'properties' => [
                     'ref' => ['type' => 'string'],
@@ -665,7 +545,7 @@ class Form_Bridge_Template
                 'required' => ['ref', 'name', 'value'],
             ]);
 
-            if (!$is_valid || ($field['ref'][0] ?? '') !== '#') {
+            if (is_wp_error($field) || ($field['ref'][0] ?? '') !== '#') {
                 throw new Form_Bridge_Template_Exception(
                     'invalid_field',
                     sprintf(

@@ -28,6 +28,7 @@ class REST_Settings_Controller extends Base_Controller
         parent::init();
         self::register_forms_route();
         self::register_templates_route();
+        self::register_workflow_jobs_route();
     }
 
     /**
@@ -47,6 +48,40 @@ class REST_Settings_Controller extends Base_Controller
                 return self::permission_callback();
             },
         ]);
+    }
+
+    /**
+     * Registers workflow jobs API routes.
+     */
+    private static function register_workflow_jobs_route()
+    {
+        $namespace = self::namespace();
+        $version = self::version();
+        register_rest_route(
+            "{$namespace}/v{$version}",
+            '/workflow_jobs/(?P<name>[a-zA-Z0-9-]+)',
+            [
+                [
+                    'methods' => WP_REST_Server::READABLE,
+                    'callback' => static function ($request) {
+                        return self::get_workflow_job($request);
+                    },
+                    'permission_callback' => static function () {
+                        return self::permission_callback();
+                    },
+                    'args' => [
+                        'name' => [
+                            'description' => __(
+                                'Name of the job',
+                                'forms-bridge'
+                            ),
+                            'type' => 'string',
+                            'required' => true,
+                        ],
+                    ],
+                ],
+            ]
+        );
     }
 
     /**
@@ -168,10 +203,36 @@ class REST_Settings_Controller extends Base_Controller
      *
      * @return array|WP_Error Template data.
      */
+    private static function get_workflow_job($request)
+    {
+        $job_name = $request['name'];
+        $job = apply_filters('forms_bridge_workflow_job', null, $job_name);
+
+        if (!$job) {
+            return new WP_Error(
+                'not_found',
+                __('Workflow job not found', 'forms-bridge'),
+                ['name' => $job_name]
+            );
+        }
+
+        return $job->to_json();
+    }
+    /**
+     * Callback for GET requests to the templates endpoint.
+     *
+     * @param REST_Request Request instance.
+     *
+     * @return array|WP_Error Template data.
+     */
     private static function get_template($request)
     {
         $template_name = $request['name'];
-        $template = Form_Bridge::get_template($template_name);
+        $template = apply_filters(
+            'forms_bridge_template',
+            null,
+            $template_name
+        );
 
         if (!$template) {
             return new WP_Error(

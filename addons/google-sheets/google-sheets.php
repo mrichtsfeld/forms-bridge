@@ -43,7 +43,14 @@ class Google_Sheets_Addon extends Addon
     protected static $bridge_class = '\FORMS_BRIDGE\Google_Sheets_Form_Bridge';
 
     /**
-     * Addon constructor. Inherits from the abstract addon and initialize interceptos
+     * Handles the addon's custom form bridge template class.
+     *
+     * @var string
+     */
+    protected static $bridge_template_class = '\FORMS_BRIDGE\Google_Sheets_Form_Bridge_Template';
+
+    /**
+     * Addon constructor. Inherits from the abstract addon and sets up interceptors
      * and custom hooks.
      */
     protected function construct(...$args)
@@ -126,52 +133,20 @@ class Google_Sheets_Addon extends Addon
     {
         return [
             self::$api,
-            [
+            self::merge_setting_config([
                 'bridges' => [
                     'type' => 'array',
                     'items' => [
                         'type' => 'object',
                         'additionalProperties' => false,
                         'properties' => [
-                            'name' => ['type' => 'string'],
-                            'form_id' => ['type' => 'string'],
                             'spreadsheet' => ['type' => 'string'],
                             'tab' => ['type' => 'string'],
-                            'mappers' => [
-                                'type' => 'array',
-                                'items' => [
-                                    'type' => 'object',
-                                    'additionalProperties' => false,
-                                    'properties' => [
-                                        'from' => ['type' => 'string'],
-                                        'to' => ['type' => 'string'],
-                                        'cast' => [
-                                            'type' => 'string',
-                                            'enum' => [
-                                                'boolean',
-                                                'string',
-                                                'integer',
-                                                'float',
-                                                'json',
-                                                'null',
-                                            ],
-                                        ],
-                                    ],
-                                    'required' => ['from', 'to', 'cast'],
-                                ],
-                            ],
-                            'template' => ['type' => 'string'],
                         ],
-                        'required' => [
-                            'name',
-                            'form_id',
-                            'spreadsheet',
-                            'tab',
-                            'mappers',
-                        ],
+                        'required' => ['spreadsheet', 'tab'],
                     ],
                 ],
-            ],
+            ]),
             [
                 'bridges' => [],
             ],

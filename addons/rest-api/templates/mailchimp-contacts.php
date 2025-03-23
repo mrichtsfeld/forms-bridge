@@ -4,29 +4,10 @@ if (!defined('ABSPATH')) {
     exit();
 }
 
-function forms_bridge_mailchimp_backend_headers($headers)
-{
-    if (isset($headers['api-key'])) {
-        $api_key = $headers['api-key'];
-        unset($headers['api-key']);
-
-        $headers['Authorization'] = 'Basic ' . base64_encode('key:' . $api_key);
-    }
-
-    remove_filter(
-        'http_bridge_backend_headers',
-        'forms_bridge_mailchimp_backend_headers',
-        10,
-        1
-    );
-
-    return $headers;
-}
-
 add_filter(
     'forms_bridge_template_data',
     function ($data, $template_name) {
-        if ($template_name === 'mailchimp-contacts') {
+        if ($template_name === 'rest-api-mailchimp-contacts') {
             $index = array_search(
                 'datacenter',
                 array_column($data['fields'], 'name')
@@ -58,50 +39,6 @@ add_filter(
     2
 );
 
-add_filter(
-    'forms_bridge_payload',
-    function ($payload, $bridge) {
-        if ($bridge->template !== 'mailchimp-contacts') {
-            return $payload;
-        }
-
-        $with_merge_fields = ['merge_fields' => []];
-
-        foreach ($payload as $field => $value) {
-            if ($field === 'email_address') {
-                $with_merge_fields[$field] = $value;
-            } elseif ($field === 'list_id' && $value) {
-                $with_merge_fields[$field] = strval((int) $value);
-            } elseif ($field === 'status') {
-                $with_merge_fields[$field] = in_array($value, [
-                    'subscribed',
-                    'unsubscribed',
-                    'cleaned',
-                    'pending',
-                    'transactional',
-                ])
-                    ? $value
-                    : 'pending';
-            } else {
-                $with_merge_fields['merge_fields'][strtoupper($field)] = $value;
-            }
-        }
-
-        $with_merge_fields['language'] = get_locale();
-
-        add_filter(
-            'http_bridge_backend_headers',
-            'forms_bridge_mailchimp_backend_headers',
-            10,
-            1
-        );
-
-        return $with_merge_fields;
-    },
-    90,
-    2
-);
-
 return [
     'title' => __('MailChimp Contacts', 'forms-bridge'),
     'fields' => [
@@ -110,7 +47,7 @@ return [
             'name' => 'base_url',
             'label' => __('MailChimp API URL', 'forms-bridge'),
             'type' => 'string',
-            'value' => 'https://{dc}.api.mailchimp.com/3.0',
+            'value' => 'https://{dc}.api.mailchimp.com',
         ],
         [
             'ref' => '#backend',
@@ -134,7 +71,7 @@ return [
             'name' => 'endpoint',
             'label' => __('Bridge endpoint', 'forms-bridge'),
             'type' => 'string',
-            'value' => '/lists/{list_id}/members',
+            'value' => '/3.0/lists/{list_id}/members',
         ],
         [
             'ref' => '#backend/headers[]',
@@ -156,7 +93,61 @@ return [
             'ref' => '#form/fields[]',
             'name' => 'datacenter',
             'label' => __('Datacenter', 'forms-bridge'),
-            'type' => 'string',
+            'type' => 'options',
+            'options' => [
+                [
+                    'label' => 'us1',
+                    'value' => 'us1',
+                ],
+                [
+                    'label' => 'us2',
+                    'value' => 'us2',
+                ],
+                [
+                    'label' => 'us3',
+                    'value' => 'us3',
+                ],
+                [
+                    'label' => 'us4',
+                    'value' => 'us4',
+                ],
+                [
+                    'label' => 'us5',
+                    'value' => 'us5',
+                ],
+                [
+                    'label' => 'us6',
+                    'value' => 'us6',
+                ],
+                [
+                    'label' => 'us7',
+                    'value' => 'us7',
+                ],
+                [
+                    'label' => 'us8',
+                    'value' => 'us8',
+                ],
+                [
+                    'label' => 'us9',
+                    'value' => 'us9',
+                ],
+                [
+                    'label' => 'us10',
+                    'value' => 'us10',
+                ],
+                [
+                    'label' => 'us11',
+                    'value' => 'us11',
+                ],
+                [
+                    'label' => 'us12',
+                    'value' => 'us12',
+                ],
+                [
+                    'label' => 'us13',
+                    'value' => 'us13',
+                ],
+            ],
             'required' => true,
         ],
         [
@@ -242,7 +233,7 @@ return [
     ],
     'bridge' => [
         'method' => 'POST',
-        'endpoint' => '/v3/contacts',
+        'endpoint' => '/3.0/lists/{list_id}/members',
         'mappers' => [
             [
                 'from' => 'datacenter',
@@ -254,6 +245,10 @@ return [
                 'to' => 'list_id',
                 'cast' => 'null',
             ],
+        ],
+        'workflow' => [
+            'rest-api-mailchimp-merge-fields',
+            'rest-api-mailchimp-authorization',
         ],
     ],
 ];

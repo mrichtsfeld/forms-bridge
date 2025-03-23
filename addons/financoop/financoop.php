@@ -41,6 +41,17 @@ class Finan_Coop_Addon extends Rest_Addon
      */
     protected static $bridge_class = '\FORMS_BRIDGE\Finan_Coop_Form_Bridge';
 
+    /**
+     * Handles the addon's custom form bridge template class.
+     *
+     * @var string
+     */
+    protected static $bridge_template_class = '\FORMS_BRIDGE\Finan_Coop_Form_Bridge_Template';
+
+    /**
+     * Addon constructor. Inherits from the abstract addon and initializes the
+     * addon's rest api.
+     */
     protected function construct(...$args)
     {
         parent::construct(...$args);

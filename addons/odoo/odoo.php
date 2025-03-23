@@ -39,6 +39,13 @@ class Odoo_Addon extends Addon
     protected static $bridge_class = '\FORMS_BRIDGE\Odoo_Form_Bridge';
 
     /**
+     * Handles the addon's custom bridge template class.
+     *
+     * @var string
+     */
+    protected static $bridge_template_class = '\FORMS_BRIDGE\Odoo_Form_Bridge_Template';
+
+    /**
      * Addon constructor. Inherits from the abstract addon and initialize interceptos
      * and custom hooks.
      */
@@ -109,7 +116,7 @@ class Odoo_Addon extends Addon
     {
         return [
             self::$api,
-            [
+            self::merge_setting_config([
                 'databases' => [
                     'type' => 'array',
                     'items' => [
@@ -130,47 +137,13 @@ class Odoo_Addon extends Addon
                         'type' => 'object',
                         'additionalProperties' => false,
                         'properties' => [
-                            'name' => ['type' => 'string'],
                             'database' => ['type' => 'string'],
-                            'form_id' => ['type' => 'string'],
                             'model' => ['type' => 'string'],
-                            'mappers' => [
-                                'type' => 'array',
-                                'items' => [
-                                    'type' => 'object',
-                                    'additionalProperties' => false,
-                                    'properties' => [
-                                        'from' => ['type' => 'string'],
-                                        'to' => ['type' => 'string'],
-                                        'cast' => [
-                                            'type' => 'string',
-                                            'enum' => [
-                                                'boolean',
-                                                'string',
-                                                'integer',
-                                                'float',
-                                                'json',
-                                                'null',
-                                            ],
-                                        ],
-                                    ],
-                                    'required' => ['from', 'to', 'cast'],
-                                ],
-                            ],
-                            'template' => ['type' => 'string'],
-                            'is_valid' => ['type' => 'boolean'],
                         ],
-                        'required' => [
-                            'name',
-                            'database',
-                            'form_id',
-                            'model',
-                            'mappers',
-                            'is_valid',
-                        ],
+                        'required' => ['database', 'model'],
                     ],
                 ],
-            ],
+            ]),
             [
                 'databases' => [],
                 'bridges' => [],

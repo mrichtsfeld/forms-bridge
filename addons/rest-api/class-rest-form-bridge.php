@@ -21,13 +21,6 @@ class Rest_Form_Bridge extends Form_Bridge
     public const allowed_methods = ['GET', 'POST', 'PUT', 'DELETE'];
 
     /**
-     * Handles the form bridge's template class.
-     *
-     * @var string
-     */
-    protected static $template_class = '\FORMS_BRIDGE\Rest_Form_Bridge_Template';
-
-    /**
      * Performs an http request to backend's REST API.
      *
      * @param array $payload Payload data.
@@ -35,7 +28,7 @@ class Rest_Form_Bridge extends Form_Bridge
      *
      * @return array|WP_Error Http request response.
      */
-    public function do_submit($payload, $attachments = [])
+    protected function do_submit($payload, $attachments = [])
     {
         if (!in_array($this->method, self::allowed_methods, true)) {
             return new WP_Error(
