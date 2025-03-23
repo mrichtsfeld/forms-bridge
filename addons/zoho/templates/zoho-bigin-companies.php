@@ -81,7 +81,7 @@ add_filter(
 
         return $payload;
     },
-    10,
+    90,
     2
 );
 

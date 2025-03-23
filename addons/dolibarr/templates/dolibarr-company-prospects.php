@@ -13,22 +13,27 @@ add_filter(
             return $payload;
         }
 
-        global $forms_bridge_dolibarr_countries;
+        if (isset($payload['country_id'])) {
+            global $forms_bridge_dolibarr_countries;
 
-        if (!isset($forms_bridge_dolibarr_countries[$payload['country_id']])) {
-            $countries_by_label = array_reduce(
-                array_keys($forms_bridge_dolibarr_countries),
-                function ($countries, $country_code) {
-                    global $forms_bridge_dolibarr_countries;
-                    $label = $forms_bridge_dolibarr_countries[$country_code];
-                    $countries[$label] = $country_code;
-                    return $countries;
-                },
-                []
-            );
+            if (
+                !isset($forms_bridge_dolibarr_countries[$payload['country_id']])
+            ) {
+                $countries_by_label = array_reduce(
+                    array_keys($forms_bridge_dolibarr_countries),
+                    function ($countries, $country_code) {
+                        global $forms_bridge_dolibarr_countries;
+                        $label =
+                            $forms_bridge_dolibarr_countries[$country_code];
+                        $countries[$label] = $country_code;
+                        return $countries;
+                    },
+                    []
+                );
 
-            $payload['country_id'] =
-                $countries_by_label[$payload['country_id']];
+                $payload['country_id'] =
+                    $countries_by_label[$payload['country_id']];
+            }
         }
 
         if (empty($payload['stcomm_id'])) {
@@ -98,18 +103,26 @@ add_filter(
             $code_client = $prefix . '-' . $next;
 
             $company = [
-                'status' => $payload['status'],
-                'typent_id' => $payload['typent_id'],
-                'client' => $payload['client'],
+                'status' => $payload['status'] ?? '1',
+                'typent_id' => $payload['typent_id'] ?? '2',
+                'client' => $payload['client'] ?? '2',
                 'code_client' => $code_client,
                 'stcomm_id' => $payload['stcomm_id'],
-                'name' => $payload['name'],
-                'idprof1' => $payload['idprof1'],
-                'address' => $payload['address'],
-                'zip' => $payload['zip'],
-                'town' => $payload['town'],
-                'country_id' => $payload['country_id'],
             ];
+
+            $company_fields = [
+                'name',
+                'idprof1',
+                'address',
+                'zip',
+                'town',
+                'country_id',
+            ];
+            foreach ($company_fields as $field) {
+                if (isset($payload[$field])) {
+                    $company[$field] = $payload[$field];
+                }
+            }
 
             $response = $backend->post(
                 '/api/index.php/thirdparties',
@@ -147,13 +160,13 @@ add_filter(
 
         return [
             'socid' => $company_id,
-            'firstname' => $payload['firstname'],
-            'lastname' => $payload['lastname'],
-            'email' => $payload['email'],
-            'poste' => $payload['poste'],
+            'firstname' => $payload['firstname'] ?? '',
+            'lastname' => $payload['lastname'] ?? '',
+            'email' => $payload['email'] ?? '',
+            'poste' => $payload['poste'] ?? '',
         ];
     },
-    10,
+    90,
     2
 );
 

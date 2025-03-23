@@ -14,27 +14,43 @@ add_filter(
         }
 
         global $forms_bridge_odoo_countries;
+        $company_fields = [
+            'company_name',
+            'vat',
+            'street',
+            'city',
+            'zip',
+            'state',
+            'country_code',
+        ];
 
-        if (!isset($forms_bridge_odoo_countries[$payload['country_code']])) {
-            $countries_by_label = array_reduce(
-                array_keys($forms_bridge_odoo_countries),
-                function ($countries, $country_code) {
-                    global $forms_bridge_odoo_countries;
-                    $label = $forms_bridge_odoo_countries[$country_code];
-                    $countries[$label] = $country_code;
-                    return $countries;
-                },
-                []
-            );
+        if (isset($payload['country_code'])) {
+            if (
+                !isset($forms_bridge_odoo_countries[$payload['country_code']])
+            ) {
+                $countries_by_label = array_reduce(
+                    array_keys($forms_bridge_odoo_countries),
+                    function ($countries, $country_code) {
+                        global $forms_bridge_odoo_countries;
+                        $label = $forms_bridge_odoo_countries[$country_code];
+                        $countries[$label] = $country_code;
+                        return $countries;
+                    },
+                    []
+                );
 
-            $payload['country_code'] =
-                $countries_by_label[$payload['country_code']];
+                $payload['country_code'] =
+                    $countries_by_label[$payload['country_code']];
+            }
         }
 
         $vat_locale = strtoupper(substr($payload['vat'], 0, 2));
 
         if (!isset($forms_bridge_odoo_countries[$vat_locale])) {
-            $payload['vat'] = $payload['country_code'] . $payload['vat'];
+            $country_code =
+                $payload['country_code'] ??
+                strtoupper(explode('_', get_locale())[0]);
+            $payload['vat'] = $country_code . $payload['vat'];
         }
 
         $response = $bridge
@@ -51,13 +67,15 @@ add_filter(
         if (is_wp_error($response)) {
             $company = [
                 'is_company' => true,
-                'vat' => $payload['vat'],
-                'name' => $payload['company_name'],
-                'street' => $payload['street'],
-                'city' => $payload['city'],
-                'zip' => $payload['zip'],
-                'country_code' => $payload['country_code'],
             ];
+
+            foreach ($company_fields as $field) {
+                if (isset($payload[$field])) {
+                    $value = $payload[$field];
+                    $field = preg_replace('/^company_/', '', $field);
+                    $company[$field] = $value;
+                }
+            }
 
             $response = $bridge
                 ->patch([
@@ -99,44 +117,14 @@ add_filter(
 
         $payload['parent_id'] = $company_id;
 
-        unset($payload['vat']);
-        unset($payload['company_name']);
-        unset($payload['street']);
-        unset($payload['city']);
-        unset($payload['zip']);
-        unset($payload['country_code']);
+        foreach (array_keys($company) as $field) {
+            unset($payload[$field]);
+        }
 
         return $payload;
     },
-    10,
+    90,
     2
-);
-
-add_action(
-    'forms_bridge_after_submission',
-    function ($bridge, $payload, $attachments, $response) {
-        if ($bridge->template !== 'odoo-company-contacts') {
-            return;
-        }
-
-        global $forms_bridge_odoo_company_contact_data;
-        $forms_bridge_odoo_company_contact_data['parent_id'] =
-            $response['data']['result'];
-
-        $response = $bridge->do_submit($forms_bridge_odoo_company_contact_data);
-
-        if (is_wp_error($response)) {
-            do_action(
-                'forms_bridge_on_failure',
-                $bridge,
-                $response,
-                $payload,
-                $attachments
-            );
-        }
-    },
-    10,
-    4
 );
 
 return [

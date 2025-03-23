@@ -24,15 +24,20 @@ add_filter(
             return $payload;
         }
 
-        $payload['Owner'] = [
-            'id' => $payload['Owner'],
-        ];
+        if (isset($payload['Owner'])) {
+            $payload['Owner'] = [
+                'id' => $payload['Owner'],
+            ];
+        }
 
-        $contact = [
-            'First_Name' => $payload['First_Name'],
-            'Last_Name' => $payload['Last_Name'],
-            'Email' => $payload['Email'],
-        ];
+        $contact = [];
+        $contact_fields = [];
+
+        foreach ($contact_fields as $field) {
+            if (isset($payload[$field])) {
+                $contact[$field] = $payload[$field];
+            }
+        }
 
         $response = $bridge
             ->patch([
@@ -64,11 +69,11 @@ add_filter(
             $contact_id = $response['data'][0]['details']['id'];
         }
 
-        $payload['Participants'] = [
-            [
-                'type' => 'contact',
-                'participant' => $contact_id,
-            ],
+        $payload['Participants'] = $payload['Participants'] ?? [];
+
+        $payload['Participants'][] = [
+            'type' => 'contact',
+            'participant' => $contact_id,
         ];
 
         foreach (array_keys($contact) as $field) {
@@ -135,7 +140,7 @@ add_filter(
         $payload['Start_DateTime'] = date('c', $time);
         $payload['End_DateTime'] = date('c', $time + 3600);
 
-        $payload['Remind_At'] = [
+        $payload['Remind_At'] = $payload['Remind_At'] ?? [
             [
                 'unit' => 1,
                 'period' => 'hours',
@@ -148,7 +153,7 @@ add_filter(
 
         return $payload;
     },
-    10,
+    90,
     2
 );
 

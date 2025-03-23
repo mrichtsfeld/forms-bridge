@@ -30,25 +30,34 @@ add_filter(
             return $payload;
         }
 
-        $payload['owner'] = base64_decode($payload['owner']);
+        $contact_fields = ['contact_name', 'email', 'phone'];
 
-        $response = $bridge
-            ->patch([
-                'name' => 'odoo-rpc-search-lead-owner-by-email',
-                'template' => null,
-                'method' => 'search',
-                'model' => 'res.users',
-            ])
-            ->submit([['email', '=', $payload['owner']]]);
+        if (isset($payload['owner'])) {
+            $payload['owner'] = base64_decode($payload['owner']);
 
-        if (is_wp_error($response)) {
-            do_action('forms_bridge_on_failure', $bridge, $response, $payload);
-            return;
+            $response = $bridge
+                ->patch([
+                    'name' => 'odoo-rpc-search-lead-owner-by-email',
+                    'template' => null,
+                    'method' => 'search',
+                    'model' => 'res.users',
+                ])
+                ->submit([['email', '=', $payload['owner']]]);
+
+            if (is_wp_error($response)) {
+                do_action(
+                    'forms_bridge_on_failure',
+                    $bridge,
+                    $response,
+                    $payload
+                );
+                return;
+            }
+
+            $user_id = $response['data']['result'][0];
+            $payload['user_id'] = $user_id;
+            unset($payload['owner']);
         }
-
-        $user_id = $response['data']['result'][0];
-        $payload['user_id'] = $user_id;
-        unset($payload['owner']);
 
         $response = $bridge
             ->patch([
@@ -63,11 +72,14 @@ add_filter(
             ]);
 
         if (is_wp_error($response)) {
-            $contact = [
-                'name' => $payload['contact_name'],
-                'email' => $payload['email'],
-                'phone' => $payload['phone'] ?? '',
-            ];
+            $contact = [];
+            foreach ($contact_fields as $field) {
+                if (isset($payload[$field])) {
+                    $value = $payload[$field];
+                    $field = preg_replace('/^contact_/', '', $field);
+                    $contact[$field] = $value;
+                }
+            }
 
             $response = $bridge
                 ->patch([
@@ -94,13 +106,13 @@ add_filter(
 
         $payload['partner_id'] = $partner_id;
 
-        unset($payload['contact_name']);
-        unset($payload['email']);
-        unset($payload['phone']);
+        foreach ($contact_fields as $field) {
+            unset($payload[$field]);
+        }
 
         return $payload;
     },
-    10,
+    90,
     2
 );
 

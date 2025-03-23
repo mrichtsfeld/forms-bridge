@@ -11,6 +11,8 @@ add_filter(
             return $payload;
         }
 
+        $contact_fields = ['contact_name', 'email', 'phone'];
+
         $response = $bridge
             ->patch([
                 'name' => 'odoo-rpc-search-lead-team-owner',
@@ -44,10 +46,15 @@ add_filter(
         if (is_wp_error($response)) {
             $contact = [
                 'is_company' => false,
-                'name' => $payload['contact_name'],
-                'email' => $payload['email'],
-                'phone' => $payload['phone'] ?? '',
             ];
+
+            foreach ($contact_fields as $field) {
+                if (isset($payload[$field])) {
+                    $value = $payload[$field];
+                    $field = preg_replace('/^contact_/', '', $field);
+                    $contact[$field] = $value;
+                }
+            }
 
             $response = $bridge
                 ->patch([
@@ -74,13 +81,13 @@ add_filter(
 
         $payload['partner_id'] = $partner_id;
 
-        unset($payload['contact_name']);
-        unset($payload['email']);
-        unset($payload['phone']);
+        foreach ($contact_fields as $field) {
+            unset($payload[$field]);
+        }
 
         return $payload;
     },
-    10,
+    90,
     2
 );
 

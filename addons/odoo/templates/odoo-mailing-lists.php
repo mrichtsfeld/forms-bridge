@@ -11,10 +11,11 @@ add_filter(
             return $payload;
         }
 
-        $payload['list_ids'] = array_map(function ($list_id) {
-            return (int) $list_id;
-        }, explode(',', $payload['list_ids']));
+        $list_ids = is_string($payload['list_ids'])
+            ? explode(',', $payload['list_ids'])
+            : (array) $payload['list_ids'];
 
+        $payload['list_ids'] = array_map('intval', $list_ids);
         $payload['name'] = "{$payload['first_name']} {$payload['last_name']}";
 
         $response = $bridge
@@ -81,7 +82,7 @@ add_filter(
 
         return $payload;
     },
-    10,
+    90,
     2
 );
 

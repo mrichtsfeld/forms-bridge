@@ -98,7 +98,7 @@ add_filter(
 
         return $with_merge_fields;
     },
-    9,
+    90,
     2
 );
 

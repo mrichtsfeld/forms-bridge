@@ -8,15 +8,18 @@ add_filter(
     'forms_bridge_payload',
     function ($payload, $bridge) {
         if ($bridge->template === 'brevo-contacts-doi') {
-            $payload['includeListIds'] = array_map(
-                'intval',
-                explode(',', $payload['includeListIds'])
-            );
+            $list_ids = is_string($payload['includeListIds'])
+                ? explode(',', $payload['includeListIds'])
+                : (array) $payload['includeListIds'];
 
-            $url = parse_url($payload['redirectionUrl']);
+            $payload['includeListIds'] = array_map('intval', $list_ids);
+
+            $site_url = get_site_url();
+            $url = parse_url($payload['redirectionUrl'] ?? $site_url);
+
             if (!isset($url['host'])) {
                 $payload['redirectionUrl'] =
-                    get_site_url() .
+                    $site_url .
                     '/' .
                     preg_replace('/^\//', '', $payload['redirectionUrl']);
             }
@@ -24,7 +27,7 @@ add_filter(
 
         return $payload;
     },
-    9,
+    90,
     2
 );
 

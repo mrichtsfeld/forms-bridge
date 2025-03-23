@@ -46,24 +46,31 @@ add_filter(
         $backend = $bridge->backend;
         $dolapikey = $bridge->api_key->key;
 
-        $payload['owner'] = base64_decode($payload['owner']);
+        if (isset($payload['owner'])) {
+            $payload['owner'] = base64_decode($payload['owner']);
 
-        $response = $backend->get(
-            '/api/index.php/users',
-            [
-                'limit' => '1',
-                'sqlfilters' => "(t.email:=:'{$payload['owner']}')",
-            ],
-            ['DOLAPIKEY' => $dolapikey]
-        );
+            $response = $backend->get(
+                '/api/index.php/users',
+                [
+                    'limit' => '1',
+                    'sqlfilters' => "(t.email:=:'{$payload['owner']}')",
+                ],
+                ['DOLAPIKEY' => $dolapikey]
+            );
 
-        if (is_wp_error($response)) {
-            do_action('forms_bridge_on_failure', $bridge, $response, $payload);
-            return;
+            if (is_wp_error($response)) {
+                do_action(
+                    'forms_bridge_on_failure',
+                    $bridge,
+                    $response,
+                    $payload
+                );
+                return;
+            }
+
+            $payload['userownerid'] = $response['data'][0]['id'];
+            unset($payload['owner']);
         }
-
-        $payload['userownerid'] = $response['data'][0]['id'];
-        unset($payload['owner']);
 
         $response = $backend->get(
             '/api/index.php/contacts',
@@ -119,13 +126,12 @@ add_filter(
             $contact_id = $response['data'][0]['id'];
         }
 
-        $payload['socpeopleassigned'] = [
-            $contact_id => [
-                'id' => $contact_id,
-                'mandatory' => '0',
-                'answer_status' => '0',
-                'transparency' => '0',
-            ],
+        $payload['socpeopleassigned'] = $payload['socpeopleassigned'] ?? [];
+        $payload['socpeopleassigned'][$contact_id] = [
+            'id' => $contact_id,
+            'mandatory' => '0',
+            'answer_status' => '0',
+            'transparency' => '0',
         ];
 
         unset($payload['firstname']);
@@ -187,6 +193,7 @@ add_filter(
 
         $payload['datep'] = (string) $time;
 
+        $payload['duration'] = floatval($payload['duration'] ?? 1);
         $end = $payload['duration'] * 3600 + $time;
         $payload['datef'] = (string) $end;
 
@@ -196,7 +203,7 @@ add_filter(
 
         return $payload;
     },
-    10,
+    90,
     2
 );
 

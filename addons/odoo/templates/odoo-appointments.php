@@ -30,37 +30,47 @@ add_filter(
             return $payload;
         }
 
-        $payload['owner'] = base64_decode($payload['owner']);
+        if (isset($payload['owner'])) {
+            $payload['owner'] = base64_decode($payload['owner']);
 
-        add_filter(
-            'forms_bridge_rpc_payload',
-            function ($payload, $bridge) {
-                if ($bridge->name !== 'odoo-rpc-search-owner-by-email') {
+            add_filter(
+                'forms_bridge_rpc_payload',
+                function ($payload, $bridge) {
+                    if ($bridge->name !== 'odoo-rpc-search-owner-by-email') {
+                        return $payload;
+                    }
+
+                    $payload['params']['args'][] = ['commercial_partner_id'];
                     return $payload;
-                }
+                },
+                10,
+                2
+            );
 
-                $payload['params']['args'][] = ['commercial_partner_id'];
-                return $payload;
-            },
-            10,
-            2
-        );
+            $response = $bridge
+                ->patch([
+                    'name' => 'odoo-rpc-search-owner-by-email',
+                    'template' => null,
+                    'model' => 'res.users',
+                    'method' => 'search_read',
+                ])
+                ->submit([['email', '=', $payload['owner']]]);
 
-        $response = $bridge
-            ->patch([
-                'name' => 'odoo-rpc-search-owner-by-email',
-                'template' => null,
-                'model' => 'res.users',
-                'method' => 'search_read',
-            ])
-            ->submit([['email', '=', $payload['owner']]]);
+            if (is_wp_error($response)) {
+                do_action(
+                    'forms_bridge_on_failure',
+                    $bridge,
+                    $response,
+                    $payload
+                );
+                return;
+            }
 
-        if (is_wp_error($response)) {
-            do_action('forms_bridge_on_failure', $bridge, $response, $payload);
-            return;
+            $owner_id =
+                $response['data']['result'][0]['commercial_partner_id'][0];
+            $payload['partner_ids'] = [$owner_id];
+            unset($payload['owner']);
         }
-
-        $owner_id = $response['data']['result'][0]['commercial_partner_id'][0];
 
         $response = $bridge
             ->patch([
@@ -73,8 +83,8 @@ add_filter(
 
         if (is_wp_error($response)) {
             $contact = [
-                'name' => $payload['contact_name'],
                 'email' => $payload['email'],
+                'name' => $payload['contact_name'] ?? '',
                 'phone' => $payload['phone'] ?? '',
             ];
 
@@ -101,9 +111,9 @@ add_filter(
             $partner_id = $response['data']['result'][0];
         }
 
-        $payload['partner_ids'] = [$owner_id, $partner_id];
+        $payload['partner_ids'] = $payload['partner_ids'] ?? [];
+        $payload['partner_ids'][] = $partner_id;
 
-        unset($payload['owner']);
         unset($payload['contact_name']);
         unset($payload['email']);
         unset($payload['phone']);
@@ -172,7 +182,7 @@ add_filter(
 
         return $payload;
     },
-    10,
+    90,
     2
 );
 

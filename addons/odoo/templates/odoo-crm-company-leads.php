@@ -33,48 +33,72 @@ add_filter(
         }
 
         global $forms_bridge_odoo_countries;
+        $company_fields = [
+            'company_name',
+            'vat',
+            'street',
+            'city',
+            'zip',
+            'state',
+            'country_code',
+        ];
+        $contact_fields = ['contact_name', 'email', 'phone', 'function'];
 
-        if (!isset($forms_bridge_odoo_countries[$payload['country_code']])) {
-            $countries_by_label = array_reduce(
-                array_keys($forms_bridge_odoo_countries),
-                function ($countries, $country_code) {
-                    global $forms_bridge_odoo_countries;
-                    $label = $forms_bridge_odoo_countries[$country_code];
-                    $countries[$label] = $country_code;
-                    return $countries;
-                },
-                []
-            );
+        if (isset($payload['country_code'])) {
+            if (
+                !isset($forms_bridge_odoo_countries[$payload['country_code']])
+            ) {
+                $countries_by_label = array_reduce(
+                    array_keys($forms_bridge_odoo_countries),
+                    function ($countries, $country_code) {
+                        global $forms_bridge_odoo_countries;
+                        $label = $forms_bridge_odoo_countries[$country_code];
+                        $countries[$label] = $country_code;
+                        return $countries;
+                    },
+                    []
+                );
 
-            $payload['country_code'] =
-                $countries_by_label[$payload['country_code']];
+                $payload['country_code'] =
+                    $countries_by_label[$payload['country_code']];
+            }
         }
 
         $vat_locale = strtoupper(substr($payload['vat'], 0, 2));
 
         if (!isset($forms_bridge_odoo_countries[$vat_locale])) {
-            $payload['vat'] = $payload['country_code'] . $payload['vat'];
+            $country_code =
+                $payload['country_code'] ??
+                strtoupper(explode('_', get_locale())[0]);
+            $payload['vat'] = $country_code . $payload['vat'];
         }
 
-        $payload['owner'] = base64_decode($payload['owner']);
+        if (isset($payload['owner'])) {
+            $payload['owner'] = base64_decode($payload['owner']);
 
-        $response = $bridge
-            ->patch([
-                'name' => 'odoo-rpc-search-company-lead-owner-by-email',
-                'template' => null,
-                'method' => 'search',
-                'model' => 'res.users',
-            ])
-            ->submit([['email', '=', $payload['owner']]]);
+            $response = $bridge
+                ->patch([
+                    'name' => 'odoo-rpc-search-company-lead-owner-by-email',
+                    'template' => null,
+                    'method' => 'search',
+                    'model' => 'res.users',
+                ])
+                ->submit([['email', '=', $payload['owner']]]);
 
-        if (is_wp_error($response)) {
-            do_action('forms_bridge_on_failure', $bridge, $response, $payload);
-            return;
+            if (is_wp_error($response)) {
+                do_action(
+                    'forms_bridge_on_failure',
+                    $bridge,
+                    $response,
+                    $payload
+                );
+                return;
+            }
+
+            $user_id = $response['data']['result'][0];
+            $payload['user_id'] = $user_id;
+            unset($payload['owner']);
         }
-
-        $user_id = $response['data']['result'][0];
-        $payload['user_id'] = $user_id;
-        unset($payload['owner']);
 
         $response = $bridge
             ->patch([
@@ -91,13 +115,15 @@ add_filter(
         if (is_wp_error($response)) {
             $company = [
                 'is_company' => true,
-                'vat' => $payload['vat'],
-                'name' => $payload['company_name'],
-                'street' => $payload['street'],
-                'city' => $payload['city'],
-                'zip' => $payload['zip'],
-                'country_code' => $payload['country_code'],
             ];
+
+            foreach ($company_fields as $field) {
+                if (isset($payload[$field])) {
+                    $value = $payload[$field];
+                    $field = preg_replace('/^company_/', '', $field);
+                    $company[$field] = $value;
+                }
+            }
 
             $response = $bridge
                 ->patch([
@@ -118,19 +144,16 @@ add_filter(
                 return;
             }
 
-            $partner_id = $response['data']['result'];
+            $company_id = $response['data']['result'];
         } else {
-            $partner_id = $response['data']['result'][0];
+            $company_id = $response['data']['result'][0];
         }
 
-        $payload['partner_id'] = $partner_id;
+        $payload['partner_id'] = $company_id;
 
-        unset($payload['vat']);
-        unset($payload['company_name']);
-        unset($payload['street']);
-        unset($payload['city']);
-        unset($payload['zip']);
-        unset($payload['country_code']);
+        foreach ($company_fields as $field) {
+            unset($payload[$field]);
+        }
 
         $response = $bridge
             ->patch([
@@ -141,17 +164,21 @@ add_filter(
             ])
             ->submit([
                 ['email', '=', $payload['email']],
-                ['parent_id', '=', $partner_id],
+                ['parent_id', '=', $company_id],
             ]);
 
         if (is_wp_error($response)) {
             $contact = [
-                'name' => $payload['contact_name'],
-                'email' => $payload['email'],
-                'phone' => $payload['phone'] ?? '',
-                'function' => $payload['function'],
-                'parent_id' => $partner_id,
+                'parent_id' => $company_id,
             ];
+
+            foreach ($contact_fields as $field) {
+                if (isset($payload[$field])) {
+                    $value = $payload[$field];
+                    $field = preg_replace('/^contact_/', '', $field);
+                    $contact[$field] = $value;
+                }
+            }
 
             $response = $bridge
                 ->patch([
@@ -174,14 +201,13 @@ add_filter(
 
         $payload['email_from'] = $payload['email'];
 
-        unset($payload['contact_name']);
-        unset($payload['email']);
-        unset($payload['phone']);
-        unset($payload['function']);
+        foreach ($contact_fields as $field) {
+            unset($payload[$field]);
+        }
 
         return $payload;
     },
-    10,
+    90,
     2
 );
 

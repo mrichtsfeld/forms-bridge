@@ -8,15 +8,16 @@ add_filter(
     'forms_bridge_payload',
     function ($payload, $bridge) {
         if ($bridge->template === 'brevo-contacts') {
-            $payload['listIds'] = array_map(
-                'intval',
-                explode(',', $payload['listIds'])
-            );
+            $list_ids = is_string($payload['listIds'])
+                ? explode(',', $payload['listIds'])
+                : (array) $payload['listIds'];
+
+            $payload['listIds'] = array_map('intval', $list_ids);
         }
 
         return $payload;
     },
-    9,
+    90,
     2
 );
 
