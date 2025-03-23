@@ -2,9 +2,10 @@
 
 namespace FORMS_BRIDGE\GF;
 
+use Error;
+use TypeError;
 use FORMS_BRIDGE\Forms_Bridge;
 use FORMS_BRIDGE\Integration as BaseIntegration;
-use TypeError;
 use GFAPI;
 use GFCommon;
 use GFFormDisplay;
@@ -209,7 +210,27 @@ class Integration extends BaseIntegration
      */
     public function serialize_form($form)
     {
+        if ($form['title'] === 'Debug') {
+            $debug = true;
+        }
+
         $form_id = (int) $form['id'];
+        $fields = array_reduce(
+            $form['fields'],
+            function ($fields, $field) {
+                $field = $this->serialize_field($field);
+                if (!$field) {
+                    return $fields;
+                }
+
+                return array_merge(
+                    $fields,
+                    wp_is_numeric_array($field) ? $field : [$field]
+                );
+            },
+            []
+        );
+
         return [
             '_id' => 'gf:' . $form_id,
             'id' => $form_id,
@@ -219,13 +240,7 @@ class Integration extends BaseIntegration
                 [],
                 'gf:' . $form_id
             ),
-            'fields' => array_values(
-                array_filter(
-                    array_map(function ($field) {
-                        return $this->serialize_field($field);
-                    }, $form['fields'])
-                )
-            ),
+            'fields' => $fields,
         ];
         return $form;
     }
@@ -239,7 +254,15 @@ class Integration extends BaseIntegration
      */
     private function serialize_field($field)
     {
-        if (in_array($field->type, ['page', 'section', 'html', 'submit'])) {
+        if (
+            in_array($field->type, [
+                'page',
+                'section',
+                'html',
+                'submit',
+                'captcha',
+            ])
+        ) {
             return;
         }
 
@@ -247,24 +270,10 @@ class Integration extends BaseIntegration
             return;
         }
 
-        $name = $field->inputName
-            ? $field->inputName
-            : ($field->adminLabel
-                ? $field->adminLabel
-                : $field->label);
+        $label = $field->adminLabel ?: $field->label;
+        $name = $field->inputName ?: $label;
 
-        $inputs = $field->get_entry_inputs();
-        if (is_array($inputs)) {
-            $inputs = array_map(function ($input) {
-                return [
-                    'name' => $input['name'],
-                    'label' => $input['label'],
-                    'id' => $input['id'],
-                ];
-            }, $inputs);
-        } else {
-            $inputs = [];
-        }
+        $allowsPrepopulate = $field->allowsPrepopulate ?? false;
 
         $options = [];
         if (is_array($field->choices)) {
@@ -273,27 +282,98 @@ class Integration extends BaseIntegration
             }, $field->choices);
         }
 
-        return [
+        try {
+            $inputs = array_filter(
+                array_map(function ($input) use ($allowsPrepopulate) {
+                    $input['name'] = $allowsPrepopulate ? $input['name'] : '';
+                    return $input;
+                }, $field->get_entry_inputs()),
+                function ($input) {
+                    return !($input['isHidden'] ?? false);
+                }
+            );
+
+            $inputs = array_values($inputs);
+        } catch (Error) {
+            $inputs = null;
+        }
+
+        if (is_array($inputs)) {
+            $named_inputs = array_filter($inputs, function ($input) {
+                return !empty($input['name']);
+            });
+
+            if (count($named_inputs)) {
+                $subfields = [];
+                for ($i = 1; $i <= count($inputs); $i++) {
+                    $input = $inputs[$i - 1];
+
+                    $input_label = implode(' ', [
+                        $label,
+                        $input['label'] ? "({$input['label']})" : "($i)",
+                    ]);
+                    $input_name = $input['name'] ?: $input_label;
+
+                    $subfields[] = $this->serialize_field(
+                        (object) array_merge((array) $field, $input, [
+                            'id' => $input['id'],
+                            'inputName' => $input_name,
+                            'label' => $input_label,
+                            'adminLabel' => $input_label,
+                        ])
+                    );
+                }
+            }
+        } else {
+            $inputs = [];
+            $subfields = [];
+        }
+
+        $field = [
             'id' => $field->id,
             'type' => $field->type,
             'name' => $name,
-            'label' => $field->label,
+            'label' => $label,
             'required' => $field->isRequired,
             'options' => $options,
             'inputs' => $inputs,
             'is_file' => $field->type === 'fileupload',
-            'is_multi' =>
-                $field->type === 'fileupload'
-                    ? $field->multipleFiles
-                    : $field->storageType === 'json' ||
-                        $field->choiceLimit === 'unlimited' ||
-                        $field->inputType === 'list' ||
-                        $field->inputType === 'checkbox',
+            'is_multi' => $this->is_multi_field($field),
             'conditional' =>
+                isset($field->conditionalLogic) &&
                 is_array($field->conditionalLogic) &&
                 $field->conditionalLogic['enabled'],
             'format' => $field->type === 'date' ? 'yyyy-mm-dd' : '',
         ];
+
+        if (!empty($subfields) && $allowsPrepopulate) {
+            return array_map(function ($subfield) use ($field) {
+                return array_merge($subfield, ['parent' => $field]);
+            }, $subfields);
+        }
+
+        return $field;
+    }
+
+    private function is_multi_field($field)
+    {
+        if ($field->type === 'fileupload') {
+            return $field->multipleFiles ?? false;
+        }
+
+        if (isset($field->storageType) && $field->storageType === 'json') {
+            return true;
+        }
+
+        if (isset($field->choiceLimit) && $field->choiceLimit === 'unlimited') {
+            return true;
+        }
+
+        if (in_array($field->inputType, ['list', 'checkbox'])) {
+            return true;
+        }
+
+        return false;
     }
 
     // private function norm_field_type($type)
@@ -347,60 +427,32 @@ class Integration extends BaseIntegration
             $inputs = $field['inputs'];
 
             if (!empty($inputs)) {
-                // composed fields
-                $isset = array_reduce(
-                    $inputs,
-                    function ($isset, $input) {
-                        return $isset || $this->isset($input['id']);
-                    },
-                    false
-                );
+                $values = [];
+                foreach ($inputs as $input) {
+                    if (!$this->isset($input['id'])) {
+                        continue;
+                    }
 
-                if (!$isset) {
-                    continue;
+                    $value = rgar($submission, (string) $input['id']);
+                    if ($input_name && $value) {
+                        $value = $this->format_value($value, $field, $input);
+
+                        if ($value !== null) {
+                            $values[] = $value;
+                        }
+                    }
                 }
 
-                $names = array_map(function ($input) {
-                    return $input['name'];
-                }, $inputs);
-                if (!empty(array_filter($names))) {
-                    // Composed with subfields
-                    foreach (array_keys($names) as $i) {
-                        if (empty($names[$i])) {
-                            continue;
-                        }
-                        $value = rgar($submission, (string) $inputs[$i]['id']);
-                        $data[$names[$i]] = $value;
-                    }
+                if ($field['type'] === 'consent') {
+                    $data[$input_name] = boolval($values[0] ?? false);
+                } elseif ($field['type'] === 'name') {
+                    $data[$input_name] = implode(' ', $values);
+                } elseif ($field['type'] === 'product') {
+                    $data[$input_name] = $values[0];
+                } elseif ($field['type'] === 'address') {
+                    $data[$input_name] = implode(', ', $values);
                 } else {
-                    // Plain composed
-                    $values = [];
-                    foreach ($inputs as $input) {
-                        $value = rgar($submission, (string) $input['id']);
-                        if ($input_name && $value) {
-                            $value = $this->format_value(
-                                $value,
-                                $field,
-                                $input
-                            );
-
-                            if ($value !== null) {
-                                $values[] = $value;
-                            }
-                        }
-                    }
-
-                    if ($field['type'] === 'consent') {
-                        $data[$input_name] = $values[0] ?? false;
-                    } elseif ($field['type'] === 'name') {
-                        $data[$input_name] = implode(' ', $values);
-                    } elseif ($field['type'] === 'product') {
-                        $data[$input_name] = $values[0];
-                    } elseif ($field['type'] === 'address') {
-                        $data[$input_name] = implode(', ', $values);
-                    } else {
-                        $data[$input_name] = $values;
-                    }
+                    $data[$input_name] = $values;
                 }
             } else {
                 // simple fields
@@ -453,11 +505,10 @@ class Integration extends BaseIntegration
                     return maybe_unserialize($value);
                 case 'multiselect':
                     return json_decode($value);
+                case 'product':
                 case 'option':
                 case 'shipping':
-                    if (preg_match('/\|(.+$)/', $value, $matches)) {
-                        return $matches[1];
-                    }
+                    return explode('|', $value)[0];
             }
         } catch (TypeError) {
             // do nothing
