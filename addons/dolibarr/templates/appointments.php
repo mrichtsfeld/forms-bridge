@@ -300,8 +300,8 @@ return [
         ],
         'workflow' => [
             'dolibarr-owner-by-email',
-            'dolibarr-appointment-attendee',
             'dolibarr-appointment-dates',
+            'dolibarr-appointment-attendee',
         ],
     ],
 ];

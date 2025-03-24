@@ -13,6 +13,7 @@ function forms_bridge_dolibarr_owner_by_email($payload, $bridge)
         $payload['owner_email'] ?? '',
         FILTER_SANITIZE_EMAIL
     );
+
     if (empty($owner_email)) {
         return $payload;
     }
@@ -44,6 +45,6 @@ return [
         'forms-bridge'
     ),
     'method' => 'forms_bridge_dolibarr_owner_by_email',
-    'input' => ['owner_email'],
+    'input' => ['owner_email*'],
     'output' => ['userownerid'],
 ];

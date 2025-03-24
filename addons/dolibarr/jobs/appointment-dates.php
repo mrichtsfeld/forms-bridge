@@ -22,5 +22,5 @@ return [
     ),
     'method' => 'forms_bridge_dolibarr_appointment_dates',
     'input' => ['date*', 'hour', 'minute', 'duration'],
-    'outpiut' => ['datep', 'datef', 'duration'],
+    'output' => ['datep', 'datef', 'duration'],
 ];

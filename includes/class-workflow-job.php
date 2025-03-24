@@ -146,8 +146,18 @@ class Workflow_Job
 
     public function run($payload, $bridge)
     {
+        $original = $payload;
+
         $method = $this->method;
         $payload = $method($payload, $bridge);
+
+        if (empty($payload)) {
+            return $payload;
+        } elseif (is_wp_error($payload)) {
+            do_action('forms_bridge_on_failure', $bridge, $payload, $original);
+
+            return;
+        }
 
         if ($next_job = $this->next) {
             $payload = $next_job->run($payload, $bridge);

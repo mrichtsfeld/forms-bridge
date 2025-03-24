@@ -23,52 +23,6 @@ add_filter(
     2
 );
 
-add_filter(
-    'forms_bridge_payload',
-    function ($payload, $bridge) {
-        if ($bridge->template !== 'dolibarr-contacts') {
-            return $payload;
-        }
-
-        $backend = $bridge->backend;
-        $dolapikey = $bridge->api_key->key;
-
-        $response = $backend->get(
-            $bridge->endpoint,
-            [
-                'limit' => '1',
-                'sqlfilters' => "(t.firstname:like:'{$payload['firstname']}') and (t.lastname:like:'{$payload['lastname']}') and (t.email:=:'{$payload['email']}')",
-            ],
-            ['DOLAPIKEY' => $dolapikey]
-        );
-
-        if (is_wp_error($response)) {
-            $response_code = $response->get_error_data()['response'][
-                'response'
-            ]['code'];
-
-            if ($response_code !== 404) {
-                do_action(
-                    'forms_bridge_on_failure',
-                    $bridge,
-                    $response,
-                    $payload
-                );
-
-                return;
-            }
-        }
-
-        if (!is_wp_error($response)) {
-            return;
-        }
-
-        return $payload;
-    },
-    90,
-    2
-);
-
 return [
     'title' => __('Contacts', 'forms-bridge'),
     'fields' => [
@@ -148,4 +102,5 @@ return [
             ],
         ],
     ],
+    'workflow' => ['dolibarr-skip-if-contact-exists'],
 ];

@@ -211,5 +211,9 @@ return [
                 'cast' => 'string',
             ],
         ],
+        'workflow' => [
+            'dolibarr-skip-if-thirdparty-exists',
+            'dolibarr-next-client-code',
+        ],
     ],
 ];

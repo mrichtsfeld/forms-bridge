@@ -6,170 +6,6 @@ if (!defined('ABSPATH')) {
 
 global $forms_bridge_dolibarr_countries;
 
-add_filter(
-    'forms_bridge_payload',
-    function ($payload, $bridge) {
-        if ($bridge->template !== 'dolibarr-company-prospects') {
-            return $payload;
-        }
-
-        if (isset($payload['country_id'])) {
-            global $forms_bridge_dolibarr_countries;
-
-            if (
-                !isset($forms_bridge_dolibarr_countries[$payload['country_id']])
-            ) {
-                $countries_by_label = array_reduce(
-                    array_keys($forms_bridge_dolibarr_countries),
-                    function ($countries, $country_code) {
-                        global $forms_bridge_dolibarr_countries;
-                        $label =
-                            $forms_bridge_dolibarr_countries[$country_code];
-                        $countries[$label] = $country_code;
-                        return $countries;
-                    },
-                    []
-                );
-
-                $payload['country_id'] =
-                    $countries_by_label[$payload['country_id']];
-            }
-        }
-
-        if (empty($payload['stcomm_id'])) {
-            $payload['stcomm_id'] = '0';
-        }
-
-        $backend = $bridge->backend;
-        $dolapikey = $bridge->api_key->key;
-
-        $response = $backend->get(
-            '/api/index.php/thirdparties',
-            [
-                'sortfield' => 't.rowid',
-                'sortorder' => 'ASC',
-                'limit' => '1',
-                'sqlfilters' => "(t.siren:=:'{$payload['idprof1']}')",
-            ],
-            ['DOLAPIKEY' => $dolapikey]
-        );
-
-        if (is_wp_error($response)) {
-            $error_data = $response->get_error_data();
-            $response_code = $error_data['response']['response']['code'];
-
-            if ($response_code !== 404) {
-                do_action(
-                    'forms_bridge_on_failure',
-                    $bridge,
-                    $response,
-                    $payload
-                );
-
-                return;
-            }
-        }
-
-        if (is_wp_error($response)) {
-            $response = $backend->get(
-                '/api/index.php/thirdparties',
-                [
-                    'sortfield' => 't.rowid',
-                    'sortorder' => 'DESC',
-                    'limit' => 1,
-                ],
-                ['DOLAPIKEY' => $dolapikey]
-            );
-
-            if (is_wp_error($response)) {
-                do_action(
-                    'forms_bridge_on_failure',
-                    $bridge,
-                    $response,
-                    $payload
-                );
-                return;
-            }
-
-            $previus_code_client = $response['data'][0]['code_client'];
-
-            [$prefix, $number] = explode('-', $previus_code_client);
-
-            $next = strval($number + 1);
-            while (strlen($next) < strlen($number)) {
-                $next = '0' . $next;
-            }
-
-            $code_client = $prefix . '-' . $next;
-
-            $company = [
-                'status' => $payload['status'] ?? '1',
-                'typent_id' => $payload['typent_id'] ?? '2',
-                'client' => $payload['client'] ?? '2',
-                'code_client' => $code_client,
-                'stcomm_id' => $payload['stcomm_id'],
-            ];
-
-            $company_fields = [
-                'name',
-                'idprof1',
-                'address',
-                'zip',
-                'town',
-                'country_id',
-            ];
-            foreach ($company_fields as $field) {
-                if (isset($payload[$field])) {
-                    $company[$field] = $payload[$field];
-                }
-            }
-
-            $response = $backend->post(
-                '/api/index.php/thirdparties',
-                $company,
-                ['DOLAPIKEY' => $dolapikey]
-            );
-
-            if (is_wp_error($response)) {
-                do_action(
-                    'forms_bridge_on_failure',
-                    $bridge,
-                    $response,
-                    $payload
-                );
-                return;
-            }
-
-            $company_id = $response['body'];
-        } else {
-            $company_id = $response['data'][0]['id'];
-
-            $response = $backend->get(
-                '/api/index.php/contacts',
-                [
-                    'limit' => '1',
-                    'sqlfilters' => "(t.email:=:'{$payload['email']}') and (t.fk_soc:=:{$company_id})",
-                ],
-                ['DOLAPIKEY' => $dolapikey]
-            );
-
-            if (!is_wp_error($response)) {
-                return;
-            }
-        }
-
-        return [
-            'socid' => $company_id,
-            'firstname' => $payload['firstname'] ?? '',
-            'lastname' => $payload['lastname'] ?? '',
-            'email' => $payload['email'] ?? '',
-            'poste' => $payload['poste'] ?? '',
-        ];
-    },
-    90,
-    2
-);
-
 return [
     'title' => __('Company Prospects', 'forms-bridge'),
     'fields' => [
@@ -348,6 +184,11 @@ return [
                 'to' => 'stcomm_id',
                 'cast' => 'string',
             ],
+        ],
+        'workflow' => [
+            'dolibarr-country-id',
+            'dolibarr-company-id',
+            'dolibarr-skip-if-contact-exists',
         ],
     ],
 ];
