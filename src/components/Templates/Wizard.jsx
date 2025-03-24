@@ -1,6 +1,6 @@
 // source
 import {
-  useConfig,
+  useTemplateConfig,
   useSubmitTemplate,
   useTemplate,
 } from "../../providers/Templates";
@@ -63,7 +63,7 @@ export default function TemplateWizard({
     [steps]
   );
 
-  const config = useConfig();
+  const config = useTemplateConfig();
   const [template] = useTemplate();
   const submitTemplate = useSubmitTemplate();
 

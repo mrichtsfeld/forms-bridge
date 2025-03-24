@@ -3,6 +3,7 @@ import StoreProvider, { useStoreSubmit } from "../providers/Store";
 import SettingsProvider from "../providers/Settings";
 import FormsProvider from "../providers/Forms";
 import TemplatesProvider from "../providers/Templates";
+import WorflowsProvider from "../providers/Workflows";
 import GeneralSettings from "./General";
 import Spinner from "../components/Spinner";
 
@@ -124,9 +125,11 @@ export default function SettingsPage({ addons }) {
           <FormsProvider>
             <SettingsProvider handle={["general"]}>
               <TemplatesProvider>
-                <Content tab={tab}>
-                  <SaveButton error={error} loading={loading} />
-                </Content>
+                <WorflowsProvider>
+                  <Content tab={tab}>
+                    <SaveButton error={error} loading={loading} />
+                  </Content>
+                </WorflowsProvider>
               </TemplatesProvider>
             </SettingsProvider>
           </FormsProvider>

@@ -8,7 +8,10 @@ const { __ } = wp.i18n;
 
 const TemplatesContext = createContext({
   template: null,
-  api: null,
+  setTemplate: () => {},
+  templates: [],
+  config: null,
+  submit: () => {},
 });
 
 export default function TemplatesProvider({ children }) {
@@ -99,7 +102,7 @@ export function useTemplates() {
   return templates || [];
 }
 
-export function useConfig() {
+export function useTemplateConfig() {
   const { config } = useContext(TemplatesContext);
   return config;
 }

@@ -247,7 +247,9 @@ return [
             ],
         ],
         'workflow' => [
+            'rest-api-mailchimp-contact-status',
             'rest-api-mailchimp-merge-fields',
+            'rest-api-mailchimp-current-language',
             'rest-api-mailchimp-authorization',
         ],
     ],

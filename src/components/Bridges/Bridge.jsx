@@ -1,10 +1,10 @@
 // source
 import { useForms } from "../../providers/Forms";
 import { useGeneral } from "../../providers/Settings";
+import { useWorkflowJobs } from "../../providers/Workflows";
 import useBridgeNames from "../../hooks/useBridgeNames";
-import { useTemplates } from "../../providers/Templates";
 import BridgeMappers from "../BridgeMappers";
-import BridgeTemplate from "../BridgeTemplate";
+import BridgeWorkflow from "../BridgeWorkflow";
 import NewBridge from "./NewBridge";
 
 const {
@@ -26,7 +26,7 @@ export default function Bridge({
 }) {
   if (data.name === "add") return template({ add: update, schema });
 
-  const templates = useTemplates();
+  const workflowJobs = useWorkflowJobs();
 
   const [{ backends }] = useGeneral();
   const backendOptions = [{ label: "", value: "" }].concat(
@@ -140,13 +140,13 @@ export default function Bridge({
           mappers={data.mappers}
           setMappers={(mappers) => update({ ...data, mappers })}
         />
-        {templates.length && (
-          <BridgeTemplate
-            templates={templates}
-            template={data.template}
-            setTemplate={(template) => update({ ...data, template })}
+        {workflowJobs.length ? (
+          <BridgeWorkflow
+            jobs={workflowJobs}
+            workflow={data.workflow}
+            setWorkflow={(workflow) => update({ ...data, workflow })}
           />
-        )}
+        ) : null}
         <Button
           isDestructive
           variant="primary"

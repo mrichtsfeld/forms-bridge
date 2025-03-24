@@ -2,6 +2,7 @@
 import SettingsProvider from "../../../../src/providers/Settings";
 import FormsProvider from "../../../../src/providers/Forms";
 import TemplatesProvider from "../../../../src/providers/Templates";
+import WorflowsProvider from "../../../../src/providers/Workflows";
 import Setting from "../Setting";
 
 // assets
@@ -40,7 +41,9 @@ export default function Addon() {
     <SettingsProvider handle={["rest-api"]}>
       <FormsProvider>
         <TemplatesProvider>
-          <div>{root && createPortal(<Setting />, root)}</div>
+          <WorflowsProvider>
+            <div>{root && createPortal(<Setting />, root)}</div>
+          </WorflowsProvider>
         </TemplatesProvider>
       </FormsProvider>
     </SettingsProvider>

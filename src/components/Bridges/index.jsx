@@ -22,22 +22,28 @@ export default function Bridges({ bridges, setBridges, Bridge }) {
   const [currentTab, setCurrentTab] = useState(String(bridges.length ? 0 : -1));
   const [tabFocus, setTabFocus] = useState(null);
   const tabs = bridges
-    .map(({ backend, form_id, name, mappers, ...customFields }, i) => ({
-      ...customFields,
-      name: String(i),
-      title: name,
-      backend,
-      form_id,
-      mappers,
-      icon: (
-        <TabTitle
-          name={name}
-          focus={tabFocus === name}
-          setFocus={(value) => setTabFocus(value ? name : null)}
-          copy={() => copyBridge(name)}
-        />
-      ),
-    }))
+    .map(
+      (
+        { backend, form_id, name, mappers, workflow = [], ...customFields },
+        i
+      ) => ({
+        ...customFields,
+        name: String(i),
+        title: name,
+        backend,
+        form_id,
+        mappers,
+        workflow,
+        icon: (
+          <TabTitle
+            name={name}
+            focus={tabFocus === name}
+            setFocus={(value) => setTabFocus(value ? name : null)}
+            copy={() => copyBridge(name)}
+          />
+        ),
+      })
+    )
     .concat([
       {
         name: "-1",
@@ -86,6 +92,7 @@ export default function Bridges({ bridges, setBridges, Bridge }) {
 
     const copy = {
       ...bridge,
+      workflow: bridge.workflow.map((job) => job),
       mappers: JSON.parse(JSON.stringify(bridge.mappers || [])),
     };
 
