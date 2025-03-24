@@ -57,6 +57,7 @@ class REST_Settings_Controller extends Base_Controller
     {
         $namespace = self::namespace();
         $version = self::version();
+
         register_rest_route(
             "{$namespace}/v{$version}",
             '/workflow_jobs/(?P<name>[a-zA-Z0-9-]+)',
@@ -82,6 +83,33 @@ class REST_Settings_Controller extends Base_Controller
                 ],
             ]
         );
+
+        register_rest_route("{$namespace}/v{$version}", '/workflow_jobs', [
+            [
+                'methods' => WP_REST_Server::CREATABLE,
+                'callback' => static function ($request) {
+                    return self::get_workflow_jobs($request);
+                },
+                'permission_callback' => static function () {
+                    return self::permission_callback();
+                },
+                'args' => [
+                    'workflow' => [
+                        'description' => __(
+                            'Array of workflow job names',
+                            'forms-bridge'
+                        ),
+                        'type' => 'array',
+                        'items' => [
+                            'type' => 'string',
+                        ],
+                        'uniqueItems' => true,
+                        'minItems' => 1,
+                        'required' => true,
+                    ],
+                ],
+            ],
+        ]);
     }
 
     /**
@@ -197,15 +225,15 @@ class REST_Settings_Controller extends Base_Controller
     }
 
     /**
-     * Callback for GET requests to the templates endpoint.
+     * Callback for GET requests to the workflow job endpoint.
      *
      * @param REST_Request Request instance.
      *
-     * @return array|WP_Error Template data.
+     * @return array|WP_Error Workflow job data.
      */
     private static function get_workflow_job($request)
     {
-        $job_name = $request['name'];
+        $job_name = sanitize_text_field($request['name']);
         $job = apply_filters('forms_bridge_workflow_job', null, $job_name);
 
         if (!$job) {
@@ -218,6 +246,42 @@ class REST_Settings_Controller extends Base_Controller
 
         return $job->to_json();
     }
+
+    /**
+     * Callback for POST requests to the workflow jobs endpoint.
+     *
+     * @param REST_Request Request instance.
+     *
+     * @return array|WP_Error Workflow jobs data.
+     */
+    private static function get_workflow_jobs($request)
+    {
+        $job_names = array_map(
+            'sanitize_text_field',
+            (array) $request['workflow']
+        );
+        $api = sanitize_text_field($request['api'] ?? '');
+        $api_jobs = apply_filters('forms_bridge_workflow_jobs', [], $api);
+
+        $jobs = array_filter($api_jobs, function ($job) use ($job_names) {
+            return in_array($job->name, $job_names, true);
+        });
+
+        if (count($jobs) !== count($job_names)) {
+            return new WP_Error(
+                'not_found',
+                __('Workflow jobs not found', 'forms-bridge'),
+                ['workflow' => $job_names]
+            );
+        }
+
+        return array_values(
+            array_map(function ($job) {
+                return $job->to_json();
+            }, $jobs)
+        );
+    }
+
     /**
      * Callback for GET requests to the templates endpoint.
      *

@@ -14,11 +14,46 @@ class Workflow_Job
         'method' => ['type' => 'string'],
         'input' => [
             'type' => 'array',
-            'items' => ['type' => 'string'],
+            'items' => [
+                'type' => 'object',
+                'properties' => [
+                    'name' => ['type' => 'string'],
+                    'type' => [
+                        'type' => 'string',
+                        'enum' => [
+                            'string',
+                            'number',
+                            'array',
+                            'object',
+                            'boolean',
+                            'null',
+                        ],
+                    ],
+                    'required' => ['type' => 'boolean'],
+                ],
+                'required' => ['name', 'type'],
+            ],
         ],
         'output' => [
             'type' => 'array',
-            'items' => ['type' => 'string'],
+            'items' => [
+                'type' => 'object',
+                'properties' => [
+                    'name' => ['type' => 'string'],
+                    'type' => [
+                        'type' => 'string',
+                        'enum' => [
+                            'string',
+                            'number',
+                            'array',
+                            'object',
+                            'boolean',
+                            'null',
+                        ],
+                    ],
+                ],
+                'required' => ['name', 'type'],
+            ],
         ],
         'submission_callbacks' => [
             'type' => 'object',
@@ -149,13 +184,18 @@ class Workflow_Job
         $original = $payload;
 
         $method = $this->method;
+
+        if ($this->missing_requireds($payload)) {
+            return $payload;
+        }
+
         $payload = $method($payload, $bridge);
 
         if (empty($payload)) {
-            return $payload;
+            return;
         } elseif (is_wp_error($payload)) {
-            do_action('forms_bridge_on_failure', $bridge, $payload, $original);
-
+            $error = $payload;
+            do_action('forms_bridge_on_failure', $bridge, $error, $original);
             return;
         }
 
@@ -265,5 +305,20 @@ class Workflow_Job
         }
 
         return $data;
+    }
+
+    private function missing_requireds($payload)
+    {
+        $requireds = array_filter($this->input, function ($input_field) {
+            return $input_field['required'] ?? false;
+        });
+
+        foreach ($requireds as $required) {
+            if (!isset($payload[$required['name']])) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
