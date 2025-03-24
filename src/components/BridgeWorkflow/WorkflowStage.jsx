@@ -39,7 +39,7 @@ export default function WorkflowStage() {
     return <p>Loading</p>;
   }
 
-  const inputFields = (workflowJob.input || []).map((inputField) => {
+  const inputFields = (workflowJob?.input || []).map((inputField) => {
     const field = data
       .filter((f) => f.isInput)
       .find((field) => field.name === inputField.name);
@@ -67,7 +67,7 @@ export default function WorkflowStage() {
             justifyContent: "space-between",
           }}
         >
-          <h2 style={{ margin: 0 }}>{workflowJob.title}</h2>
+          <h2 style={{ margin: 0 }}>{workflowJob?.title}</h2>
           <ToggleControl
             __nextHasNoMarginBottom
             checked={diff}
@@ -75,7 +75,7 @@ export default function WorkflowStage() {
             onChange={() => setDiff(!diff)}
           />
         </div>
-        <p style={{ marginTop: "0.5em" }}>{workflowJob.description}</p>
+        <p style={{ marginTop: "0.5em" }}>{workflowJob?.description}</p>
         <div style={{ display: "flex", gap: "5px" }}>
           <strong>{__("Job interface", "forms-bridge")}:&nbsp;</strong>
           {inputFields.map((field) => (

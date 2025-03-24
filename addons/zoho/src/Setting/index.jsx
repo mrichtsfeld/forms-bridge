@@ -12,7 +12,7 @@ export default function ZohoSetting() {
     useZohoApi();
 
   const update = (field) =>
-    save({ bridges, templates, credentials, workflow_job, ...field });
+    save({ bridges, templates, credentials, workflow_jobs, ...field });
 
   return (
     <>
