@@ -2,8 +2,15 @@
 
 namespace FORMS_BRIDGE;
 
+use WP_Error;
+
 if (!defined('ABSPATH')) {
     exit();
+}
+
+function forms_bridge_workflow_noop_method($payload)
+{
+    return $payload;
 }
 
 class Workflow_Job
@@ -176,11 +183,6 @@ class Workflow_Job
         $this->next = $job;
     }
 
-    public function start()
-    {
-        add_filter('forms_bridge_payload', [$this, 'run'], 999, 2);
-    }
-
     public function run($payload, $bridge)
     {
         $original = $payload;
@@ -280,7 +282,13 @@ class Workflow_Job
             'required' => array_keys(static::$schema),
         ];
 
-        $data = array_merge(['submission_callbacks' => []], $data);
+        $data = array_merge(
+            [
+                'submission_callbacks' => [],
+                'method' => '\FORMS_BRIDGE\forms_bridge_workflow_noop_method',
+            ],
+            $data
+        );
 
         $is_valid = rest_validate_value_from_schema($data, $schema);
         if (is_wp_error($is_valid)) {
