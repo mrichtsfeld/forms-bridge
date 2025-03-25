@@ -26,16 +26,18 @@ function clone(obj) {
 // }
 
 function applyMappers(fields, mappers) {
-  return fields.map(clone).map((field) => {
-    const mapper = mappers.find(({ from }) => from === field.name);
+  return fields
+    .map(clone)
+    .map((field) => {
+      mappers.forEach((mapper) => {
+        if (mapper.from === field.name) {
+          field.name = mapper.cast === "null" ? null : mapper.to;
+        }
+      });
 
-    if (mapper) {
-      field.name = mapper.to;
-      field.type = mapper.cast;
-    }
-
-    return field;
-  });
+      return field;
+    })
+    .filter((field) => field.name);
 }
 
 function applyJob(fields, job) {
