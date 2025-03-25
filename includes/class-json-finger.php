@@ -63,7 +63,9 @@ class JSON_Finger
                         $i += 1;
                     }
 
-                    if (!((int) $index == $index)) {
+                    if (strlen($index) === 0) {
+                        $index = -1;
+                    } elseif (!((int) $index == $index)) {
                         throw new ValueError(
                             'Invalid array index at ' . esc_attr($from)
                         );
@@ -160,10 +162,15 @@ class JSON_Finger
 
             $value = $this->data;
             foreach ($keys as $key) {
+                if (wp_is_numeric_array($value) && $key === -1) {
+                    $key = count($value) - 1;
+                }
+
                 if (!isset($value[$key])) {
                     $value = null;
                     break;
                 }
+
                 $value = $value[$key];
             }
         } catch (Error $e) {
@@ -202,16 +209,23 @@ class JSON_Finger
                 }
 
                 $key = $keys[$i];
+                if ($key === -1 && wp_is_numeric_array($partial)) {
+                    $key = count($partial) - 1;
+                }
+
                 if (!isset($partial[$key])) {
                     $partial[$key] = [];
                 }
+
                 $breadcrumb[] = ['partial' => &$partial, 'key' => $key];
                 $partial = &$partial[$key];
             }
 
             $key = $keys[$i];
             if ($unset) {
-                if (is_array($partial)) {
+                if ($key === -1 && wp_is_numeric_array($partial)) {
+                    array_pop($partial);
+                } elseif (is_array($partial)) {
                     unset($partial[$key]);
                 }
 
@@ -225,7 +239,11 @@ class JSON_Finger
                     unset($partial[$key]);
                 }
             } else {
-                $partial[$key] = $value;
+                if ($key === -1 && wp_is_numeric_array($partial)) {
+                    $partial[] = $value;
+                } else {
+                    $partial[$key] = $value;
+                }
             }
         } catch (Error $e) {
             error_log($e->getMessage());

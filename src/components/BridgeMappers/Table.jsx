@@ -42,6 +42,33 @@ const castOptions = [
   },
 ];
 
+function chainedFromOptions(options, mappers, index) {
+  const mutations = mappers.slice(0, index);
+
+  return options
+    .map((opt) => {
+      opt = { ...opt };
+      mutations.forEach((mutation) => {
+        if (mutation.from === opt.value) {
+          opt.value = mutation.cast === "null" ? null : mutation.to;
+          if (opt.value !== null) {
+            opt.label = opt.value;
+          }
+        }
+      });
+
+      return opt;
+    })
+    .filter((opt) => opt.value !== null)
+    .reduce((options, opt) => {
+      if (opt && !options.map(({ value }) => value).includes(opt.value)) {
+        options.push(opt);
+      }
+
+      return options;
+    }, []);
+}
+
 export default function MappersTable({ form, mappers, setMappers, done }) {
   const fields = useMemo(() => {
     if (!form) return [];
@@ -50,11 +77,15 @@ export default function MappersTable({ form, mappers, setMappers, done }) {
       .map(({ name, label }) => ({ name, label }));
   }, [form]);
 
-  const fromOptions = [{ label: "", value: "" }].concat(
-    fields.map((field) => ({
-      label: __(field.label, "forms-bridge"),
-      value: field.name,
-    }))
+  const fromOptions = useMemo(
+    () =>
+      [{ label: "", value: "" }].concat(
+        fields.map((field) => ({
+          label: field.label,
+          value: field.name,
+        }))
+      ),
+    [fields]
   );
 
   const setMapper = (attr, index, value) => {
@@ -113,7 +144,7 @@ export default function MappersTable({ form, mappers, setMappers, done }) {
                   placeholder={__("From", "forms-bridge")}
                   value={from}
                   onChange={(value) => setMapper("from", i, value)}
-                  options={fromOptions}
+                  options={chainedFromOptions(fromOptions, mappers, i)}
                   __nextHasNoMarginBottom
                   __next40pxDefaultSize
                 />
