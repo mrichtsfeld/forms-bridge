@@ -292,10 +292,6 @@ class Forms_Bridge extends Base_Plugin
                 continue;
             }
 
-            if ($workflow = $bridge->workflow) {
-                $workflow->start();
-            }
-
             try {
                 // TODO: Exclude attachments from payload finger mangling
                 $payload = $bridge->apply_mappers($submission);
@@ -350,6 +346,13 @@ class Forms_Bridge extends Base_Plugin
 
                 Logger::log('Filtered submission payload');
                 Logger::log($payload);
+
+                if ($workflow = $bridge->workflow) {
+                    $payload = $workflow->run($payload, $bridge);
+
+                    Logger::log('Payload after workflow');
+                    Logger::log($payload);
+                }
 
                 if (empty($payload)) {
                     continue;
