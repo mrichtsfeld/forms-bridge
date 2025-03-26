@@ -23,99 +23,6 @@ add_filter(
     2
 );
 
-add_filter(
-    'forms_bridge_payload',
-    function ($payload, $bridge) {
-        if ($bridge->template !== 'odoo-crm-leads') {
-            return $payload;
-        }
-
-        $contact_fields = ['contact_name', 'email', 'phone'];
-
-        if (isset($payload['owner'])) {
-            $payload['owner'] = base64_decode($payload['owner']);
-
-            $response = $bridge
-                ->patch([
-                    'name' => 'odoo-rpc-search-lead-owner-by-email',
-                    'template' => null,
-                    'method' => 'search',
-                    'model' => 'res.users',
-                ])
-                ->submit([['email', '=', $payload['owner']]]);
-
-            if (is_wp_error($response)) {
-                do_action(
-                    'forms_bridge_on_failure',
-                    $bridge,
-                    $response,
-                    $payload
-                );
-                return;
-            }
-
-            $user_id = $response['data']['result'][0];
-            $payload['user_id'] = $user_id;
-            unset($payload['owner']);
-        }
-
-        $response = $bridge
-            ->patch([
-                'name' => 'odoo-rpc-search-lead-contact-by-email',
-                'template' => null,
-                'method' => 'search',
-                'model' => 'res.partner',
-            ])
-            ->submit([
-                ['email', '=', $payload['email']],
-                ['is_company', '=', false],
-            ]);
-
-        if (is_wp_error($response)) {
-            $contact = [];
-            foreach ($contact_fields as $field) {
-                if (isset($payload[$field])) {
-                    $value = $payload[$field];
-                    $field = preg_replace('/^contact_/', '', $field);
-                    $contact[$field] = $value;
-                }
-            }
-
-            $response = $bridge
-                ->patch([
-                    'name' => 'odoo-rpc-create-lead-contact',
-                    'template' => null,
-                    'model' => 'res.partner',
-                ])
-                ->submit($contact);
-
-            if (is_wp_error($response)) {
-                do_action(
-                    'forms_bridge_on_failure',
-                    $bridge,
-                    $response,
-                    $payload
-                );
-                return;
-            }
-
-            $partner_id = $response['data']['result'];
-        } else {
-            $partner_id = $response['data']['result'][0];
-        }
-
-        $payload['partner_id'] = $partner_id;
-
-        foreach ($contact_fields as $field) {
-            unset($payload[$field]);
-        }
-
-        return $payload;
-    },
-    90,
-    2
-);
-
 return [
     'title' => __('CRM Leads', 'forms-bridge'),
     'fields' => [
@@ -162,7 +69,13 @@ return [
                 'to' => 'priority',
                 'cast' => 'string',
             ],
+            [
+                'from' => 'owner',
+                'to' => 'owner_email',
+                'cast' => 'string',
+            ],
         ],
+        'workflow' => ['odoo-lead-owner-id', 'odoo-contact-id'],
     ],
     'form' => [
         'fields' => [

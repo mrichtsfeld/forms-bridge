@@ -11,80 +11,6 @@ add_filter(
             return $payload;
         }
 
-        $contact_fields = ['contact_name', 'email', 'phone'];
-
-        $response = $bridge
-            ->patch([
-                'name' => 'odoo-rpc-search-lead-team-owner',
-                'template' => null,
-                'method' => 'search',
-                'model' => 'crm.team',
-            ])
-            ->submit([['name', '=', $payload['team']]]);
-
-        if (is_wp_error($response)) {
-            do_action('forms_bridge_on_failure', $bridge, $response, $payload);
-            return;
-        }
-
-        $team_id = $response['data']['result'][0];
-        $payload['team_id'] = $team_id;
-        unset($payload['team']);
-
-        $response = $bridge
-            ->patch([
-                'name' => 'odoo-rpc-search-team-lead-contact-by-email',
-                'template' => null,
-                'method' => 'search',
-                'model' => 'res.partner',
-            ])
-            ->submit([
-                ['email', '=', $payload['email']],
-                ['is_company', '=', false],
-            ]);
-
-        if (is_wp_error($response)) {
-            $contact = [
-                'is_company' => false,
-            ];
-
-            foreach ($contact_fields as $field) {
-                if (isset($payload[$field])) {
-                    $value = $payload[$field];
-                    $field = preg_replace('/^contact_/', '', $field);
-                    $contact[$field] = $value;
-                }
-            }
-
-            $response = $bridge
-                ->patch([
-                    'name' => 'odoo-rpc-create-team-lead-contact',
-                    'template' => null,
-                    'model' => 'res.partner',
-                ])
-                ->submit($contact);
-
-            if (is_wp_error($response)) {
-                do_action(
-                    'forms_bridge_on_failure',
-                    $bridge,
-                    $response,
-                    $payload
-                );
-                return;
-            }
-
-            $partner_id = $response['data']['result'];
-        } else {
-            $partner_id = $response['data']['result'][0];
-        }
-
-        $payload['partner_id'] = $partner_id;
-
-        foreach ($contact_fields as $field) {
-            unset($payload[$field]);
-        }
-
         return $payload;
     },
     90,
@@ -138,6 +64,7 @@ return [
                 'cast' => 'string',
             ],
         ],
+        'workflow' => ['odoo-team-owner-id', 'odoo-contact-id'],
     ],
     'form' => [
         'fields' => [

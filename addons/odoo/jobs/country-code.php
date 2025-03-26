@@ -1,6 +1,10 @@
 <?php
 
-function forms_bridge_financoop_country_code($payload)
+if (!defined('ABSPATH')) {
+    exit();
+}
+
+function forms_bridge_odoo_country_code($payload)
 {
     global $forms_bridge_odoo_countries;
     $country_code = strtoupper($payload['country']);
@@ -31,7 +35,7 @@ return [
         'Gets the ISO2 country code from country names and replace its value',
         'forms-bridge'
     ),
-    'method' => 'forms_bridge_financoop_country_code',
+    'method' => 'forms_bridge_odoo_country_code',
     'input' => [
         [
             'name' => 'country',

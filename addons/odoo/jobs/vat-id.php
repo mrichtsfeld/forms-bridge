@@ -4,7 +4,7 @@ if (!defined('ABSPATH')) {
     exit();
 }
 
-function forms_bridge_financoop_vat_id($payload)
+function forms_bridge_odoo_vat_id($payload)
 {
     global $forms_bridge_odoo_countries;
 
@@ -38,7 +38,7 @@ return [
         'Prefix the vat with country code, or the current locale, if it isn\'t prefixed',
         'forms-bridge'
     ),
-    'method' => 'forms_bridge_financoop_vat_id',
+    'method' => 'forms_bridge_odoo_vat_id',
     'input' => [
         [
             'name' => 'vat',

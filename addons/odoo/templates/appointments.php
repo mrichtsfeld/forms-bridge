@@ -23,169 +23,6 @@ add_filter(
     2
 );
 
-add_filter(
-    'forms_bridge_payload',
-    function ($payload, $bridge) {
-        if ($bridge->template !== 'odoo-appointments') {
-            return $payload;
-        }
-
-        if (isset($payload['owner'])) {
-            $payload['owner'] = base64_decode($payload['owner']);
-
-            add_filter(
-                'forms_bridge_rpc_payload',
-                function ($payload, $bridge) {
-                    if ($bridge->name !== 'odoo-rpc-search-owner-by-email') {
-                        return $payload;
-                    }
-
-                    $payload['params']['args'][] = ['commercial_partner_id'];
-                    return $payload;
-                },
-                10,
-                2
-            );
-
-            $response = $bridge
-                ->patch([
-                    'name' => 'odoo-rpc-search-owner-by-email',
-                    'template' => null,
-                    'model' => 'res.users',
-                    'method' => 'search_read',
-                ])
-                ->submit([['email', '=', $payload['owner']]]);
-
-            if (is_wp_error($response)) {
-                do_action(
-                    'forms_bridge_on_failure',
-                    $bridge,
-                    $response,
-                    $payload
-                );
-                return;
-            }
-
-            $owner_id =
-                $response['data']['result'][0]['commercial_partner_id'][0];
-            $payload['partner_ids'] = [$owner_id];
-            unset($payload['owner']);
-        }
-
-        $response = $bridge
-            ->patch([
-                'name' => 'odoo-rpc-search-partner-by-email',
-                'template' => null,
-                'model' => 'res.partner',
-                'method' => 'search',
-            ])
-            ->submit([['email', '=', $payload['email']]]);
-
-        if (is_wp_error($response)) {
-            $contact = [
-                'email' => $payload['email'],
-                'name' => $payload['contact_name'] ?? '',
-                'phone' => $payload['phone'] ?? '',
-            ];
-
-            $response = $bridge
-                ->patch([
-                    'name' => 'odoo-rpc-create-appointment-contact',
-                    'template' => null,
-                    'model' => 'res.partner',
-                ])
-                ->submit($contact);
-
-            if (is_wp_error($response)) {
-                do_action(
-                    'forms_bridge_on_failure',
-                    $bridge,
-                    $response,
-                    $payload
-                );
-                return;
-            }
-
-            $partner_id = $response['data']['result'];
-        } else {
-            $partner_id = $response['data']['result'][0];
-        }
-
-        $payload['partner_ids'] = $payload['partner_ids'] ?? [];
-        $payload['partner_ids'][] = $partner_id;
-
-        unset($payload['contact_name']);
-        unset($payload['email']);
-        unset($payload['phone']);
-
-        $date = $payload['date'];
-        $hour = $payload['h'];
-        $minute = $payload['m'];
-
-        $form_data = apply_filters('forms_bridge_form', null);
-        $date_index = array_search(
-            'date',
-            array_column($form_data['fields'], 'name')
-        );
-        $date_format = $form_data['fields'][$date_index]['format'] ?? '';
-
-        if (strstr($date_format, '-')) {
-            $separator = '-';
-        } elseif (strstr($date_format, '.')) {
-            $separator = '.';
-        } elseif (strstr($date_format, '/')) {
-            $separator = '/';
-        }
-
-        switch (substr($date_format, 0, 1)) {
-            case 'y':
-                [$year, $month, $day] = explode($separator, $date);
-                break;
-            case 'm':
-                [$month, $day, $year] = explode($separator, $date);
-                break;
-            case 'd':
-                [$day, $month, $year] = explode($separator, $date);
-                break;
-        }
-
-        $date = "{$year}-{$month}-{$day}";
-
-        if (preg_match('/(am|pm)/i', $hour, $matches)) {
-            $hour = (int) $hour;
-            if (strtolower($matches[0]) === 'pm') {
-                $hour += 12;
-            }
-        }
-
-        $time = strtotime("{$date} {$hour}:{$minute}");
-
-        if ($time === false) {
-            do_action(
-                'forms_bridge_on_failure',
-                $bridge,
-                new WP_Error('Invalid date format'),
-                $payload
-            );
-
-            return;
-        }
-
-        $payload['start'] = date('Y-m-d H:i:s', $time);
-
-        $end = $payload['duration'] * 3600 + $time;
-        $payload['stop'] = date('Y-m-d H:i:s', $end);
-
-        unset($payload['date']);
-        unset($payload['h']);
-        unset($payload['m']);
-
-        return $payload;
-    },
-    90,
-    2
-);
-
 return [
     'title' => __('Appointments', 'forms-bridge'),
     'fields' => [
@@ -241,6 +78,16 @@ return [
                 'to' => 'duration',
                 'cast' => 'float',
             ],
+            [
+                'from' => 'owner',
+                'to' => 'owner_email',
+                'cast' => 'string',
+            ],
+        ],
+        'workflow' => [
+            'odoo-appointment-owner',
+            'odoo-appointment-attendee',
+            'odoo-appointment-dates',
         ],
     ],
     'form' => [
@@ -289,7 +136,7 @@ return [
                 'required' => true,
             ],
             [
-                'name' => 'h',
+                'name' => 'hour',
                 'label' => __('Hour', 'forms-bridge'),
                 'type' => 'options',
                 'required' => true,
@@ -393,7 +240,7 @@ return [
                 ],
             ],
             [
-                'name' => 'm',
+                'name' => 'minute',
                 'label' => __('Minute', 'forms-bridge'),
                 'type' => 'options',
                 'required' => true,
