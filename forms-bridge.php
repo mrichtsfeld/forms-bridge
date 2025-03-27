@@ -293,23 +293,6 @@ class Forms_Bridge extends Base_Plugin
             }
 
             try {
-                // TODO: Exclude attachments from payload finger mangling
-                $payload = $bridge->apply_mappers($submission);
-                Logger::log('Submission payload after mappers');
-                Logger::log($payload);
-
-                $prune_empties = apply_filters(
-                    'forms_bridge_prune_empties',
-                    true,
-                    $bridge
-                );
-
-                if ($prune_empties) {
-                    $payload = self::prune_empties($payload);
-                    Logger::log('Submission payload after prune empties');
-                    Logger::log($payload);
-                }
-
                 $attachments = apply_filters(
                     'forms_bridge_attachments',
                     self::attachments($uploads),
@@ -328,14 +311,28 @@ class Forms_Bridge extends Base_Plugin
                             $attachments
                         );
                         foreach ($attachments as $name => $value) {
-                            $payload[$name] = $value;
+                            $submission[$name] = $value;
                         }
                         $attachments = [];
-                        Logger::log(
-                            'Submission payload after attachments stringify'
-                        );
-                        Logger::log($payload);
+                        Logger::log('Submission after attachments stringify');
+                        Logger::log($submission);
                     }
+                }
+
+                $payload = $bridge->apply_mappers($submission);
+                Logger::log('Submission payload after mutations');
+                Logger::log($payload);
+
+                $prune_empties = apply_filters(
+                    'forms_bridge_prune_empties',
+                    true,
+                    $bridge
+                );
+
+                if ($prune_empties) {
+                    $payload = self::prune_empties($payload);
+                    Logger::log('Submission payload after prune empties');
+                    Logger::log($payload);
                 }
 
                 if ($workflow = $bridge->workflow) {
