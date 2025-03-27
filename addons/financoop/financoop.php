@@ -224,7 +224,8 @@ class Finan_Coop_Addon extends Rest_Addon
             array_filter($response['data']['data'], static function (
                 $campaign
             ) {
-                return $campaign['state'] !== 'closed';
+                // @todo allow draft for preview purpose but with some kind of warnings
+                return $campaign['state'] === 'open'; // $campaign['state'] !== 'closed' && $campaign['state'] !== 'draft';
             })
         );
     }

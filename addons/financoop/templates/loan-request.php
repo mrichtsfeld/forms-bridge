@@ -14,11 +14,14 @@ add_filter(
         $campaign_id = $data['bridge']['campaign_id'];
         $backend_params = $data['backend'];
 
-        // $campaign = \FORMS_BRIDGE\Finan_Coop_Addon::fetch_campaign($campaign_id, $backend_params);
+        $campaign = \FORMS_BRIDGE\Finan_Coop_Addon::fetch_campaign(
+            $campaign_id,
+            $backend_params
+        );
 
-        // if (is_wp_error($campaign)) {
-        //     return;
-        // }
+        if (is_wp_error($campaign)) {
+            return;
+        }
 
         $loan_index = array_search(
             'loan_amount',
@@ -27,8 +30,13 @@ add_filter(
 
         $loan_field = &$data['form']['fields'][$loan_index];
 
-        $loan_field['min'] = 300;
-        // $loan_field['step'] = 300;
+        if (!empty(($min = $campaign['minimal_loan_amount']))) {
+            $loan_field['min'] = $min;
+        }
+
+        if (!empty(($max = $campaign['maximal_loan_amount']))) {
+            $loan_field['max'] = $max;
+        }
 
         return $data;
     },

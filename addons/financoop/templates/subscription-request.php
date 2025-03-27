@@ -14,11 +14,14 @@ add_filter(
         $campaign_id = $data['bridge']['campaign_id'];
         $backend_params = $data['backend'];
 
-        // $campaign = \FORMS_BRIDGE\Finan_Coop_Addon::fetch_campaign($campaign_id, $backend_params);
+        $campaign = \FORMS_BRIDGE\Finan_Coop_Addon::fetch_campaign(
+            $campaign_id,
+            $backend_params
+        );
 
-        // if (is_wp_error($campaign)) {
-        //     throw $campaign;
-        // }
+        if (is_wp_error($campaign)) {
+            throw $campaign;
+        }
 
         $parts_index = array_search(
             'ordered_parts',
@@ -27,8 +30,14 @@ add_filter(
 
         $parts_field = &$data['form']['fields'][$parts_index];
 
-        $parts_field['min'] = 300;
-        $parts_field['step'] = 300;
+        if (!empty(($min = $campaign['minimal_subscription_amount']))) {
+            $parts_field['min'] = $min;
+            $parts_field['step'] = $min;
+        }
+
+        if (!empty(($max = $campaign['maximal_subscription_amount']))) {
+            $parts_field['max'] = $max;
+        }
 
         return $data;
     },
