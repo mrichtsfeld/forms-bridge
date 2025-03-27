@@ -10,19 +10,19 @@ const { __ } = wp.i18n;
 const castOptions = [
   {
     value: "string",
-    label: "String",
+    label: __("String", "forms-bridge"),
   },
   {
     value: "integer",
-    label: "Integer",
+    label: __("Integer", "forms-bridge"),
   },
   {
     value: "float",
-    label: "Decimal",
+    label: __("Decimal", "forms-bridge"),
   },
   {
     value: "boolean",
-    label: "Boolean",
+    label: __("Boolean", "forms-bridge"),
   },
   {
     value: "json",
@@ -34,11 +34,15 @@ const castOptions = [
   },
   {
     value: "concat",
-    label: "Concatenate",
+    label: __("Concatenate", "forms-bridge"),
+  },
+  {
+    value: "copy",
+    label: __("Copy", "forms-bridge"),
   },
   {
     value: "null",
-    label: "Ignore",
+    label: __("Ignore", "forms-bridge"),
   },
 ];
 
@@ -74,7 +78,6 @@ function parseFinger(finger) {
   let closured = false;
   let index = 0;
 
-  // Parse finger as a charstring iteration
   for (let i = 0; i < len; i++) {
     const char = finger[i];
     if (closured) {
@@ -137,8 +140,18 @@ function chainedFromOptions(options, mappers, index) {
   const mutatedOptions = options
     .reduce((options, opt) => {
       opt = { ...opt };
-      mutations.forEach((mutation) => {
+      mutations.forEach((mutation, i) => {
         if (mutation.from === opt.value) {
+          if (mutation.cast === "copy" && mutation.to !== opt.value) {
+            const ignoredAfter =
+              mutations.slice(i + 1).find(({ to }) => to === opt.value)
+                ?.cast === "null";
+
+            if (!ignoredAfter) {
+              options.push({ ...opt });
+            }
+          }
+
           opt.value = mutation.cast === "null" ? null : mutation.to;
           if (opt.value !== null) {
             opt.label = opt.value;
@@ -150,21 +163,22 @@ function chainedFromOptions(options, mappers, index) {
         return options;
       }
 
-      const repetitions = options.filter(({ value }) => value === opt.value);
-      if (repetitions.length) {
-        if (/\[\]$/.test(opt.value)) {
-          mappers
-            .filter(({ to }) => to === opt.value)
-            .forEach((_, i) => {
-              const finger = opt.value.replace(/\[\]$/, "");
-              const value = `${finger}[${i}]`;
+      const arrayItems = opt.value.endsWith("[]")
+        ? options.filter(({ value }) => value === opt.value)
+        : [];
 
-              if (!uniques.has(value)) {
-                uniques.add(value);
-                options.push({ value, label: value });
-              }
-            });
-        }
+      if (arrayItems.length) {
+        mappers
+          .filter(({ to }) => to === opt.value)
+          .forEach((_, i) => {
+            const finger = opt.value.slice(0, -2);
+            const value = `${finger}[${i}]`;
+
+            if (!uniques.has(value)) {
+              uniques.add(value);
+              options.push({ value, label: value });
+            }
+          });
       } else {
         uniques.add(opt.value);
         options.push(opt);
@@ -185,7 +199,7 @@ function chainedFromOptions(options, mappers, index) {
         const finger = buildFinger(keys.slice(0, i + 1));
 
         if (mutations.find(({ from }) => from === finger)) {
-          return;
+          return false;
         }
       }
 
@@ -195,7 +209,6 @@ function chainedFromOptions(options, mappers, index) {
 }
 
 function fingerOptions(options, mutations) {
-  console.log(mutations);
   const values = new Set(options.map((opt) => opt.value));
   const uniques = new Set();
 
