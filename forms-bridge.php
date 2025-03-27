@@ -300,7 +300,7 @@ class Forms_Bridge extends Base_Plugin
 
                 $prune_empties = apply_filters(
                     'forms_bridge_prune_empties',
-                    false,
+                    true,
                     $bridge
                 );
 
@@ -338,25 +338,31 @@ class Forms_Bridge extends Base_Plugin
                     }
                 }
 
+                if ($workflow = $bridge->workflow) {
+                    $payload = $workflow->run($payload, $bridge);
+
+                    if (empty($payload)) {
+                        Logger::log('Skip empty payload after bridge workflow');
+                        continue;
+                    }
+
+                    Logger::log('Payload after workflow');
+                    Logger::log($payload);
+                }
+
                 $payload = apply_filters(
                     'forms_bridge_payload',
                     $payload,
                     $bridge
                 );
 
-                Logger::log('Filtered submission payload');
-                Logger::log($payload);
-
-                if ($workflow = $bridge->workflow) {
-                    $payload = $workflow->run($payload, $bridge);
-
-                    Logger::log('Payload after workflow');
-                    Logger::log($payload);
-                }
-
                 if (empty($payload)) {
+                    Logger::log('Skip empty payload after user filter');
                     continue;
                 }
+
+                Logger::log('User filtered submission payload');
+                Logger::log($payload);
 
                 $skip = apply_filters(
                     'forms_bridge_skip_submission',
@@ -380,7 +386,6 @@ class Forms_Bridge extends Base_Plugin
 
                 $response = $bridge->submit($payload, $attachments);
                 Logger::log('Submission response');
-                Logger::log($response['response']);
 
                 if ($error = is_wp_error($response) ? $response : null) {
                     do_action(
@@ -391,6 +396,9 @@ class Forms_Bridge extends Base_Plugin
                         $attachments
                     );
                 } else {
+                    Logger::log('Submission response');
+                    Logger::log($response['response']);
+
                     do_action(
                         'forms_bridge_after_submission',
                         $bridge,
