@@ -208,7 +208,11 @@ abstract class Form_Bridge
         foreach ($this->mappers as $pipe) {
             extract($pipe);
             $value = $finger->get($from);
-            $finger->unset($from);
+
+            if ($cast !== 'copy') {
+                $finger->unset($from);
+            }
+
             if ($cast !== 'null') {
                 $finger->set($to, $this->cast($value, $cast));
             }
@@ -248,6 +252,8 @@ abstract class Form_Bridge
                 return implode(' ', (array) $value);
             case 'null':
                 return null;
+            case 'copy':
+                return $value;
             default:
                 return (string) $value;
         }

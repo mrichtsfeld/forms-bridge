@@ -179,6 +179,7 @@ class Form_Bridge_Template
                                     'csv',
                                     'concat',
                                     'null',
+                                    'copy',
                                 ],
                             ],
                         ],
