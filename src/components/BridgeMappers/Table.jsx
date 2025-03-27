@@ -198,7 +198,8 @@ function chainedFromOptions(options, mappers, index) {
       for (let i = 0; i < keys.length; i++) {
         const finger = buildFinger(keys.slice(0, i + 1));
 
-        if (mutations.find(({ from }) => from === finger)) {
+        const mutation = mutations.find(({ from }) => from === finger);
+        if (mutation && mutation.cast !== "copy") {
           return false;
         }
       }
@@ -228,9 +229,19 @@ function fingerOptions(options, mutations) {
 
       return options;
     }, [])
-    .map((opt) => {
-      mutations.forEach((mutation) => {
+    .reduce((options, opt) => {
+      mutations.forEach((mutation, i) => {
         if (mutation.from === opt.value) {
+          if (mutation.cast === "copy" && mutation.to !== opt.value) {
+            const ignoredAfter =
+              mutations.slice(i + 1).find(({ to }) => to === opt.value)
+                ?.cast === "null";
+
+            if (!ignoredAfter) {
+              options.push({ ...opt });
+            }
+          }
+
           if (mutation.cast === "null") {
             opt.value = null;
           } else {
@@ -241,9 +252,13 @@ function fingerOptions(options, mutations) {
         }
       });
 
-      return opt;
-    })
-    .filter((opt) => opt.value);
+      if (opt.value === null) {
+        return options;
+      }
+
+      options.push(opt);
+      return options;
+    }, []);
 }
 
 export default function MappersTable({ form, mappers, setMappers, done }) {
