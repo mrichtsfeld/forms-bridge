@@ -247,9 +247,8 @@ class Integration extends BaseIntegration
     private function _serialize_field($id, $settings)
     {
         $name =
-            $settings['custom_name_attribute'] ?? null ?:
-            $settings['admin_label'] ?? null ?:
-            $settings['label'];
+            $settings['key'] ??
+            ($settings['admin_label'] ?? $settings['label']);
 
         $children = isset($settings['fields'])
             ? array_map(function ($setting) {
@@ -269,15 +268,34 @@ class Integration extends BaseIntegration
                 ? $settings['options']
                 : [],
             'is_file' => false,
-            'is_multi' => in_array($settings['type'], [
-                'listmultiselect',
-                'listcheckbox',
-            ]),
+            'is_multi' => $this->is_multi_field($settings),
             'conditional' => false,
             'children' => $children,
             'format' => strtolower($settings['date_format'] ?? ''),
             'schema' => $this->field_value_schema($settings, $children),
         ];
+    }
+
+    private function is_multi_field($settings)
+    {
+        if (
+            in_array(
+                $settings['type'],
+                ['listmultiselect', 'listcheckbox', 'repeater'],
+                true
+            )
+        ) {
+            return true;
+        }
+
+        if (
+            $settings['type'] === 'listimage' &&
+            ($settings['allow_multi_select'] ?? false)
+        ) {
+            return true;
+        }
+
+        return false;
     }
 
     private function field_value_schema($settings, $children = [])
@@ -534,7 +552,7 @@ class Integration extends BaseIntegration
             'objectType' => 'Field',
             'objectDomain' => 'fields',
             'editActive' => false,
-            'order' => count($nf_fields),
+            'order' => count($nf_fields) + 1,
             'type' => 'submit',
             'label' => __('Submit', 'forms-bridge'),
             'processing_label' => __('Processing', 'forms-bridge'),
@@ -559,7 +577,7 @@ class Integration extends BaseIntegration
             'type' => $type,
             'label' => $label,
             'key' => $name,
-            'custom_name_attribute' => $name,
+            // 'custom_name_attribute' => $name,
             'admin_label' => '',
             'required' => $required ? '1' : '',
             'default' => '',
