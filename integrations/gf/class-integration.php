@@ -6,6 +6,7 @@ use Error;
 use TypeError;
 use FORMS_BRIDGE\Forms_Bridge;
 use FORMS_BRIDGE\Integration as BaseIntegration;
+use FORMS_BRIDGE\JSON_Finger;
 use GFAPI;
 use GFCommon;
 use GFFormDisplay;
@@ -225,7 +226,7 @@ class Integration extends BaseIntegration
             []
         );
 
-        return [
+        return apply_filters('forms_bridge_form_data', [
             '_id' => 'gf:' . $form_id,
             'id' => $form_id,
             'title' => $form['title'],
@@ -235,8 +236,7 @@ class Integration extends BaseIntegration
                 'gf:' . $form_id
             ),
             'fields' => $fields,
-        ];
-        return $form;
+        ]);
     }
 
     /**
@@ -276,13 +276,16 @@ class Integration extends BaseIntegration
             $field->choices ?: []
         );
 
-        $inputs = array_map(
-            static function ($input) use ($allowsPrepopulate) {
+        try {
+            $inputs = array_map(static function ($input) use (
+                $allowsPrepopulate
+            ) {
                 $input['name'] = $allowsPrepopulate ? $input['name'] : '';
                 return $input;
-            },
-            $field->get_entry_inputs() ?: []
-        );
+            }, $field->get_entry_inputs());
+        } catch (Error) {
+            $inputs = [];
+        }
 
         $inputs = array_values(
             array_filter($inputs, static function ($input) {
@@ -313,32 +316,38 @@ class Integration extends BaseIntegration
                         'label' => $input_label,
                         'adminLabel' => $input_label,
                         'type' => 'text',
+                        'schema' => ['type' => 'string'],
                     ])
                 );
             }
         }
 
-        $field = [
-            'id' => $field->id,
-            'type' => $field->type,
-            'name' => $name,
-            'label' => $label,
-            'required' => $field->isRequired,
-            'options' => $options,
-            'inputs' => $inputs,
-            'is_file' => $field->type === 'fileupload',
-            'is_multi' => $this->is_multi_field($field),
-            'conditional' => $field->conditionalLogic['enabled'] ?? false,
-            'format' => $field->type === 'date' ? 'yyyy-mm-dd' : '',
-            'schema' => $this->field_value_schema($field),
-        ];
+        $field = apply_filters(
+            'forms_bridge_form_field_data',
+            [
+                'id' => $field->id,
+                'type' => $field->type,
+                'name' => $name,
+                'label' => $label,
+                'required' => $field->isRequired,
+                'options' => $options,
+                'inputs' => $inputs,
+                'is_file' => $field->type === 'fileupload',
+                'is_multi' => $this->is_multi_field($field),
+                'conditional' => $field->conditionalLogic['enabled'] ?? false,
+                'format' => $field->type === 'date' ? 'yyyy-mm-dd' : '',
+                'schema' => $this->field_value_schema($field),
+            ],
+            $field,
+            'gf'
+        );
 
-        if (!empty($subfields) && $allowsPrepopulate) {
+        if (
+            !empty($subfields) &&
+            ($allowsPrepopulate || $field['type'] === 'list')
+        ) {
             return array_map(function ($subfield) use ($field) {
-                return array_merge($subfield, [
-                    'parent' => $field,
-                    'schema' => ['type' => 'string'],
-                ]);
+                return array_merge($subfield, ['parent' => $field]);
             }, $subfields);
         }
 
@@ -390,23 +399,39 @@ class Integration extends BaseIntegration
                                 []
                             ),
                         ],
+                        'additionalItems' => true,
                     ];
                 }
             // no break
             case 'list':
+                return [
+                    'type' => 'array',
+                    'items' => ['type' => 'string'],
+                    'additionalItems' => true,
+                ];
             case 'checkbox':
             case 'multiselect':
                 return [
                     'type' => 'array',
-                    'tiems' => ['type' => 'string'],
+                    'items' => ['type' => 'string'],
+                    'maxItems' => count($field->choices),
                 ];
             case 'multi_choice':
             case 'image_choice':
             case 'option':
                 if ($this->is_multi_field($field)) {
+                    if ($field->choiceLimit === 'range') {
+                        $maxItems = $field->choiceLimitMax;
+                    } elseif ($field->choiceLimit === 'exactly') {
+                        $maxItems = $field->choiceLimitNumber;
+                    } else {
+                        $maxItems = count($field->choices);
+                    }
+
                     return [
                         'type' => 'array',
                         'items' => ['type' => 'string'],
+                        'maxItems' => $maxItems,
                     ];
                 }
 
@@ -446,6 +471,20 @@ class Integration extends BaseIntegration
     {
         $data = [];
 
+        $has_total = array_search(
+            'total',
+            array_map(static function ($field) {
+                return $field['type'];
+            }, $form_data['fields'])
+        );
+
+        $has_quantity = array_search(
+            'quantity',
+            array_map(static function ($field) {
+                return $field['type'];
+            }, $form_data['fields'])
+        );
+
         foreach ($form_data['fields'] as $field) {
             if ($field['is_file']) {
                 continue;
@@ -476,7 +515,15 @@ class Integration extends BaseIntegration
                 } elseif ($field['type'] === 'name') {
                     $data[$input_name] = implode(' ', $values);
                 } elseif ($field['type'] === 'product') {
-                    $data[$input_name] = $values[0];
+                    if ($has_total) {
+                        $data[$input_name] = $values[0];
+                    } else {
+                        if ($has_quantity) {
+                            $values = array_slice($values, 0, 2);
+                        }
+
+                        $data[$input_name] = implode('|', $values);
+                    }
                 } elseif ($field['type'] === 'address') {
                     $data[$input_name] = implode(', ', $values);
                 } else {
@@ -527,6 +574,7 @@ class Integration extends BaseIntegration
                         return $number_val;
                     }
                     break;
+                case 'quantity':
                 case 'number':
                     return (float) preg_replace('/[^0-9\.,]/', '', $value);
                 case 'list':
@@ -536,7 +584,8 @@ class Integration extends BaseIntegration
                 case 'product':
                 case 'option':
                 case 'shipping':
-                    return explode('|', $value)[0];
+                    return $value;
+                // return explode('|', $value)[0];
             }
         } catch (TypeError) {
             // do nothing
