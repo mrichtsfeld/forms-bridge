@@ -35,6 +35,24 @@ foreach ($setting_names as $setting_name) {
         }
 
         $bridge_data['workflow'] = $bridge_data['workflow'] ?? [];
+
+        if (!isset($bridge_data['mutations'])) {
+            $mappers = $bridge_data['mappers'] ?? [];
+            $mutations = [$mappers];
+        } else {
+            $mutations = $bridge_data['mutations'];
+        }
+
+        for (
+            $i = count($mutations);
+            $i <= count($bridge_data['workflow']);
+            $i++
+        ) {
+            $mutations[] = [];
+        }
+
+        $bridge_data['mutations'] = $mutations;
+        unset($bridge_data['mappers']);
     }
 
     update_option($option, $data);

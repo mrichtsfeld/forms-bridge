@@ -6,7 +6,6 @@ use Error;
 use TypeError;
 use FORMS_BRIDGE\Forms_Bridge;
 use FORMS_BRIDGE\Integration as BaseIntegration;
-use FORMS_BRIDGE\JSON_Finger;
 use GFAPI;
 use GFCommon;
 use GFFormDisplay;

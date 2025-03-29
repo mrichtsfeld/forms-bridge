@@ -75,6 +75,7 @@ function forms_bridge_merge_collection($collection, $default, $schema = [])
             }
         }
     } elseif ($schema['type'] === 'array') {
+        $a = 1;
         // TODO: Handle matrix case
     }
 

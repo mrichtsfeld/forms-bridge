@@ -59,31 +59,34 @@ abstract class Addon extends Singleton
                 'properties' => [
                     'name' => ['type' => 'string'],
                     'form_id' => ['type' => 'string'],
-                    'mappers' => [
+                    'mutations' => [
                         'type' => 'array',
                         'items' => [
-                            'type' => 'object',
-                            'additionalProperties' => false,
-                            'properties' => [
-                                'from' => ['type' => 'string'],
-                                'to' => ['type' => 'string'],
-                                'cast' => [
-                                    'type' => 'string',
-                                    'enum' => [
-                                        'boolean',
-                                        'string',
-                                        'integer',
-                                        'float',
-                                        'json',
-                                        'csv',
-                                        'concat',
-                                        'inherit',
-                                        'copy',
-                                        'null',
+                            'type' => 'array',
+                            'items' => [
+                                'type' => 'object',
+                                'additionalProperties' => false,
+                                'properties' => [
+                                    'from' => ['type' => 'string'],
+                                    'to' => ['type' => 'string'],
+                                    'cast' => [
+                                        'type' => 'string',
+                                        'enum' => [
+                                            'boolean',
+                                            'string',
+                                            'integer',
+                                            'float',
+                                            'json',
+                                            'csv',
+                                            'concat',
+                                            'inherit',
+                                            'copy',
+                                            'null',
+                                        ],
                                     ],
                                 ],
+                                'required' => ['from', 'to', 'cast'],
                             ],
-                            'required' => ['from', 'to', 'cast'],
                         ],
                     ],
                     'template' => ['type' => 'string'],
@@ -245,6 +248,80 @@ abstract class Addon extends Singleton
      * @return array Validated value.
      */
     abstract protected static function validate_setting($data, $setting);
+
+    protected static function validate_bridge($bridge, &$uniques = [])
+    {
+        if (empty($bridge['name'])) {
+            return;
+        }
+
+        if (in_array($bridge['name'], $uniques)) {
+            return;
+        } else {
+            $uniques[] = $bridge['name'];
+        }
+
+        static $forms;
+        if (empty($forms)) {
+            $forms = apply_filters('forms_bridge_forms', []);
+        }
+
+        $form = null;
+        foreach ($forms as $_form) {
+            if ($_form['_id'] === $bridge['form_id']) {
+                $form = $_form;
+            }
+        }
+
+        if (empty($form)) {
+            $bridge['form_id'] = '';
+        }
+
+        $field_names = $form
+            ? array_map(static function ($field) {
+                return $field['name'];
+            }, $form['fields'])
+            : [];
+
+        $bridge['workflow'] = array_map(
+            'sanitize_text_field',
+            (array) ($bridge['workflow'] ?? [])
+        );
+
+        $mutations = [];
+        foreach ((array) ($bridge['mutations'] ?? []) as $mappers) {
+            $mappers = array_filter($mappers, static function ($mapper) use (
+                $field_names
+            ) {
+                extract($mapper);
+
+                if (empty($from) || empty($to) || empty($cast)) {
+                    return;
+                }
+
+                if (!in_array($from, $field_names)) {
+                    return;
+                }
+
+                return true;
+            });
+
+            $mutations[] = array_values($mappers);
+        }
+
+        $bridge['mutations'] = array_slice(
+            $mutations,
+            0,
+            count($bridge['workflow']) + 1
+        );
+
+        for ($i = 0; $i <= count($bridge['workflow']); $i++) {
+            $bridge['mutations'][$i] = $bridge['mutations'][$i] ?? [];
+        }
+
+        $bridge['is_valid'] = !empty($bridge['form_id']);
+        return $bridge;
+    }
 
     /**
      * Private class constructor. Add addons scripts as dependency to the

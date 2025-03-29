@@ -161,7 +161,7 @@ class Form_Bridge_Template
             'properties' => [
                 'name' => ['type' => 'string'],
                 'form_id' => ['type' => 'string'],
-                'mappers' => [
+                'mutations' => [
                     'type' => 'array',
                     'items' => [
                         'type' => 'object',
