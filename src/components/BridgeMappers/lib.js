@@ -114,7 +114,10 @@ export function getFromOptions(fields, mappers, index) {
 
     const value = finger.get(mutation.from);
 
-    if (mutation.cast !== "copy" && mutation.from !== mutation.to) {
+    if (
+      (mutation.cast !== "copy" && mutation.from !== mutation.to) ||
+      mutation.cast === "null"
+    ) {
       finger.unset(mutation.from);
     }
 
@@ -137,10 +140,12 @@ function fieldsToOptions(fields, options = []) {
   }
 
   options = fields.reduce((fields, { name, schema }) => {
-    name = name.replace(/\./g, "\.");
-    name = name.replace(/\[/g, "\[");
-    name = name.replace(/\]/g, "\]");
-    name = JsonFinger.sanitizeKey(name);
+    // name = name.replace(/\./g, "\.");
+    // name = name.replace(/\[/g, "\[");
+    // name = name.replace(/\]/g, "\]");
+    if (JsonFinger.parse(name).length === 1) {
+      name = JsonFinger.sanitizeKey(name);
+    }
 
     if (schema.type === "array") {
       fields.push({
