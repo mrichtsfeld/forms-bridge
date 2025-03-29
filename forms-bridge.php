@@ -276,13 +276,13 @@ class Forms_Bridge extends Base_Plugin
         Logger::log('Form submission');
         Logger::log($submission);
 
-        if (empty($submission)) {
-            return;
-        }
-
         $uploads = apply_filters('forms_bridge_uploads', []);
         Logger::log('Submission uploads');
         Logger::log($uploads);
+
+        if (empty($submission) && empty($uploads)) {
+            return;
+        }
 
         foreach (array_values($bridges) as $bridge) {
             if (!$bridge->is_valid) {
@@ -308,7 +308,9 @@ class Forms_Bridge extends Base_Plugin
                         ])
                     ) {
                         $attachments = self::stringify_attachments(
-                            $attachments
+                            $attachments,
+                            $bridge,
+                            $uploads
                         );
                         foreach ($attachments as $name => $value) {
                             $submission[$name] = $value;
@@ -481,8 +483,11 @@ class Forms_Bridge extends Base_Plugin
      *
      * @return array Array with base64 encoded file contents and file names.
      */
-    private static function stringify_attachments($attachments)
-    {
+    private static function stringify_attachments(
+        $attachments,
+        $bridge,
+        $uploads
+    ) {
         foreach ($attachments as $name => $path) {
             if (!is_file($path) || !is_readable($path)) {
                 continue;
@@ -492,6 +497,29 @@ class Forms_Bridge extends Base_Plugin
             $content = file_get_contents($path);
             $attachments[$name] = base64_encode($content);
             $attachments[$name . '_filename'] = $filename;
+        }
+
+        $attachments = $bridge->apply_mappers($attachments);
+
+        foreach ($attachments as $field => $value) {
+            if (isset($uploads[$field])) {
+                continue;
+            }
+
+            if (strstr($field, '_filename')) {
+                $unique_field = preg_replace('/_\d+(?=_filename)/', '', $field);
+            } else {
+                $unique_field = preg_replace('/_\d+$/', '', $field);
+            }
+
+            $value = $attachments[$field];
+            unset($attachments[$field]);
+
+            $mutation = $bridge->apply_mappers([$unique_field => $value]);
+
+            if (!empty($mutation)) {
+                $attachments[$field] = $mutation[$unique_field];
+            }
         }
 
         return $attachments;
