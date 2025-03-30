@@ -187,7 +187,16 @@ class Workflow_Job
     {
         $original = $payload;
 
+        if ($mutations === null) {
+            $mutations = array_slice($bridge->mutations, 1);
+        }
+
         if ($this->missing_requireds($payload)) {
+            if ($next_job = $this->next) {
+                $mutations = array_slice($mutations, 1);
+                $payload = $next_job->run($payload, $bridge, $mutations);
+            }
+
             return $payload;
         }
 
@@ -203,11 +212,6 @@ class Workflow_Job
         }
 
         $payload = $this->output_payload($payload);
-
-        if ($mutations === null) {
-            $mutations = $bridge->mutations;
-            $mutations = array_slice($mutations, 1);
-        }
 
         $mutation = array_shift($mutations) ?: [];
         $payload = $bridge->apply_mutation($payload, $mutation);
