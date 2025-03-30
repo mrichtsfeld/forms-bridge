@@ -174,7 +174,7 @@ class Form_Bridge_Template
                                     'boolean',
                                     'string',
                                     'integer',
-                                    'float',
+                                    'number',
                                     'json',
                                     'csv',
                                     'concat',

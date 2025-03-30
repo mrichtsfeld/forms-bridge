@@ -321,7 +321,7 @@ return [
             [
                 'from' => 'duration',
                 'to' => 'duration',
-                'cast' => 'float',
+                'cast' => 'number',
             ],
         ],
         'workflow' => [

@@ -75,7 +75,7 @@ abstract class Addon extends Singleton
                                             'boolean',
                                             'string',
                                             'integer',
-                                            'float',
+                                            'number',
                                             'json',
                                             'csv',
                                             'concat',

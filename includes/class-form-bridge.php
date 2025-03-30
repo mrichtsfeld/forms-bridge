@@ -260,7 +260,7 @@ abstract class Form_Bridge
                 return (string) $value;
             case 'integer':
                 return (int) $value;
-            case 'float':
+            case 'number':
                 return (float) $value;
             case 'boolean':
                 return (bool) $value;

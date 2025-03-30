@@ -76,7 +76,7 @@ return [
             [
                 'from' => 'duration',
                 'to' => 'duration',
-                'cast' => 'float',
+                'cast' => 'number',
             ],
             [
                 'from' => 'owner',

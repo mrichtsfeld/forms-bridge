@@ -25,7 +25,7 @@ const castOptions = [
     label: __("Integer", "forms-bridge"),
   },
   {
-    value: "float",
+    value: "number",
     label: __("Decimal", "forms-bridge"),
   },
   {
