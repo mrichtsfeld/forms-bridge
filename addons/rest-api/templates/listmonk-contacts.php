@@ -100,16 +100,18 @@ return [
     'bridge' => [
         'method' => 'POST',
         'endpoint' => '/subscription/form',
-        'mappers' => [
+        'mutations' => [
             [
-                'from' => 'your-email',
-                'to' => 'email',
-                'cast' => 'string',
-            ],
-            [
-                'from' => 'your-name',
-                'to' => 'name',
-                'cast' => 'string',
+                [
+                    'from' => 'your-email',
+                    'to' => 'email',
+                    'cast' => 'string',
+                ],
+                [
+                    'from' => 'your-name',
+                    'to' => 'name',
+                    'cast' => 'string',
+                ],
             ],
         ],
     ],

@@ -134,27 +134,28 @@ return [
     'bridge' => [
         'method' => 'POST',
         'endpoint' => '/v3/contacts/doubleOptinConfirmation',
-        'mappers' => [
+        'mutations' => [
             [
-                'from' => 'templateId',
-                'to' => 'templateId',
-                'cast' => 'integer',
-            ],
-            [
-                'from' => 'fname',
-                'to' => 'attributes.FNAME',
-                'cast' => 'string',
-            ],
-            [
-                'from' => 'lname',
-                'to' => 'attributes.LNAME',
-                'cast' => 'string',
+                [
+                    'from' => 'templateId',
+                    'to' => 'templateId',
+                    'cast' => 'integer',
+                ],
+                [
+                    'from' => 'fname',
+                    'to' => 'attributes.FNAME',
+                    'cast' => 'string',
+                ],
+                [
+                    'from' => 'lname',
+                    'to' => 'attributes.LNAME',
+                    'cast' => 'string',
+                ],
             ],
         ],
         'workflow' => [
             'rest-api-brevo-list-ids',
             'rest-api-brevo-doi-redirection-url',
-            'rest-api-brevo-doi-contact-attributes',
         ],
     ],
 ];

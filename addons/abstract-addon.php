@@ -85,6 +85,7 @@ abstract class Addon extends Singleton
                                         ],
                                     ],
                                 ],
+                                'additionalProperties' => false,
                                 'required' => ['from', 'to', 'cast'],
                             ],
                         ],

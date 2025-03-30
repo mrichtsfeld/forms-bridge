@@ -104,21 +104,20 @@ return [
     'bridge' => [
         'method' => 'POST',
         'endpoint' => '/v3/contacts',
-        'mappers' => [
+        'mutations' => [
             [
-                'from' => 'fname',
-                'to' => 'attributes.FNAME',
-                'cast' => 'string',
-            ],
-            [
-                'from' => 'lname',
-                'to' => 'attributes.LNAME',
-                'cast' => 'string',
+                [
+                    'from' => 'fname',
+                    'to' => 'attributes.FNAME',
+                    'cast' => 'string',
+                ],
+                [
+                    'from' => 'lname',
+                    'to' => 'attributes.LNAME',
+                    'cast' => 'string',
+                ],
             ],
         ],
-        'workflow' => [
-            'rest-api-brevo-list-ids',
-            'rest-api-brevo-contact-attributes',
-        ],
+        'workflow' => ['rest-api-brevo-list-ids'],
     ],
 ];

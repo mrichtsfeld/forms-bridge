@@ -164,28 +164,31 @@ class Form_Bridge_Template
                 'mutations' => [
                     'type' => 'array',
                     'items' => [
-                        'type' => 'object',
-                        'properties' => [
-                            'from' => ['type' => 'string'],
-                            'to' => ['type' => 'string'],
-                            'cast' => [
-                                'type' => 'string',
-                                'enum' => [
-                                    'boolean',
-                                    'string',
-                                    'integer',
-                                    'number',
-                                    'json',
-                                    'csv',
-                                    'concat',
-                                    'inherit',
-                                    'null',
-                                    'copy',
+                        'type' => 'array',
+                        'items' => [
+                            'type' => 'object',
+                            'properties' => [
+                                'from' => ['type' => 'string'],
+                                'to' => ['type' => 'string'],
+                                'cast' => [
+                                    'type' => 'string',
+                                    'enum' => [
+                                        'boolean',
+                                        'string',
+                                        'integer',
+                                        'number',
+                                        'json',
+                                        'csv',
+                                        'concat',
+                                        'inherit',
+                                        'copy',
+                                        'null',
+                                    ],
                                 ],
                             ],
+                            'additionalProperties' => false,
+                            'required' => ['from', 'to', 'cast'],
                         ],
-                        'additionalProperties' => false,
-                        'required' => ['from', 'to', 'cast'],
                     ],
                 ],
                 'workflow' => [
@@ -193,7 +196,7 @@ class Form_Bridge_Template
                     'items' => ['type' => 'string'],
                 ],
             ],
-            'required' => ['name', /* 'form_id', */ 'mappers'],
+            'required' => ['name', /* 'form_id', */ 'mutations'],
             'additionalProperties' => false,
         ],
         'backend' => [
@@ -349,7 +352,7 @@ class Form_Bridge_Template
                 'bridge' => [
                     'name' => '',
                     'form_id' => '',
-                    'mappers' => [],
+                    'mutations' => [[]],
                     'workflow' => [],
                 ],
                 'backend' => [

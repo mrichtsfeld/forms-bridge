@@ -51,7 +51,7 @@ export default function Bridge({
 
   const isMultipart = useMemo(
     () =>
-      backend.headers.find((header) => header.name === "Content-Type")
+      backend?.headers.find((header) => header.name === "Content-Type")
         ?.value === "multipart/form-data",
 
     [backend]

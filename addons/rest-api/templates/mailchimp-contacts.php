@@ -229,16 +229,27 @@ return [
     'bridge' => [
         'method' => 'POST',
         'endpoint' => '/3.0/lists/{list_id}/members',
-        'mappers' => [
+        'mutations' => [
             [
-                'from' => 'datacenter',
-                'to' => 'datacenter',
-                'cast' => 'null',
+                [
+                    'from' => 'datacenter',
+                    'to' => 'datacenter',
+                    'cast' => 'null',
+                ],
+                [
+                    'from' => 'fname',
+                    'to' => 'merge_fields.FNAME',
+                    'cast' => 'string',
+                ],
+                [
+                    'from' => 'lname',
+                    'to' => 'merge_fields.LNAME',
+                    'cast' => 'string',
+                ],
             ],
         ],
         'workflow' => [
             'rest-api-mailchimp-contact-status',
-            'rest-api-mailchimp-merge-fields',
             'rest-api-mailchimp-current-language',
             'rest-api-mailchimp-authorization',
         ],
