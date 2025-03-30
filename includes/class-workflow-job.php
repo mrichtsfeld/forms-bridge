@@ -8,6 +8,8 @@ if (!defined('ABSPATH')) {
     exit();
 }
 
+require_once 'workflow-jobs/timestamp.php';
+
 function forms_bridge_workflow_noop_method($payload)
 {
     return $payload;
@@ -200,6 +202,12 @@ class Workflow_Job
 
             return $payload;
         }
+
+        $payload = apply_filters(
+            'forms_bridge_workflow_job_payload',
+            $payload,
+            $this
+        );
 
         $method = $this->method;
         $payload = $method($payload, $bridge);
