@@ -7,11 +7,13 @@ const { Button, Modal } = wp.components;
 const { useState } = wp.element;
 const { __ } = wp.i18n;
 
-export default function BridgeWorkflow({
+export default function Workflow({
   workflow = [],
   setWorkflow,
-  mappers = [],
+  mutations = [],
+  setMutationMappers,
   formId,
+  includeFiles,
 }) {
   const [open, setOpen] = useState(false);
 
@@ -32,8 +34,9 @@ export default function BridgeWorkflow({
         >
           <WorkflowProvider
             formId={formId}
-            mappers={mappers}
+            mutations={mutations}
             workflow={workflow}
+            includeFiles={includeFiles}
           >
             <div
               style={{
@@ -63,7 +66,6 @@ export default function BridgeWorkflow({
                   style={{
                     paddingTop: "1em",
                     display: "flex",
-                    justifyContent: "center",
                   }}
                 >
                   <Button
@@ -84,7 +86,11 @@ export default function BridgeWorkflow({
                   height: "100%",
                 }}
               >
-                <WorkflowStage />
+                <WorkflowStage
+                  setMappers={(step, mappers) =>
+                    setMutationMappers(step, mappers)
+                  }
+                />
               </div>
             </div>
           </WorkflowProvider>

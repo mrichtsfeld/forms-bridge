@@ -41,11 +41,17 @@ return [
     'output' => [
         [
             'name' => 'listIds',
-            'type' => 'string',
+            'type' => 'array',
+            'items' => ['type' => 'integer'],
+            'additionalItems' => true,
+            'touch' => true,
         ],
         [
             'name' => 'includeListIds',
-            'type' => 'string',
+            'type' => 'array',
+            'items' => ['type' => 'integer'],
+            'additionalItems' => true,
+            'touch' => true,
         ],
     ],
 ];

@@ -2,7 +2,7 @@ import JsonFinger from "./JsonFinger";
 
 const cache = new WeakMap();
 
-function payloadToOptions(payload, fields, mappers) {
+export function payloadToOptions(payload, mappers, fields) {
   return Object.keys(payload).reduce((options, key) => {
     let sKey;
     if (Array.isArray(payload)) {
@@ -75,7 +75,38 @@ function payloadToOptions(payload, fields, mappers) {
   }, []);
 }
 
-function schemaToPayload(schema, pointer) {
+export function payloadToSchema(payload) {
+  if (!payload) {
+    return { type: "null" };
+  }
+
+  const type = Array.isArray(payload)
+    ? "array"
+    : typeof payload === "object"
+      ? "object"
+      : payload;
+
+  switch (type) {
+    case "array":
+      return {
+        type: "array",
+        items: payloadToSchema(payload[0]),
+        maxItems: payload.length,
+      };
+    case "object":
+      return {
+        type: "object",
+        properties: Object.keys(payload).reduce((props, key) => {
+          props[key] = payloadToSchema(payload[key]);
+          return props;
+        }, {}),
+      };
+    default:
+      return { type };
+  }
+}
+
+export function schemaToPayload(schema, pointer) {
   if (schema.type === "object") {
     pointer = JsonFinger.parse(pointer);
 
@@ -99,7 +130,9 @@ function schemaToPayload(schema, pointer) {
   return schema.type;
 }
 
-export function applyMappers(payload, mappers) {
+export function applyMappers(payload, mappers = []) {
+  if (!mappers.length) return payload;
+
   const finger = new JsonFinger(payload);
 
   for (const mapper of mappers) {
@@ -132,6 +165,16 @@ export function applyMappers(payload, mappers) {
   return finger.data;
 }
 
+export function payloadToFields(payload) {
+  return Object.entries(payload).map(([name, value]) => {
+    return {
+      name,
+      label: name,
+      schema: payloadToSchema(value),
+    };
+  });
+}
+
 export function fieldsToPayload(fields) {
   if (cache.has(fields)) {
     return cache.get(fields);
@@ -151,7 +194,7 @@ export function fieldsToPayload(fields) {
 
 export function getFromOptions(fields, mappers) {
   const payload = applyMappers(fieldsToPayload(fields), mappers);
-  const options = payloadToOptions(payload, fields, mappers);
+  const options = payloadToOptions(payload, mappers, fields);
   return [{ label: "", value: "" }].concat(options);
 }
 

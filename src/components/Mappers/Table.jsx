@@ -7,7 +7,7 @@ const {
   Button,
   __experimentalSpacer: Spacer,
 } = wp.components;
-const { useEffect, useMemo } = wp.element;
+const { useEffect, useRef } = wp.element;
 const { __ } = wp.i18n;
 
 const castOptions = [
@@ -68,6 +68,17 @@ const castOptions = [
   },
 ];
 
+const CSS = `.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}`;
+
 const INVALID_TO_STYLE = {
   "--wp-components-color-accent": "#cc1818",
   "color":
@@ -85,32 +96,12 @@ function mapperToStyle(pointer = "") {
 }
 
 export default function MappersTable({
-  form,
+  title,
+  fields,
   mappers,
   setMappers,
-  includeFiles,
-  done,
+  done = null,
 }) {
-  const fields = useMemo(() => {
-    if (!form) return [];
-    return form.fields
-      .filter(({ is_file }) => includeFiles || !is_file)
-      .reduce((fields, { name, label, is_file, schema }) => {
-        if (includeFiles && is_file) {
-          fields.push({ name, label, schema: { type: "string" } });
-          fields.push({
-            name: name + "_filename",
-            label: name + "_filename",
-            schema: { type: "string" },
-          });
-        } else {
-          fields.push({ name, label, schema });
-        }
-
-        return fields;
-      }, []);
-  }, [form]);
-
   const setMapper = (attr, index, value) => {
     const newMappers = mappers.map((mapper, i) => {
       if (index === i) {
@@ -139,6 +130,16 @@ export default function MappersTable({
     if (!mappers.length) addMapper();
   }, [mappers]);
 
+  const style = useRef(document.createElement("style"));
+  useEffect(() => {
+    style.current.appendChild(document.createTextNode(CSS));
+    document.head.appendChild(style.current);
+
+    return () => {
+      document.head.removeChild(style.current);
+    };
+  }, []);
+
   return (
     <>
       <label
@@ -150,62 +151,67 @@ export default function MappersTable({
           lineHeight: "32px",
         }}
       >
-        {__("Form mapper", "forms-bridge")}
+        {title}
       </label>
-      <table
-        style={{
-          width: "calc(100% + 10px)",
-          borderSpacing: "5px",
-          margin: "0 -5px",
-        }}
+      <div
+        className="scrollbar-hide"
+        style={{ flex: 1, borderTop: "2px outset", borderBottom: "2px inset" }}
       >
-        <tbody>
-          {mappers.map(({ from, to, cast }, i) => (
-            <tr key={i}>
-              <td>
-                <SelectControl
-                  placeholder={__("From", "forms-bridge")}
-                  value={from}
-                  onChange={(value) => setMapper("from", i, value)}
-                  options={getFromOptions(fields, mappers.slice(0, i))}
-                  __nextHasNoMarginBottom
-                  __next40pxDefaultSize
-                />
-              </td>
-              <td>
-                <TextControl
-                  placeholder={__("To", "forms-bridge")}
-                  style={mapperToStyle(to)}
-                  value={to}
-                  onChange={(value) => setMapper("to", i, value)}
-                  __nextHasNoMarginBottom
-                  __next40pxDefaultSize
-                />
-              </td>
-              <td>
-                <SelectControl
-                  placeholder={__("Cast as", "forms-bridge")}
-                  value={cast || "string"}
-                  onChange={(value) => setMapper("cast", i, value)}
-                  options={castOptions}
-                  __nextHasNoMarginBottom
-                  __next40pxDefaultSize
-                />
-              </td>
-              <td>
-                <Button
-                  isDestructive
-                  variant="secondary"
-                  onClick={() => dropMapper(i)}
-                  __next40pxDefaultSize
-                >
-                  {__("Drop", "forms-bridge")}
-                </Button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+        <table
+          style={{
+            width: "calc(100% + 10px)",
+            borderSpacing: "5px",
+            margin: "0 -5px",
+          }}
+        >
+          <tbody>
+            {mappers.map(({ from, to, cast }, i) => (
+              <tr key={i}>
+                <td>
+                  <SelectControl
+                    placeholder={__("From", "forms-bridge")}
+                    value={from}
+                    onChange={(value) => setMapper("from", i, value)}
+                    options={getFromOptions(fields, mappers.slice(0, i))}
+                    __nextHasNoMarginBottom
+                    __next40pxDefaultSize
+                  />
+                </td>
+                <td>
+                  <TextControl
+                    placeholder={__("To", "forms-bridge")}
+                    style={mapperToStyle(to)}
+                    value={to}
+                    onChange={(value) => setMapper("to", i, value)}
+                    __nextHasNoMarginBottom
+                    __next40pxDefaultSize
+                  />
+                </td>
+                <td>
+                  <SelectControl
+                    placeholder={__("Cast as", "forms-bridge")}
+                    value={cast || "string"}
+                    onChange={(value) => setMapper("cast", i, value)}
+                    options={castOptions}
+                    __nextHasNoMarginBottom
+                    __next40pxDefaultSize
+                  />
+                </td>
+                <td>
+                  <Button
+                    isDestructive
+                    variant="secondary"
+                    onClick={() => dropMapper(i)}
+                    __next40pxDefaultSize
+                  >
+                    {__("Drop", "forms-bridge")}
+                  </Button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
       <Spacer paddingY="calc(3px)" />
       <div style={{ display: "flex", gap: "0.5rem" }}>
         <Button
@@ -215,9 +221,15 @@ export default function MappersTable({
         >
           {__("Add", "forms-bridge")}
         </Button>
-        <Button variant="primary" onClick={() => done()} __next40pxDefaultSize>
-          {__("Done", "forms-bridge")}
-        </Button>
+        {done && (
+          <Button
+            variant="primary"
+            onClick={() => done()}
+            __next40pxDefaultSize
+          >
+            {__("Done", "forms-bridge")}
+          </Button>
+        )}
       </div>
     </>
   );

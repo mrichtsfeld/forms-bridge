@@ -277,12 +277,6 @@ abstract class Addon extends Singleton
             $bridge['form_id'] = '';
         }
 
-        $field_names = $form
-            ? array_map(static function ($field) {
-                return $field['name'];
-            }, $form['fields'])
-            : [];
-
         $bridge['workflow'] = array_map(
             'sanitize_text_field',
             (array) ($bridge['workflow'] ?? [])
@@ -290,16 +284,17 @@ abstract class Addon extends Singleton
 
         $mutations = [];
         foreach ((array) ($bridge['mutations'] ?? []) as $mappers) {
-            $mappers = array_filter($mappers, static function ($mapper) use (
-                $field_names
-            ) {
+            $mappers = array_filter($mappers, static function ($mapper) {
                 extract($mapper);
 
                 if (empty($from) || empty($to) || empty($cast)) {
                     return;
                 }
 
-                if (!in_array($from, $field_names)) {
+                if (
+                    !JSON_Finger::validate($from) ||
+                    !JSON_Finger::validate($to)
+                ) {
                     return;
                 }
 

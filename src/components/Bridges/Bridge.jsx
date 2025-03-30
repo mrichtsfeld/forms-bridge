@@ -2,8 +2,8 @@
 import { useForms } from "../../providers/Forms";
 import { useGeneral } from "../../providers/Settings";
 import useBridgeNames from "../../hooks/useBridgeNames";
-import BridgeMappers from "../Mappers";
-import BridgeWorkflow from "../Workflow";
+import Mappers from "../Mappers";
+import Workflow from "../Workflow";
 import NewBridge from "./NewBridge";
 
 const {
@@ -144,7 +144,7 @@ export default function Bridge({
           flexWrap: "wrap",
         }}
       >
-        <BridgeMappers
+        <Mappers
           form={form}
           mappers={data.mutations[0]}
           setMappers={(mappers) =>
@@ -155,20 +155,21 @@ export default function Bridge({
           }
           includeFiles={!isMultipart}
         />
-        <BridgeWorkflow
+        <Workflow
           formId={data.form_id}
-          mutations={data.mutations.slice(1)}
+          mutations={data.mutations}
           workflow={data.workflow}
           setWorkflow={(workflow) => update({ ...data, workflow })}
-          setMappers={(step, mappers) => {
+          setMutationMappers={(mutation, mappers) => {
             update({
               ...data,
               mutations: data.mutations
-                .slice(0, step)
+                .slice(0, mutation)
                 .concat([mappers])
-                .concat(data.mutations.slice(step + 1)),
+                .concat(data.mutations.slice(mutation + 1)),
             });
           }}
+          includeFiles={!isMultipart}
         />
         <Button
           isDestructive

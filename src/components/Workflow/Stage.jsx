@@ -3,201 +3,240 @@ import {
   useWorkflowStage,
   useWorkflowStepper,
 } from "../../providers/Workflow";
+import MappersTable from "../Mappers/Table";
+import { applyMappers, fieldsToPayload, payloadToFields } from "../Mappers/lib";
 import WorkflowStageField from "./StageField";
+import WorkflowStageInterface from "./StageInterface";
 
 const {
   __experimentalItemGroup: ItemGroup,
   __experimentalItem: Item,
   ToggleControl,
-  Tooltip,
+  Button,
 } = wp.components;
-const { useState, useMemo } = wp.element;
+const { useState, useMemo, useEffect } = wp.element;
 const { __ } = wp.i18n;
 
-export default function WorkflowStage() {
-  const [step] = useWorkflowStepper();
-  const workflowJob = useWorkflowJob();
-  const data = useWorkflowStage();
-
-  const [diff, setDiff] = useState(false);
-
-  const fields = useMemo(() => {
-    if (diff) return data;
-    return data.filter((field) => !field.exit);
-  }, [data, diff]);
-
-  if (!workflowJob && step > 0) {
-    return <p>Loading</p>;
+function WorkflowStageHeader({
+  title = "",
+  description = "",
+  jobInputs,
+  showDiff,
+  setShowDiff,
+  showMutations,
+  setShowMutations,
+  showControls,
+  skipped,
+}) {
+  if (skipped) {
+    title += ` (${__("Skipped", "forms-bridge")})`;
   }
 
-  const inputFields = (workflowJob?.input || []).map((inputField) => {
-    const field = data
-      .filter((f) => f.isInput)
-      .find((field) => field.name === inputField.name);
-
-    const isMissing = inputField.required && !field;
-    // const isMutable = field && field.type !== inputField.type;
-    const isOptional = !field && !inputField.required;
-
-    return {
-      ...inputField,
-      isOptional,
-      isMissing,
-      // isMutable,
-    };
-  });
-
   return (
-    <>
-      <div style={{ borderBottom: "1px solid", paddingBottom: "1.5em" }}>
-        <div
-          style={{
-            display: "inline-flex",
-            width: "100%",
-            alignItems: "center",
-            justifyContent: "space-between",
-          }}
-        >
-          <h2 style={{ margin: 0 }}>{workflowJob?.title}</h2>
-          <ToggleControl
-            __nextHasNoMarginBottom
-            checked={diff}
-            label={__("Show diff")}
-            onChange={() => setDiff(!diff)}
-          />
-        </div>
-        <p style={{ marginTop: "0.5em" }}>{workflowJob?.description}</p>
-        <div style={{ display: "flex", gap: "5px", flexWrap: "wrap" }}>
-          <strong>{__("Job interface", "forms-bridge")}:&nbsp;</strong>
-          {inputFields.map((field) => (
-            <InputField key={field.name} {...field} />
-          ))}
-        </div>
+    <div style={{ borderBottom: "1px solid", paddingBottom: "1.5em" }}>
+      <div
+        style={{
+          display: "inline-flex",
+          width: "100%",
+          alignItems: "center",
+          justifyContent: "space-between",
+        }}
+      >
+        <h2 style={{ margin: 0, paddingRight: "1rem" }}>{title}</h2>
+        {showControls && (
+          <div style={{ width: "max-content", flexShrink: 0 }}>
+            <ToggleControl
+              __nextHasNoMarginBottom
+              checked={!showMutations && !skipped}
+              label={__("Before mappers", "forms-bridge")}
+              onChange={() => setShowMutations(!showMutations)}
+              disabled={skipped}
+            />
+          </div>
+        )}
       </div>
-      <div style={{ overflowY: "auto" }}>
-        <ItemGroup size="large" isSeparated>
-          {fields.map((field, i) => (
-            <Item key={field.name + i}>
-              <WorkflowStageField {...field} diff={diff} />
-            </Item>
-          ))}
-        </ItemGroup>
+      <div
+        style={{
+          display: "inline-flex",
+          width: "100%",
+          justifyContent: "space-between",
+        }}
+      >
+        <p style={{ marginTop: "0.5em", paddingRight: "1rem" }}>
+          {description}
+        </p>
+        {showControls && (
+          <div style={{ margin: "6.5px", width: "max-content", flexShrink: 0 }}>
+            <ToggleControl
+              __nextHasNoMarginBottom
+              checked={showDiff && !skipped}
+              label={__("Show diff", "forms-bridge")}
+              onChange={() => setShowDiff(!showDiff)}
+              disabled={skipped}
+            />
+          </div>
+        )}
       </div>
-    </>
+      <WorkflowStageInterface fields={jobInputs} />
+    </div>
   );
 }
 
-const BASE = {
-  color: "#2f2f2f",
-  background: "#f0f0f0",
-  icon: null,
-};
+export default function WorkflowStage({ setMappers }) {
+  const [step] = useWorkflowStepper();
+  const workflowJob = useWorkflowJob();
+  const [fields = [], diff] = useWorkflowStage();
 
-const CHECK = {
-  color: "#4ab866",
-  background: "color-mix(in srgb, #fff 90%, #4ab866)",
-  icon: (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 24 24"
-      width="16"
-      height="16"
-      fill="currentColor"
-      class="components-badge__icon"
-      aria-hidden="true"
-      focusable="false"
-    >
-      <path
-        fill-rule="evenodd"
-        clip-rule="evenodd"
-        d="M12 18.5a6.5 6.5 0 1 1 0-13 6.5 6.5 0 0 1 0 13ZM4 12a8 8 0 1 1 16 0 8 8 0 0 1-16 0Zm11.53-1.47-1.06-1.06L11 12.94l-1.47-1.47-1.06 1.06L11 15.06l4.53-4.53Z"
-      ></path>
-    </svg>
-  ),
-};
+  const [showDiff, setShowDiff] = useState(false);
+  const [showMutations, setShowMutations] = useState(true);
+  const [mode, setMode] = useState("payload");
 
-const WARN = {
-  color: "#f0b849",
-  background: "color-mix(in srgb, #fff 90%, #f0b849)",
-  icon: (
-    <svg
-      viewBox="0 0 24 24"
-      xmlns="http://www.w3.org/2000/svg"
-      width="16"
-      height="16"
-      fill="currentColor"
-      class="components-badge__icon"
-      aria-hidden="true"
-      focusable="false"
-    >
-      <path
-        fill-rule="evenodd"
-        clip-rule="evenodd"
-        d="M5.5 12a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0ZM12 4a8 8 0 1 0 0 16 8 8 0 0 0 0-16Zm-.75 12v-1.5h1.5V16h-1.5Zm0-8v5h1.5V8h-1.5Z"
-      ></path>
-    </svg>
-  ),
-};
+  const skipped = useMemo(() => {
+    return diff.missing.values().some(() => true);
+  }, [diff]);
 
-const ALERT = {
-  color: "#cc1818",
-  background: "color-mix(in srgb, #fff 90%, #cc1818)",
-  icon: (
-    <svg
-      viewBox="0 0 24 24"
-      xmlns="http://www.w3.org/2000/svg"
-      width="16"
-      height="16"
-      fill="currentColor"
-      class="components-badge__icon"
-      aria-hidden="true"
-      focusable="false"
-    >
-      <path
-        fill-rule="evenodd"
-        clip-rule="evenodd"
-        d="M12.218 5.377a.25.25 0 0 0-.436 0l-7.29 12.96a.25.25 0 0 0 .218.373h14.58a.25.25 0 0 0 .218-.372l-7.29-12.96Zm-1.743-.735c.669-1.19 2.381-1.19 3.05 0l7.29 12.96a1.75 1.75 0 0 1-1.525 2.608H4.71a1.75 1.75 0 0 1-1.525-2.608l7.29-12.96ZM12.75 17.46h-1.5v-1.5h1.5v1.5Zm-1.5-3h1.5v-5h-1.5v5Z"
-      ></path>
-    </svg>
-  ),
-};
+  useEffect(() => {
+    if (mode === "mappers") {
+      setMode("payload");
+    }
+  }, [step]);
 
-function InputField({ name, isMissing, isMutable, isOptional }) {
-  const style = isMissing
-    ? ALERT
-    : isMutable
-      ? WARN
-      : isOptional
-        ? BASE
-        : CHECK;
+  const mappers = useMemo(() => {
+    if (!workflowJob) return [];
+    return workflowJob.mappers;
+  }, [workflowJob]);
 
-  const feedback = isMissing
-    ? __("Field is required", "forms-bridge")
-    : isMutable
-      ? __("Field type does not match", "forms-bridge")
-      : isOptional
-        ? __("Field is optional", "forms-bridge")
-        : "";
+  const switchMode = () => {
+    if (mode === "payload") {
+      setMode("mappers");
+    } else {
+      setMode("payload");
+    }
+  };
+
+  const handleSetMappers = (mappers) => {
+    mappers.forEach((mapper) => {
+      delete mapper.index;
+    });
+
+    setMappers(step, mappers);
+  };
+
+  const outputFields = useMemo(() => {
+    let output;
+    if (!showMutations) {
+      output = fields;
+    } else {
+      output = payloadToFields(applyMappers(fieldsToPayload(fields), mappers));
+      mappers
+        .map((m) => m)
+        .reverse()
+        .forEach(({ to, from }) => {
+          if (diff.enter.has(from)) {
+            diff.enter.delete(from);
+            diff.enter.add(to);
+          } else if (diff.mutated.has(from)) {
+            diff.mutated.delete(from);
+            diff.mutated.add(to);
+          }
+        });
+    }
+
+    if (showDiff) {
+      output.forEach((field) => {
+        field.enter = diff.enter.has(field.name);
+        field.mutated = diff.mutated.has(field.name);
+        field.exit = false;
+      });
+
+      diff.exit.values().map((name) => {
+        output.push({
+          name,
+          schema: { type: "null" },
+          enter: false,
+          mutated: false,
+          exit: true,
+        });
+      });
+    }
+
+    return output;
+  }, [fields, mappers, showMutations, showDiff]);
+
+  const jobInputs = useMemo(() => {
+    if (!workflowJob) return [];
+
+    return workflowJob.input.map(({ name, type, required }) => {
+      return {
+        name,
+        missing: diff.missing.has(name),
+        optional:
+          !required && !outputFields.find((field) => field.name === name),
+        type,
+      };
+    });
+  }, [workflowJob]);
+
+  if (!workflowJob && step > 0) {
+    return <p>{__("Loading", "forms-bridge")}</p>;
+  }
 
   return (
-    <Tooltip text={feedback}>
-      <span
+    <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
+      <WorkflowStageHeader
+        skipped={skipped}
+        title={workflowJob?.title}
+        description={workflowJob?.description}
+        jobInputs={jobInputs}
+        showDiff={showDiff}
+        setShowDiff={setShowDiff}
+        showMutations={showMutations}
+        setShowMutations={setShowMutations}
+        showControls={step > 0}
+      />
+      <div
         style={{
-          cursor: "pointer",
-          color: style.color,
-          backgroundColor: style.background,
-          padding: "0 8px",
-          borderRadius: "2px",
-          fontSize: "12px",
-          lineHeight: "20px",
-          alignItems: "center",
-          display: "inline-flex",
-          gap: "2px",
+          flex: 1,
+          overflow: "hidden auto",
+          display: "flex",
+          flexDirection: "column",
+          padding: "5px",
         }}
       >
-        {style.icon}
-        <span>{name}</span>
-      </span>
-    </Tooltip>
+        {(mode === "mappers" && (
+          <MappersTable
+            title={__("Stage mapper", "forms-bridge")}
+            fields={fields}
+            mappers={mappers.map((mapper, index) => ({ ...mapper, index }))}
+            setMappers={handleSetMappers}
+          />
+        )) || (
+          <div style={{ overflowY: "auto" }}>
+            <ItemGroup size="large" isSeparated>
+              {outputFields.map((field) => (
+                <Item key={field.name}>
+                  <WorkflowStageField {...field} showDiff={showDiff} />
+                </Item>
+              ))}
+            </ItemGroup>
+          </div>
+        )}
+      </div>
+      {step > 0 && (
+        <div style={{ marginTop: "1rem" }}>
+          <Button
+            variant={mode === "mappers" ? "primary" : "secondary"}
+            disabled={skipped}
+            onClick={switchMode}
+            style={{ width: "150px", justifyContent: "center" }}
+            __next40pxDefaultSize
+          >
+            {mode === "mappers"
+              ? __("Payload", "forms-bridge")
+              : __("Mappers", "forms-bridge")}
+          </Button>
+        </div>
+      )}
+    </div>
   );
 }

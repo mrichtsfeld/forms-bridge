@@ -60,6 +60,7 @@ class Workflow_Job
                             'null',
                         ],
                     ],
+                    'touch' => ['type' => 'boolean'],
                 ],
                 'required' => ['name', 'type'],
             ],

@@ -1,143 +1,115 @@
 import JsonFinger from "../components/Mappers/JsonFinger";
+import {
+  fieldsToPayload,
+  schemaToPayload,
+  applyMappers,
+  payloadToFields,
+} from "../components/Mappers/lib";
 import { useForms } from "./Forms";
 import { useWorkflowJobs } from "./WorkflowJobs";
 
 const { createContext, useContext, useState, useMemo } = wp.element;
 const { __ } = wp.i18n;
 
-const WorkflowContext = createContext({ jobs: [] });
+const WorkflowContext = createContext({
+  workflowJobs: [],
+  isLoading: false,
+  step: 0,
+  setStep: () => {},
+  stage: [],
+});
 
-function clone(obj) {
-  return JSON.parse(JSON.stringify(obj));
-}
+function checkType(a, b) {
+  if (!a || !b) {
+    return false;
+  }
 
-function mapperJsonType(cast) {
-  switch (cast) {
-    case "json":
-    case "concat":
-    case "csv":
-    case "string":
-      return "string";
-    case "null":
-      return null;
-    default:
-      return cast;
+  if (a.type !== b.type) {
+    return false;
+  }
+
+  if (a.type === "object") {
+    const props = a.properties || {};
+
+    return Object.keys(props).reduce((typeCheck, key) => {
+      if (!typeCheck) return typeCheck;
+      if (!b?.properties?.[key]) return false;
+
+      return typeCheck && checkType(a[key], b[key]);
+    }, true);
+  } else if (a.type === "array") {
+    return checkType(a.items, b.items);
   }
 }
 
-function applyMutations(fields, mappers) {
-  const mutadedFields = fields
-    .map(clone)
-    .reduce((fields, field) => {
-      mappers.forEach((mapper, i) => {
-        if (mapper.from === field.name) {
-          if (mapper.cast === "copy" && mapper.to !== field.name) {
-            const ignoreAfter =
-              mappers.slice(i + 1).find(({ to }) => to === field.name)?.cast ===
-              "null";
+function applyJob(payload, job) {
+  const exit = new Set();
+  const mutated = new Set();
+  const enter = new Set();
+  const missing = new Set();
 
-            if (!ignoreAfter) {
-              fields.push(clone(field));
-            }
-          }
+  if (!job) return [payload, { exit, mutated, enter, missing }];
 
-          field.name = mapper.cast === "null" ? null : mapper.to;
-          if (mapper.cast !== "copy") {
-            field.type = mapperJsonType(mapper.cast);
-          }
-        }
+  job.input
+    .filter((field) => field.required)
+    .forEach((field) => missing.add(field.name));
+
+  Object.keys(payload).forEach((key) => {
+    if (missing.has(key)) {
+      missing.delete(key);
+    }
+  });
+
+  if (missing.values().some(() => true)) {
+    return [payload, { missing, exit, enter, mutated }];
+  }
+
+  job.output.forEach((output) => {
+    const input = job.input.find((field) => field.name === output.name);
+
+    let addToPayload;
+    if (input) {
+      addToPayload = Object.prototype.hasOwnProperty.call(payload, input.name);
+
+      if (addToPayload && (output.touch || !checkType(input, output))) {
+        mutated.add(output.name);
+      }
+    } else {
+      addToPayload = true;
+      enter.add(output.name);
+    }
+
+    if (addToPayload) {
+      payload[output.name] = schemaToPayload({
+        type: output.type || "string",
+        properties: output.properties || {},
+        items: output.items || {},
+        additionalItems: output?.additionalItems || false,
+        maxItems: output?.maxItems,
+        minItems: output?.minItems,
       });
+    }
+  });
 
-      if (!field.name) {
-        return fields;
-      }
+  job.input.forEach((input) => {
+    const exists = Object.prototype.hasOwnProperty.call(payload, input.name);
+    const output = job.output.find((field) => field.name === input.name);
 
-      const keys = JsonFinger.parse(field.name);
-      if (keys.length > 1) {
-        for (let i = 0; i < keys.length; i++) {
-          const finger = JsonFinger.build(keys.slice(0, i + 1));
+    if (!output && exists) {
+      delete payload[input.name];
+      exit.add(input.name);
+    }
+  });
 
-          const mapper = mappers.find(({ from }) => from === finger);
-          if (mapper && mapper.cast !== "copy") {
-            return fields;
-          }
-        }
-
-        field.name = keys[0];
-
-        const fieldType = field.type;
-        if (typeof keys[1] === "string") {
-          field.type = "object";
-          field.properties = { [keys[1]]: { type: fieldType } };
-        } else {
-          field.type = "array";
-          field.items = { type: fieldType };
-        }
-      }
-
-      fields.push(field);
-      return fields;
-    }, [])
-    .reduce((fields, field) => {
-      return [field].concat(fields);
-    }, [])
-    .reduce((fields, field) => {
-      if (!fields.map(({ name }) => name).includes(field.name)) {
-        fields.push(field);
-      }
-
-      return fields;
-    }, [])
-    .reduce((fields, field) => {
-      return [field].concat(fields);
-    }, []);
-
-  const mutatedNames = new Set(mutadedFields.map((field) => field.name));
-}
-
-function applyJob(fields, job) {
-  if (!job) return fields;
-
-  if (job.mappers) return applyMutations(fields, job.mappers);
-
-  const missing = job.input.filter(
-    (field) => field.required && !fields.find(({ name }) => name === field.name)
-  );
-
-  if (missing.length) return fields;
-
-  return fields
-    .filter((field) => field.exit !== true && field.schema)
-    .map(clone)
-    .map((field) => {
-      const inputField = job.input.find(({ name }) => name === field.name);
-      const outputField = job.output.find(({ name }) => name === field.name);
-
-      field.isInput = inputField !== undefined;
-      field.exit = inputField && !outputField;
-      field.mutated =
-        inputField && outputField && inputField.type !== outputField.type;
-
-      field.isNew = false;
-      return field;
-    })
-    .concat(
-      job.output
-        .filter((field) => !fields.find(({ name }) => name === field.name))
-        .filter((field) => !job.input.find(({ name }) => name === field.name))
-        .map(clone)
-        .map((field) => {
-          field.isNew = true;
-          return field;
-        })
-    );
+  return [payload, { missing, enter, exit, mutated }];
 }
 
 export default function WorkflowProvider({
   children,
   formId,
-  mappers,
+  mutations,
   workflow,
+  includeFiles,
 }) {
   const [step, setStep] = useState(0);
 
@@ -150,36 +122,126 @@ export default function WorkflowProvider({
         "Form submission after mappers has been applied",
         "forms-bridge"
       ),
-      mappers,
+      mappers: mutations[0] || [],
+      input: [],
+      output: [],
     }),
-    [mappers]
+    [mutations]
   );
 
   const workflowJobs = useMemo(
-    () => [mappersJob].concat(jobs),
-    [jobs, mappersJob]
+    () =>
+      [mappersJob].concat(
+        jobs.map((job, i) => ({
+          ...job,
+          mappers: mutations[i + 1] || [],
+        }))
+      ),
+    [mutations, jobs, mappersJob]
   );
 
   const forms = useForms();
   const formFields = useMemo(() => {
     const form = forms.find(({ _id }) => _id === formId);
-    return form?.fields || [];
+    if (!form) return [];
+
+    return form.fields
+      .filter(({ is_file }) => includeFiles || !is_file)
+      .reduce((fields, { name, label, is_file, schema }) => {
+        if (includeFiles && is_file) {
+          fields.push({ name, label, schema: { type: "string" } });
+          fields.push({
+            name: name + "_filename",
+            label: name + "_filename",
+            schema: { type: "string" },
+          });
+        } else {
+          fields.push({ name, label, schema });
+        }
+
+        return fields;
+      }, []);
   }, [formId, forms]);
 
+  const stepMappers = useMemo(() => {
+    return mutations.reduce((acum, mappers, i) => {
+      if (i <= step) {
+        mappers.forEach((mapper) => acum.push(mapper));
+      }
+
+      return acum;
+    }, []);
+  }, [step, mutations]);
+
   const stage = useMemo(() => {
-    let stage = formFields
-      .filter((field) => field.schema)
-      .map((field) => ({
-        ...field,
-        ...field.schema,
-      }));
+    let payload = fieldsToPayload(formFields);
+    let diff;
 
     for (let i = 0; i <= step; i++) {
-      stage = applyJob(stage, workflowJobs[i]);
+      if (diff?.missing && !diff.missing.values().some(() => true)) {
+        payload = applyMappers(payload, workflowJobs[i - 1]?.mappers || []);
+      }
+      [payload, diff] = applyJob(payload, workflowJobs[i]);
     }
 
-    return stage;
-  }, [step, workflowJobs]);
+    // const fields = payloadToFields(payload).map((field) => {
+    //   if (field.schema.type === "array") {
+    //     delete field.schema.maxItems;
+    //     field.schema.additionalItems = true;
+    //   }
+
+    //   return field;
+    // });
+
+    const fields = payloadToFields(payload);
+
+    fields
+      .filter((field) => field.schema.type === "array")
+      .forEach((field) => {
+        let fromName;
+        stepMappers
+          .map((m) => m)
+          .reverse()
+          .forEach(({ to, from }) => {
+            if (to === field.name) {
+              fromName = from;
+            }
+          });
+        if (fromName && field.schema.type === "array") {
+          const formField = formFields.find(({ name }) => name === fromName);
+          if (
+            formField &&
+            formField.schema.type === "array" &&
+            formField.schema.additionalItems
+          ) {
+            field.schema.additionalItems = true;
+          }
+        }
+      });
+
+    return [fields, diff];
+
+    // workflowJobs[step].mappers.forEach(({ from, to, cast }) => {
+    //   if (cast === "null") {
+    //     diff.exit.add(from);
+    //     return;
+    //   }
+
+    //   if (from !== to) {
+    //     if (diff.enter.has(from)) {
+    //       diff.enter.delete(from);
+    //       diff.enter.add(to);
+    //     }
+
+    //     if (diff.mutated.has(from)) {
+    //       diff.mutated.delete(from);
+    //       diff.mutated.add(to);
+    //     }
+    //   } else if (cast !== "copy" && cast !== "inherit") {
+    //     diff.mutated.add(to);
+    //   }
+    // });
+  }, [step, workflowJobs, formFields]);
 
   return (
     <WorkflowContext.Provider
@@ -205,3 +267,8 @@ export function useWorkflowJob() {
   if (isLoading) return;
   return workflowJobs[step];
 }
+
+// export function useWorkflowStageFields() {
+//   const { stageFields = [] } = useContext(WorkflowContext);
+//   return stageFields;
+// }
