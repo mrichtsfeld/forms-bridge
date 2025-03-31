@@ -33,16 +33,12 @@ function forms_bridge_zoho_bigin_contact_name($payload, $bridge)
         ->submit($contact);
 
     if (is_wp_error($response)) {
-        $data = json_decode(
-            $response->get_error_data()['response']['body'],
-            true
-        );
+        return $response;
+    }
 
-        if ($data['data'][0]['code'] !== 'DUPLICATE_DATA') {
-            return $response;
-        }
-
-        $contact_id = $data['data'][0]['details']['duplicate_record']['id'];
+    if ($response['data']['data'][0]['code'] === 'DUPLICATE_DATA') {
+        $contact_id =
+            $response['data']['data'][0]['details']['duplicate_record']['id'];
     } else {
         $contact_id = $response['data']['data'][0]['details']['id'];
     }

@@ -19,7 +19,6 @@ function forms_bridge_bigin_appointment_participant($payload, $bridge)
     ];
 
     unset($payload['Contact_Name']);
-
     return $payload;
 }
 

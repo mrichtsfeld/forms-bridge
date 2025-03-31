@@ -13,8 +13,10 @@ add_filter(
                 array_column($data['form']['fields'], 'name')
             );
 
-            $field = &$data['form']['fields'][$index];
-            $field['value'] = $field['value'] ? '0' : '1';
+            if ($index !== false) {
+                $field = &$data['form']['fields'][$index];
+                $field['value'] = $field['value'] ? '0' : '1';
+            }
         }
 
         return $data;

@@ -44,6 +44,7 @@ return [
                     'name' => ['type' => 'string'],
                 ],
             ],
+            'additionalItems' => true,
         ],
     ],
 ];

@@ -13,8 +13,10 @@ add_filter(
                 array_column($data['form']['fields'], 'name')
             );
 
-            $field = &$data['form']['fields'][$index];
-            $field['value'] = base64_encode($field['value']);
+            if ($index !== false) {
+                $field = &$data['form']['fields'][$index];
+                $field['value'] = base64_encode($field['value']);
+            }
         }
 
         return $data;

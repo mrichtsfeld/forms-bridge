@@ -4,6 +4,27 @@ if (!defined('ABSPATH')) {
     exit();
 }
 
+add_filter(
+    'forms_bridge_template_data',
+    function ($data, $template_name) {
+        if ($template_name === 'zoho-bigin-appointments') {
+            $index = array_search(
+                'All_day',
+                array_column($data['form']['fields'], 'name')
+            );
+
+            if ($index !== false) {
+                $field = &$data['form']['fields'][$index];
+                $field['value'] = $field['value'] ? '1' : '0';
+            }
+        }
+
+        return $data;
+    },
+    10,
+    2
+);
+
 return [
     'title' => __('Bigin Appointments', 'forms-bridge'),
     'fields' => [
@@ -274,16 +295,24 @@ return [
         'endpoint' => '/bigin/v2/Events',
         'scope' =>
             'ZohoBigin.modules.contacts.CREATE,ZohoBigin.modules.events.CREATE',
-        'mappers' => [
+        'mutations' => [
             [
-                'from' => 'Owner',
-                'to' => 'Owner.id',
-                'cast' => 'string',
+                [
+                    'from' => 'Owner',
+                    'to' => 'Owner.id',
+                    'cast' => 'string',
+                ],
+                [
+                    'from' => 'All_day',
+                    'to' => 'All_day',
+                    'cast' => 'boolean',
+                ],
             ],
         ],
         'workflow' => [
-            'zoho-bigin-appointment-participant',
+            'forms-bridge-timestamp',
             'zoho-appointment-dates',
+            'zoho-bigin-appointment-participant',
         ],
     ],
     'backend' => [

@@ -16,7 +16,7 @@ function forms_bridge_dolibarr_appointment_dates($payload)
 return [
     'title' => __('Appointment dates', 'forms-bridge'),
     'description' => __(
-        'Sets appointment start, end time and duration from "date", "hour", "minute" and "duration" fields.',
+        'Sets appointment start, end time and duration from "timestamp" and "duration" fields.',
         'forms-bridge'
     ),
     'method' => 'forms_bridge_dolibarr_appointment_dates',

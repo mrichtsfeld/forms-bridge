@@ -213,7 +213,8 @@ class Zoho_Form_Bridge extends Form_Bridge
                 return $response;
             }
 
-            return $response->get_error_data()['response'];
+            $response = $response->get_error_data()['response'];
+            $response['data'] = json_decode($response['body'], true);
         }
 
         return $response;
