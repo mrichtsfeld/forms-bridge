@@ -44,7 +44,7 @@ add_filter(
     2
 );
 
-global $forms_bridge_odoo_countries;
+global $forms_bridge_country_codes;
 
 return [
     'title' => __('Loan Requests', 'forms-bridge'),
@@ -57,14 +57,16 @@ return [
     ],
     'bridge' => [
         'endpoint' => '/api/campaign/{campaign_id}/loan_request',
-        'mappers' => [
+        'mutations' => [
             [
-                'from' => 'loan_amount',
-                'to' => 'loan_amount',
-                'cast' => 'integer',
+                [
+                    'from' => 'loan_amount',
+                    'to' => 'loan_amount',
+                    'cast' => 'integer',
+                ],
             ],
         ],
-        'workflow' => ['financoop-country-code', 'financoop-vat-id'],
+        'workflow' => ['forms-bridge-country-code', 'financoop-vat-id'],
     ],
     'form' => [
         'fields' => [
@@ -95,15 +97,15 @@ return [
             ],
             [
                 'label' => __('Nationality', 'forms-bridge'),
-                'name' => 'country_code',
+                'name' => 'country',
                 'type' => 'options',
                 'options' => array_map(function ($country_code) {
-                    global $forms_bridge_odoo_countries;
+                    global $forms_bridge_country_codes;
                     return [
                         'value' => $country_code,
-                        'label' => $forms_bridge_odoo_countries[$country_code],
+                        'label' => $forms_bridge_country_codes[$country_code],
                     ];
-                }, array_keys($forms_bridge_odoo_countries)),
+                }, array_keys($forms_bridge_country_codes)),
                 'required' => true,
             ],
             [

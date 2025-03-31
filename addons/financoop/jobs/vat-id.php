@@ -6,7 +6,7 @@ if (!defined('ABSPATH')) {
 
 function forms_bridge_financoop_vat_id($payload)
 {
-    global $forms_bridge_odoo_countries;
+    global $forms_bridge_country_codes;
 
     $prefixed = preg_match('/^[A-Z]{2}/', $payload['vat'], $matches);
 
@@ -18,7 +18,7 @@ function forms_bridge_financoop_vat_id($payload)
         $vat_prefix = strtoupper(explode('_', get_locale())[0]);
     }
 
-    if (!isset($forms_bridge_odoo_countries[$vat_prefix])) {
+    if (!isset($forms_bridge_country_codes[$vat_prefix])) {
         return new WP_Error(
             'invalid_country_code',
             __('The vat ID prefix is invalid', 'forms-bridge')
@@ -54,6 +54,7 @@ return [
         [
             'name' => 'vat',
             'type' => 'string',
+            'touch' => true,
         ],
         [
             'name' => 'country_code',

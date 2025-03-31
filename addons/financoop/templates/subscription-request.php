@@ -45,7 +45,7 @@ add_filter(
     2
 );
 
-global $forms_bridge_odoo_countries;
+global $forms_bridge_country_codes;
 
 return [
     'title' => __('Subscription Requests', 'forms-bridge'),
@@ -58,14 +58,16 @@ return [
     ],
     'bridge' => [
         'endpoint' => '/api/campaign/{campaign_id}/subscription_request',
-        'mappers' => [
+        'mutations' => [
             [
-                'from' => 'ordered_parts',
-                'to' => 'ordered_parts',
-                'cast' => 'integer',
+                [
+                    'from' => 'ordered_parts',
+                    'to' => 'ordered_parts',
+                    'cast' => 'integer',
+                ],
             ],
         ],
-        'workflow' => ['financoop-country-code', 'financoop-vat-id'],
+        'workflow' => ['forms-bridge-country-code', 'financoop-vat-id'],
     ],
     'form' => [
         'fields' => [
@@ -111,12 +113,12 @@ return [
                 'name' => 'country',
                 'type' => 'options',
                 'options' => array_map(function ($country_code) {
-                    global $forms_bridge_odoo_countries;
+                    global $forms_bridge_country_codes;
                     return [
                         'value' => $country_code,
-                        'label' => $forms_bridge_odoo_countries[$country_code],
+                        'label' => $forms_bridge_country_codes[$country_code],
                     ];
-                }, array_keys($forms_bridge_odoo_countries)),
+                }, array_keys($forms_bridge_country_codes)),
                 'required' => true,
             ],
             [

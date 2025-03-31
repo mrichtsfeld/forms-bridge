@@ -15,9 +15,6 @@ require_once FORMS_BRIDGE_ADDONS_DIR . '/rest-api/rest-api.php';
 require_once 'class-financoop-form-bridge.php';
 require_once 'class-financoop-form-bridge-template.php';
 
-$addons_dir = dirname(__FILE__, 2);
-require_once $addons_dir . '/odoo/country-codes.php';
-
 /**
  * FinanCoop Addon class.
  */
