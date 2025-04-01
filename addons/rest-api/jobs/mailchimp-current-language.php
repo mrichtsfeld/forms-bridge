@@ -17,7 +17,7 @@ return [
     'output' => [
         [
             'name' => 'language',
-            'type' => 'string',
+            'schema' => ['type' => 'string'],
         ],
     ],
 ];

@@ -22,14 +22,14 @@ return [
     'input' => [
         [
             'name' => 'status',
-            'type' => 'string',
             'required' => true,
+            'schema' => ['type' => 'string'],
         ],
     ],
     'output' => [
         [
             'name' => 'status',
-            'type' => 'string',
+            'schema' => ['type' => 'string'],
         ],
     ],
 ];

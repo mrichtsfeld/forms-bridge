@@ -35,14 +35,15 @@ return [
     'input' => [
         [
             'name' => 'redirectionUrl',
-            'type' => 'string',
             'required' => true,
+            'schema' => ['type' => 'string'],
         ],
     ],
     'output' => [
         [
             'name' => 'redirectionUrl',
-            'type' => 'string',
+            'schema' => ['type' => 'string'],
+            'touch' => true,
         ],
     ],
 ];

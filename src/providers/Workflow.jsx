@@ -17,13 +17,17 @@ const WorkflowContext = createContext({
   stage: [],
 });
 
-function checkType(a, b) {
+function checkType(a, b, strict = true) {
   if (!a || !b) {
     return false;
   }
 
   if (a.type !== b.type) {
-    return false;
+    if (strict) {
+      return false;
+    } else {
+      // do some type compatibility checks
+    }
   }
 
   if (a.type === "object") {
@@ -80,14 +84,7 @@ function applyJob(payload, job) {
     }
 
     if (addToPayload) {
-      payload[output.name] = schemaToPayload({
-        type: output.type || "string",
-        properties: output.properties || {},
-        items: output.items || {},
-        additionalItems: output?.additionalItems || false,
-        maxItems: output?.maxItems,
-        minItems: output?.minItems,
-      });
+      payload[output.name] = schemaToPayload(output.schema);
     }
   });
 

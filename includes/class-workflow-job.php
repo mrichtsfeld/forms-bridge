@@ -28,22 +28,42 @@ class Workflow_Job
                 'type' => 'object',
                 'properties' => [
                     'name' => ['type' => 'string'],
-                    // @todo separate field defn from schema
-                    'type' => [
-                        'type' => 'string',
-                        'enum' => [
-                            'string',
-                            'integer',
-                            'number',
-                            'array',
-                            'object',
-                            'boolean',
-                            'null',
-                        ],
-                    ],
                     'required' => ['type' => 'boolean'],
+                    'schema' => [
+                        'type' => 'object',
+                        'properties' => [
+                            'type' => [
+                                'type' => 'string',
+                                'enum' => [
+                                    'string',
+                                    'integer',
+                                    'number',
+                                    'array',
+                                    'object',
+                                    'boolean',
+                                    'null',
+                                ],
+                            ],
+                            'items' => [
+                                'type' => ['array', 'object'],
+                                'additionalProperties' => true,
+                                'additionalItems' => true,
+                            ],
+                            'properties' => [
+                                'type' => 'object',
+                                'additionalProperties' => true,
+                            ],
+                            'maxItems' => ['type' => 'integer'],
+                            'minItems' => ['type' => 'integer'],
+                            'additionalProperties' => ['type' => 'boolean'],
+                            'additionalItems' => ['type' => 'boolean'],
+                        ],
+                        'required' => ['type'],
+                        'additionalProperties' => false,
+                    ],
                 ],
-                'required' => ['name', 'type'],
+                'required' => ['name', 'schema'],
+                'additionalProperties' => false,
             ],
         ],
         'output' => [
@@ -52,22 +72,42 @@ class Workflow_Job
                 'type' => 'object',
                 'properties' => [
                     'name' => ['type' => 'string'],
-                    // @todo separate field defn from schema 'schema' => ['type' => 'string']
-                    'type' => [
-                        'type' => 'string',
-                        'enum' => [
-                            'string',
-                            'integer',
-                            'number',
-                            'array',
-                            'object',
-                            'boolean',
-                            'null',
-                        ],
-                    ],
                     'touch' => ['type' => 'boolean'],
+                    'schema' => [
+                        'type' => 'object',
+                        'properties' => [
+                            'type' => [
+                                'type' => 'string',
+                                'enum' => [
+                                    'string',
+                                    'integer',
+                                    'number',
+                                    'array',
+                                    'object',
+                                    'boolean',
+                                    'null',
+                                ],
+                            ],
+                            'items' => [
+                                'type' => ['array', 'object'],
+                                'additionalProperties' => true,
+                                'additionalItems' => true,
+                            ],
+                            'properties' => [
+                                'type' => 'object',
+                                'additionalProperties' => true,
+                            ],
+                            'maxItems' => ['type' => 'integer'],
+                            'minItems' => ['type' => 'integer'],
+                            'additionalProperties' => ['type' => 'boolean'],
+                            'additionalItems' => ['type' => 'boolean'],
+                        ],
+                        'required' => ['type'],
+                        'additionalProperties' => false,
+                    ],
                 ],
-                'required' => ['name', 'type'],
+                'required' => ['name', 'schema'],
+                'additionalProperties' => false,
             ],
         ],
         'submission_callbacks' => [

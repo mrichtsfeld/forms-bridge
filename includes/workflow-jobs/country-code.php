@@ -23,14 +23,14 @@ add_filter(
                 'input' => [
                     [
                         'name' => 'country',
-                        'type' => 'string',
                         'required' => true,
+                        'schema' => ['type' => 'string'],
                     ],
                 ],
                 'output' => [
                     [
                         'name' => 'country_code',
-                        'type' => 'string',
+                        'schema' => ['type' => 'string'],
                     ],
                 ],
             ],

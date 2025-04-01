@@ -31,26 +31,30 @@ return [
     'input' => [
         [
             'name' => 'listIds',
-            'type' => 'string',
+            'schema' => ['type' => 'string'],
         ],
         [
             'name' => 'includeListIds',
-            'type' => 'string',
+            'schema' => ['type' => 'string'],
         ],
     ],
     'output' => [
         [
             'name' => 'listIds',
-            'type' => 'array',
-            'items' => ['type' => 'integer'],
-            'additionalItems' => true,
+            'schema' => [
+                'type' => 'array',
+                'items' => ['type' => 'integer'],
+                'additionalItems' => true,
+            ],
             'touch' => true,
         ],
         [
             'name' => 'includeListIds',
-            'type' => 'array',
-            'items' => ['type' => 'integer'],
-            'additionalItems' => true,
+            'schema' => [
+                'type' => 'array',
+                'items' => ['type' => 'integer'],
+                'additionalItems' => true,
+            ],
             'touch' => true,
         ],
     ],

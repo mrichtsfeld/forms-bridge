@@ -23,22 +23,22 @@ add_filter(
                 'input' => [
                     [
                         'name' => 'date',
-                        'type' => 'string',
                         'required' => true,
+                        'schema' => ['type' => 'string'],
                     ],
                     [
                         'name' => 'hour',
-                        'type' => 'string',
+                        'schema' => ['type' => 'string'],
                     ],
                     [
                         'name' => 'minute',
-                        'type' => 'string',
+                        'schema' => ['type' => 'string'],
                     ],
                 ],
                 'output' => [
                     [
                         'name' => 'timestamp',
-                        'type' => 'integer',
+                        'schema' => ['type' => 'integer'],
                     ],
                 ],
             ],
