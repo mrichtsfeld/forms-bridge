@@ -28,6 +28,7 @@ class Workflow_Job
                 'type' => 'object',
                 'properties' => [
                     'name' => ['type' => 'string'],
+                    // @todo separate field defn from schema
                     'type' => [
                         'type' => 'string',
                         'enum' => [
@@ -51,6 +52,7 @@ class Workflow_Job
                 'type' => 'object',
                 'properties' => [
                     'name' => ['type' => 'string'],
+                    // @todo separate field defn from schema 'schema' => ['type' => 'string']
                     'type' => [
                         'type' => 'string',
                         'enum' => [

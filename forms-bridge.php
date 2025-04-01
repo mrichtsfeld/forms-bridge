@@ -514,6 +514,9 @@ class Forms_Bridge extends Base_Plugin
                 $unique_field = preg_replace('/_\d+$/', '', $field);
             }
 
+            if ($unique_field === $field) {
+                continue;
+            }
             $value = $attachments[$field];
             unset($attachments[$field]);
 

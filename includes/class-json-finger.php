@@ -63,8 +63,9 @@ class JSON_Finger
                 }
 
                 if (strlen($key) === 0) {
-                    self::$cache[$pointer] = [];
-                    return [];
+                    $key = INF;
+                    // self::$cache[$pointer] = [];
+                    // return [];
                 } elseif (intval($key) != $key) {
                     if (!preg_match('/^"[^"]+"$/', $key, $matches)) {
                         self::$cache[$pointer] = [];
@@ -100,7 +101,9 @@ class JSON_Finger
 
     public static function sanitizeKey($key)
     {
-        if (intval($key) === $key) {
+        if ($key === INF) {
+            $key = '[]';
+        } elseif (is_int($key)) {
             $key = "[{$key}]";
         } else {
             $key = trim($key);
@@ -136,8 +139,9 @@ class JSON_Finger
         return array_reduce(
             $keys,
             static function ($pointer, $key) {
-                $is_array = intval($key) === $key;
-                if ($is_array) {
+                if ($key === INF) {
+                    $key = '[]';
+                } elseif (is_int($key)) {
                     $key = "[{$key}]";
                 } else {
                     $key = self::sanitizeKey($key);
@@ -218,6 +222,10 @@ class JSON_Finger
             return $this->$pointer;
         }
 
+        if (strstr($pointer, '[]') !== false) {
+            return $this->get_expanded($pointer);
+        }
+
         $value = null;
         try {
             $keys = self::parse($pointer);
@@ -237,6 +245,26 @@ class JSON_Finger
         return $value;
     }
 
+    private function get_expanded($pointer, &$expansion = [])
+    {
+        $parts = explode('[]', $pointer);
+        $before = $parts[0];
+        $after = implode('[]', array_slice($parts, 1));
+
+        $items = $this->get($before, $expansion);
+
+        if (empty($after) || !wp_is_numeric_array($items)) {
+            return $items;
+        }
+
+        for ($i = 0; $i < count($items); $i++) {
+            $pointer = "{$before}[$i]{$after}";
+            $items[$i] = $this->get($pointer);
+        }
+
+        return $items;
+    }
+
     /**
      * Sets the attribute value on the data.
      *
@@ -251,6 +279,10 @@ class JSON_Finger
         if ($this->$pointer) {
             $this->$pointer = $value;
             return $this->data;
+        }
+
+        if (strstr($pointer, '[]') !== false) {
+            return $this->set_expanded($pointer, $value, $unset);
         }
 
         $data = $this->data;
@@ -314,6 +346,31 @@ class JSON_Finger
         return $data;
     }
 
+    private function set_expanded($pointer, $values, $unset)
+    {
+        $parts = explode('[]', $pointer);
+        $before = $parts[0];
+        $after = implode('[]', array_slice($parts, 1));
+
+        if ($unset) {
+            $values = $this->get($before);
+        }
+
+        if (!wp_is_numeric_array($values)) {
+            return;
+        }
+
+        for ($i = count($values) - 1; $i >= 0; $i--) {
+            $pointer = "{$before}[{$i}]{$after}";
+
+            if ($unset) {
+                $this->unset($pointer);
+            } else {
+                $this->set($pointer, $values[$i]);
+            }
+        }
+    }
+
     /**
      * Unsets the attribute from the data.
      *
@@ -357,7 +414,22 @@ class JSON_Finger
                 $key = array_pop($keys);
                 $pointer = self::pointer($keys);
                 $parent = $this->get($pointer);
-                return isset($parent[$key]);
+
+                if (strstr($pointer, '[]') === false) {
+                    return isset($parent[$key]);
+                }
+
+                if (!wp_is_numeric_array($parent)) {
+                    return false;
+                }
+
+                foreach ($parent as $item) {
+                    if (isset($item[$key])) {
+                        return true;
+                    }
+                }
+
+                return false;
         }
     }
 }

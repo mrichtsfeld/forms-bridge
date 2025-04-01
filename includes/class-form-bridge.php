@@ -237,7 +237,7 @@ abstract class Form_Bridge
             if ($mapper['cast'] !== 'null') {
                 $finger->set(
                     $mapper['to'],
-                    $this->cast($value, $mapper['cast'])
+                    $this->cast($value, $mapper['cast'], $mapper['from'])
                 );
             }
         }
@@ -253,9 +253,13 @@ abstract class Form_Bridge
      *
      * @return mixed
      */
-    private function cast($value, $type)
+    private function cast($value, $cast, $pointer)
     {
-        switch ($type) {
+        if (strstr($pointer, '[]') !== false) {
+            return $this->cast_expanded($value, $cast, $pointer);
+        }
+
+        switch ($cast) {
             case 'string':
                 return (string) $value;
             case 'integer':
@@ -279,5 +283,25 @@ abstract class Form_Bridge
             default:
                 return (string) $value;
         }
+    }
+
+    private function cast_expanded($values, $cast, $pointer)
+    {
+        $parts = explode('[]', $pointer);
+        $before = $parts[0];
+        $after = implode('[]', array_slice($parts, 1));
+
+        if (empty($after)) {
+            return array_map(function ($value) use ($cast, $before) {
+                $this->cast($value, $cast, $before);
+            }, $values);
+        }
+
+        for ($i = 0; $i < count($values); $i++) {
+            $pointer = "{$before}[{$i}]{$after}";
+            $values[$i] = $this->cast($values[$i], $cast, $pointer);
+        }
+
+        return $values;
     }
 }
