@@ -42,23 +42,23 @@ return [
     'input' => [
         [
             'name' => 'vat',
-            'type' => 'string',
+            'schema' => ['type' => 'string'],
             'required' => true,
         ],
         [
             'name' => 'country_code',
-            'type' => 'string',
+            'schema' => ['type' => 'string'],
         ],
     ],
     'output' => [
         [
             'name' => 'vat',
-            'type' => 'string',
+            'schema' => ['type' => 'string'],
             'touch' => true,
         ],
         [
             'name' => 'country_code',
-            'type' => 'string',
+            'schema' => ['type' => 'string'],
         ],
     ],
 ];

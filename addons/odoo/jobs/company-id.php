@@ -61,39 +61,39 @@ return [
     'input' => [
         [
             'name' => 'vat',
-            'type' => 'string',
+            'schema' => ['type' => 'string'],
             'required' => true,
         ],
         [
             'name' => 'company_name',
-            'type' => 'string',
+            'schema' => ['type' => 'string'],
             'required' => true,
         ],
         [
             'name' => 'street',
-            'type' => 'string',
+            'schema' => ['type' => 'string'],
         ],
         [
             'name' => 'city',
-            'type' => 'string',
+            'schema' => ['type' => 'string'],
         ],
         [
             'name' => 'zip',
-            'type' => 'string',
+            'schema' => ['type' => 'string'],
         ],
         [
             'name' => 'state',
-            'type' => 'string',
+            'schema' => ['type' => 'string'],
         ],
         [
             'name' => 'country_code',
-            'type' => 'string',
+            'schema' => ['type' => 'string'],
         ],
     ],
     'output' => [
         [
             'name' => 'partner_id',
-            'type' => 'integer',
+            'schema' => ['type' => 'integer'],
         ],
     ],
 ];

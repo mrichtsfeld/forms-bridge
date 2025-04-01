@@ -32,30 +32,33 @@ return [
     'input' => [
         [
             'name' => 'Email',
-            'type' => 'string',
+            'schema' => ['type' => 'string'],
             'required' => true,
         ],
         [
             'name' => 'First_Name',
-            'type' => 'string',
+            'schema' => ['type' => 'string'],
             'required' => true,
         ],
         [
             'name' => 'Last_Name',
-            'type' => 'string',
+            'schema' => ['type' => 'string'],
             'required' => true,
         ],
     ],
     'output' => [
         [
             'name' => 'Participants',
-            'type' => 'array',
-            'items' => [
-                'type' => 'object',
-                'properties' => [
-                    'type' => ['type' => 'string'],
-                    'participant' => ['type' => 'string'],
+            'schema' => [
+                'type' => 'array',
+                'items' => [
+                    'type' => 'object',
+                    'properties' => [
+                        'type' => ['type' => 'string'],
+                        'participant' => ['type' => 'string'],
+                    ],
                 ],
+                'additionalItems' => true,
             ],
         ],
     ],

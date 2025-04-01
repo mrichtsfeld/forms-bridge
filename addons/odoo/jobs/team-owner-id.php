@@ -33,14 +33,14 @@ return [
     'input' => [
         [
             'name' => 'team',
-            'type' => 'string',
+            'schema' => ['type' => 'string'],
             'required' => true,
         ],
     ],
     'output' => [
         [
             'name' => 'team_id',
-            'type' => 'integer',
+            'schema' => ['type' => 'integer'],
         ],
     ],
 ];

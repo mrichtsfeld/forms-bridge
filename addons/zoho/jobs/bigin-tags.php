@@ -30,21 +30,23 @@ return [
     'input' => [
         [
             'name' => 'Tag',
-            'type' => 'string',
+            'schema' => ['type' => 'string'],
             'required' => true,
         ],
     ],
     'output' => [
         [
             'name' => 'Tag',
-            'type' => 'array',
-            'items' => [
-                'type' => 'object',
-                'properties' => [
-                    'name' => ['type' => 'string'],
+            'schema' => [
+                'type' => 'array',
+                'items' => [
+                    'type' => 'object',
+                    'properties' => [
+                        'name' => ['type' => 'string'],
+                    ],
                 ],
+                'additionalItems' => true,
             ],
-            'additionalItems' => true,
         ],
     ],
 ];

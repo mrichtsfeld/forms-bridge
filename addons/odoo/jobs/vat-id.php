@@ -42,22 +42,22 @@ return [
     'input' => [
         [
             'name' => 'vat',
-            'type' => 'string',
+            'schema' => ['type' => 'string'],
             'required' => true,
         ],
         [
             'name' => 'country_code',
-            'type' => 'string',
+            'schema' => ['type' => 'string'],
         ],
     ],
     'output' => [
         [
             'name' => 'vat',
-            'type' => 'string',
+            'schema' => ['type' => 'string'],
         ],
         [
             'name' => 'country_code',
-            'type' => 'string',
+            'schema' => ['type' => 'string'],
         ],
     ],
 ];

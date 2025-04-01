@@ -6,9 +6,9 @@ if (!defined('ABSPATH')) {
 
 function forms_bridge_dolibarr_appointment_dates($payload)
 {
-    $payload['datep'] = (string) $payload['timestamp'];
+    $payload['datep'] = (int) $payload['timestamp'];
     $payload['duration'] = floatval($payload['duration'] ?? 1);
-    $payload['datef'] = $payload['duration'] * 3600 + $payload['datep'];
+    $payload['datef'] = intval($payload['duration'] * 3600 + $payload['datep']);
 
     return $payload;
 }
@@ -24,25 +24,25 @@ return [
         [
             'name' => 'timestamp',
             'required' => true,
-            'type' => 'string',
+            'schema' => ['type' => 'string'],
         ],
         [
             'name' => 'duration',
-            'type' => 'number',
+            'schema' => ['type' => 'number'],
         ],
     ],
     'output' => [
         [
             'name' => 'datep',
-            'type' => 'number',
+            'schema' => ['type' => 'integer'],
         ],
         [
             'name' => 'datef',
-            'type' => 'number',
+            'schema' => ['type' => 'integer'],
         ],
         [
             'name' => 'duration',
-            'type' => 'number',
+            'schema' => ['type' => 'number'],
         ],
     ],
 ];

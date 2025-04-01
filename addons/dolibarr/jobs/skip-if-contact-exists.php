@@ -29,37 +29,38 @@ return [
     'input' => [
         [
             'name' => 'email',
-            'type' => 'string',
+            'required' => true,
+            'schema' => ['type' => 'string'],
         ],
         [
             'name' => 'firstname',
-            'type' => 'string',
+            'schema' => ['type' => 'string'],
         ],
         [
             'name' => 'lastname',
-            'type' => 'string',
+            'schema' => ['type' => 'string'],
         ],
         [
             'name' => 'socid',
-            'type' => 'string',
+            'schema' => ['type' => 'string'],
         ],
     ],
     'output' => [
         [
             'name' => 'email',
-            'type' => 'string',
+            'schema' => ['type' => 'string'],
         ],
         [
             'name' => 'firstname',
-            'type' => 'string',
+            'schema' => ['type' => 'string'],
         ],
         [
             'name' => 'lastname',
-            'type' => 'string',
+            'schema' => ['type' => 'string'],
         ],
         [
             'name' => 'socid',
-            'type' => 'string',
+            'schema' => ['type' => 'string'],
         ],
     ],
 ];

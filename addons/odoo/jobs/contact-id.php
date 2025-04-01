@@ -67,31 +67,31 @@ return [
     'input' => [
         [
             'name' => 'email',
-            'type' => 'string',
+            'schema' => ['type' => 'string'],
             'required' => true,
         ],
         [
             'name' => 'contact_name',
-            'type' => 'string',
+            'schema' => ['type' => 'string'],
             'required' => true,
         ],
         [
             'name' => 'parent_id',
-            'type' => 'string',
+            'schema' => ['type' => 'string'],
         ],
         [
             'name' => 'phone',
-            'type' => 'string',
+            'schema' => ['type' => 'string'],
         ],
         [
             'name' => 'function',
-            'type' => 'string',
+            'schema' => ['type' => 'string'],
         ],
     ],
     'output' => [
         [
             'name' => 'partner_id',
-            'type' => 'integer',
+            'schema' => ['type' => 'integer'],
         ],
     ],
 ];

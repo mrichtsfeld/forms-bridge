@@ -79,63 +79,63 @@ return [
     'input' => [
         [
             'name' => 'name',
-            'type' => 'string',
+            'schema' => ['type' => 'string'],
             'required' => true,
         ],
         [
             'name' => 'email',
-            'type' => 'string',
+            'schema' => ['type' => 'string'],
             'required' => true,
         ],
         [
             'name' => 'typent_id',
-            'type' => 'string',
+            'schema' => ['type' => 'string'],
         ],
         [
             'name' => 'status',
-            'type' => 'string',
+            'schema' => ['type' => 'string'],
         ],
         [
             'name' => 'client',
-            'type' => 'string',
+            'schema' => ['type' => 'string'],
         ],
         [
             'name' => 'stcomm_id',
-            'type' => 'string',
+            'schema' => ['type' => 'string'],
         ],
         [
             'name' => 'address',
-            'type' => 'string',
+            'schema' => ['type' => 'string'],
         ],
         [
             'name' => 'zip',
-            'type' => 'string',
+            'schema' => ['type' => 'string'],
         ],
         [
             'name' => 'town',
-            'type' => 'string',
+            'schema' => ['type' => 'string'],
         ],
         [
             'name' => 'state',
-            'type' => 'string',
+            'schema' => ['type' => 'string'],
         ],
         [
             'name' => 'country_id',
-            'type' => 'string',
+            'schema' => ['type' => 'string'],
         ],
         [
             'name' => 'idprof1',
-            'type' => 'string',
+            'schema' => ['type' => 'string'],
         ],
         [
             'name' => 'note_public',
-            'type' => 'string',
+            'schema' => ['type' => 'string'],
         ],
     ],
     'output' => [
         [
             'name' => 'socid',
-            'type' => 'string',
+            'schema' => ['type' => 'string'],
         ],
     ],
 ];

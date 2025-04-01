@@ -22,36 +22,37 @@ function forms_bridge_dolibarr_skip_thirdparty($payload, $bridge)
 return [
     'title' => __('Skip if thirdparty exists', 'forms-bridge'),
     'description' => __(
-        'Aborts form submission if a contact with same email exists.',
+        'Aborts form submission if a thirdparty with same idprof1 exists',
         'forms-bridge'
     ),
     'method' => 'forms_bridge_dolibarr_skip_thirdparty',
     'input' => [
         [
             'name' => 'email',
-            'type' => 'string',
+            'schema' => ['type' => 'string'],
         ],
         [
             'name' => 'name',
-            'type' => 'string',
+            'schema' => ['type' => 'string'],
         ],
         [
             'name' => 'idprof1',
-            'type' => 'string',
+            'schema' => ['type' => 'string'],
+            'required' => true,
         ],
     ],
     'output' => [
         [
             'name' => 'email',
-            'type' => 'string',
+            'schema' => ['type' => 'string'],
         ],
         [
             'name' => 'name',
-            'type' => 'string',
+            'schema' => ['type' => 'string'],
         ],
         [
             'name' => 'idprof1',
-            'type' => 'string',
+            'schema' => ['type' => 'string'],
         ],
     ],
 ];

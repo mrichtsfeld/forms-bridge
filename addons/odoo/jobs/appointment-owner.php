@@ -28,16 +28,18 @@ return [
     'input' => [
         [
             'name' => 'owner_email',
-            'type' => 'string',
+            'schema' => ['type' => 'string'],
             'required' => true,
         ],
     ],
     'output' => [
         [
             'name' => 'partner_ids',
-            'type' => 'array',
-            'items' => ['type' => 'integer'],
-            'additionalItems' => true,
+            'schema' => [
+                'type' => 'array',
+                'items' => ['type' => 'integer'],
+                'additionalItems' => true,
+            ],
         ],
     ],
 ];

@@ -38,14 +38,14 @@ return [
     'input' => [
         [
             'name' => 'country_id',
-            'type' => 'integer',
             'required' => true,
+            'schema' => ['type' => 'integer'],
         ],
     ],
     'output' => [
         [
             'name' => 'country_id',
-            'type' => 'integer',
+            'schema' => ['type' => 'integer'],
             'touch' => true,
         ],
     ],

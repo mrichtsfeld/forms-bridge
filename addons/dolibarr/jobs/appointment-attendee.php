@@ -26,9 +26,13 @@ function forms_bridge_dolibarr_appointment_attendee($payload, $bridge)
     $backend = $bridge->backend;
     $dolapykey = $bridge->api_key->key;
 
-    $contact = [];
-    $contact_fields = ['email', 'firstname', 'lastname', 'socid', 'poste'];
+    $contact = [
+        'email' => $payload['email'],
+        'firstname' => $payload['firstname'],
+        'lastname' => $payload['lastname'],
+    ];
 
+    $contact_fields = ['socid', 'poste'];
     foreach ($contact_fields as $field) {
         if (isset($payload[$field])) {
             $contact[$field] = $payload[$field];
@@ -67,37 +71,46 @@ return [
     'input' => [
         [
             'name' => 'email',
-            'type' => 'string',
+            'required' => true,
+            'schema' => ['type' => 'string'],
         ],
         [
             'name' => 'firstname',
-            'type' => 'string',
+            'required' => true,
+            'schema' => ['type' => 'string'],
         ],
         [
             'name' => 'lastname',
-            'type' => 'string',
+            'required' => true,
+            'schema' => ['type' => 'string'],
         ],
         [
             'name' => 'socid',
-            'type' => 'string',
+            'schema' => ['type' => 'string'],
         ],
         [
             'name' => 'poste',
-            'type' => 'string',
+            'schema' => ['type' => 'string'],
         ],
     ],
     'output' => [
         [
             'name' => 'socpeopleassigned',
-            'type' => 'object',
-            'properties' => [
-                'socid' => [
-                    'type' => 'object',
-                    'properties' => [
-                        'id' => ['type' => 'string'],
-                        'mandatory' => ['type' => 'string'],
-                        'answer_status' => ['type' => 'string'],
-                        'transparency' => ['type' => 'string'],
+            'schema' => [
+                'type' => 'array',
+                'items' => [
+                    [
+                        'type' => 'object',
+                        'properties' => [
+                            'type' => 'object',
+                            'properties' => [
+                                'id' => ['type' => 'string'],
+                                'mandatory' => ['type' => 'string'],
+                                'answer_status' => ['type' => 'string'],
+                                'transparency' => ['type' => 'string'],
+                            ],
+                            'additionalProperties' => false,
+                        ],
                     ],
                 ],
             ],

@@ -29,33 +29,35 @@ return [
     'input' => [
         [
             'name' => 'email',
-            'type' => 'string',
+            'schema' => ['type' => 'string'],
             'required' => true,
         ],
         [
             'name' => 'contact_name',
-            'type' => 'string',
+            'schema' => ['type' => 'string'],
             'required' => true,
         ],
         [
             'name' => 'phone',
-            'type' => 'string',
+            'schema' => ['type' => 'string'],
         ],
         [
             'name' => 'function',
-            'type' => 'string',
+            'schema' => ['type' => 'string'],
         ],
         [
             'name' => 'parent_id',
-            'type' => 'string',
+            'schema' => ['type' => 'string'],
         ],
     ],
     'output' => [
         [
             'name' => 'partner_ids',
-            'type' => 'array',
-            'items' => ['type' => 'integer'],
-            'additionalItems' => true,
+            'schema' => [
+                'type' => 'array',
+                'items' => ['type' => 'integer'],
+                'additionalItems' => true,
+            ],
         ],
     ],
 ];

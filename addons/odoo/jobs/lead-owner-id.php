@@ -28,14 +28,14 @@ return [
     'input' => [
         [
             'name' => 'owner_email',
-            'type' => 'string',
+            'schema' => ['type' => 'string'],
             'required' => true,
         ],
     ],
     'output' => [
         [
             'name' => 'user_id',
-            'type' => 'integer',
+            'schema' => ['type' => 'integer'],
         ],
     ],
 ];

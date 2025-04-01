@@ -25,16 +25,18 @@ return [
     'input' => [
         [
             'name' => 'list_ids',
-            'type' => 'string',
+            'schema' => ['type' => 'string'],
             'required' => true,
         ],
     ],
     'output' => [
         [
             'name' => 'list_ids',
-            'type' => 'array',
-            'items' => ['type' => 'integer'],
-            'additionalItems' => true,
+            'schema' => [
+                'type' => 'array',
+                'items' => ['type' => 'integer'],
+                'additionalItems' => true,
+            ],
         ],
     ],
 ];

@@ -28,21 +28,21 @@ return [
         [
             'name' => 'timestamp',
             'required' => true,
-            'type' => 'string',
+            'schema' => ['type' => 'string'],
         ],
         [
             'name' => 'duration',
-            'type' => 'number',
+            'schema' => ['type' => 'number'],
         ],
     ],
     'output' => [
         [
             'name' => 'Start_DateTime',
-            'type' => 'string',
+            'schema' => ['type' => 'string'],
         ],
         [
             'name' => 'End_DateTime',
-            'type' => 'string',
+            'schema' => ['type' => 'string'],
         ],
     ],
 ];

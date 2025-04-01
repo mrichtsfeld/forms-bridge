@@ -61,40 +61,43 @@ return [
     'input' => [
         [
             'name' => 'Account_Name',
-            'type' => 'string',
+            'schema' => ['type' => 'string'],
             'required' => true,
         ],
         [
             'name' => 'Billing_Street',
-            'type' => 'string',
+            'schema' => ['type' => 'string'],
         ],
         [
             'name' => 'Billing_Code',
-            'type' => 'string',
+            'schema' => ['type' => 'string'],
         ],
         [
             'name' => 'Billing_City',
-            'type' => 'string',
+            'schema' => ['type' => 'string'],
         ],
         [
             'name' => 'Billing_State',
-            'type' => 'string',
+            'schema' => ['type' => 'string'],
         ],
         [
             'name' => 'Billing_Country',
-            'type' => 'string',
+            'schema' => ['type' => 'string'],
         ],
         [
             'name' => 'Description',
-            'type' => 'string',
+            'schema' => ['type' => 'string'],
         ],
     ],
     'output' => [
         [
             'name' => 'Account_Name',
-            'type' => 'object',
-            'properties' => [
-                'id' => ['type' => 'string'],
+            'schema' => [
+                'type' => 'object',
+                'properties' => [
+                    'id' => ['type' => 'string'],
+                ],
+                'additionalProperties' => false,
             ],
         ],
     ],

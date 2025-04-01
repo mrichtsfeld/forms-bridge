@@ -6,7 +6,7 @@ if (!defined('ABSPATH')) {
 
 function forms_bridge_odoo_appointment_dates($payload)
 {
-    $duration = $payload['duration'] ?? 1;
+    $duration = floatval($payload['duration'] ?? 1);
 
     $payload['start'] = date('Y-m-d H:i:s', $payload['timestamp']);
 
@@ -27,21 +27,21 @@ return [
         [
             'name' => 'timestamp',
             'required' => true,
-            'type' => 'string',
+            'schema' => ['type' => 'string'],
         ],
         [
             'name' => 'duration',
-            'type' => 'number',
+            'schema' => ['type' => 'number'],
         ],
     ],
     'output' => [
         [
             'name' => 'start',
-            'type' => 'string',
+            'schema' => ['type' => 'string'],
         ],
         [
             'name' => 'stop',
-            'type' => 'string',
+            'schema' => ['type' => 'string'],
         ],
     ],
 ];

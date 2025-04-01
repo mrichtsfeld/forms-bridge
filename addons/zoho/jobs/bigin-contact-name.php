@@ -60,48 +60,57 @@ return [
     'input' => [
         [
             'name' => 'Email',
-            'type' => 'string',
+            'schema' => ['type' => 'string'],
             'required' => true,
         ],
         [
             'name' => 'First_Name',
-            'type' => 'string',
+            'schema' => ['type' => 'string'],
             'required' => true,
         ],
         [
             'name' => 'Last_Name',
-            'type' => 'string',
+            'schema' => ['type' => 'string'],
             'required' => true,
         ],
         [
             'name' => 'Phone',
-            'type' => 'string',
+            'schema' => ['type' => 'string'],
         ],
         [
             'name' => 'Title',
-            'type' => 'string',
+            'schema' => ['type' => 'string'],
         ],
         [
             'name' => 'Account_Name',
-            'type' => 'object',
-            'properties' => [
-                'id' => ['type' => 'string'],
+            'schema' => [
+                'type' => 'object',
+                'properties' => [
+                    'id' => ['type' => 'string'],
+                ],
+                'additionalProperties' => false,
             ],
         ],
     ],
     'output' => [
         [
             'name' => 'Contact_Name',
-            'type' => 'object',
-            'properties' => [
-                'id' => ['type' => 'string'],
+            'schema' => [
+                'type' => 'object',
+                'properties' => [
+                    'id' => ['type' => 'string'],
+                ],
+                'additionalProperties' => false,
             ],
         ],
         [
             'name' => 'Account_Name',
-            'type' => 'object',
-            'properties' => [
-                'id' => ['type' => 'string'],
+            'schema' => [
+                'type' => 'object',
+                'properties' => [
+                    'id' => ['type' => 'string'],
+                ],
+                'additionalProperties' => false,
             ],
         ],
     ],

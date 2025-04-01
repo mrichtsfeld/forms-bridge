@@ -30,7 +30,7 @@ return [
     'output' => [
         [
             'name' => 'code_client',
-            'type' => 'string',
+            'schema' => ['type' => 'string'],
         ],
     ],
 ];
