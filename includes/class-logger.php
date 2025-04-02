@@ -43,6 +43,8 @@ class Logger extends Singleton
 
     /**
      * Log file path getter.
+     * 
+     * @return string
      */
     private static function log_path()
     {
@@ -175,6 +177,8 @@ class Logger extends Singleton
 
     /**
      * Logger's setup method. Initializes php log configurations.
+     * 
+     * @return Logger
      */
     public static function setup()
     {

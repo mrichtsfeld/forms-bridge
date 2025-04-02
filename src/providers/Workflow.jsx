@@ -112,7 +112,7 @@ export default function WorkflowProvider({
 
   const [jobs, isLoading] = useWorkflowJobs(workflow);
 
-  const mappersJob = useMemo(
+  const formJob = useMemo(
     () => ({
       title: __("Form submission", "forms-bridge"),
       description: __(
@@ -128,13 +128,13 @@ export default function WorkflowProvider({
 
   const workflowJobs = useMemo(
     () =>
-      [mappersJob].concat(
+      [formJob].concat(
         jobs.map((job, i) => ({
           ...job,
           mappers: mutations[i + 1] || [],
         }))
       ),
-    [mutations, jobs, mappersJob]
+    [mutations, jobs, formJob]
   );
 
   const formFields = useMemo(() => {
