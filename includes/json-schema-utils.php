@@ -1,5 +1,13 @@
 <?php
 
+/**
+ * Applies validation and sanitization to data based on json schemas.
+ *
+ * @param array $data Target data.
+ * @param array $schema JSON schema.
+ *
+ * @return array|WP_Error Validation result.
+ */
 function forms_bridge_validate_with_schema($data, $schema)
 {
     $is_valid = rest_validate_value_from_schema($data, $schema);
@@ -138,6 +146,13 @@ function forms_bridge_merge_object($array, $default, $schema = [])
     return $array;
 }
 
+/**
+ * Gets the corresponding JSON schema type from a given value.
+ *
+ * @param mixed $value
+ *
+ * @return string JSON schema value type.
+ */
 function forms_bridge_get_json_schema_type($value)
 {
     if (wp_is_numeric_array($value)) {

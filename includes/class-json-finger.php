@@ -99,7 +99,14 @@ class JSON_Finger
         return $keys;
     }
 
-    public static function sanitizeKey($key)
+    /**
+     * Sanitize a key to be a valid finger key.
+     *
+     * @param string|int Finger key value.
+     *
+     * @return string Sanitized key value.
+     */
+    public static function sanitize_key($key)
     {
         if ($key === INF) {
             $key = '[]';
@@ -119,7 +126,14 @@ class JSON_Finger
         return $key;
     }
 
-    public static function validate($pointer): bool
+    /**
+     * Validates the finger pointer.
+     *
+     * @param string $pointer Finger pointer.
+     *
+     * @return boolean Validation result.
+     */
+    public static function validate($pointer)
     {
         $pointer = (string) $pointer;
 
@@ -130,6 +144,13 @@ class JSON_Finger
         return count(self::parse($pointer)) > 0;
     }
 
+    /**
+     * Returns a finger pointer from an array of keys after keys validation and sanitization.
+     *
+     * @param array $keys Array with finger keys.
+     *
+     * @return string Finger pointer result.
+     */
     public static function pointer($keys)
     {
         if (!is_array($keys)) {
@@ -144,7 +165,7 @@ class JSON_Finger
                 } elseif (is_int($key)) {
                     $key = "[{$key}]";
                 } else {
-                    $key = self::sanitizeKey($key);
+                    $key = self::sanitize_key($key);
 
                     if ($key[0] !== '[' && strlen($pointer) > 0) {
                         $key = '.' . $key;
@@ -210,11 +231,12 @@ class JSON_Finger
      * Gets the attribute from the data.
      *
      * @param string $pointer JSON finger pointer.
-     * pointer.
+     * @param array $expansion In case pointer needs expansion, this handles an flat array
+     * with the expansion values.
      *
      * @return mixed Attribute value.
      */
-    public function get($pointer)
+    public function get($pointer, &$expansion = [])
     {
         $pointer = (string) $pointer;
 
@@ -223,7 +245,7 @@ class JSON_Finger
         }
 
         if (strstr($pointer, '[]') !== false) {
-            return $this->get_expanded($pointer);
+            return $this->get_expanded($pointer, $expansion);
         }
 
         $value = null;
@@ -242,9 +264,18 @@ class JSON_Finger
             return;
         }
 
+        $expansion[] = $value;
         return $value;
     }
 
+    /**
+     * Gets values from an expanded finger pointer.
+     *
+     * @param string $pointer Finger pointer.
+     * @param array $expansion Handle for the expansion's flat array of values.
+     *
+     * @return array Hierarchical structure of values result of the expansion.
+     */
     private function get_expanded($pointer, &$expansion = [])
     {
         $parts = explode('[]', $pointer);
@@ -259,7 +290,7 @@ class JSON_Finger
 
         for ($i = 0; $i < count($items); $i++) {
             $pointer = "{$before}[$i]{$after}";
-            $items[$i] = $this->get($pointer);
+            $items[$i] = $this->get($pointer, $expansion);
         }
 
         return $items;
@@ -272,7 +303,7 @@ class JSON_Finger
      * @param mixed $value Attribute value.
      * @param boolean $unset If true, unsets the attribute.
      *
-     * @return array Data after the attribute update.
+     * @return array Updated data.
      */
     public function set($pointer, $value, $unset = false)
     {
@@ -346,6 +377,15 @@ class JSON_Finger
         return $data;
     }
 
+    /**
+     * Sets values based on the expansion of the finger pointer.
+     *
+     * @param string $pointer Finger pointer.
+     * @param array $values Array of values.
+     * @param boolean $unset If true, unsets the attributes.
+     *
+     * @return array Updated data.
+     */
     private function set_expanded($pointer, $values, $unset)
     {
         $parts = explode('[]', $pointer);
@@ -369,6 +409,8 @@ class JSON_Finger
                 $this->set($pointer, $values[$i]);
             }
         }
+
+        return $this->data;
     }
 
     /**
