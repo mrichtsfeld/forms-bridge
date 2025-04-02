@@ -258,6 +258,14 @@ abstract class Addon extends Singleton
      */
     abstract protected static function validate_setting($data, $setting);
 
+    /**
+     * Common bridge validation method.
+     *
+     * @param array $bridge Bridge data.
+     * @param array $uniques Carry with already validated unique bridge names.
+     *
+     * @return array Validated and sanitized bridge data.
+     */
     protected static function validate_bridge($bridge, &$uniques = [])
     {
         if (empty($bridge['name'])) {
