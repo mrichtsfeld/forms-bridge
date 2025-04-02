@@ -357,6 +357,13 @@ class Integration extends BaseIntegration
         );
     }
 
+    /**
+     * Checks if a filed is multi value field.
+     *
+     * @param array Target field instance.
+     *
+     * @return boolean
+     */
     private function is_multi_field($field)
     {
         if ($field['type'] === 'checkbox' || $field['type'] === 'repeater') {
@@ -377,6 +384,14 @@ class Integration extends BaseIntegration
         return false;
     }
 
+    /**
+     * Gets the field value JSON schema.
+     *
+     * @param array $field Field instance.
+     * @param array $children Children fields.
+     *
+     * @return array JSON schema of the value of the field.
+     */
     private function field_value_schema($field, $children = [])
     {
         switch ($field['type']) {

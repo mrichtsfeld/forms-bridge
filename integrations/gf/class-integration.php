@@ -353,6 +353,13 @@ class Integration extends BaseIntegration
         return $field;
     }
 
+    /**
+     * Checks if a filed is multi value field.
+     *
+     * @param GF_Field Target field instance.
+     *
+     * @return boolean
+     */
     private function is_multi_field($field)
     {
         if ($field->type === 'fileupload') {
@@ -378,6 +385,13 @@ class Integration extends BaseIntegration
         return false;
     }
 
+    /**
+     * Gets the field value JSON schema.
+     *
+     * @param GF_Field $field Field instance.
+     *
+     * @return array JSON schema of the value of the field.
+     */
     private function field_value_schema($field)
     {
         switch ($field->type) {
@@ -983,6 +997,16 @@ class Integration extends BaseIntegration
         );
     }
 
+    /**
+     * Returns a valid date field data.
+     *
+     * @param int $id Field id.
+     * @param string $name Input name.
+     * @param string $label Field label.
+     * @param boolean $required Is field required.
+     *
+     * @return array
+     */
     private function date_field($id, $name, $label, $required)
     {
         return array_merge(

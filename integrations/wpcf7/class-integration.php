@@ -253,24 +253,38 @@ class Integration extends BaseIntegration
         );
     }
 
-    private function is_multi_field($field)
+    /**
+     * Checks if a filed is multi value field.
+     *
+     * @param WPCF7_FormTag Target tag instance.
+     *
+     * @return boolean
+     */
+    private function is_multi_field($tag)
     {
-        $type = str_replace('*', '', $field->type);
+        $type = str_replace('*', '', $tag->type);
 
         if ($type === 'checkbox') {
-            return !$field->has_option('exclusive');
+            return !$tag->has_option('exclusive');
         }
 
         if ($type === 'select') {
-            return $field->has_option('multiple');
+            return $tag->has_option('multiple');
         }
 
         return false;
     }
 
-    private function field_value_schema($field)
+    /**
+     * Gets the field value JSON schema.
+     *
+     * @param WPCF7_FormTag $tag Tag instance.
+     *
+     * @return array JSON schema of the value of the field.
+     */
+    private function field_value_schema($tag)
     {
-        $type = str_replace('*', '', $field->type);
+        $type = str_replace('*', '', $tag->type);
 
         switch ($type) {
             case 'text':
@@ -284,9 +298,9 @@ class Integration extends BaseIntegration
             case 'vat':
                 return ['type' => 'string'];
             case 'select':
-                if ($field->has_option('multiple')) {
+                if ($tag->has_option('multiple')) {
                     $items = [];
-                    for ($i = 0; $i < count($field->values); $i++) {
+                    for ($i = 0; $i < count($tag->values); $i++) {
                         $items[] = ['type' => 'string'];
                     }
 
@@ -299,12 +313,12 @@ class Integration extends BaseIntegration
 
                 return ['type' => 'string'];
             case 'checkbox':
-                if ($field->has_option('exclusive')) {
+                if ($tag->has_option('exclusive')) {
                     return ['type' => 'string'];
                 }
 
                 $items = [];
-                for ($i = 0; $i < count($field->values); $i++) {
+                for ($i = 0; $i < count($tag->values); $i++) {
                     $items[] = ['type' => 'string'];
                 }
 

@@ -276,6 +276,13 @@ class Integration extends BaseIntegration
         ];
     }
 
+    /**
+     * Checks if a filed is multi value field.
+     *
+     * @param array Field settings data.
+     *
+     * @return boolean
+     */
     private function is_multi_field($settings)
     {
         if (
@@ -298,6 +305,14 @@ class Integration extends BaseIntegration
         return false;
     }
 
+    /**
+     * Gets the field value JSON schema.
+     *
+     * @param array $settings Field settings data.
+     * @param array $children Children fields.
+     *
+     * @return array JSON schema of the value of the field.
+     */
     private function field_value_schema($settings, $children = [])
     {
         switch ($settings['type']) {
