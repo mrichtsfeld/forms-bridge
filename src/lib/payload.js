@@ -40,7 +40,7 @@ export function payloadToSchema(payload) {
       return {
         type: "array",
         items: payload.map((item) => payloadToSchema(item)),
-        additionalItems: !Object.isFrozen(payload),
+        additionalItems: Object.isFrozen(payload),
       };
     case "object":
       return {
@@ -83,7 +83,7 @@ export function schemaToPayload(schema, pointer) {
       return schemaToPayload(schema, `${pointer}[${i}]`);
     });
 
-    if (schema.additionalItems === false) {
+    if (schema.additionalItems === true) {
       Object.freeze(payload);
     }
 
@@ -248,7 +248,7 @@ export function checkType(from, to, strict = true) {
           return typeCheck && checkType(item, from.items, strict);
         }, true);
       }
-    } else if (Array.isArra(to.items)) {
+    } else if (Array.isArray(to.items)) {
       result = to.items.reduce((typeCheck, item) => {
         if (!typeCheck) return typeCheck;
         return typeCheck && checkType(from.items, item, strict);

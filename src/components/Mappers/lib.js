@@ -14,7 +14,9 @@ export function payloadToOptions(payload, mappers, fields) {
 
     if (Array.isArray(payload[key])) {
       payload[key].forEach((item, i) => {
-        i = Object.isFrozen(payload[key]) ? i : "";
+        if (Object.isFrozen(payload[key])) {
+          i = "";
+        }
 
         if (typeof item === "string") {
           if (i !== "") {
