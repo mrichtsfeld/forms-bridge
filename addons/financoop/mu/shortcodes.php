@@ -73,7 +73,7 @@ function financoop_render_campaign_progress($campaign, $currency)
             $output .= financoop_render_source_progress(
                 $source,
                 $campaign["source_objective_{$source}"],
-                $campaign["{$source}_progress"],
+                $campaign["progress_{$source}"],
                 $currency
             );
         }
@@ -82,37 +82,39 @@ function financoop_render_campaign_progress($campaign, $currency)
     return $output;
 }
 
-function financoop_render_source_progress($source, $max, $value, $currency)
+function financoop_render_source_progress($source, $goal, $value, $currency)
 {
     $label = _x($source, 'source progress label', 'forms-bridge');
-    $max = (int) $max;
-    $value = (int) $value;
+    $value = round(min(100, (int) $value), 2);
+    $goal = (int) $goal;
 
-    if ($max === 0) {
+    if ($goal === 0) {
         return '';
     }
-
-    $percentage = ($value / $max) * 100;
 
     ob_start();
     ?><div class='financoop-progress' data-source="<?php echo esc_attr($source); ?>">
     <h4 class='wp-block-heading'><?php echo esc_html($label); ?></h4>
     <p><label><?php echo esc_html(
         __('Goal', 'forms-bridge')
-    ); ?>: </label><span><?php echo intval($max); ?> <?php echo esc_html($currency); ?></span></p>
+    ); ?>: </label><span><?php echo intval($goal); ?> <?php echo esc_html($currency); ?></span></p>
     <div class="financoop-progress-bar">
         <label for='<?php echo esc_attr(
             $source
-        ); ?>-progress'><?php echo esc_html(__('Progress', 'forms-bridge')); ?>: <span><?php echo intval($percentage); ?> %</span></label></br>
+        ); ?>-progress'><?php echo esc_html(__('Progress', 'forms-bridge')); ?>: <span><?php echo $value; ?> %</span></label></br>
         <progress id='<?php echo esc_attr(
             $source
-        ); ?>-progress' value='<?php echo intval($value); ?>' max='<?php echo esc_attr($max); ?>'><?php echo intval($percentage); ?> %</progress>
+        ); ?>-progress' value='<?php echo intval($value); ?>' max='100'><?php echo $value; ?> %</progress>
     </div>
 </div><?php return ob_get_clean();
 }
 
 function financoop_render_campaign_dates($campaign)
 {
+    if ($campaign['is_permanent']) {
+        return '';
+    }
+
     $start = $campaign['start_date'];
     $end = $campaign['end_date'];
     $days_to_start = null;
