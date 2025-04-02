@@ -181,17 +181,22 @@ class Integration extends BaseIntegration
     /**
      * Retrives the current form submission data.
      *
+     * @param boolean $raw Control if the submission is serialized before exit.
+     *
      * @return array Submission data.
      */
-    public function submission()
+    public function submission($raw = false)
     {
         $form = $this->form();
+
         if (!$form) {
             return;
         }
 
         if (empty(self::$submission)) {
             return;
+        } elseif ($raw) {
+            return self::$submission;
         }
 
         return $this->serialize_submission(self::$submission, $form);

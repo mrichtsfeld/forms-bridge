@@ -346,7 +346,10 @@ class Workflow_Job
             $payload = $next_job->run($payload, $bridge, $mutations);
         }
 
-        if (isset($this->submission_callbacks['before'])) {
+        if (
+            isset($this->submission_callbacks['before']) &&
+            function_exists($this->submission_callbacks['before'])
+        ) {
             add_action(
                 'forms_bridge_before_submission',
                 [$this, 'before_submission'],
@@ -355,7 +358,10 @@ class Workflow_Job
             );
         }
 
-        if (isset($this->submission_callbacks['after'])) {
+        if (
+            isset($this->submission_callbacks['after']) &&
+            function_exists($this->submission_callbacks['after'])
+        ) {
             add_action(
                 'forms_bridge_after_submission',
                 [$this, 'after_submission'],

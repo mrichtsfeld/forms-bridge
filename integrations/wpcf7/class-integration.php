@@ -137,13 +137,18 @@ class Integration extends BaseIntegration
     /**
      * Retrives the current submission data.
      *
+     * @param boolean $raw Control if the submission is serialized before exit.
+     *
      * @return array Submission data.
      */
-    public function submission()
+    public function submission($raw = false)
     {
         $submission = WPCF7_Submission::get_instance();
+
         if (!$submission) {
             return null;
+        } elseif ($raw) {
+            return $submission;
         }
 
         $form = $this->form();

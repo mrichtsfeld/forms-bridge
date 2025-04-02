@@ -156,9 +156,11 @@ class Integration extends BaseIntegration
     /**
      * Retrives the current submission data.
      *
+     * @param boolean $raw Control if the submission is serialized before exit.
+     *
      * @return array
      */
-    public function submission()
+    public function submission($raw = false)
     {
         $form_data = $this->form();
         if (!$form_data) {
@@ -171,6 +173,8 @@ class Integration extends BaseIntegration
 
         if (!$submission) {
             return null;
+        } elseif ($raw) {
+            return $submission;
         }
 
         $form = $this->form();
@@ -627,7 +631,7 @@ class Integration extends BaseIntegration
      */
     protected function submission_uploads($submission, $form_data)
     {
-        $private_upload = forms_bridge_private_upload($form_data['id']);
+        $private_upload = forms_bridge_gf_private_upload($form_data['id']);
 
         return array_reduce(
             array_filter($form_data['fields'], function ($field) {
@@ -644,7 +648,7 @@ class Integration extends BaseIntegration
                     if ($private_upload) {
                         $url = wp_parse_url($path);
                         parse_str($url['query'], $query);
-                        $path = forms_bridge_attachment_fullpath(
+                        $path = forms_bridge_gf_attachment_fullpath(
                             $query['forms-bridge-attachment']
                         );
                     }

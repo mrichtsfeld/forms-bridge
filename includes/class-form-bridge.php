@@ -2,8 +2,6 @@
 
 namespace FORMS_BRIDGE;
 
-use TypeError;
-
 if (!defined('ABSPATH')) {
     exit();
 }
