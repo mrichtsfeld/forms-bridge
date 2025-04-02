@@ -345,8 +345,15 @@ abstract class Addon extends Singleton
             throw new Exception('Invalid addon registration');
         }
 
-        static::load_templates();
-        static::load_workflow_jobs();
+        add_action(
+            'after_setup_theme',
+            static function () {
+                static::load_templates();
+                static::load_workflow_jobs();
+            },
+            10,
+            0
+        );
 
         static::handle_settings();
         static::admin_scripts();
