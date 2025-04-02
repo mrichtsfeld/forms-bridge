@@ -18,6 +18,8 @@ add_shortcode('financoop_campaign', function ($atts) {
         return "[financoop_campaign id='{$atts['id']}' backend='null']Missing 'backend' param[/financoop_campaign]";
     }
 
+    $currency = $atts['currency'] ?? '€';
+
     $campaign = Finan_Coop_Addon::fetch_campaign($atts['id'], [
         'name' => $atts['backend'],
     ]);
@@ -29,7 +31,8 @@ add_shortcode('financoop_campaign', function ($atts) {
 
     ob_start();
     ?><style>.financoop-campaign-state{background:var(--wp-admin-theme-color);color:white;font-size:0.8em;padding:0 0.6em;width:fit-content;border-radius:1em}
-.financoop-campaign-dates{padding-left:0;list-style:none;}</style>
+.financoop-campaign-dates{padding-left:0;list-style:none;}
+.financoop-progress>p{margin:0}</style>
 <article class="financoop-campaign wp-block-group">
     <div class="finanacoop-campaign-header wp-block-group">
         <div class="financoop-campaign-state"><?php echo esc_html(
@@ -44,7 +47,7 @@ add_shortcode('financoop_campaign', function ($atts) {
     </div>
     <div class="financoop-campaign-content">
         <?php echo financoop_render_campaign_dates($campaign); ?>
-        <?php echo financoop_render_campaign_progress($campaign); ?>
+        <?php echo financoop_render_campaign_progress($campaign, $currency); ?>
     </div>
 </article><?php
 $output = ob_get_clean();
@@ -55,12 +58,13 @@ return apply_filters(
 );
 });
 
-function financoop_render_campaign_progress($campaign)
+function financoop_render_campaign_progress($campaign, $currency)
 {
     $output = financoop_render_source_progress(
         'global',
         $campaign['global_objective'],
-        $campaign['progress']
+        $campaign['progress'],
+        $currency
     );
 
     $sources = ['subscription', 'loan', 'donation'];
@@ -69,7 +73,8 @@ function financoop_render_campaign_progress($campaign)
             $output .= financoop_render_source_progress(
                 $source,
                 $campaign["source_objective_{$source}"],
-                $campaign["{$source}_progress"]
+                $campaign["{$source}_progress"],
+                $currency
             );
         }
     }
@@ -77,38 +82,33 @@ function financoop_render_campaign_progress($campaign)
     return $output;
 }
 
-function financoop_render_source_progress($source, $max, $value)
+function financoop_render_source_progress($source, $max, $value, $currency)
 {
+    $label = _x($source, 'source progress label', 'forms-bridge');
     $max = (int) $max;
     $value = (int) $value;
 
-    switch ($source) {
-        case 'global':
-            $label = __('Progress', 'forms-bridge');
-            break;
-        case 'subscription':
-            $label = __('Subscriptions progress', 'forms-bridge');
-            break;
-        case 'loan':
-            $label = __('Loans progress', 'forms-bridge');
-            break;
-        case 'donation':
-            $label = __('Donations progress', 'forms-bridge');
-            break;
-        default:
-            $label = null;
-    }
-
-    if (!$label || $max === 0) {
+    if ($max === 0) {
         return '';
     }
 
     $percentage = ($value / $max) * 100;
 
-    return "<div class='financoop-progress' data-source='{$source}>
-    <label for='{$source}-progress'>{$label}<span>:<strong style='margin-left: 0.5em'>{$percentage} %</strong></span></label></br>
-    <progress id='{$source}-progress' value='{$value}' max='{$max}'>{$percentage} %</progress>
-</div>";
+    ob_start();
+    ?><div class='financoop-progress' data-source="<?php echo esc_attr($source); ?>">
+    <h4 class='wp-block-heading'><?php echo esc_html($label); ?></h4>
+    <p><label><?php echo esc_html(
+        __('Goal', 'forms-bridge')
+    ); ?>: </label><span><?php echo intval($max); ?> <?php echo esc_html($currency); ?></span></p>
+    <div class="financoop-progress-bar">
+        <label for='<?php echo esc_attr(
+            $source
+        ); ?>-progress'><?php echo esc_html(__('Progress', 'forms-bridge')); ?>: <span><?php echo intval($percentage); ?> %</span></label></br>
+        <progress id='<?php echo esc_attr(
+            $source
+        ); ?>-progress' value='<?php echo intval($value); ?>' max='<?php echo esc_attr($max); ?>'><?php echo intval($percentage); ?> %</progress>
+    </div>
+</div><?php return ob_get_clean();
 }
 
 function financoop_render_campaign_dates($campaign)
