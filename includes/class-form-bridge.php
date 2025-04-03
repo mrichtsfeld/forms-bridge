@@ -2,8 +2,6 @@
 
 namespace FORMS_BRIDGE;
 
-use TypeError;
-
 if (!defined('ABSPATH')) {
     exit();
 }
@@ -26,90 +24,6 @@ abstract class Form_Bridge
      * @var string
      */
     protected $api;
-
-    /**
-     * Handles the form bridge's template class.
-     *
-     * @var string
-     */
-    protected static $template_class = '\FORMS_BRIDGE\Form_Bridge_Template';
-
-    /**
-     * Handles available template instances.
-     *
-     * @var array
-     */
-    private static $templates = [];
-
-    /**
-     * Loads template configs from a given directory path.Allowed file formats
-     * are php and json.
-     *
-     * @param string $templates_path Source templates directory path.
-     * @param string $api API name.
-     */
-    final public static function load_templates($templates_path, $api)
-    {
-        if (!is_dir($templates_path)) {
-            $res = mkdir($templates_path);
-            if (!$res) {
-                return;
-            }
-        }
-
-        if (!is_readable($templates_path)) {
-            return;
-        }
-
-        $template_files = apply_filters(
-            'forms_bridge_template_files',
-            array_map(function ($template_file) use ($templates_path) {
-                return $templates_path . '/' . $template_file;
-            }, array_diff(scandir($templates_path), ['.', '..'])),
-            $api
-        );
-
-        foreach ($template_files as $template_path) {
-            if (!is_file($template_path) || !is_readable($template_path)) {
-                continue;
-            }
-
-            $template_file = basename($template_path);
-            $ext = pathinfo($template_file)['extension'];
-
-            $config = null;
-            if ($ext === 'php') {
-                $config = include $template_path;
-            } elseif ($ext === 'json') {
-                $content = file_get_contents($template_path);
-                $config = json_decode($content, true);
-            }
-
-            if (is_array($config)) {
-                static::$templates[] = new static::$template_class(
-                    $template_file,
-                    $config,
-                    $api
-                );
-            }
-        }
-    }
-
-    /**
-     * Gets a template instance by name.
-     *
-     * @param string $name Template name.
-     *
-     * @return Form_Bridge_Template|null
-     */
-    final public static function get_template($name)
-    {
-        foreach (static::$templates as $template) {
-            if ($template->name === $name) {
-                return $template;
-            }
-        }
-    }
 
     /**
      * Stores the form bridge's data as a private attribute.
@@ -140,6 +54,8 @@ abstract class Form_Bridge
                 return $this->backend();
             case 'content_type':
                 return $this->content_type();
+            case 'workflow':
+                return $this->workflow();
             default:
                 return $this->data[$name] ?? null;
         }
@@ -199,6 +115,56 @@ abstract class Form_Bridge
     }
 
     /**
+     * Gets bridge's workflow instnace.
+     *
+     * @return Workflow_Job|null;
+     */
+    protected function workflow()
+    {
+        return Workflow_Job::from_workflow($this->data['workflow'] ?? []);
+    }
+
+    /**
+     * Bridge public submit method wrapped with hooks. Calls to the private
+     * do_submit method.
+     *
+     * @param array $payload Form submission data.
+     * @param array $attachments Form submission's attached files.
+     *
+     * @return array|WP_Error Http request response.
+     */
+    public function submit($payload, $attachments = [])
+    {
+        do_action(
+            'forms_bridge_before_bridge_submit',
+            $this,
+            $payload,
+            $attachments
+        );
+        $response = $this->do_submit($payload, $attachments);
+
+        if (is_wp_error($response)) {
+            do_action(
+                'forms_bridge_bridge_submit_error',
+                $this,
+                $response,
+                $payload,
+                $attachments
+            );
+        } else {
+            do_action(
+                'forms_bridge_after_bridge_submit',
+                $this,
+                $response,
+                $payload,
+                $attachments
+            );
+        }
+
+        return $response;
+    }
+
+    /**
      * Submits payload and attachments to the bridge's backend.
      *
      * @param array $payload Form submission data.
@@ -206,20 +172,7 @@ abstract class Form_Bridge
      *
      * @return array|WP_Error Http request response.
      */
-    final public function submit($payload, $attachments = [])
-    {
-        do_action('forms_bridge_before_submit', $this, $payload, $attachments);
-
-        $response = $this->do_submit($payload, $attachments);
-
-        if (is_wp_error($response)) {
-            do_action('forms_bridge_submit_error', $this, $response);
-        } else {
-            do_action('forms_bridge_submit', $this, $response);
-        }
-
-        return $response;
-    }
+    abstract protected function do_submit($payload, $attachments = []);
 
     /**
      * Returns a clone of the bridge instance with its data patched by
@@ -241,31 +194,49 @@ abstract class Form_Bridge
     }
 
     /**
-     * Submits submission to the backend.
-     *
-     * @param array $payload Submission data.
-     * @param array $attachments Submission's attached files.
-     *
-     * @return array|WP_Error Http request response.
-     */
-    abstract protected function do_submit($payload, $attachments);
-
-    /**
      * Apply cast mappers to data.
      *
      * @param array $data Array of data.
      *
      * @return array Data modified by the bridge's mappers.
      */
-    final public function apply_mappers($data)
+    final public function apply_mutation($data, $mutation = null)
     {
         $finger = new JSON_Finger($data);
-        foreach ($this->mappers as $pipe) {
-            extract($pipe);
-            $value = $finger->get($from);
-            $finger->unset($from);
-            if ($cast !== 'null') {
-                $finger->set($to, $this->cast($value, $cast));
+
+        if ($mutation === null) {
+            $mutation = $this->mutations[0] ?? [];
+        }
+
+        foreach ($mutation as $mapper) {
+            $is_valid =
+                JSON_Finger::validate($mapper['from']) &&
+                JSON_Finger::validate($mapper['to']);
+
+            if (!$is_valid) {
+                continue;
+            }
+
+            $isset = $finger->isset($mapper['from']);
+            if (!$isset) {
+                continue;
+            }
+
+            $value = $finger->get($mapper['from']);
+
+            if (
+                ($mapper['cast'] !== 'copy' &&
+                    $mapper['from'] !== $mapper['to']) ||
+                $mapper['cast'] === 'null'
+            ) {
+                $finger->unset($mapper['from']);
+            }
+
+            if ($mapper['cast'] !== 'null') {
+                $finger->set(
+                    $mapper['to'],
+                    $this->cast($value, $mapper['cast'], $mapper['from'])
+                );
             }
         }
 
@@ -280,31 +251,55 @@ abstract class Form_Bridge
      *
      * @return mixed
      */
-    private function cast($value, $type)
+    private function cast($value, $cast, $pointer)
     {
-        switch ($type) {
+        if (strstr($pointer, '[]') !== false) {
+            return $this->cast_expanded($value, $cast, $pointer);
+        }
+
+        switch ($cast) {
             case 'string':
                 return (string) $value;
             case 'integer':
                 return (int) $value;
-            case 'float':
+            case 'number':
                 return (float) $value;
             case 'boolean':
                 return (bool) $value;
             case 'json':
-                try {
-                    return wp_json_encode($value, JSON_UNESCAPED_UNICODE);
-                } catch (TypeError) {
-                    return '';
-                }
+                return wp_json_encode($value, JSON_UNESCAPED_UNICODE);
             case 'csv':
                 return implode(',', (array) $value);
             case 'concat':
                 return implode(' ', (array) $value);
+            case 'inherit':
+                return $value;
+            case 'copy':
+                return $value;
             case 'null':
-                return null;
+                return;
             default:
                 return (string) $value;
         }
+    }
+
+    private function cast_expanded($values, $cast, $pointer)
+    {
+        $parts = explode('[]', $pointer);
+        $before = $parts[0];
+        $after = implode('[]', array_slice($parts, 1));
+
+        if (empty($after)) {
+            return array_map(function ($value) use ($cast, $before) {
+                $this->cast($value, $cast, $before);
+            }, $values);
+        }
+
+        for ($i = 0; $i < count($values); $i++) {
+            $pointer = "{$before}[{$i}]{$after}";
+            $values[$i] = $this->cast($values[$i], $cast, $pointer);
+        }
+
+        return $values;
     }
 }

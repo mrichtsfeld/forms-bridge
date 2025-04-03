@@ -36,6 +36,13 @@ class Rest_Addon extends Addon
     protected static $bridge_class = '\FORMS_BRIDGE\Rest_Form_Bridge';
 
     /**
+     * Handles the addon's custom form bridge template class.
+     *
+     * @var string
+     */
+    protected static $bridge_template_class = '\FORMS_BRIDGE\Rest_Form_Bridge_Template';
+
+    /**
      * Registers the setting and its fields.
      *
      * @return array Addon's settings configuration.
@@ -44,61 +51,24 @@ class Rest_Addon extends Addon
     {
         return [
             static::$api,
-            [
+            self::merge_setting_config([
                 'bridges' => [
                     'type' => 'array',
                     'items' => [
                         'type' => 'object',
                         'additionalProperties' => false,
                         'properties' => [
-                            'name' => ['type' => 'string'],
                             'backend' => ['type' => 'string'],
-                            'form_id' => ['type' => 'string'],
                             'endpoint' => ['type' => 'string'],
                             'method' => [
                                 'type' => 'string',
                                 'enum' => ['GET', 'POST', 'PUT', 'DELETE'],
                             ],
-                            'mappers' => [
-                                'type' => 'array',
-                                'items' => [
-                                    'type' => 'object',
-                                    'additionalProperties' => false,
-                                    'properties' => [
-                                        'from' => ['type' => 'string'],
-                                        'to' => ['type' => 'string'],
-                                        'cast' => [
-                                            'type' => 'string',
-                                            'enum' => [
-                                                'boolean',
-                                                'string',
-                                                'integer',
-                                                'float',
-                                                'json',
-                                                'csv',
-                                                'concat',
-                                                'null',
-                                            ],
-                                        ],
-                                    ],
-                                    'required' => ['from', 'to', 'cast'],
-                                ],
-                            ],
-                            'template' => ['type' => 'string'],
-                            'is_valid' => ['type' => 'boolean'],
                         ],
-                        'required' => [
-                            'name',
-                            'backend',
-                            'form_id',
-                            'endpoint',
-                            'method',
-                            'mappers',
-                            'is_valid',
-                        ],
+                        'required' => ['backend', 'endpoint', 'method'],
                     ],
                 ],
-            ],
+            ]),
             [
                 'bridges' => [],
             ],
@@ -137,14 +107,6 @@ class Rest_Addon extends Addon
             return [];
         }
 
-        $form_ids = array_reduce(
-            apply_filters('forms_bridge_forms', []),
-            static function ($form_ids, $form) {
-                return array_merge($form_ids, [$form['_id']]);
-            },
-            []
-        );
-
         $backend_names = array_map(function ($backend) {
             return $backend['name'];
         }, $backends);
@@ -154,22 +116,14 @@ class Rest_Addon extends Addon
         $uniques = [];
         $validated = [];
         foreach ($bridges as $bridge) {
-            if (empty($bridge['name'])) {
-                continue;
-            }
+            $bridge = self::validate_bridge($bridge, $uniques);
 
-            if (in_array($bridge['name'], $uniques)) {
+            if (!$bridge) {
                 continue;
-            } else {
-                $uniques[] = $bridge['name'];
             }
 
             if (!in_array($bridge['backend'], $backend_names)) {
                 $bridge['backend'] = '';
-            }
-
-            if (!in_array($bridge['form_id'], $form_ids)) {
-                $bridge['form_id'] = '';
             }
 
             if (!in_array($bridge['method'], $http_methods)) {
@@ -178,27 +132,11 @@ class Rest_Addon extends Addon
 
             $bridge['endpoint'] = $bridge['endpoint'] ?? '';
 
-            $bridge['mappers'] = array_values(
-                array_filter((array) $bridge['mappers'], function ($pipe) {
-                    return !(
-                        empty($pipe['from']) ||
-                        empty($pipe['to']) ||
-                        empty($pipe['cast'])
-                    );
-                })
-            );
+            $bridge['is_valid'] =
+                $bridge['is_valid'] &&
+                !empty($bridge['endpoint']) &&
+                !empty($bridge['backend']);
 
-            $is_valid = true;
-            unset($bridge['is_valid']);
-            foreach ($bridge as $field => $value) {
-                if ($field === 'mappers') {
-                    continue;
-                }
-
-                $is_valid = $is_valid && !empty($value);
-            }
-
-            $bridge['is_valid'] = $is_valid;
             $validated[] = $bridge;
         }
 

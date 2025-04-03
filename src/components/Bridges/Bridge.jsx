@@ -2,9 +2,8 @@
 import { useForms } from "../../providers/Forms";
 import { useGeneral } from "../../providers/Settings";
 import useBridgeNames from "../../hooks/useBridgeNames";
-import { useTemplates } from "../../providers/Templates";
-import BridgeMappers from "../BridgeMappers";
-import BridgeTemplate from "../BridgeTemplate";
+import Mappers from "../Mappers";
+import Workflow from "../Workflow";
 import NewBridge from "./NewBridge";
 
 const {
@@ -26,8 +25,6 @@ export default function Bridge({
 }) {
   if (data.name === "add") return template({ add: update, schema });
 
-  const templates = useTemplates();
-
   const [{ backends }] = useGeneral();
   const backendOptions = [{ label: "", value: "" }].concat(
     backends.map(({ name }) => ({
@@ -47,6 +44,18 @@ export default function Bridge({
   const form = useMemo(() => {
     return forms.find((form) => form._id == data.form_id);
   }, [data.form_id]);
+
+  const backend = useMemo(() => {
+    return backends.find((backend) => backend.name === data.backend);
+  }, [data.backend]);
+
+  const isMultipart = useMemo(
+    () =>
+      backend?.headers.find((header) => header.name === "Content-Type")
+        ?.value === "multipart/form-data",
+
+    [backend]
+  );
 
   const [name, setName] = useState(data.name);
   const initialName = useRef(data.name);
@@ -135,18 +144,33 @@ export default function Bridge({
           flexWrap: "wrap",
         }}
       >
-        <BridgeMappers
+        <Mappers
           form={form}
-          mappers={data.mappers}
-          setMappers={(mappers) => update({ ...data, mappers })}
+          mappers={data.mutations[0]}
+          setMappers={(mappers) =>
+            update({
+              ...data,
+              mutations: [mappers].concat(data.mutations.slice(1)),
+            })
+          }
+          includeFiles={!isMultipart}
         />
-        {templates.length && (
-          <BridgeTemplate
-            templates={templates}
-            template={data.template}
-            setTemplate={(template) => update({ ...data, template })}
-          />
-        )}
+        <Workflow
+          form={form}
+          mutations={data.mutations}
+          workflow={data.workflow}
+          setWorkflow={(workflow) => update({ ...data, workflow })}
+          setMutationMappers={(mutation, mappers) => {
+            update({
+              ...data,
+              mutations: data.mutations
+                .slice(0, mutation)
+                .concat([mappers])
+                .concat(data.mutations.slice(mutation + 1)),
+            });
+          }}
+          includeFiles={!isMultipart}
+        />
         <Button
           isDestructive
           variant="primary"

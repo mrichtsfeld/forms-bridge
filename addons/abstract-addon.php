@@ -44,6 +44,76 @@ abstract class Addon extends Singleton
     protected static $bridge_class = '\FORMS_BRIDGE\Form_Bridge';
 
     /**
+     * Handles addon's custom bridge template class name.
+     *
+     * @var string
+     */
+    protected static $bridge_template_class = '\FORMS_BRIDGE\Form_Bridge_Template';
+
+    protected static $default_config = [
+        'bridges' => [
+            'type' => 'array',
+            'items' => [
+                'type' => 'object',
+                'additionalProperties' => false,
+                'properties' => [
+                    'name' => ['type' => 'string'],
+                    'form_id' => ['type' => 'string'],
+                    'mutations' => [
+                        'type' => 'array',
+                        'items' => [
+                            'type' => 'array',
+                            'items' => [
+                                'type' => 'object',
+                                'additionalProperties' => false,
+                                'properties' => [
+                                    'from' => ['type' => 'string'],
+                                    'to' => ['type' => 'string'],
+                                    'cast' => [
+                                        'type' => 'string',
+                                        'enum' => [
+                                            'boolean',
+                                            'string',
+                                            'integer',
+                                            'number',
+                                            'json',
+                                            'csv',
+                                            'concat',
+                                            'inherit',
+                                            'copy',
+                                            'null',
+                                        ],
+                                    ],
+                                ],
+                                'additionalProperties' => false,
+                                'required' => ['from', 'to', 'cast'],
+                            ],
+                        ],
+                    ],
+                    'template' => ['type' => 'string'],
+                    'workflow' => [
+                        'type' => 'array',
+                        'items' => ['type' => 'string'],
+                    ],
+                    'is_valid' => ['type' => 'boolean'],
+                ],
+                'required' => [
+                    'name',
+                    'form_id',
+                    'mappers',
+                    'workflow',
+                    'is_valid',
+                ],
+            ],
+        ],
+    ];
+
+    protected static function merge_setting_config($config)
+    {
+        return forms_bridge_merge_object($config, self::$default_config);
+    }
+
+    /**
      * Public singleton initializer.
      */
     final public static function setup(...$args)
@@ -102,12 +172,20 @@ abstract class Addon extends Singleton
     /**
      * Public addons loader.
      */
-    final public static function load()
+    final public static function load($autoload = false)
     {
         $registry = self::registry();
         foreach ($registry as $addon => $enabled) {
+            $addon_dir = dirname(__FILE__) . "/{$addon}";
+
             if ($enabled) {
-                require_once dirname(__FILE__) . "/{$addon}/{$addon}.php";
+                if ($autoload) {
+                    require_once "{$addon_dir}/{$addon}.php";
+                }
+
+                if (is_dir("{$addon_dir}/mu")) {
+                    self::autoload_dir("{$addon}/mu", ['php']);
+                }
             }
         }
 
@@ -155,9 +233,12 @@ abstract class Addon extends Singleton
         );
     }
 
+    /**
+     * Loads the addon and registers its settings on the store.
+     */
     final public static function lazy_load()
     {
-        static::load();
+        static::load(true);
         do_action('wpct_init_store');
     }
 
@@ -178,6 +259,83 @@ abstract class Addon extends Singleton
     abstract protected static function validate_setting($data, $setting);
 
     /**
+     * Common bridge validation method.
+     *
+     * @param array $bridge Bridge data.
+     * @param array $uniques Carry with already validated unique bridge names.
+     *
+     * @return array Validated and sanitized bridge data.
+     */
+    protected static function validate_bridge($bridge, &$uniques = [])
+    {
+        if (empty($bridge['name'])) {
+            return;
+        }
+
+        if (in_array($bridge['name'], $uniques)) {
+            return;
+        } else {
+            $uniques[] = $bridge['name'];
+        }
+
+        static $forms;
+        if (empty($forms)) {
+            $forms = apply_filters('forms_bridge_forms', []);
+        }
+
+        $form = null;
+        foreach ($forms as $_form) {
+            if ($_form['_id'] === $bridge['form_id']) {
+                $form = $_form;
+            }
+        }
+
+        if (empty($form)) {
+            $bridge['form_id'] = '';
+        }
+
+        $bridge['workflow'] = array_map(
+            'sanitize_text_field',
+            (array) ($bridge['workflow'] ?? [])
+        );
+
+        $mutations = [];
+        foreach ((array) ($bridge['mutations'] ?? []) as $mappers) {
+            $mappers = array_filter($mappers, static function ($mapper) {
+                extract($mapper);
+
+                if (empty($from) || empty($to) || empty($cast)) {
+                    return;
+                }
+
+                if (
+                    !JSON_Finger::validate($from) ||
+                    !JSON_Finger::validate($to)
+                ) {
+                    return;
+                }
+
+                return true;
+            });
+
+            $mutations[] = array_values($mappers);
+        }
+
+        $bridge['mutations'] = array_slice(
+            $mutations,
+            0,
+            count($bridge['workflow']) + 1
+        );
+
+        for ($i = 0; $i <= count($bridge['workflow']); $i++) {
+            $bridge['mutations'][$i] = $bridge['mutations'][$i] ?? [];
+        }
+
+        $bridge['is_valid'] = !empty($bridge['form_id']);
+        return $bridge;
+    }
+
+    /**
      * Private class constructor. Add addons scripts as dependency to the
      * plugin's scripts and setup settings hooks.
      */
@@ -187,7 +345,16 @@ abstract class Addon extends Singleton
             throw new Exception('Invalid addon registration');
         }
 
-        static::load_templates();
+        add_action(
+            'after_setup_theme',
+            static function () {
+                static::load_templates();
+                static::load_workflow_jobs();
+            },
+            10,
+            0
+        );
+
         static::handle_settings();
         static::admin_scripts();
 
@@ -207,18 +374,6 @@ abstract class Addon extends Singleton
             10,
             3
         );
-    }
-
-    /**
-     * Addon templates getter.
-     *
-     * @todo Define abstract template and implementations.
-     *
-     * @return array List with addon template instances.
-     */
-    final protected static function templates()
-    {
-        return apply_filters('forms_bridge_templates', [], static::$api);
     }
 
     /**
@@ -329,8 +484,30 @@ abstract class Addon extends Singleton
                     return $default;
                 }
 
+                $templates = apply_filters(
+                    'forms_bridge_templates',
+                    [],
+                    static::$api
+                );
+                $workflow_jobs = apply_filters(
+                    'forms_bridgr_workflow_jobs',
+                    [],
+                    static::$api
+                );
+
                 return array_merge($default, [
-                    'templates' => static::templates(),
+                    'templates' => array_map(function ($template) {
+                        return [
+                            'title' => $template->title,
+                            'name' => $template->name,
+                        ];
+                    }, $templates),
+                    'workflow_jobs' => array_map(function ($job) {
+                        return [
+                            'title' => $job->title,
+                            'name' => $job->name,
+                        ];
+                    }, $workflow_jobs),
                 ]);
             },
             10,
@@ -344,8 +521,30 @@ abstract class Addon extends Singleton
                     return $value;
                 }
 
+                $templates = apply_filters(
+                    'forms_bridge_templates',
+                    [],
+                    static::$api
+                );
+                $workflow_jobs = apply_filters(
+                    'forms_bridge_workflow_jobs',
+                    [],
+                    static::$api
+                );
+
                 return array_merge($value, [
-                    'templates' => static::templates(),
+                    'templates' => array_map(function ($template) {
+                        return [
+                            'title' => $template->title,
+                            'name' => $template->name,
+                        ];
+                    }, $templates),
+                    'workflow_jobs' => array_map(function ($job) {
+                        return [
+                            'title' => $job->title,
+                            'name' => $job->name,
+                        ];
+                    }, $workflow_jobs),
                 ]);
             },
             10,
@@ -420,7 +619,78 @@ abstract class Addon extends Singleton
         }
 
         unset($data['templates']);
+        unset($data['workflow_jobs']);
+
         return static::validate_setting($data, $setting);
+    }
+
+    /**
+     * Autoload config files from a given addon's directory. Used to load
+     * template and workflow job config files.
+     *
+     * @param string $dirname Name of the target directory.
+     *
+     * @return array Array with data from files.
+     */
+    private static function autoload_dir(
+        $dirname,
+        $extensions = ['php', 'json']
+    ) {
+        $__FILE__ = (new ReflectionClass(static::class))->getFileName();
+        $dir = dirname($__FILE__) . '/' . $dirname;
+
+        if (!is_dir($dir)) {
+            $res = mkdir($dir, 755, true);
+            if (!$res) {
+                return [];
+            }
+        }
+
+        if (!is_readable($dir)) {
+            return [];
+        }
+
+        $files = [];
+        foreach (array_diff(scandir($dir), ['.', '..']) as $file) {
+            $file_path = $dir . '/' . $file;
+
+            if (is_file($file_path) && is_readable($file_path)) {
+                $files[] = $file_path;
+            }
+        }
+
+        $loaded = [];
+        foreach ($files as $file_path) {
+            if (!is_file($file_path) || !is_readable($file_path)) {
+                continue;
+            }
+
+            $file = basename($file_path);
+            $name = pathinfo($file)['filename'];
+            $ext = pathinfo($file)['extension'] ?? null;
+
+            if (!in_array($ext, $extensions)) {
+                continue;
+            }
+
+            $data = null;
+            if ($ext === 'php') {
+                $data = include_once $file_path;
+            } elseif ($ext === 'json') {
+                $content = file_get_contents($file_path);
+                $data = json_decode($content, true);
+            }
+
+            if (is_array($data)) {
+                $loaded[] = [
+                    'name' => $name,
+                    'data' => $data,
+                    'api' => static::$api,
+                ];
+            }
+        }
+
+        return $loaded;
     }
 
     /**
@@ -428,9 +698,36 @@ abstract class Addon extends Singleton
      */
     private static function load_templates()
     {
-        $__FILE__ = (new ReflectionClass(static::class))->getFileName();
-        $dir = dirname($__FILE__) . '/templates';
+        $templates = self::autoload_dir('templates');
+        $templates = apply_filters(
+            'forms_bridge_load_templates',
+            $templates,
+            static::$api
+        );
 
-        static::$bridge_class::load_templates($dir, static::$api);
+        foreach ($templates as $template) {
+            new static::$bridge_template_class(
+                $template['name'],
+                $template['data'],
+                static::$api
+            );
+        }
+    }
+
+    /**
+     * Loads addon's workflow jobs.
+     */
+    private static function load_workflow_jobs()
+    {
+        $jobs = self::autoload_dir('jobs');
+        $jobs = apply_filters(
+            'forms_bridge_load_workflow_jobs',
+            $jobs,
+            static::$api
+        );
+
+        foreach ($jobs as $job) {
+            new Workflow_Job($job['name'], $job['data'], static::$api);
+        }
     }
 }

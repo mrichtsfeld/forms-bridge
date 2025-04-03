@@ -10,7 +10,7 @@ require_once 'class-odoo-db.php';
 require_once 'class-odoo-form-bridge.php';
 require_once 'class-odoo-form-bridge-template.php';
 
-require_once 'country-codes.php';
+require_once 'api-functions.php';
 
 /**
  * Odoo Addon class.
@@ -37,6 +37,13 @@ class Odoo_Addon extends Addon
      * @var string
      */
     protected static $bridge_class = '\FORMS_BRIDGE\Odoo_Form_Bridge';
+
+    /**
+     * Handles the addon's custom bridge template class.
+     *
+     * @var string
+     */
+    protected static $bridge_template_class = '\FORMS_BRIDGE\Odoo_Form_Bridge_Template';
 
     /**
      * Addon constructor. Inherits from the abstract addon and initialize interceptos
@@ -109,7 +116,7 @@ class Odoo_Addon extends Addon
     {
         return [
             self::$api,
-            [
+            self::merge_setting_config([
                 'databases' => [
                     'type' => 'array',
                     'items' => [
@@ -130,47 +137,13 @@ class Odoo_Addon extends Addon
                         'type' => 'object',
                         'additionalProperties' => false,
                         'properties' => [
-                            'name' => ['type' => 'string'],
                             'database' => ['type' => 'string'],
-                            'form_id' => ['type' => 'string'],
                             'model' => ['type' => 'string'],
-                            'mappers' => [
-                                'type' => 'array',
-                                'items' => [
-                                    'type' => 'object',
-                                    'additionalProperties' => false,
-                                    'properties' => [
-                                        'from' => ['type' => 'string'],
-                                        'to' => ['type' => 'string'],
-                                        'cast' => [
-                                            'type' => 'string',
-                                            'enum' => [
-                                                'boolean',
-                                                'string',
-                                                'integer',
-                                                'float',
-                                                'json',
-                                                'null',
-                                            ],
-                                        ],
-                                    ],
-                                    'required' => ['from', 'to', 'cast'],
-                                ],
-                            ],
-                            'template' => ['type' => 'string'],
-                            'is_valid' => ['type' => 'boolean'],
                         ],
-                        'required' => [
-                            'name',
-                            'database',
-                            'form_id',
-                            'model',
-                            'mappers',
-                            'is_valid',
-                        ],
+                        'required' => ['database', 'model'],
                     ],
                 ],
-            ],
+            ]),
             [
                 'databases' => [],
                 'bridges' => [],
@@ -262,14 +235,6 @@ class Odoo_Addon extends Addon
             return [];
         }
 
-        $form_ids = array_reduce(
-            apply_filters('forms_bridge_forms', []),
-            static function ($form_ids, $form) {
-                return array_merge($form_ids, [$form['_id']]);
-            },
-            []
-        );
-
         $db_names = array_map(function ($database) {
             return $database['name'];
         }, $databases);
@@ -277,47 +242,23 @@ class Odoo_Addon extends Addon
         $uniques = [];
         $validated = [];
         foreach ($bridges as $bridge) {
-            if (empty($bridge['name'])) {
-                continue;
-            }
+            $bridge = self::validate_bridge($bridge, $uniques);
 
-            if (in_array($bridge['name'], $uniques)) {
+            if (!$bridge) {
                 continue;
-            } else {
-                $uniques[] = $bridge['name'];
             }
 
             if (!in_array($bridge['database'], $db_names)) {
                 $bridge['database'] = '';
             }
 
-            if (!in_array($bridge['form_id'], $form_ids)) {
-                $bridge['form_id'] = '';
-            }
-
             $bridge['model'] = $bridge['model'] ?? '';
 
-            $bridge['mappers'] = array_values(
-                array_filter((array) $bridge['mappers'], function ($pipe) {
-                    return !(
-                        empty($pipe['from']) ||
-                        empty($pipe['to']) ||
-                        empty($pipe['cast'])
-                    );
-                })
-            );
+            $bridge['is_valid'] =
+                $bridge['is_valid'] &&
+                !empty($bridge['database']) &&
+                !empty($bridge['model']);
 
-            $is_valid = true;
-            unset($bridge['is_valid']);
-            foreach ($bridge as $field => $value) {
-                if ($field === 'mappers') {
-                    continue;
-                }
-
-                $is_valid = $is_valid && !empty($value);
-            }
-
-            $bridge['is_valid'] = $is_valid;
             $validated[] = $bridge;
         }
 

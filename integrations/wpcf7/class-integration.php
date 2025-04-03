@@ -137,13 +137,18 @@ class Integration extends BaseIntegration
     /**
      * Retrives the current submission data.
      *
+     * @param boolean $raw Control if the submission is serialized before exit.
+     *
      * @return array Submission data.
      */
-    public function submission()
+    public function submission($raw = false)
     {
         $submission = WPCF7_Submission::get_instance();
+
         if (!$submission) {
             return null;
+        } elseif ($raw) {
+            return $submission;
         }
 
         $form = $this->form();
@@ -175,23 +180,28 @@ class Integration extends BaseIntegration
     public function serialize_form($form)
     {
         $form_id = (int) $form->id();
-        return [
-            '_id' => 'wpcf7:' . $form_id,
-            'id' => $form_id,
-            'title' => $form->title(),
-            'bridges' => apply_filters(
-                'forms_bridge_bridges',
-                [],
-                'wpcf7:' . $form_id
-            ),
-            'fields' => array_values(
-                array_filter(
-                    array_map(function ($field) {
-                        return $this->serialize_field($field);
-                    }, $form->scan_form_tags())
-                )
-            ),
-        ];
+        $fields = array_filter(
+            array_map(function ($field) {
+                return $this->serialize_field($field);
+            }, $form->scan_form_tags())
+        );
+
+        return apply_filters(
+            'forms_bridge_form_data',
+            [
+                '_id' => 'wpcf7:' . $form_id,
+                'id' => $form_id,
+                'title' => $form->title(),
+                'bridges' => apply_filters(
+                    'forms_bridge_bridges',
+                    [],
+                    'wpcf7:' . $form_id
+                ),
+                'fields' => array_values($fields),
+            ],
+            $form,
+            'wpcf7'
+        );
     }
 
     /**
@@ -204,7 +214,7 @@ class Integration extends BaseIntegration
      */
     private function serialize_field($field)
     {
-        if (in_array($field->basetype, ['response', 'submit'])) {
+        if (in_array($field->basetype, ['response', 'submit', 'quiz'])) {
             return;
         }
 
@@ -212,8 +222,6 @@ class Integration extends BaseIntegration
         if ($type === 'conditional') {
             $type = $field->get_option('type')[0];
         }
-
-        // $type = $this->norm_field_type($type);
 
         $options = [];
         if (is_array($field->values)) {
@@ -228,48 +236,113 @@ class Integration extends BaseIntegration
 
         $format = $type === 'date' ? 'yyyy-mm-dd' : '';
 
-        return [
-            'id' => $field->get_id_option(),
-            'type' => $type,
-            'name' => $field->raw_name,
-            'label' => $field->name,
-            'required' => $field->is_required(),
-            'options' => $options,
-            'is_file' => $type === 'file',
-            'is_multi' =>
-                ($field->basetype === 'checkbox' &&
-                    !$field->has_option('exclusive')) ||
-                ($field->basetype === 'select' &&
-                    $field->has_option('multiple')),
-            'conditional' =>
-                $field->basetype === 'conditional' ||
-                $field->basetype === 'fileconditional',
-            'format' => $format,
-        ];
+        return apply_filters(
+            'forms_bridge_form_field_data',
+            [
+                'id' => $field->get_id_option(),
+                'type' => $type,
+                'name' => $field->raw_name,
+                'label' => $field->name,
+                'required' => $field->is_required(),
+                'options' => $options,
+                'is_file' => $type === 'file',
+                'is_multi' => $this->is_multi_field($field),
+                'conditional' =>
+                    $field->basetype === 'conditional' ||
+                    $field->basetype === 'fileconditional',
+                'format' => $format,
+                'schema' => $this->field_value_schema($field),
+            ],
+            $field,
+            'wpcf7'
+        );
     }
 
-    // private function norm_field_type($type)
-    // {
-    //     switch ($type) {
-    //         case 'iban':
-    //         case 'vat':
-    //         case 'email':
-    //         case 'url':
-    //         case 'textarea':
-    //         case 'quiz':
-    //             return 'text';
-    //         case 'select':
-    //         case 'checkbox':
-    //         case 'radio':
-    //             return 'options';
-    //         case 'files':
-    //             return 'file';
-    //         case 'acceptance':
-    //             return 'consent';
-    //         default:
-    //             return $type;
-    //     }
-    // }
+    /**
+     * Checks if a filed is multi value field.
+     *
+     * @param WPCF7_FormTag Target tag instance.
+     *
+     * @return boolean
+     */
+    private function is_multi_field($tag)
+    {
+        $type = str_replace('*', '', $tag->type);
+
+        if ($type === 'checkbox') {
+            return !$tag->has_option('exclusive');
+        }
+
+        if ($type === 'select') {
+            return $tag->has_option('multiple');
+        }
+
+        return false;
+    }
+
+    /**
+     * Gets the field value JSON schema.
+     *
+     * @param WPCF7_FormTag $tag Tag instance.
+     *
+     * @return array JSON schema of the value of the field.
+     */
+    private function field_value_schema($tag)
+    {
+        $type = str_replace('*', '', $tag->type);
+
+        switch ($type) {
+            case 'text':
+            case 'textarea':
+            case 'date':
+            case 'email':
+            case 'url':
+            case 'quiz':
+            case 'radio':
+            case 'iban':
+            case 'vat':
+                return ['type' => 'string'];
+            case 'select':
+                if ($tag->has_option('multiple')) {
+                    $items = [];
+                    for ($i = 0; $i < count($tag->values); $i++) {
+                        $items[] = ['type' => 'string'];
+                    }
+
+                    return [
+                        'type' => 'array',
+                        'items' => $items,
+                        'additionalItems' => false,
+                    ];
+                }
+
+                return ['type' => 'string'];
+            case 'checkbox':
+                if ($tag->has_option('exclusive')) {
+                    return ['type' => 'string'];
+                }
+
+                $items = [];
+                for ($i = 0; $i < count($tag->values); $i++) {
+                    $items[] = ['type' => 'string'];
+                }
+
+                return [
+                    'type' => 'array',
+                    'items' => $items,
+                    'additionalItems' => false,
+                ];
+            case 'file':
+            case 'files':
+                return;
+            case 'acceptance':
+                return ['type' => 'boolean'];
+            case 'number':
+                return ['type' => 'number'];
+            default:
+                return ['type' => 'string'];
+        }
+    }
 
     /**
      * Serializes the form's submission data.
@@ -342,7 +415,9 @@ class Integration extends BaseIntegration
         $form = '';
         foreach ($fields as $field) {
             if ($field['type'] == 'hidden') {
-                $form .= $this->field_to_tag($field) . "\n\n";
+                if (isset($field['value'])) {
+                    $form .= $this->field_to_tag($field) . "\n\n";
+                }
             } else {
                 $form .= "<label> {$field['label']}\n";
                 $form .= '  ' . $this->field_to_tag($field) . " </label>\n\n";
@@ -362,7 +437,7 @@ class Integration extends BaseIntegration
      */
     private function field_to_tag($field)
     {
-        if (!empty($field['value'])) {
+        if (isset($field['value'])) {
             $type = 'hidden';
         } else {
             if ($field['type'] === 'options') {

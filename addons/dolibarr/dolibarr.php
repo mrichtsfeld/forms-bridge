@@ -10,6 +10,8 @@ require_once 'class-dolibarr-api-key.php';
 require_once 'class-dolibarr-form-bridge.php';
 require_once 'class-dolibarr-form-bridge-template.php';
 
+require_once 'api-functions.php';
+
 require_once 'country-codes.php';
 // require_once 'state-codes.php';
 
@@ -40,8 +42,14 @@ class Dolibarr_Addon extends Addon
     protected static $bridge_class = '\FORMS_BRIDGE\Dolibarr_Form_Bridge';
 
     /**
-     * Addon constructor. Inherits from the abstract addon and initialize interceptos
-     * and custom hooks.
+     * Handles the addon's custom form bridge template class.
+     *
+     * @var string
+     */
+    protected static $bridge_template_class = '\FORMS_BRIDGE\Dolibarr_Form_Bridge_Template';
+
+    /**
+     * Addon constructor. Inherits from the abstract addon and sets up custom hooks.
      */
     protected function construct(...$args)
     {
@@ -110,7 +118,7 @@ class Dolibarr_Addon extends Addon
     {
         return [
             self::$api,
-            [
+            self::merge_setting_config([
                 'api_keys' => [
                     'type' => 'array',
                     'items' => [
@@ -130,49 +138,13 @@ class Dolibarr_Addon extends Addon
                         'type' => 'object',
                         'additionalProperties' => false,
                         'properties' => [
-                            'name' => ['type' => 'string'],
                             'api_key' => ['type' => 'string'],
-                            'form_id' => ['type' => 'string'],
                             'endpoint' => ['type' => 'string'],
-                            'mappers' => [
-                                'type' => 'array',
-                                'items' => [
-                                    'type' => 'object',
-                                    'additionalProperties' => false,
-                                    'properties' => [
-                                        'from' => ['type' => 'string'],
-                                        'to' => ['type' => 'string'],
-                                        'cast' => [
-                                            'type' => 'string',
-                                            'enum' => [
-                                                'boolean',
-                                                'string',
-                                                'integer',
-                                                'float',
-                                                'json',
-                                                'csv',
-                                                'concat',
-                                                'null',
-                                            ],
-                                        ],
-                                    ],
-                                    'required' => ['from', 'to', 'cast'],
-                                ],
-                            ],
-                            'template' => ['type' => 'string'],
-                            'is_valid' => ['type' => 'boolean'],
                         ],
-                        'required' => [
-                            'name',
-                            'api_key',
-                            'form_id',
-                            'endpoint',
-                            'mappers',
-                            'is_valid',
-                        ],
+                        'required' => ['api_key', 'endpoint'],
                     ],
                 ],
-            ],
+            ]),
             [
                 'api_keys' => [],
                 'bridges' => [],
@@ -263,14 +235,6 @@ class Dolibarr_Addon extends Addon
             return [];
         }
 
-        $form_ids = array_reduce(
-            apply_filters('forms_bridge_forms', []),
-            static function ($form_ids, $form) {
-                return array_merge($form_ids, [$form['_id']]);
-            },
-            []
-        );
-
         $key_names = array_map(function ($api_key) {
             return $api_key['name'];
         }, $api_keys);
@@ -278,47 +242,23 @@ class Dolibarr_Addon extends Addon
         $uniques = [];
         $validated = [];
         foreach ($bridges as $bridge) {
-            if (empty($bridge['name'])) {
-                continue;
-            }
+            $bridge = self::validate_bridge($bridge, $uniques);
 
-            if (in_array($bridge['name'], $uniques, true)) {
+            if (!$bridge) {
                 continue;
-            } else {
-                $uniques[] = $bridge['name'];
             }
 
             if (!in_array($bridge['api_key'], $key_names, true)) {
                 $bridge['api_key'] = '';
             }
 
-            if (!in_array($bridge['form_id'], $form_ids, true)) {
-                $bridge['form_id'] = '';
-            }
-
             $bridge['endpoint'] = $bridge['endpoint'] ?? '';
 
-            $bridge['mappers'] = array_values(
-                array_filter((array) $bridge['mappers'], function ($pipe) {
-                    return !(
-                        empty($pipe['from']) ||
-                        empty($pipe['to']) ||
-                        empty($pipe['cast'])
-                    );
-                })
-            );
+            $bridge['is_valid'] =
+                $bridge['is_valid'] &&
+                !empty($bridge['api_key']) &&
+                !empty($bridge['endpoint']);
 
-            $is_valid = true;
-            unset($bridge['is_valid']);
-            foreach ($bridge as $field => $value) {
-                if ($field === 'mappers') {
-                    continue;
-                }
-
-                $is_valid = $is_valid && !empty($value);
-            }
-
-            $bridge['is_valid'] = $is_valid;
             $validated[] = $bridge;
         }
 

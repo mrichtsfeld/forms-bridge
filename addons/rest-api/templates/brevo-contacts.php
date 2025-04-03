@@ -4,22 +4,6 @@ if (!defined('ABSPATH')) {
     exit();
 }
 
-add_filter(
-    'forms_bridge_payload',
-    function ($payload, $bridge) {
-        if ($bridge->template === 'brevo-contacts') {
-            $payload['listIds'] = array_map(
-                'intval',
-                explode(',', $payload['listIds'])
-            );
-        }
-
-        return $payload;
-    },
-    9,
-    2
-);
-
 return [
     'title' => __('Brevo Contacts', 'forms-bridge'),
     'fields' => [
@@ -120,17 +104,20 @@ return [
     'bridge' => [
         'method' => 'POST',
         'endpoint' => '/v3/contacts',
-        'mappers' => [
+        'mutations' => [
             [
-                'from' => 'fname',
-                'to' => 'attributes.FNAME',
-                'cast' => 'string',
-            ],
-            [
-                'from' => 'lname',
-                'to' => 'attributes.LNAME',
-                'cast' => 'string',
+                [
+                    'from' => 'fname',
+                    'to' => 'attributes.FNAME',
+                    'cast' => 'string',
+                ],
+                [
+                    'from' => 'lname',
+                    'to' => 'attributes.LNAME',
+                    'cast' => 'string',
+                ],
             ],
         ],
+        'workflow' => ['rest-api-brevo-list-ids'],
     ],
 ];

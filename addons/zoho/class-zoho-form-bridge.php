@@ -30,13 +30,6 @@ class Zoho_Form_Bridge extends Form_Bridge
     private const token_transient = 'forms-bridge-zoho-oauth-access-token';
 
     /**
-     * Handles the form bridge's template class.
-     *
-     * @var string
-     */
-    protected static $template_class = '\FORMS_BRIDGE\Zoho_Form_Bridge_Template';
-
-    /**
      * Parent getter interceptor to short circtuit credentials access.
      *
      * @param string $name Attribute name.
@@ -165,6 +158,7 @@ class Zoho_Form_Bridge extends Form_Bridge
 
         return $response['data']['access_token'];
     }
+
     /**
      * Performs an http request to the Zoho API backend.
      *
@@ -197,7 +191,7 @@ class Zoho_Form_Bridge extends Form_Bridge
 
         $payload = wp_is_numeric_array($payload) ? $payload : [$payload];
 
-        return $this->backend->post(
+        $response = $this->backend->post(
             $this->endpoint,
             ['data' => $payload],
             [
@@ -208,5 +202,21 @@ class Zoho_Form_Bridge extends Form_Bridge
             ],
             $attachments
         );
+
+        if (is_wp_error($response)) {
+            $data = json_decode(
+                $response->get_error_data()['response']['body'],
+                true
+            );
+
+            if ($data['data'][0]['code'] !== 'DUPLICATE_DATA') {
+                return $response;
+            }
+
+            $response = $response->get_error_data()['response'];
+            $response['data'] = json_decode($response['body'], true);
+        }
+
+        return $response;
     }
 }

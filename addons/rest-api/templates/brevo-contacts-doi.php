@@ -4,30 +4,6 @@ if (!defined('ABSPATH')) {
     exit();
 }
 
-add_filter(
-    'forms_bridge_payload',
-    function ($payload, $bridge) {
-        if ($bridge->template === 'brevo-contacts-doi') {
-            $payload['includeListIds'] = array_map(
-                'intval',
-                explode(',', $payload['includeListIds'])
-            );
-
-            $url = parse_url($payload['redirectionUrl']);
-            if (!isset($url['host'])) {
-                $payload['redirectionUrl'] =
-                    get_site_url() .
-                    '/' .
-                    preg_replace('/^\//', '', $payload['redirectionUrl']);
-            }
-        }
-
-        return $payload;
-    },
-    9,
-    2
-);
-
 return [
     'title' => __('Brevo Contacts DOI', 'forms-bridge'),
     'fields' => [
@@ -158,22 +134,28 @@ return [
     'bridge' => [
         'method' => 'POST',
         'endpoint' => '/v3/contacts/doubleOptinConfirmation',
-        'mappers' => [
+        'mutations' => [
             [
-                'from' => 'templateId',
-                'to' => 'templateId',
-                'cast' => 'integer',
+                [
+                    'from' => 'templateId',
+                    'to' => 'templateId',
+                    'cast' => 'integer',
+                ],
+                [
+                    'from' => 'fname',
+                    'to' => 'attributes.FNAME',
+                    'cast' => 'string',
+                ],
+                [
+                    'from' => 'lname',
+                    'to' => 'attributes.LNAME',
+                    'cast' => 'string',
+                ],
             ],
-            [
-                'from' => 'fname',
-                'to' => 'attributes.FNAME',
-                'cast' => 'string',
-            ],
-            [
-                'from' => 'lname',
-                'to' => 'attributes.LNAME',
-                'cast' => 'string',
-            ],
+        ],
+        'workflow' => [
+            'rest-api-brevo-list-ids',
+            'rest-api-brevo-doi-redirection-url',
         ],
     ],
 ];

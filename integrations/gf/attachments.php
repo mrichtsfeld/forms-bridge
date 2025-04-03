@@ -12,14 +12,14 @@ if (!defined('ABSPATH')) {
  *
  * @return array Attachments path info.
  */
-function forms_bridge_upload_path($path_info, $form_id)
+function forms_bridge_gf_upload_path($path_info, $form_id)
 {
-    $private_upload = forms_bridge_private_upload($form_id);
+    $private_upload = forms_bridge_gf_private_upload($form_id);
     if (!$private_upload) {
         return $path_info;
     }
 
-    $base_path = forms_bridge_attachment_base_path();
+    $base_path = forms_bridge_gf_attachment_base_path();
     $path =
         $base_path .
         '/' .
@@ -42,21 +42,22 @@ deny from all'
     }
 
     $path_info['path'] = $path;
-    $path_info['url'] = forms_bridge_attachment_url($path);
+    $path_info['url'] = forms_bridge_gf_attachment_url($path);
     return $path_info;
 }
-add_filter('gform_upload_path', 'forms_bridge_upload_path', 90, 2);
+
+add_filter('gform_upload_path', 'forms_bridge_gf_upload_path', 90, 2);
 
 /**
  * Intercepts GET requests with download query and send attachment file as response.
  */
-function forms_bridge_download_file()
+function forms_bridge_gf_download_file()
 {
     if (!isset($_GET['forms-bridge-attachment'])) {
         return;
     }
 
-    $path = forms_bridge_attachment_fullpath(
+    $path = forms_bridge_gf_attachment_fullpath(
         sanitize_text_field(wp_unslash($_GET['forms-bridge-attachment']))
     );
 
@@ -93,18 +94,19 @@ function forms_bridge_download_file()
     readfile($path);
     die();
 }
-add_action('init', 'forms_bridge_download_file');
+
+add_action('init', 'forms_bridge_gf_download_file');
 
 /**
  * Gets gravityforms attachment store base path.
  *
  * @return string $base_path Attachments store base path.
  */
-function forms_bridge_attachment_base_path()
+function forms_bridge_gf_attachment_base_path()
 {
     $upload_dir = wp_upload_dir();
     $base_path = apply_filters(
-        'forms_bridge_upload_path',
+        'forms_bridge_gf_upload_path',
         $upload_dir['basedir'] . '/forms-bridge'
     );
     if (!($base_path && is_string($base_path))) {
@@ -121,9 +123,9 @@ function forms_bridge_attachment_base_path()
  *
  * @return string Attachment file absolute path.
  */
-function forms_bridge_attachment_fullpath($filepath)
+function forms_bridge_gf_attachment_fullpath($filepath)
 {
-    $base_path = forms_bridge_attachment_base_path();
+    $base_path = forms_bridge_gf_attachment_base_path();
     return $base_path . urldecode($filepath);
 }
 
@@ -134,9 +136,9 @@ function forms_bridge_attachment_fullpath($filepath)
  *
  * @return string Attachment public URL.
  */
-function forms_bridge_attachment_url($filepath)
+function forms_bridge_gf_attachment_url($filepath)
 {
-    $base_path = forms_bridge_attachment_base_path();
+    $base_path = forms_bridge_gf_attachment_base_path();
     $url = get_site_url() . '/index.php?';
     $url .=
         'forms-bridge-attachment=' .
@@ -151,7 +153,7 @@ function forms_bridge_attachment_url($filepath)
  *
  * @return boolean Form uses private store.
  */
-function forms_bridge_private_upload($form_id)
+function forms_bridge_gf_private_upload($form_id)
 {
-    return apply_filters('forms_bridge_private_upload', true, $form_id);
+    return apply_filters('forms_bridge_gf_private_upload', true, $form_id);
 }

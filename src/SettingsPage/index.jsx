@@ -1,8 +1,6 @@
 // source
 import StoreProvider, { useStoreSubmit } from "../providers/Store";
 import SettingsProvider from "../providers/Settings";
-import FormsProvider from "../providers/Forms";
-import TemplatesProvider from "../providers/Templates";
 import GeneralSettings from "./General";
 import Spinner from "../components/Spinner";
 
@@ -121,15 +119,11 @@ export default function SettingsPage({ addons }) {
       )}
       <TabPanel initialTabName={initalTab} onSelect={setTab} tabs={tabs}>
         {(tab) => (
-          <FormsProvider>
-            <SettingsProvider handle={["general"]}>
-              <TemplatesProvider>
-                <Content tab={tab}>
-                  <SaveButton error={error} loading={loading} />
-                </Content>
-              </TemplatesProvider>
-            </SettingsProvider>
-          </FormsProvider>
+          <SettingsProvider handle={["general"]}>
+            <Content tab={tab}>
+              <SaveButton error={error} loading={loading} />
+            </Content>
+          </SettingsProvider>
         )}
       </TabPanel>
       <Spacer paddingY="calc(16px)" />

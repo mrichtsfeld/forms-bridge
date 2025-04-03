@@ -6,9 +6,10 @@ import useRestApi from "../hooks/useRestApi";
 const { PanelRow } = wp.components;
 
 export default function RestSetting() {
-  const [{ bridges, templates }, save] = useRestApi();
+  const [{ bridges, templates, workflow_jobs }, save] = useRestApi();
 
-  const update = (field) => save({ bridges, templates, ...field });
+  const update = (field) =>
+    save({ bridges, templates, workflow_jobs, ...field });
 
   return (
     <PanelRow>

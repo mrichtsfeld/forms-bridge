@@ -181,17 +181,22 @@ class Integration extends BaseIntegration
     /**
      * Retrives the current form submission data.
      *
+     * @param boolean $raw Control if the submission is serialized before exit.
+     *
      * @return array Submission data.
      */
-    public function submission()
+    public function submission($raw = false)
     {
         $form = $this->form();
+
         if (!$form) {
             return;
         }
 
         if (empty(self::$submission)) {
             return;
+        } elseif ($raw) {
+            return self::$submission;
         }
 
         return $this->serialize_submission(self::$submission, $form);
@@ -228,23 +233,38 @@ class Integration extends BaseIntegration
 
         $form_id = isset($data['id']) ? (int) $data['id'] : $form->ID;
 
-        return [
-            '_id' => 'wpforms:' . $form_id,
-            'id' => $form_id,
-            'title' => $data['settings']['form_title'] ?? '',
-            'bridges' => apply_filters(
-                'forms_bridge_bridges',
-                [],
-                'wpforms:' . $form_id
-            ),
-            'fields' => array_values(
-                array_filter(
-                    array_map(function ($field) {
-                        return $this->serialize_field($field);
-                    }, $data['fields'] ?? [])
-                )
-            ),
-        ];
+        return apply_filters(
+            'forms_bridge_form_data',
+            [
+                '_id' => 'wpforms:' . $form_id,
+                'id' => $form_id,
+                'title' => $data['settings']['form_title'] ?? '',
+                'bridges' => apply_filters(
+                    'forms_bridge_bridges',
+                    [],
+                    'wpforms:' . $form_id
+                ),
+                'fields' => array_reduce(
+                    $data['fields'],
+                    function ($fields, $field) use ($data) {
+                        $field = $this->serialize_field(
+                            $field,
+                            $fields,
+                            $data['fields']
+                        );
+
+                        if ($field) {
+                            $fields[] = $field;
+                        }
+
+                        return $fields;
+                    },
+                    []
+                ),
+            ],
+            $data,
+            'wpforms'
+        );
     }
 
     /**
@@ -255,13 +275,11 @@ class Integration extends BaseIntegration
      *
      * @return array
      */
-    private function serialize_field($field)
+    private function serialize_field($field, $fields = [], $all_fields = [])
     {
-        // $type = $this->norm_field_type($field['type']);
         if (
             in_array($field['type'], [
                 'submit',
-                'repeater',
                 'pagebreak',
                 'layout',
                 'captcha',
@@ -274,6 +292,46 @@ class Integration extends BaseIntegration
             return;
         }
 
+        $repeaters = array_filter($fields, static function ($field) {
+            return $field['type'] === 'repeater';
+        });
+
+        $fields_in_repeater = array_reduce(
+            $repeaters,
+            static function ($ids, $repeater) {
+                foreach ($repeater['children'] as $child) {
+                    $ids[] = $child['id'];
+                }
+
+                return $ids;
+            },
+            []
+        );
+
+        $children = [];
+        if ($field['type'] === 'repeater') {
+            foreach ($field['columns'] as $column) {
+                foreach ($column['fields'] as $field_id) {
+                    $children[] = $field_id;
+                }
+            }
+
+            $children = array_map(
+                function ($field) {
+                    return $this->serialize_field($field);
+                },
+                array_filter($all_fields, static function ($field) use (
+                    $children
+                ) {
+                    return in_array($field['id'], $children);
+                })
+            );
+        } else {
+            if (in_array($field['id'], $fields_in_repeater)) {
+                return;
+            }
+        }
+
         $format = $field['date_format'] ?? '';
         if ($format) {
             $format =
@@ -283,49 +341,169 @@ class Integration extends BaseIntegration
                 ][$format] ?? '';
         }
 
-        return [
-            'id' => (int) ($field['id'] ?? 0),
-            'type' => $field['type'],
-            'name' => $field['label'] ?? '',
-            'label' => $field['label'] ?? '',
-            'required' =>
-                isset($field['required']) && $field['required'] === '1',
-            'options' => isset($field['choices']) ? $field['choices'] : [],
-            'is_file' => $field['type'] === 'file-upload',
-            'is_multi' =>
-                strstr($field['type'], 'checkbox') ||
-                ($field['type'] === 'select' &&
-                    ($field['multiple'] ?? null) === '1') ||
-                ($field['type'] === 'file-upload' &&
-                    ($field['max_file_number'] ?? '1') !== '1'),
-            'conditional' => false,
-            'format' => $format,
-        ];
+        return apply_filters(
+            'forms_bridge_form_field_data',
+            [
+                'id' => (int) ($field['id'] ?? 0),
+                'type' => $field['type'],
+                'name' => $field['label'] ?? '',
+                'label' => $field['label'] ?? '',
+                'required' => ($field['required'] ?? '') === '1',
+                'options' => isset($field['choices']) ? $field['choices'] : [],
+                'is_file' => $field['type'] === 'file-upload',
+                'is_multi' => $this->is_multi_field($field),
+                'conditional' => false,
+                'format' => $format,
+                'children' => array_values($children),
+                'schema' => $this->field_value_schema($field, $children),
+            ],
+            $field,
+            'wpforms'
+        );
     }
 
-    // private function norm_field_type($type)
-    // {
-    //     switch ($type) {
-    //         case 'name':
-    //         case 'email':
-    //         case 'textarea':
-    //         case 'payment-total':
-    //         case 'payment-single':
-    //             return 'text';
-    //         case 'number-slider':
-    //         case 'numbers':
-    //             return 'number';
-    //         case 'payment-select':
-    //         case 'payment-multiple':
-    //         case 'payment-checkbox':
-    //         case 'select':
-    //         case 'radio':
-    //         case 'checkbox':
-    //             return 'options';
-    //         default:
-    //             return $type;
-    //     }
-    // }
+    /**
+     * Checks if a filed is multi value field.
+     *
+     * @param array Target field instance.
+     *
+     * @return boolean
+     */
+    private function is_multi_field($field)
+    {
+        if ($field['type'] === 'checkbox' || $field['type'] === 'repeater') {
+            return true;
+        }
+
+        if ($field['type'] === 'select' && ($field['multiple'] ?? false)) {
+            return true;
+        }
+
+        if (
+            $field['type'] === 'file-upload' &&
+            ($field['max_file_number'] ?? 1) !== '1'
+        ) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Gets the field value JSON schema.
+     *
+     * @param array $field Field instance.
+     * @param array $children Children fields.
+     *
+     * @return array JSON schema of the value of the field.
+     */
+    private function field_value_schema($field, $children = [])
+    {
+        switch ($field['type']) {
+            case 'name':
+            case 'email':
+            case 'text':
+            case 'textarea':
+            case 'payment-total':
+            case 'payment-single':
+            case 'radio':
+            case 'password':
+            case 'url':
+                return ['type' => 'string'];
+            case 'number-slider':
+            case 'number':
+                return ['type' => 'number'];
+            case 'payment-select':
+            case 'payment-multiple':
+            case 'payment-checkbox':
+            case 'select':
+                if ($field['multiple'] ?? false) {
+                    $items = [];
+                    for ($i = 0; $i < count($field['choices']); $i++) {
+                        $items[] = ['type' => 'string'];
+                    }
+
+                    return [
+                        'type' => 'array',
+                        'items' => $items,
+                        'additionalItems' => false,
+                    ];
+                }
+
+                return ['type' => 'string'];
+            case 'checkbox':
+                $items = [];
+                for ($i = 0; $i < count($field['choices']); $i++) {
+                    $items[] = ['type' => 'string'];
+                }
+
+                return [
+                    'type' => 'array',
+                    'items' => $items,
+                    'additionalItems' => false,
+                ];
+            case 'date-time':
+                if ($field['format'] === 'date-time') {
+                    return [
+                        'type' => 'object',
+                        'properties' => [
+                            'date' => ['type' => 'string'],
+                            'time' => ['type' => 'string'],
+                        ],
+                    ];
+                }
+
+                return ['type' => 'string'];
+            case 'address':
+                $properties = [
+                    'address1' => ['type' => 'string'],
+                    'city' => ['type' => 'string'],
+                    'state' => ['type' => 'string'],
+                ];
+
+                if (($field['address2_hide'] ?? '0') !== '1') {
+                    $properties['address2'] = ['type' => 'string'];
+                }
+
+                if (($field['postal_hide'] ?? '0') !== '1') {
+                    $properties['postal'] = ['type' => 'string'];
+                }
+
+                if (
+                    ($field['country_hide'] ?? '0') !== '1' &&
+                    $field['scheme'] !== 'us'
+                ) {
+                    $properties['country'] = ['type' => 'string'];
+                }
+
+                return [
+                    'type' => 'object',
+                    'properties' => $properties,
+                ];
+            case 'file-upload':
+                return;
+            case 'repeater':
+                $properties = array_reduce(
+                    $children,
+                    function ($props, $field) {
+                        $props[$field['label']] = $field['schema'];
+                        return $props;
+                    },
+                    []
+                );
+
+                return [
+                    'type' => 'array',
+                    'items' => [
+                        'type' => 'object',
+                        'properties' => $properties,
+                    ],
+                    'additionalItems' => true,
+                ];
+            default:
+                return ['type' => 'string'];
+        }
+    }
 
     /**
      * Serializes the form's submission data.
@@ -338,6 +516,23 @@ class Integration extends BaseIntegration
     public function serialize_submission($submission, $form_data)
     {
         $data = [];
+        $repeaters = array_filter($form_data['fields'], static function (
+            $field
+        ) {
+            return $field['type'] === 'repeater';
+        });
+
+        $fields_in_repeaters = array_reduce(
+            $repeaters,
+            static function ($ids, $repeater) {
+                foreach ($repeater['children'] as $child) {
+                    $ids[$child['id']] = [];
+                }
+
+                return $ids;
+            },
+            []
+        );
 
         foreach ($submission['fields'] as $field) {
             if ($field['type'] === 'file-upload') {
@@ -350,58 +545,101 @@ class Integration extends BaseIntegration
             );
             $field_data = $form_data['fields'][$i];
 
-            // Prevent repeater name collissions
-            if (
-                $field_data['id'] !== $field['id'] &&
-                preg_match('/_\d+$/', $field['id'])
-            ) {
-                [, $n] = explode('_', $field['id']);
-                $field_name = sprintf('%s (%s)', $field_data['name'], $n);
+            $field['id'] = preg_replace('/_\d+$/', '', $field['id']);
+            if (isset($fields_in_repeaters[$field['id']])) {
+                $fields_in_repeaters[$field['id']][] = $field;
             } else {
-                $field_name = $field_data['name'];
-            }
-
-            if (strstr($field['type'], 'payment')) {
-                $field['value'] = html_entity_decode($field['value']);
-            }
-
-            if ($field_data['type'] === 'hidden') {
-                $number_val = (float) $field['value'];
-                if (strval($number_val) === $field['value']) {
-                    $data[$field_name] = $number_val;
-                } else {
-                    $data[$field_name] = $field['value'];
-                }
-            } elseif ($field_data['type'] === 'number') {
-                if (isset($field['amount'])) {
-                    $data[$field_name] = (float) $field['amount'];
-                    if (isset($field['currency'])) {
-                        $data[$field_name] .= ' ' . $field['currency'];
-                    }
-                } else {
-                    $data[$field_name] = (float) preg_replace(
-                        '/[^0-9\.,]/',
-                        '',
-                        $field['value']
-                    );
-                }
-            } elseif (
-                $field_data['type'] === 'select' ||
-                $field_data['type'] === 'checkbox'
-            ) {
-                if ($field_data['is_multi']) {
-                    $data[$field_name] = array_map(function ($value) {
-                        return trim($value);
-                    }, explode("\n", $field['value']));
-                } else {
-                    $data[$field_name] = $field['value'];
-                }
-            } else {
-                $data[$field_name] = $field['value'];
+                $value = $this->format_value($field, $field_data);
+                $data[$field_data['name']] = $value;
             }
         }
 
+        foreach ($repeaters as $repeater) {
+            $repeater_data = [];
+            foreach ($repeater['children'] as $child) {
+                foreach ($fields_in_repeaters as $id => $fields) {
+                    if ($id == $child['id']) {
+                        break;
+                    }
+                }
+
+                for ($i = 0; $i < count($fields); $i++) {
+                    $field = $fields[$i];
+                    $value = $this->format_value($field, $child);
+                    $datum =
+                        count($repeater_data) > $i ? $repeater_data[$i] : [];
+                    $datum[$child['name']] = $value;
+                    $repeater_data[$i] = $datum;
+                }
+            }
+
+            $data[$repeater['name']] = $repeater_data;
+        }
+
         return $data;
+    }
+
+    private function format_value($field, $field_data)
+    {
+        if (strstr($field['type'], 'payment')) {
+            $field['value'] = html_entity_decode($field['value']);
+        }
+
+        if ($field_data['type'] === 'hidden') {
+            $number_val = (float) $field['value'];
+            if (strval($number_val) === $field['value']) {
+                return $number_val;
+            }
+        }
+
+        if (
+            $field_data['type'] === 'number' ||
+            $field_data['type'] === 'number-slider'
+        ) {
+            if (isset($field['amount'])) {
+                $value = (float) $field['amount'];
+                if (isset($field['currency'])) {
+                    $value .= ' ' . $field['currency'];
+                }
+
+                return $value;
+            } else {
+                return (float) preg_replace('/[^0-9\.,]/', '', $field['value']);
+            }
+        }
+
+        if (
+            $field_data['type'] === 'select' ||
+            $field_data['type'] === 'checkbox'
+        ) {
+            if ($field_data['is_multi']) {
+                return array_map(function ($value) {
+                    return trim($value);
+                }, explode("\n", $field['value']));
+            }
+        }
+
+        if ($field_data['type'] === 'address') {
+            $post_values = $_POST['wpforms']['fields'][$field['id']];
+            $field_values = [];
+            foreach (array_keys($field_data['schema']['properties']) as $prop) {
+                $field_values[$prop] = $post_values[$prop] ?? '';
+            }
+
+            return $field_values;
+        }
+
+        if ($field_data['type'] === 'date-time') {
+            if ($field_data['schema']['type'] === 'object') {
+                $post_values = $_POST['wpforms']['fields'][$field['id']];
+                return [
+                    'date' => $post_values['date'],
+                    'time' => $post_values['time'],
+                ];
+            }
+        }
+
+        return (string) $field['value'];
     }
 
     /**
@@ -433,7 +671,11 @@ class Integration extends BaseIntegration
 
         $uploads = [];
         foreach ($fields as $field) {
-            $is_multi = count($field['value_raw']) > 1;
+            if (empty($field['value_raw'])) {
+                continue;
+            }
+
+            $is_multi = count($field['value_raw'] ?: []) > 1;
             $paths = WPForms_Field_File_Upload::get_entry_field_file_paths(
                 $form_data['id'],
                 $field
@@ -468,8 +710,8 @@ class Integration extends BaseIntegration
                     $wp_fields[strval($id)] = $this->textarea_field(...$args);
                     break;
                 case 'hidden':
-                    if (!empty($field['value'])) {
-                        $args[] = $field['value'];
+                    if (isset($field['value'])) {
+                        $args[] = (string) $field['value'];
                         $wp_fields[strval($id)] = $this->hidden_field(...$args);
                     }
 
@@ -491,7 +733,7 @@ class Integration extends BaseIntegration
                     break;
                 case 'number':
                     $constraints = [
-                        'default_value' => intval($field['default'] ?? 0),
+                        'default_value' => floatval($field['default'] ?? 0),
                         'min' => $field['min'] ?? '',
                         'max' => $field['max'] ?? '',
                         'step' => $field['step'] ?? '1',

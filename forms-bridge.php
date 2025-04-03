@@ -10,7 +10,7 @@
  * License URI:         http://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain:         forms-bridge
  * Domain Path:         /languages
- * Version:             3.0.7
+ * Version:             3.1.0
  * Requires PHP:        8.0
  * Requires at least:   6.7
  */
@@ -43,9 +43,13 @@ require_once 'includes/class-rest-settings-controller.php';
 require_once 'includes/class-json-finger.php';
 require_once 'includes/class-form-bridge.php';
 require_once 'includes/class-form-bridge-template.php';
+require_once 'includes/class-workflow-job.php';
+require_once 'includes/json-schema-utils.php';
 
 require_once 'integrations/abstract-integration.php';
 require_once 'addons/abstract-addon.php';
+
+require_once 'includes/data/country-codes.php';
 
 /**
  * Forms Bridge plugin.
@@ -80,12 +84,10 @@ class Forms_Bridge extends Base_Plugin
     {
         parent::construct(...$args);
 
-        if (
+        $autoload_addons =
             Menu::is_admin_current_page() ||
-            REST_Settings_Controller::is_doing_rest()
-        ) {
-            Addon::load();
-        }
+            REST_Settings_Controller::is_doing_rest();
+        Addon::load($autoload_addons);
 
         Integration::load();
 
@@ -274,13 +276,13 @@ class Forms_Bridge extends Base_Plugin
         Logger::log('Form submission');
         Logger::log($submission);
 
-        if (empty($submission)) {
-            return;
-        }
-
         $uploads = apply_filters('forms_bridge_uploads', []);
         Logger::log('Submission uploads');
         Logger::log($uploads);
+
+        if (empty($submission) && empty($uploads)) {
+            return;
+        }
 
         foreach (array_values($bridges) as $bridge) {
             if (!$bridge->is_valid) {
@@ -291,23 +293,6 @@ class Forms_Bridge extends Base_Plugin
             }
 
             try {
-                // TODO: Exclude attachments from payload finger mangling
-                $payload = $bridge->apply_mappers($submission);
-                Logger::log('Submission payload after mappers');
-                Logger::log($payload);
-
-                $prune_empties = apply_filters(
-                    'forms_bridge_prune_empties',
-                    false,
-                    $bridge
-                );
-
-                if ($prune_empties) {
-                    $payload = self::prune_empties($payload);
-                    Logger::log('Submission payload after prune empties');
-                    Logger::log($payload);
-                }
-
                 $attachments = apply_filters(
                     'forms_bridge_attachments',
                     self::attachments($uploads),
@@ -323,17 +308,45 @@ class Forms_Bridge extends Base_Plugin
                         ])
                     ) {
                         $attachments = self::stringify_attachments(
-                            $attachments
+                            $attachments,
+                            $bridge,
+                            $uploads
                         );
                         foreach ($attachments as $name => $value) {
-                            $payload[$name] = $value;
+                            $submission[$name] = $value;
                         }
                         $attachments = [];
-                        Logger::log(
-                            'Submission payload after attachments stringify'
-                        );
-                        Logger::log($payload);
+                        Logger::log('Submission after attachments stringify');
+                        Logger::log($submission);
                     }
+                }
+
+                $payload = $bridge->apply_mutation($submission);
+                Logger::log('Submission payload after mutation');
+                Logger::log($payload);
+
+                $prune_empties = apply_filters(
+                    'forms_bridge_prune_empties',
+                    true,
+                    $bridge
+                );
+
+                if ($prune_empties) {
+                    $payload = self::prune_empties($payload);
+                    Logger::log('Submission payload after prune empties');
+                    Logger::log($payload);
+                }
+
+                if ($workflow = $bridge->workflow) {
+                    $payload = $workflow->run($payload, $bridge);
+
+                    if (empty($payload)) {
+                        Logger::log('Skip empty payload after bridge workflow');
+                        continue;
+                    }
+
+                    Logger::log('Payload after workflow');
+                    Logger::log($payload);
                 }
 
                 $payload = apply_filters(
@@ -342,12 +355,13 @@ class Forms_Bridge extends Base_Plugin
                     $bridge
                 );
 
-                Logger::log('Filtered submission payload');
-                Logger::log($payload);
-
                 if (empty($payload)) {
+                    Logger::log('Skip empty payload after user filter');
                     continue;
                 }
+
+                Logger::log('User filtered submission payload');
+                Logger::log($payload);
 
                 $skip = apply_filters(
                     'forms_bridge_skip_submission',
@@ -371,7 +385,6 @@ class Forms_Bridge extends Base_Plugin
 
                 $response = $bridge->submit($payload, $attachments);
                 Logger::log('Submission response');
-                Logger::log($response['response']);
 
                 if ($error = is_wp_error($response) ? $response : null) {
                     do_action(
@@ -382,12 +395,15 @@ class Forms_Bridge extends Base_Plugin
                         $attachments
                     );
                 } else {
+                    Logger::log('Submission response');
+                    Logger::log($response['response']);
+
                     do_action(
                         'forms_bridge_after_submission',
                         $bridge,
+                        $response,
                         $payload,
-                        $attachments,
-                        $response
+                        $attachments
                     );
                 }
             } catch (Error | Exception $e) {
@@ -467,8 +483,11 @@ class Forms_Bridge extends Base_Plugin
      *
      * @return array Array with base64 encoded file contents and file names.
      */
-    private static function stringify_attachments($attachments)
-    {
+    private static function stringify_attachments(
+        $attachments,
+        $bridge,
+        $uploads
+    ) {
         foreach ($attachments as $name => $path) {
             if (!is_file($path) || !is_readable($path)) {
                 continue;
@@ -478,6 +497,32 @@ class Forms_Bridge extends Base_Plugin
             $content = file_get_contents($path);
             $attachments[$name] = base64_encode($content);
             $attachments[$name . '_filename'] = $filename;
+        }
+
+        $attachments = $bridge->apply_mutation($attachments);
+
+        foreach ($attachments as $field => $value) {
+            if (isset($uploads[$field])) {
+                continue;
+            }
+
+            if (strstr($field, '_filename')) {
+                $unique_field = preg_replace('/_\d+(?=_filename)/', '', $field);
+            } else {
+                $unique_field = preg_replace('/_\d+$/', '', $field);
+            }
+
+            if ($unique_field === $field) {
+                continue;
+            }
+            $value = $attachments[$field];
+            unset($attachments[$field]);
+
+            $mutation = $bridge->apply_mutation([$unique_field => $value]);
+
+            if (!empty($mutation)) {
+                $attachments[$field] = $mutation[$unique_field];
+            }
         }
 
         return $attachments;
@@ -531,6 +576,8 @@ class Forms_Bridge extends Base_Plugin
      */
     private static function do_migrations()
     {
+        Addon::lazy_load();
+
         $from = get_option(self::db_version, '1.0.0');
 
         if (!preg_match('/^\d+\.\d+\.\d+$/', $from)) {

@@ -10,6 +10,8 @@ require_once 'class-zoho-credential.php';
 require_once 'class-zoho-form-bridge.php';
 require_once 'class-zoho-form-bridge-template.php';
 
+require_once 'api-functions.php';
+
 /**
  * Zoho Addon class.
  */
@@ -30,15 +32,22 @@ class Zoho_Addon extends Addon
     protected static $api = 'zoho';
 
     /**
-     * Handles the addom's custom bridge class.
+     * Handles the addon's custom bridge class.
      *
      * @var string
      */
     protected static $bridge_class = '\FORMS_BRIDGE\Zoho_Form_Bridge';
 
     /**
-     * Addon constructor. Inherits from the abstract addon and initialize interceptos
-     * and custom hooks.
+     * Handles the addon's custom form bridge template class.
+     *
+     * @var string
+     */
+    protected static $bridge_template_class = '\FORMS_BRIDGE\Zoho_Form_Bridge_Template';
+
+    /**
+     * Addon constructor. Inherits from the abstract addon and initializes
+     * custom hooks.
      */
     protected function construct(...$args)
     {
@@ -81,6 +90,19 @@ class Zoho_Addon extends Addon
             10,
             2
         );
+
+        add_filter(
+            'forms_bridge_prune_empties',
+            static function ($prune, $bridge) {
+                if ($bridge instanceof Zoho_Form_Bridge) {
+                    return true;
+                }
+
+                return $prune;
+            },
+            10,
+            2
+        );
     }
 
     /**
@@ -107,7 +129,7 @@ class Zoho_Addon extends Addon
     {
         return [
             self::$api,
-            [
+            self::merge_setting_config([
                 'credentials' => [
                     'type' => 'array',
                     'items' => [
@@ -135,51 +157,14 @@ class Zoho_Addon extends Addon
                         'type' => 'object',
                         'additionalProperties' => false,
                         'properties' => [
-                            'name' => ['type' => 'string'],
                             'credential' => ['type' => 'string'],
-                            'form_id' => ['type' => 'string'],
                             'endpoint' => ['type' => 'string'],
                             'scope' => ['type' => 'string'],
-                            'mappers' => [
-                                'type' => 'array',
-                                'items' => [
-                                    'type' => 'object',
-                                    'additionalProperties' => false,
-                                    'properties' => [
-                                        'from' => ['type' => 'string'],
-                                        'to' => ['type' => 'string'],
-                                        'cast' => [
-                                            'type' => 'string',
-                                            'enum' => [
-                                                'boolean',
-                                                'string',
-                                                'integer',
-                                                'float',
-                                                'json',
-                                                'csv',
-                                                'concat',
-                                                'null',
-                                            ],
-                                        ],
-                                    ],
-                                    'required' => ['from', 'to', 'cast'],
-                                ],
-                            ],
-                            'template' => ['type' => 'string'],
-                            'is_valid' => ['type' => 'boolean'],
                         ],
-                        'required' => [
-                            'name',
-                            'credential',
-                            'form_id',
-                            'endpoint',
-                            'scope',
-                            'mappers',
-                            'is_valid',
-                        ],
+                        'required' => ['credential', 'endpoint', 'scope'],
                     ],
                 ],
-            ],
+            ]),
             [
                 'credentials' => [],
                 'bridges' => [],
@@ -273,10 +258,6 @@ class Zoho_Addon extends Addon
             return [];
         }
 
-        $form_ids = array_map(function ($form) {
-            return $form['_id'];
-        }, apply_filters('forms_bridge_forms', []));
-
         $credentials = array_map(function ($credential) {
             return $credential['name'];
         }, $credentials);
@@ -284,18 +265,10 @@ class Zoho_Addon extends Addon
         $uniques = [];
         $validated = [];
         foreach ($bridges as $bridge) {
-            if (empty($bridge['name'])) {
-                continue;
-            }
+            $bridge = self::validate_bridge($bridge, $uniques);
 
-            if (in_array($bridge['name'], $uniques)) {
+            if (!$bridge) {
                 continue;
-            } else {
-                $uniques[] = $bridge['name'];
-            }
-
-            if (!in_array($bridge['form_id'] ?? null, $form_ids)) {
-                $bridge['form_id'] = '';
             }
 
             if (!in_array($bridge['credential'] ?? null, $credentials)) {
@@ -305,27 +278,12 @@ class Zoho_Addon extends Addon
             $bridge['scope'] = $bridge['scope'] ?? '';
             $bridge['endpoint'] = $bridge['endpoint'] ?? '';
 
-            $bridge['mappers'] = array_values(
-                array_filter((array) $bridge['mappers'], function ($pipe) {
-                    return !(
-                        empty($pipe['from']) ||
-                        empty($pipe['to']) ||
-                        empty($pipe['cast'])
-                    );
-                })
-            );
+            $bridge['is_valid'] =
+                $bridge['is_valid'] &&
+                !empty($bridge['endpoint']) &&
+                !empty($bridge['scope']) &&
+                !empty($bridge['endpoint']);
 
-            $is_valid = true;
-            unset($bridge['is_valid']);
-            foreach ($bridge as $field => $value) {
-                if ($field === 'mappers') {
-                    continue;
-                }
-
-                $is_valid = $is_valid && !empty($value);
-            }
-
-            $bridge['is_valid'] = $is_valid;
             $validated[] = $bridge;
         }
 

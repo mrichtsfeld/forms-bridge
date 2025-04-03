@@ -18,26 +18,35 @@ function TabTitle({ name, focus, setFocus, copy }) {
   );
 }
 
+const CSS = `.bridges-tabs-panel .components-tab-panel__tabs{overflow-x:auto;}
+.bridges-tabs-panel .components-tab-panel__tabs>button{flex-shrink:0;}`;
+
 export default function Bridges({ bridges, setBridges, Bridge }) {
   const [currentTab, setCurrentTab] = useState(String(bridges.length ? 0 : -1));
   const [tabFocus, setTabFocus] = useState(null);
   const tabs = bridges
-    .map(({ backend, form_id, name, mappers, ...customFields }, i) => ({
-      ...customFields,
-      name: String(i),
-      title: name,
-      backend,
-      form_id,
-      mappers,
-      icon: (
-        <TabTitle
-          name={name}
-          focus={tabFocus === name}
-          setFocus={(value) => setTabFocus(value ? name : null)}
-          copy={() => copyBridge(name)}
-        />
-      ),
-    }))
+    .map(
+      (
+        { backend, form_id, name, mutations, workflow = [], ...customFields },
+        i
+      ) => ({
+        ...customFields,
+        name: String(i),
+        title: name,
+        backend,
+        form_id,
+        mutations,
+        workflow,
+        icon: (
+          <TabTitle
+            name={name}
+            focus={tabFocus === name}
+            setFocus={(value) => setTabFocus(value ? name : null)}
+            copy={() => copyBridge(name)}
+          />
+        ),
+      })
+    )
     .concat([
       {
         name: "-1",
@@ -86,7 +95,8 @@ export default function Bridges({ bridges, setBridges, Bridge }) {
 
     const copy = {
       ...bridge,
-      mappers: JSON.parse(JSON.stringify(bridge.mappers || [])),
+      workflow: bridge.workflow.map((job) => job),
+      mutations: JSON.parse(JSON.stringify(bridge.mutations || [[]])),
     };
 
     let isUnique = false;
@@ -97,6 +107,16 @@ export default function Bridges({ bridges, setBridges, Bridge }) {
 
     setBridges(bridges.concat(copy));
   };
+
+  const style = useRef(document.createElement("style"));
+  useEffect(() => {
+    style.current.appendChild(document.createTextNode(CSS));
+    document.head.appendChild(style.current);
+
+    return () => {
+      document.head.removeChild(style.current);
+    };
+  }, []);
 
   return (
     <div style={{ width: "100%" }}>
@@ -115,6 +135,7 @@ export default function Bridges({ bridges, setBridges, Bridge }) {
         tabs={tabs}
         onSelect={setCurrentTab}
         initialTabName={currentTab}
+        className="bridges-tabs-panel"
       >
         {(bridge) => {
           bridge.name = bridge.name >= 0 ? bridges[+bridge.name].name : "add";

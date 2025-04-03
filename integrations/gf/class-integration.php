@@ -156,9 +156,11 @@ class Integration extends BaseIntegration
     /**
      * Retrives the current submission data.
      *
+     * @param boolean $raw Control if the submission is serialized before exit.
+     *
      * @return array
      */
-    public function submission()
+    public function submission($raw = false)
     {
         $form_data = $this->form();
         if (!$form_data) {
@@ -171,6 +173,8 @@ class Integration extends BaseIntegration
 
         if (!$submission) {
             return null;
+        } elseif ($raw) {
+            return $submission;
         }
 
         $form = $this->form();
@@ -210,28 +214,22 @@ class Integration extends BaseIntegration
      */
     public function serialize_form($form)
     {
-        if ($form['title'] === 'Debug') {
-            $debug = true;
-        }
-
         $form_id = (int) $form['id'];
         $fields = array_reduce(
             $form['fields'],
             function ($fields, $field) {
                 $field = $this->serialize_field($field);
-                if (!$field) {
-                    return $fields;
+                if ($field) {
+                    $field = wp_is_numeric_array($field) ? $field : [$field];
+                    $fields = array_merge($fields, $field);
                 }
 
-                return array_merge(
-                    $fields,
-                    wp_is_numeric_array($field) ? $field : [$field]
-                );
+                return $fields;
             },
             []
         );
 
-        return [
+        return apply_filters('forms_bridge_form_data', [
             '_id' => 'gf:' . $form_id,
             'id' => $form_id,
             'title' => $form['title'],
@@ -241,8 +239,7 @@ class Integration extends BaseIntegration
                 'gf:' . $form_id
             ),
             'fields' => $fields,
-        ];
-        return $form;
+        ]);
     }
 
     /**
@@ -275,78 +272,83 @@ class Integration extends BaseIntegration
 
         $allowsPrepopulate = $field->allowsPrepopulate ?? false;
 
-        $options = [];
-        if (is_array($field->choices)) {
-            $options = array_map(function ($opt) {
+        $options = array_map(
+            function ($opt) {
                 return ['value' => $opt['value'], 'label' => $opt['text']];
-            }, $field->choices);
-        }
+            },
+            $field->choices ?: []
+        );
 
         try {
-            $inputs = array_filter(
-                array_map(function ($input) use ($allowsPrepopulate) {
-                    $input['name'] = $allowsPrepopulate ? $input['name'] : '';
-                    return $input;
-                }, $field->get_entry_inputs()),
-                function ($input) {
-                    return !($input['isHidden'] ?? false);
-                }
-            );
-
-            $inputs = array_values($inputs);
+            $inputs = array_map(static function ($input) use (
+                $allowsPrepopulate
+            ) {
+                $input['name'] = $allowsPrepopulate ? $input['name'] : '';
+                return $input;
+            }, $field->get_entry_inputs());
         } catch (Error) {
-            $inputs = null;
-        }
-
-        if (is_array($inputs)) {
-            $named_inputs = array_filter($inputs, function ($input) {
-                return !empty($input['name']);
-            });
-
-            if (count($named_inputs)) {
-                $subfields = [];
-                for ($i = 1; $i <= count($inputs); $i++) {
-                    $input = $inputs[$i - 1];
-
-                    $input_label = implode(' ', [
-                        $label,
-                        $input['label'] ? "({$input['label']})" : "($i)",
-                    ]);
-                    $input_name = $input['name'] ?: $input_label;
-
-                    $subfields[] = $this->serialize_field(
-                        (object) array_merge((array) $field, $input, [
-                            'id' => $input['id'],
-                            'inputName' => $input_name,
-                            'label' => $input_label,
-                            'adminLabel' => $input_label,
-                        ])
-                    );
-                }
-            }
-        } else {
             $inputs = [];
-            $subfields = [];
         }
 
-        $field = [
-            'id' => $field->id,
-            'type' => $field->type,
-            'name' => $name,
-            'label' => $label,
-            'required' => $field->isRequired,
-            'options' => $options,
-            'inputs' => $inputs,
-            'is_file' => $field->type === 'fileupload',
-            'is_multi' => $this->is_multi_field($field),
-            'conditional' =>
-                isset($field->conditionalLogic) &&
-                is_array($field->conditionalLogic) &&
-                $field->conditionalLogic['enabled'],
-            'format' => $field->type === 'date' ? 'yyyy-mm-dd' : '',
-        ];
+        $inputs = array_values(
+            array_filter($inputs, static function ($input) {
+                return !isset($input['isHidden']) || !$input['isHidden'];
+            })
+        );
 
-        if (!empty($subfields) && $allowsPrepopulate) {
+        $named_inputs = array_filter($inputs, function ($input) {
+            return !empty($input['name']);
+        });
+
+        $subfields = [];
+        if (count($named_inputs)) {
+            for ($i = 1; $i <= count($inputs); $i++) {
+                $input = $inputs[$i - 1];
+
+                $input_label = implode(' ', [
+                    $label,
+                    $input['label'] ? "({$input['label']})" : "($i)",
+                ]);
+
+                $input_name = $input['name'] ?: $input_label;
+
+                $subfields[] = $this->serialize_field(
+                    (object) array_merge((array) $field, $input, [
+                        'id' => $input['id'],
+                        'inputName' => $input_name,
+                        'label' => $input_label,
+                        'adminLabel' => $input_label,
+                        'type' => 'text',
+                        'schema' => ['type' => 'string'],
+                    ])
+                );
+            }
+        }
+
+        $field = apply_filters(
+            'forms_bridge_form_field_data',
+            [
+                'id' => $field->id,
+                'type' => $field->type,
+                'name' => $name,
+                'label' => $label,
+                'required' => $field->isRequired,
+                'options' => $options,
+                'inputs' => $inputs,
+                'is_file' => $field->type === 'fileupload',
+                'is_multi' => $this->is_multi_field($field),
+                'conditional' => $field->conditionalLogic['enabled'] ?? false,
+                'format' => $field->type === 'date' ? 'yyyy-mm-dd' : '',
+                'schema' => $this->field_value_schema($field),
+            ],
+            $field,
+            'gf'
+        );
+
+        if (
+            !empty($subfields) &&
+            ($allowsPrepopulate || $field['type'] === 'list')
+        ) {
             return array_map(function ($subfield) use ($field) {
                 return array_merge($subfield, ['parent' => $field]);
             }, $subfields);
@@ -355,6 +357,13 @@ class Integration extends BaseIntegration
         return $field;
     }
 
+    /**
+     * Checks if a filed is multi value field.
+     *
+     * @param GF_Field Target field instance.
+     *
+     * @return boolean
+     */
     private function is_multi_field($field)
     {
         if ($field->type === 'fileupload') {
@@ -365,9 +374,13 @@ class Integration extends BaseIntegration
             return true;
         }
 
-        if (isset($field->choiceLimit) && $field->choiceLimit === 'unlimited') {
-            return true;
-        }
+        // if (isset($field->choiceLimit)) {
+        //     if ($field->choiceLimit === 'unlimited') {
+        //         return true;
+        //     } elseif ($field->choiceLimit === 'exactly' && $field->choiceLimitNumber > 1) {
+        //         return true;
+        //     }
+        // }
 
         if (in_array($field->inputType, ['list', 'checkbox'])) {
             return true;
@@ -376,35 +389,102 @@ class Integration extends BaseIntegration
         return false;
     }
 
-    // private function norm_field_type($type)
-    // {
-    //     switch ($type) {
-    //         case 'multi_choice':
-    //         case 'image_choice':
-    //         case 'multiselect':
-    //         case 'list':
-    //         case 'option':
-    //         case 'select':
-    //         case 'radio':
-    //         case 'checkbox':
-    //             return 'options';
-    //         case 'address':
-    //         case 'website':
-    //         case 'product':
-    //         case 'email':
-    //         case 'textarea':
-    //         case 'name':
-    //         case 'shipping':
-    //             return 'text';
-    //         case 'total':
-    //         case 'quantity':
-    //             return 'number';
-    //         case 'fileupload':
-    //             return 'file';
-    //         default:
-    //             return $type;
-    //     }
-    // }
+    /**
+     * Gets the field value JSON schema.
+     *
+     * @param GF_Field $field Field instance.
+     *
+     * @return array JSON schema of the value of the field.
+     */
+    private function field_value_schema($field)
+    {
+        switch ($field->type) {
+            case 'list':
+                if (!empty($field->choices)) {
+                    return [
+                        'type' => 'array',
+                        'items' => [
+                            'type' => 'object',
+                            'properties' => array_reduce(
+                                $field->choices,
+                                static function ($choices, $choice) {
+                                    $choices[$choice['value']] = [
+                                        'type' => 'string',
+                                    ];
+                                    return $choices;
+                                },
+                                []
+                            ),
+                        ],
+                        'additionalItems' => true,
+                    ];
+                }
+            // no break
+            case 'list':
+                return [
+                    'type' => 'array',
+                    'items' => ['type' => 'string'],
+                    'additionalItems' => true,
+                ];
+            case 'checkbox':
+            case 'multiselect':
+                $items = [];
+                for ($i = 0; $i < count($field->choices); $i++) {
+                    $items[] = ['type' => 'string'];
+                }
+
+                return [
+                    'type' => 'array',
+                    'items' => $items,
+                    'additionalItems' => false,
+                ];
+            case 'multi_choice':
+            case 'image_choice':
+            case 'option':
+                if ($this->is_multi_field($field)) {
+                    if ($field->choiceLimit === 'range') {
+                        $maxItems = $field->choiceLimitMax;
+                    } elseif ($field->choiceLimit === 'exactly') {
+                        $maxItems = $field->choiceLimitNumber;
+                    } else {
+                        $maxItems = count($field->choices);
+                    }
+
+                    $items = [];
+                    for ($i = 0; $i < $maxItems; $i++) {
+                        $items[] = ['type' => 'string'];
+                    }
+
+                    return [
+                        'type' => 'array',
+                        'items' => $items,
+                        'additionalItems' => false,
+                    ];
+                }
+
+                return ['type' => 'string'];
+            case 'select':
+            case 'radio':
+            case 'address':
+            case 'website':
+            case 'product':
+            case 'email':
+            case 'textarea':
+            case 'name':
+            case 'shipping':
+                return ['type' => 'string'];
+            case 'number':
+            case 'total':
+            case 'quantity':
+                return ['type' => 'number'];
+            case 'fileupload':
+                return;
+            case 'consent':
+                return ['type' => 'boolean'];
+            default:
+                return ['type' => 'string'];
+        }
+    }
 
     /**
      * Serializes the current form's submission data.
@@ -417,6 +497,20 @@ class Integration extends BaseIntegration
     public function serialize_submission($submission, $form_data)
     {
         $data = [];
+
+        $has_total = array_search(
+            'total',
+            array_map(static function ($field) {
+                return $field['type'];
+            }, $form_data['fields'])
+        );
+
+        $has_quantity = array_search(
+            'quantity',
+            array_map(static function ($field) {
+                return $field['type'];
+            }, $form_data['fields'])
+        );
 
         foreach ($form_data['fields'] as $field) {
             if ($field['is_file']) {
@@ -448,7 +542,15 @@ class Integration extends BaseIntegration
                 } elseif ($field['type'] === 'name') {
                     $data[$input_name] = implode(' ', $values);
                 } elseif ($field['type'] === 'product') {
-                    $data[$input_name] = $values[0];
+                    if ($has_total) {
+                        $data[$input_name] = $values[0];
+                    } else {
+                        if ($has_quantity) {
+                            $values = array_slice($values, 0, 2);
+                        }
+
+                        $data[$input_name] = implode('|', $values);
+                    }
                 } elseif ($field['type'] === 'address') {
                     $data[$input_name] = implode(', ', $values);
                 } else {
@@ -499,6 +601,7 @@ class Integration extends BaseIntegration
                         return $number_val;
                     }
                     break;
+                case 'quantity':
                 case 'number':
                     return (float) preg_replace('/[^0-9\.,]/', '', $value);
                 case 'list':
@@ -508,7 +611,8 @@ class Integration extends BaseIntegration
                 case 'product':
                 case 'option':
                 case 'shipping':
-                    return explode('|', $value)[0];
+                    return $value;
+                // return explode('|', $value)[0];
             }
         } catch (TypeError) {
             // do nothing
@@ -527,7 +631,7 @@ class Integration extends BaseIntegration
      */
     protected function submission_uploads($submission, $form_data)
     {
-        $private_upload = forms_bridge_private_upload($form_data['id']);
+        $private_upload = forms_bridge_gf_private_upload($form_data['id']);
 
         return array_reduce(
             array_filter($form_data['fields'], function ($field) {
@@ -544,7 +648,7 @@ class Integration extends BaseIntegration
                     if ($private_upload) {
                         $url = wp_parse_url($path);
                         parse_str($url['query'], $query);
-                        $path = forms_bridge_attachment_fullpath(
+                        $path = forms_bridge_gf_attachment_fullpath(
                             $query['forms-bridge-attachment']
                         );
                     }
@@ -598,21 +702,19 @@ class Integration extends BaseIntegration
 
             switch ($field['type']) {
                 case 'hidden':
-                    if (!empty($field['value'])) {
-                        $args[] = $field['value'];
+                    if (isset($field['value'])) {
+                        $args[] = (string) $field['value'];
                         $gf_fields[] = $this->hidden_field(...$args);
                     }
 
                     break;
                 case 'number':
-                    $constraints = [];
-                    if (isset($field['min'])) {
-                        $constraints['rangeMin'] = $field['min'];
-                    }
-
-                    if (isset($field['max'])) {
-                        $constraints['rangeMax'] = $field['max'];
-                    }
+                    $constraints = [
+                        'rangeMin' => $field['min'] ?? '',
+                        'rangeMax' => $filed['max'] ?? '',
+                        'rangeStep' => $field['step'] ?? '1',
+                        'defaultValue' => floatval($field['default'] ?? 0),
+                    ];
 
                     $args[] = $constraints;
                     $gf_fields[] = $this->number_field(...$args);
@@ -897,6 +999,16 @@ class Integration extends BaseIntegration
         );
     }
 
+    /**
+     * Returns a valid date field data.
+     *
+     * @param int $id Field id.
+     * @param string $name Input name.
+     * @param string $label Field label.
+     * @param boolean $required Is field required.
+     *
+     * @return array
+     */
     private function date_field($id, $name, $label, $required)
     {
         return array_merge(
@@ -931,3 +1043,21 @@ class Integration extends BaseIntegration
         );
     }
 }
+
+add_filter(
+    'gform_field_content',
+    function ($field_content, $field, $value, $entry_id, $form_id) {
+        if ($field->type !== 'number') {
+            return $field_content;
+        }
+
+        if (empty($field->rangeStep)) {
+            return $field_content;
+        }
+
+        $step = (int) $field->rangeStep;
+        return str_replace("step='any'", "step='{$step}'", $field_content);
+    },
+    10,
+    5
+);

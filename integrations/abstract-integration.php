@@ -263,10 +263,10 @@ abstract class Integration extends Singleton
         // Gets current submission data
         add_filter(
             'forms_bridge_submission',
-            static function ($value) {
+            static function ($value, $raw = false) {
                 $integrations = self::integrations();
                 foreach ($integrations as $integration) {
-                    if ($submission = $integration->submission()) {
+                    if ($submission = $integration->submission($raw)) {
                         return $submission;
                     }
                 }
@@ -274,7 +274,7 @@ abstract class Integration extends Singleton
                 return $value;
             },
             5,
-            1
+            2
         );
 
         // Gets curent submission uploads
@@ -388,9 +388,11 @@ abstract class Integration extends Singleton
     /**
      * Retrives the current form submission.
      *
+     * @param boolean $raw Control if the submission is serialized before exit.
+     *
      * @return array Submission data.
      */
-    abstract public function submission();
+    abstract public function submission($raw);
 
     /**
      * Retrives the current submission uploaded files.

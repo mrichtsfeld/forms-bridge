@@ -29,13 +29,6 @@ class Odoo_Form_Bridge extends Form_Bridge
     private static $session;
 
     /**
-     * Handles the bridge's template class.
-     *
-     * @var string
-     */
-    protected static $template_class = '\FORMS_BRIDGE\Odoo_Form_Bridge_Template';
-
-    /**
      * RPC payload decorator.
      *
      * @param int $session_id RPC session ID.
