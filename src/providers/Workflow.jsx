@@ -55,7 +55,9 @@ function applyJob(payload, job) {
 
     let addToPayload;
     if (input) {
-      addToPayload = Object.prototype.hasOwnProperty.call(payload, input.name);
+      addToPayload =
+        Object.prototype.hasOwnProperty.call(payload, input.name) ||
+        output.touch === true;
 
       if (addToPayload) {
         if (output.touch) {

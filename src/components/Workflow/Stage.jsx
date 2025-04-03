@@ -208,7 +208,8 @@ export default function WorkflowStage({ setMappers }) {
         optional:
           !required &&
           !diff.exit.has(name) &&
-          !fields.find((field) => field.name === name),
+          (!fields.find((field) => field.name === name) ||
+            diff.touched.has(name)),
       };
     });
   }, [workflowJob]);
