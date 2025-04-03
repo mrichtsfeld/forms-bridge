@@ -179,7 +179,7 @@ export default function WorkflowStage({ setMappers }) {
         field.exit = false;
       });
 
-      outputDiff.exit.values().forEach((name) => {
+      Array.from(outputDiff.exit).forEach((name) => {
         output.push({
           name,
           schema: { type: "null" },
