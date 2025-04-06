@@ -5,11 +5,86 @@ if (!defined('ABSPATH')) {
 }
 
 return [
-    'title' => __('Bigin Appointments', 'forms-bridge'),
+    'title' => __('CRM Meetings', 'forms-bridge'),
     'fields' => [
+        [
+            'ref' => '#form/fields[]',
+            'name' => 'Owner',
+            'label' => __('Owner ID', 'forms-bridge'),
+            'description' => __(
+                'ID of the owner user of the deal',
+                'forms-bridge'
+            ),
+            'type' => 'string',
+            'required' => true,
+        ],
+        [
+            'ref' => '#form/fields[]',
+            'name' => 'Event_Title',
+            'label' => __('Event title', 'forms-bridge'),
+            'type' => 'string',
+            'required' => true,
+            'default' => __('Web Meetting', 'forms-bridge'),
+        ],
+        [
+            'ref' => '#form/fields[]',
+            'name' => 'Lead_Source',
+            'label' => __('Lead source', 'forms-bridge'),
+            'description' => __(
+                'Label to identify your website sourced leads',
+                'forms-bridge'
+            ),
+            'type' => 'string',
+            'required' => true,
+            'default' => 'WordPress',
+        ],
+        [
+            'ref' => '#form/fields[]',
+            'name' => 'Lead_Status',
+            'label' => __('Lead status', 'forms-bridge'),
+            'type' => 'options',
+            'options' => [
+                [
+                    'label' => __('Not Contacted', 'forms-bridge'),
+                    'value' => 'Not Connected',
+                ],
+                [
+                    'label' => __('Qualified', 'forms-bridge'),
+                    'value' => 'Qualified',
+                ],
+                [
+                    'label' => __('Not qualified', 'forms-bridge'),
+                    'value' => 'Not Qualified',
+                ],
+                [
+                    'label' => __('Pre-qualified', 'forms-bridge'),
+                    'value' => 'Pre-Qualified',
+                ],
+                [
+                    'label' => __('Attempted to Contact', 'forms-bridge'),
+                    'value' => 'New Lead',
+                ],
+                [
+                    'label' => __('Contact in Future', 'forms-bridge'),
+                    'value' => 'Connected',
+                ],
+                [
+                    'label' => __('Junk Lead', 'forms-bridge'),
+                    'value' => 'Junk Lead',
+                ],
+                [
+                    'label' => __('Lost Lead', 'forms-bridge'),
+                    'value' => 'Lost Lead',
+                ],
+            ],
+            'required' => true,
+            'default' => 'Not Contacted',
+        ],
         [
             'ref' => '#backend',
             'name' => 'name',
+            'label' => __('Backend name', 'forms-bridge'),
+            'type' => 'string',
             'default' => 'Zoho API',
         ],
         [
@@ -26,10 +101,13 @@ return [
         [
             'ref' => '#credential',
             'name' => 'client_id',
+            'label' => __('Client ID', 'forms-bridge'),
             'description' => __(
                 'You have to create a Self-Client Application on the Zoho Developer Console and get the Client ID',
                 'forms-bridge'
             ),
+            'type' => 'string',
+            'required' => true,
         ],
         [
             'ref' => '#credential',
@@ -47,7 +125,7 @@ return [
             'name' => 'endpoint',
             'label' => __('Endpoint', 'forms-bridge'),
             'type' => 'string',
-            'value' => '/bigin/v2/Events',
+            'value' => '/crm/v7/Events',
         ],
         [
             'ref' => '#bridge',
@@ -55,46 +133,12 @@ return [
             'label' => __('Scope', 'forms-bridge'),
             'type' => 'string',
             'value' =>
-                'ZohoBigin.modules.contacts.CREATE,ZohoBigin.modules.events.CREATE',
+                'ZohoCRM.modules.leads.CREATE,ZohoCRM.modules.events.CREATE',
         ],
         [
             'ref' => '#form',
             'name' => 'title',
-            'default' => __('Appointments', 'forms-bridge'),
-        ],
-        [
-            'ref' => '#form/fields[]',
-            'name' => 'Owner',
-            'label' => __('Owner ID', 'forms-bridge'),
-            'descritpion' => __(
-                'ID of the owner user of the event',
-                'forms-bridge'
-            ),
-            'type' => 'string',
-            'required' => true,
-        ],
-        [
-            'ref' => '#form/fields[]',
-            'name' => 'Event_Title',
-            'label' => __('Event title', 'forms-bridge'),
-            'type' => 'string',
-            'required' => true,
-            'default' => __('Web Appointment', 'forms-bridge'),
-        ],
-        [
-            'ref' => '#form/fields[]',
-            'name' => 'All_day',
-            'label' => __('Is all day event?', 'forms-bridge'),
-            'type' => 'boolean',
-            'default' => false,
-        ],
-        [
-            'ref' => '#form/fields[]',
-            'name' => 'duration',
-            'label' => __('Duration', 'forms-bridge'),
-            'description' => __('Duration in hours', 'forms-bridge'),
-            'type' => 'number',
-            'default' => '1',
+            'default' => __('CRM Meetings', 'forms-bridge'),
         ],
     ],
     'form' => [
@@ -110,6 +154,16 @@ return [
                 'required' => true,
             ],
             [
+                'name' => 'Lead_Source',
+                'type' => 'hidden',
+                'required' => true,
+            ],
+            [
+                'name' => 'Lead_Status',
+                'type' => 'hidden',
+                'required' => true,
+            ],
+            [
                 'name' => 'All_day',
                 'type' => 'hidden',
                 'required' => true,
@@ -118,7 +172,7 @@ return [
                 'name' => 'duration',
                 'type' => 'hidden',
                 'required' => true,
-                'value' => '1',
+                'value' => 1,
             ],
             [
                 'name' => 'First_Name',
@@ -281,9 +335,13 @@ return [
         ],
     ],
     'bridge' => [
-        'endpoint' => '/bigin/v2/Events',
-        'scope' =>
-            'ZohoBigin.modules.contacts.CREATE,ZohoBigin.modules.events.CREATE',
+        'endpoint' => '/crm/v7/Events',
+        'scope' => 'ZohoCRM.modules.events.CREATE,ZohoCRM.modules.leads.CREATE',
+        'workflow' => [
+            'forms-bridge-date-fields-to-date',
+            'zoho-event-dates',
+            'zoho-crm-meeting-participant',
+        ],
         'mutations' => [
             [
                 [
@@ -304,11 +362,6 @@ return [
                     'cast' => 'string',
                 ],
             ],
-        ],
-        'workflow' => [
-            'forms-bridge-date-fields-to-date',
-            'zoho-event-dates',
-            'zoho-bigin-appointment-participant',
         ],
     ],
     'backend' => [

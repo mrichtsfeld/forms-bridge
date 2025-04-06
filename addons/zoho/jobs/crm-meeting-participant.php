@@ -4,30 +4,30 @@ if (!defined('ABSPATH')) {
     exit();
 }
 
-function forms_bridge_bigin_appointment_participant($payload, $bridge)
+function forms_bridge_crm_meeting_participant($payload, $bridge)
 {
-    $contact = forms_bridge_zoho_bigin_create_contact($payload, $bridge);
+    $lead = forms_bridge_zoho_crm_create_lead($payload, $bridge);
 
-    if (is_wp_error($payload)) {
-        return $payload;
+    if (is_wp_error($lead)) {
+        return $lead;
     }
 
     $payload['Participants'] = $payload['Participants'] ?? [];
     $payload['Participants'][] = [
-        'type' => 'contact',
-        'participant' => $contact['id'],
+        'type' => 'lead',
+        'participant' => $lead['id'],
     ];
 
     return $payload;
 }
 
 return [
-    'title' => __('Bigin appointment participant', 'forms-bridge'),
+    'title' => __('CRM meeting participant', 'forms-bridge'),
     'description' => __(
-        'Search for a contact or creates a new one and sets its ID as appointment participant',
+        'Search for a lead or creates a new one and sets its ID as meeting participant',
         'forms-bridge'
     ),
-    'method' => 'forms_bridge_bigin_appointment_participant',
+    'method' => 'forms_bridge_crm_meeting_participant',
     'input' => [
         [
             'name' => 'Email',
@@ -45,19 +45,19 @@ return [
             'required' => true,
         ],
         [
+            'name' => 'Lead_Source',
+            'schema' => ['type' => 'string'],
+        ],
+        [
+            'name' => 'Lead_Status',
+            'schema' => ['type' => 'string'],
+        ],
+        [
             'name' => 'Phone',
             'schema' => ['type' => 'string'],
         ],
         [
             'name' => 'Description',
-            'schema' => ['type' => 'string'],
-        ],
-        [
-            'name' => 'Account_Name',
-            'schema' => ['type' => 'string'],
-        ],
-        [
-            'name' => 'Title',
             'schema' => ['type' => 'string'],
         ],
     ],

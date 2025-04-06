@@ -52,7 +52,7 @@ return [
             'name' => 'endpoint',
             'label' => __('Endpoint', 'forms-bridge'),
             'type' => 'string',
-            'value' => '/crm/v7/Contacts',
+            'value' => '/crm/v7/Contacts/upsert',
         ],
         [
             'ref' => '#bridge',
@@ -100,7 +100,7 @@ return [
         ],
     ],
     'bridge' => [
-        'endpoint' => '/crm/v7/Contacts',
+        'endpoint' => '/crm/v7/Contacts/upsert',
         'scope' => 'ZohoCRM.modules.contacts.CREATE',
     ],
     'backend' => [

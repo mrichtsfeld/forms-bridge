@@ -56,6 +56,7 @@ class Odoo_Form_Bridge_Template extends Form_Bridge_Template
             'form_id' => '',
             'database' => '',
             'model' => '',
+            'mutations' => [],
         ],
         'backend' => [
             'name' => 'Odoo',

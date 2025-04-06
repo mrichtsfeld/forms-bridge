@@ -50,7 +50,7 @@ return [
             'name' => 'endpoint',
             'label' => __('Endpoint', 'forms-bridge'),
             'type' => 'string',
-            'value' => '/bigin/v2/Contacts',
+            'value' => '/bigin/v2/Contacts/upsert',
         ],
         [
             'ref' => '#bridge',
@@ -136,10 +136,11 @@ return [
         ],
     ],
     'bridge' => [
-        'endpoint' => '/bigin/v2/Contacts',
+        'endpoint' => '/bigin/v2/Contacts/upsert',
         'scope' =>
             'ZohoBigin.modules.accounts.CREATE,ZohoBigin.modules.contacts.CREATE',
         'workflow' => ['zoho-bigin-account-name'],
+        'mutations' => [],
     ],
     'backend' => [
         'base_url' => 'https://www.zohoapis.com',

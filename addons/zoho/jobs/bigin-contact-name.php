@@ -6,45 +6,14 @@ if (!defined('ABSPATH')) {
 
 function forms_bridge_zoho_bigin_contact_name($payload, $bridge)
 {
-    $contact = [
-        'Email' => $payload['Email'],
-        'First_Name' => $payload['First_Name'],
-        'Last_Name' => $payload['Last_Name'],
-    ];
+    $contact = forms_bridge_zoho_bigin_create_contact($payload, $bridge);
 
-    if (isset($payload['Phone'])) {
-        $contact['Phone'] = $payload['Phone'];
-    }
-
-    if (isset($payload['Title'])) {
-        $contact['Title'] = $payload['Title'];
-    }
-
-    if (isset($payload['Account_Name']['id'])) {
-        $contact['Account_Name'] = $payload['Account_Name'];
-    }
-
-    $response = $bridge
-        ->patch([
-            'name' => 'zoho-bigin-contact-name',
-            'endpoint' => '/bigin/v2/Contacts',
-            'template' => null,
-        ])
-        ->submit($contact);
-
-    if (is_wp_error($response)) {
-        return $response;
-    }
-
-    if ($response['data']['data'][0]['code'] === 'DUPLICATE_DATA') {
-        $contact_id =
-            $response['data']['data'][0]['details']['duplicate_record']['id'];
-    } else {
-        $contact_id = $response['data']['data'][0]['details']['id'];
+    if (is_wp_error($contact)) {
+        return $contact;
     }
 
     $payload['Contact_Name'] = [
-        'id' => $contact_id,
+        'id' => $contact['id'],
     ];
 
     return $payload;
@@ -90,6 +59,10 @@ return [
                 ],
                 'additionalProperties' => false,
             ],
+        ],
+        [
+            'name' => 'Description',
+            'schema' => ['type' => 'string'],
         ],
     ],
     'output' => [

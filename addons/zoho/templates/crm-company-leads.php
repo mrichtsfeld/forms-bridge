@@ -5,7 +5,7 @@ if (!defined('ABSPATH')) {
 }
 
 return [
-    'title' => __('CRM Leads', 'forms-bridge'),
+    'title' => __('CRM Company Leads', 'forms-bridge'),
     'fields' => [
         [
             'ref' => '#form/fields[]',
@@ -134,12 +134,13 @@ return [
             'name' => 'scope',
             'label' => __('Scope', 'forms-bridge'),
             'type' => 'string',
-            'value' => 'ZohoCRM.modules.leads.CREATE',
+            'value' =>
+                'ZohoCRM.modules.leads.CREATE,ZohoCRM.modules.accounts.CREATE',
         ],
         [
             'ref' => '#form',
             'name' => 'title',
-            'default' => __('CRM Leads', 'forms-bridge'),
+            'default' => __('CRM Company Leads', 'forms-bridge'),
         ],
     ],
     'form' => [
@@ -155,14 +156,46 @@ return [
                 'required' => true,
             ],
             [
-                'name' => 'Tag',
-                'type' => 'hidden',
-            ],
-            [
                 'name' => 'Lead_Status',
                 'type' => 'hidden',
                 'required' => true,
             ],
+            [
+                'name' => 'Tag',
+                'type' => 'hidden',
+            ],
+            [
+                'name' => 'Company',
+                'label' => __('Company', 'forms-bridge'),
+                'type' => 'text',
+                'required' => true,
+            ],
+            [
+                'name' => 'Street',
+                'label' => __('Street', 'forms-bridge'),
+                'type' => 'text',
+            ],
+            [
+                'name' => 'Zip_Code',
+                'label' => __('Postal code', 'forms-bridge'),
+                'type' => 'text',
+            ],
+            [
+                'name' => 'City',
+                'label' => __('City', 'forms-bridge'),
+                'type' => 'text',
+            ],
+            [
+                'name' => 'State',
+                'label' => __('State', 'forms-bridge'),
+                'type' => 'text',
+            ],
+            [
+                'name' => 'Country',
+                'label' => __('Country', 'forms-bridge'),
+                'type' => 'text',
+            ],
+
             [
                 'name' => 'First_Name',
                 'label' => __('First name', 'forms-bridge'),
@@ -184,6 +217,11 @@ return [
             [
                 'name' => 'Phone',
                 'label' => __('Phone', 'forms-bridge'),
+                'type' => 'text',
+            ],
+            [
+                'name' => 'Title',
+                'label' => __('Job position', 'forms-bridge'),
                 'type' => 'text',
             ],
             [

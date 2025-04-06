@@ -127,6 +127,12 @@ return [
         ],
         [
             'ref' => '#form/fields[]',
+            'name' => 'Amount',
+            'label' => __('Deal amount', 'forms-bridge'),
+            'type' => 'number',
+        ],
+        [
+            'ref' => '#form/fields[]',
             'name' => 'Tag',
             'label' => __('Deal tags', 'forms-bridge'),
             'description' => __(
@@ -161,6 +167,11 @@ return [
             [
                 'name' => 'Tag',
                 'type' => 'hidden',
+            ],
+            [
+                'name' => 'Amount',
+                'type' => 'hidden',
+                'required' => true,
             ],
             [
                 'name' => 'Account_Name',
@@ -245,7 +256,16 @@ return [
         'workflow' => [
             'zoho-bigin-account-name',
             'zoho-bigin-contact-name',
-            'zoho-bigin-tags',
+            'zoho-tags',
+        ],
+        'mutations' => [
+            [
+                [
+                    'from' => 'Amount',
+                    'to' => 'Amount',
+                    'cast' => 'number',
+                ],
+            ],
         ],
     ],
 ];

@@ -6,46 +6,14 @@ if (!defined('ABSPATH')) {
 
 function forms_bridge_zoho_bigin_account_name($payload, $bridge)
 {
-    $company = [
-        'Account_Name' => $payload['Account_Name'],
-    ];
+    $account = forms_bridge_zoho_bigin_create_account($payload, $bridge);
 
-    $company_fields = [
-        'Billing_Street',
-        'Billing_Code',
-        'Billing_City',
-        'Billing_State',
-        'Billing_Country',
-        'Description',
-    ];
-
-    foreach ($company_fields as $field) {
-        if (isset($payload[$field])) {
-            $company[$field] = $payload[$field];
-        }
-    }
-
-    $response = $bridge
-        ->patch([
-            'name' => 'zoho-bigin-account-name',
-            'endpoint' => '/bigin/v2/Accounts',
-            'template' => null,
-        ])
-        ->submit($company);
-
-    if (is_wp_error($response)) {
-        return $response;
-    }
-
-    if ($response['data']['data'][0]['code'] === 'DUPLICATE_DATA') {
-        $account_id =
-            $response['data']['data'][0]['details']['duplicate_record']['id'];
-    } else {
-        $account_id = $response['data']['data'][0]['details']['id'];
+    if (is_wp_error($account)) {
+        return $account;
     }
 
     $payload['Account_Name'] = [
-        'id' => $account_id,
+        'id' => $account['id'],
     ];
 
     return $payload;
