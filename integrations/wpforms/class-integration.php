@@ -711,6 +711,10 @@ class Integration extends BaseIntegration
                     break;
                 case 'hidden':
                     if (isset($field['value'])) {
+                        if (is_bool($field['value'])) {
+                            $field['value'] = $field['value'] ? '1' : '0';
+                        }
+
                         $args[] = (string) $field['value'];
                         $wp_fields[strval($id)] = $this->hidden_field(...$args);
                     }

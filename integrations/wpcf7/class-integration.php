@@ -416,6 +416,10 @@ class Integration extends BaseIntegration
         foreach ($fields as $field) {
             if ($field['type'] == 'hidden') {
                 if (isset($field['value'])) {
+                    if (is_bool($field['value'])) {
+                        $field['value'] = $field['value'] ? '1' : '0';
+                    }
+
                     $form .= $this->field_to_tag($field) . "\n\n";
                 }
             } else {

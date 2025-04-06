@@ -703,6 +703,10 @@ class Integration extends BaseIntegration
             switch ($field['type']) {
                 case 'hidden':
                     if (isset($field['value'])) {
+                        if (is_bool($field['value'])) {
+                            $field['value'] = $field['value'] ? '1' : '0';
+                        }
+
                         $args[] = (string) $field['value'];
                         $gf_fields[] = $this->hidden_field(...$args);
                     }
