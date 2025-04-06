@@ -81,6 +81,13 @@ return [
             'default' => 'Not Contacted',
         ],
         [
+            'ref' => '#form/fields[]',
+            'name' => 'All_day',
+            'label' => __('Is all day event?', 'forms-bridge'),
+            'type' => 'boolean',
+            'default' => false,
+        ],
+        [
             'ref' => '#backend',
             'name' => 'name',
             'label' => __('Backend name', 'forms-bridge'),
