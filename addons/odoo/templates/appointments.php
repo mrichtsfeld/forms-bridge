@@ -119,12 +119,19 @@ return [
                     'cast' => 'string',
                 ],
             ],
+            [
+                [
+                    'from' => 'datetime',
+                    'to' => 'date',
+                    'cast' => 'string',
+                ],
+            ],
         ],
         'workflow' => [
+            'forms-bridge-date-fields-to-date',
+            'odoo-appointment-dates',
             'odoo-appointment-owner',
             'odoo-appointment-attendee',
-            'forms-bridge-timestamp',
-            'odoo-appointment-dates',
         ],
     ],
     'form' => [

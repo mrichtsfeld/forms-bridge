@@ -328,11 +328,18 @@ return [
                     'cast' => 'number',
                 ],
             ],
+            [
+                [
+                    'from' => 'datetime',
+                    'to' => 'date',
+                    'cast' => 'string',
+                ],
+            ],
         ],
         'workflow' => [
-            'dolibarr-get-owner-by-email',
-            'forms-bridge-timestamp',
+            'forms-bridge-date-fields-to-date',
             'dolibarr-appointment-dates',
+            'dolibarr-get-owner-by-email',
             'dolibarr-appointment-attendee',
         ],
     ],

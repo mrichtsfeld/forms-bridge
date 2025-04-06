@@ -12,14 +12,14 @@ add_filter(
         }
 
         $job = new \FORMS_BRIDGE\Workflow_Job(
-            'timestamp',
+            'date-fields-to-date',
             [
-                'title' => __('Timestamp', 'forms-bridge'),
+                'title' => __('Format date fields', 'forms-bridge'),
                 'description' => __(
-                    'Gets date, hour and minute inputs and transform its values to a timestamp',
+                    'Gets date, hour and minute fields and merge its values into a date with format Y-m-d H:M:S',
                     'forms-bridge'
                 ),
-                'method' => 'forms_bridge_workflow_job_timestamp',
+                'method' => 'forms_bridge_workflow_job_format_date_fields',
                 'input' => [
                     [
                         'name' => 'date',
@@ -37,8 +37,8 @@ add_filter(
                 ],
                 'output' => [
                     [
-                        'name' => 'timestamp',
-                        'schema' => ['type' => 'integer'],
+                        'name' => 'datetime',
+                        'schema' => ['type' => 'string'],
                     ],
                 ],
             ],
@@ -55,7 +55,7 @@ add_filter(
     1
 );
 
-function forms_bridge_workflow_job_timestamp($payload)
+function forms_bridge_workflow_job_format_date_fields($payload)
 {
     $date = $payload['date'];
     $hour = $payload['hour'] ?? '00';
@@ -100,9 +100,12 @@ function forms_bridge_workflow_job_timestamp($payload)
     $time = strtotime("{$date} {$hour}:{$minute}");
 
     if ($time === false) {
-        return new WP_Error('Invalid date format');
+        return new WP_Error(
+            'invalid-date',
+            __('Invalid date format', 'forms-bridge')
+        );
     }
 
-    $payload['timestamp'] = $time;
+    $payload['datetime'] = date('Y-m-d H:i:s', $time);
     return $payload;
 }

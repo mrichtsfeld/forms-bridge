@@ -8,11 +8,9 @@ function forms_bridge_zoho_appointment_dates($payload)
 {
     $duration = $payload['duration'] ?? 1;
 
-    $payload['Start_DateTime'] = date('c', $payload['timestamp']);
-    $payload['End_DateTime'] = date(
-        'c',
-        $payload['timestamp'] + 3600 * $duration
-    );
+    $time = strtotime($payload['date']);
+    $payload['Start_DateTime'] = date('c', $time);
+    $payload['End_DateTime'] = date('c', $time + 3600 * $duration);
 
     return $payload;
 }
@@ -20,13 +18,13 @@ function forms_bridge_zoho_appointment_dates($payload)
 return [
     'title' => __('Appointment dates', 'forms-bridge'),
     'description' => __(
-        'Sets appointment start and end time from "timestamp" and "duration" fields.',
+        'Sets appointment start and end time from "datetime" and "duration" fields.',
         'forms-bridge'
     ),
     'method' => 'forms_bridge_zoho_appointment_dates',
     'input' => [
         [
-            'name' => 'timestamp',
+            'name' => 'date',
             'required' => true,
             'schema' => ['type' => 'string'],
         ],

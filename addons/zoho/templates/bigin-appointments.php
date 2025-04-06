@@ -308,9 +308,16 @@ return [
                     'cast' => 'boolean',
                 ],
             ],
+            [
+                [
+                    'from' => 'datetime',
+                    'to' => 'date',
+                    'cast' => 'string',
+                ],
+            ],
         ],
         'workflow' => [
-            'forms-bridge-timestamp',
+            'forms-bridge-date-fields-to-date',
             'zoho-appointment-dates',
             'zoho-bigin-appointment-participant',
         ],

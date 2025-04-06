@@ -6,11 +6,19 @@ if (!defined('ABSPATH')) {
 
 function forms_bridge_odoo_appointment_dates($payload)
 {
+    $timestamp = strtotime($payload['date']);
+    if ($timestamp === false) {
+        return new WP_Error(
+            'invalid-date',
+            __('Invalid date time value', 'forms-bridge')
+        );
+    }
+
     $duration = floatval($payload['duration'] ?? 1);
 
-    $payload['start'] = date('Y-m-d H:i:s', $payload['timestamp']);
+    $payload['start'] = date('Y-m-d H:i:s', $timestamp);
 
-    $end = $duration * 3600 + $payload['timestamp'];
+    $end = $duration * 3600 + $timestamp;
     $payload['stop'] = date('Y-m-d H:i:s', $end);
 
     return $payload;
@@ -25,7 +33,7 @@ return [
     'method' => 'forms_bridge_odoo_appointment_dates',
     'input' => [
         [
-            'name' => 'timestamp',
+            'name' => 'date',
             'required' => true,
             'schema' => ['type' => 'string'],
         ],

@@ -6,9 +6,17 @@ if (!defined('ABSPATH')) {
 
 function forms_bridge_dolibarr_appointment_dates($payload)
 {
-    $payload['datep'] = (int) $payload['timestamp'];
+    $timestamp = strtotime($payload['date']);
+    if ($timestamp === false) {
+        return new WP_Error(
+            'invalid-date',
+            __('Invalid date time value', 'forms-bridge')
+        );
+    }
+
+    $payload['datep'] = $timestamp;
     $payload['duration'] = floatval($payload['duration'] ?? 1);
-    $payload['datef'] = intval($payload['duration'] * 3600 + $payload['datep']);
+    $payload['datef'] = intval($payload['duration'] * 3600 + $timestamp);
 
     return $payload;
 }
@@ -16,13 +24,13 @@ function forms_bridge_dolibarr_appointment_dates($payload)
 return [
     'title' => __('Appointment dates', 'forms-bridge'),
     'description' => __(
-        'Sets appointment start, end time and duration from "timestamp" and "duration" fields.',
+        'Sets appointment start, end time and duration from datetime and duration fields.',
         'forms-bridge'
     ),
     'method' => 'forms_bridge_dolibarr_appointment_dates',
     'input' => [
         [
-            'name' => 'timestamp',
+            'name' => 'date',
             'required' => true,
             'schema' => ['type' => 'string'],
         ],
