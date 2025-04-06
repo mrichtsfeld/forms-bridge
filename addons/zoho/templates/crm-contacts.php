@@ -12,7 +12,7 @@ return [
             'name' => 'name',
             'label' => __('Backend name', 'forms-bridge'),
             'type' => 'string',
-            'default' => 'Zoho CRM API',
+            'default' => 'Zoho API',
         ],
         [
             'ref' => '#credential',

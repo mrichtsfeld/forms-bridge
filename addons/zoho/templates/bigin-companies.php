@@ -10,7 +10,7 @@ return [
         [
             'ref' => '#backend',
             'name' => 'name',
-            'default' => 'Zoho Bigin API',
+            'default' => 'Zoho API',
         ],
         [
             'ref' => '#credential',
