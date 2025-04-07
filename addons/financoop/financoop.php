@@ -132,50 +132,8 @@ class Finan_Coop_Addon extends Rest_Addon
             return;
         }
 
-        $headers = [];
-        foreach (self::http_headers as $http_header) {
-            $index = array_search(
-                $http_header,
-                array_column($params['headers'], 'name')
-            );
-            if ($index === false) {
-                return;
-            }
-
-            $headers[] = [
-                'name' => $http_header,
-                'value' => sanitize_text_field(
-                    $params['headers'][$index]['value']
-                ),
-            ];
-        }
-
-        $params['headers'] = $headers;
         $params['name'] = $params['name'] ?? '__financoop-' . time();
-
-        add_filter(
-            'wpct_setting_data',
-            static function ($setting_data, $name) use ($params) {
-                if ($name !== 'http-bridge_general') {
-                    return $setting_data;
-                }
-
-                $index = array_search(
-                    $params['name'],
-                    array_column($setting_data['backends'], 'name')
-                );
-
-                if ($index === false) {
-                    $setting_data['backends'][] = $params;
-                }
-
-                return $setting_data;
-            },
-            20,
-            2
-        );
-
-        return new Http_Backend($params['name']);
+        return new Http_Backend($params);
     }
 
     public static function fetch_campaign($campaign_id, $backend_params)

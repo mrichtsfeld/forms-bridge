@@ -70,7 +70,7 @@ abstract class Form_Bridge
     {
         $backend_name = $this->data['backend'] ?? null;
         if (!$backend_name) {
-            return $backend_name;
+            return;
         }
 
         return apply_filters('http_bridge_backend', null, $backend_name);
