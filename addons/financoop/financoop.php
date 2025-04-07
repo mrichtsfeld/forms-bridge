@@ -134,14 +134,18 @@ class Finan_Coop_Addon extends Rest_Addon
 
         $headers = [];
         foreach (self::http_headers as $http_header) {
-            if (empty($params['headers'][$http_header])) {
+            $index = array_search(
+                $http_header,
+                array_column($params['headers'], 'name')
+            );
+            if ($index === false) {
                 return;
             }
 
             $headers[] = [
                 'name' => $http_header,
                 'value' => sanitize_text_field(
-                    $params['headers'][$http_header]
+                    $params['headers'][$index]['value']
                 ),
             ];
         }

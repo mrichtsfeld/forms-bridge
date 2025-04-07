@@ -20,7 +20,7 @@ add_filter(
         );
 
         if (is_wp_error($campaign)) {
-            throw $campaign;
+            return;
         }
 
         $parts_index = array_search(

@@ -66,17 +66,24 @@ export default function FinanCoopTemplateWizard({ integration, onDone }) {
   }, [data.backend, backends]);
 
   const fetchCampaigns = useRef(
-    debounce(
-      (data) =>
-        apiFetch({
-          path: "forms-bridge/v1/financoop/campaigns",
-          method: "POST",
-          data,
-        })
-          .then(setCampaigns)
-          .catch(() => setCampaigns([])),
-      300
-    )
+    debounce((data) => {
+      const backend = {
+        name: data.name,
+        base_url: data.base_url,
+        headers: FINANCOOP_HEADERS.map((header) => ({
+          name: header,
+          value: data.headers[header],
+        })),
+      };
+
+      apiFetch({
+        path: "forms-bridge/v1/financoop/campaigns",
+        method: "POST",
+        data: backend,
+      })
+        .then(setCampaigns)
+        .catch(() => setCampaigns([]));
+    }, 300)
   ).current;
 
   useEffect(() => {
