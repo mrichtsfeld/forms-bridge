@@ -341,7 +341,7 @@ abstract class Addon extends Singleton
                 static::load_templates();
                 static::load_workflow_jobs();
             },
-            10,
+            5,
             0
         );
 
