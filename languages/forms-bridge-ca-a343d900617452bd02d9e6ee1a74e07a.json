@@ -1,5 +1,5 @@
 {
-  "translation-revision-date": "2025-03-15 12:19+0000",
+  "translation-revision-date": "2025-04-07 23:13+0000",
   "generator": "WP-CLI\/2.11.0",
   "source": "assets\/plugin.bundle.js",
   "domain": "messages",
@@ -10,6 +10,9 @@
         "lang": "ca",
         "plural-forms": "nplurals=2; plural=n != 1;"
       },
+      "Activate the debug mode and open the loggin console to see bridged form submissions' logs": [
+        ""
+      ],
       "Add": ["Afegir"],
       "Add Backend": ["Afegir Backend"],
       "Addons": ["Addons"],
@@ -19,20 +22,38 @@
       "Backend name": ["N\u00f3m del backend"],
       "Backends": ["Backends"],
       "Cancel": ["Cancelar"],
+      "Cancel the import": ["Cancela la importaci\u00f3"],
       "Config import warning": [
         "Alerta d'importaci\u00f3 de configuraci\u00f3"
+      ],
+      "Configure your backend connexions and reuse them on your form bridges": [
+        ""
       ],
       "Content encoding": ["Codificaci\u00f3 del contingut"],
       "Continue": ["Continuar"],
       "Continue with the import": ["Continuar amb la importaci\u00f3"],
       "Custom encoding": ["Codificaci\u00f3 personalitzada"],
       "Debug": ["Depurar"],
+      "dolibarr": ["Dolibarr"],
       "Download config": ["Exportar config"],
       "Drop": ["Descartar"],
+      "Each addon allows you to create API specific bridges and comes with a library of bridge templates and workflow jobs": [
+        ""
+      ],
+      "Email address where submission errors will be sent with the error log and the submission data": [
+        ""
+      ],
+      "Error notification receiver": ["Receptor de notificacions"],
       "Export Forms Bridge config as JSON": [
         "Exporta la configuraci\u00f3 com a JSON"
       ],
+      "Export or import your configuration as a JSON to migrate your bridges to, or from, any other WordPress instance": [
+        ""
+      ],
+      "financoop": ["FinanCoop"],
       "General": ["General"],
+      "gf": ["GravityForms"],
+      "google-sheets": ["Google Sheets"],
       "Header-Name": ["Nom-Cap\u00e7alera"],
       "If your backend uses custom encoding, Forms Bridge will need a string payload. You can use the `forms_bridge_payload` hook to encode your form submission as string.": [
         "Si el teu backend fa servir una codificaci\u00f3 personalitzada, Forms Bridge necessitar\u00e0 una cadena de text com a cos del missatge. Pots fer \u00fas del hook `forms_bridge_payload` per codificar les dades."
@@ -44,46 +65,38 @@
       "Import config": ["Importar config"],
       "Import Forms Bridge JSON config": ["Importa configuraci\u00f3 JSON"],
       "Integrations": ["Integracions"],
-      "It has been an error on config import": [
+      "It has been an error with config import": [
         "Hi ha hagut un erro en la importaci\u00f3 de la configuraci\u00f3"
       ],
-      "It seems you have no available integrations. If you want to use Forms Bridge, you should install one of the following plugins before you go.": [
+      "It seems you have no available integrations. If you want to use Forms Bridge, you should install, at least one of the following plugins before you can create form bridges.": [
         "Sembla que no disposes d'integracions disponibles. Si vols fer \u00fas de Forms Bridge, haur\u00e0s d'instal\u00b7lar alguna de les seg\u00fcents extensions abans de continuar. "
       ],
       "JSON syntax error": ["Error de sintaxi JSON"],
+      "Load settings error": ["Error de c\u00e0rrega de configuraci\u00f3"],
+      "Loading...": [""],
       "Logging": ["Registrant"],
-      "Notification receiver": ["Receptor de notificacions"],
+      "ninja": ["Ninja Forms"],
+      "odoo": ["Odoo JSON-RPC"],
       "Remove": ["Eliminar"],
       "rest-api": ["REST API"],
       "Save": ["Guardar"],
+      "Save settings error": ["Error al guardar la configuraci\u00f3"],
       "Select how Forms Bridge should encode your form submissions.": [
         "Selecciona com vols que Forms Bridge codifiqui les entrades de formulari."
       ],
-      "Somthing went wrong on the file upload": [
+      "Select which plugins you want to integrate with Forms Bridge": [""],
+      "Somthing went wrong with the file upload": [
         "Alguna cosa ha anat malament amb la pujada de l'arxiu"
       ],
       "This name is already in use": ["Aquest n\u00f3m ja s'est\u00e0 usant"],
       "Value": ["Valor"],
-      "\ud83d\udc4b Welcome! It seems you have more than one forms builder plugin installed. Before you continue, please, select which plugins do you want to integrate with Forms Bridge.": [
-        "Benvinguda! Sembla que tens m\u00e9s d'un constructor de formularsi instal\u00b7lat. Abans de continuar, si us plau, selecciona amb quines extensions vols que s'integri Forms Bridge."
+      "When debug mode is activated, logs will be write to the log file and readed from there. Make sure to deactivate the debug mode once you've done to erase this file contents.": [
+        ""
       ],
-      "Cancel the import": ["Cancela la importaci\u00f3"],
-      "financoop": ["FinanCoop"],
-      "google-sheets": ["Google Sheets"],
-      "odoo": ["Odoo JSON-RPC"],
-      "Load settings error": ["Error de c\u00e0rrega de configuraci\u00f3"],
-      "Save settings error": ["Error al guardar la configuraci\u00f3"],
-      "Loading config error": ["Error de c\u00e0rrega de configuraci\u00f3"],
-      "Template submit error": ["Error d'enviament de plantilla"],
-      "zoho": ["Zoho"],
-      "When logging is activated, logs will be write to `wp-content\/uploads\/.forms-bridge.log` and read from them. If your server is not hardened, this file could be public to the web with confidencial data. Make sure to deactivate debugging once you've done.": [
-        "Quan el registre est\u00e0 activat, els registres seran escrits a `wp-content\/uploads\/.forms-bridge.log` i llegits d'all\u00e0. Si el teu servidor no est\u00e0 protegit, aquest fitxer ser\u00e0 publicament accessible des de la web amb informaci\u00f3 confidencials. Assegura't de desactivar la depuraci\u00f3 un cop hagis acabat."
-      ],
+      "woo": ["WooCommerce"],
       "wpcf7": ["Contact Form 7"],
-      "gf": ["GravityForms"],
-      "ninja": ["Ninja Forms"],
       "wpforms": ["WPForms"],
-      "dolibarr": ["Dolibarr"]
+      "zoho": ["Zoho"]
     }
   }
 }

@@ -1,5 +1,5 @@
 {
-  "translation-revision-date": "2025-03-15 12:28+0000",
+  "translation-revision-date": "2025-04-07 23:13+0000",
   "generator": "WP-CLI\/2.11.0",
   "source": "assets\/plugin.bundle.js",
   "domain": "messages",
@@ -10,6 +10,9 @@
         "lang": "es_ES",
         "plural-forms": "nplurals=2; plural=n != 1;"
       },
+      "Activate the debug mode and open the loggin console to see bridged form submissions' logs": [
+        ""
+      ],
       "Add": ["A\u00f1adir"],
       "Add Backend": ["A\u00f1adir Backend"],
       "Addons": ["Addons"],
@@ -23,18 +26,33 @@
       "Config import warning": [
         "Aviso de importaci\u00f3n de configuraci\u00f3n"
       ],
+      "Configure your backend connexions and reuse them on your form bridges": [
+        ""
+      ],
       "Content encoding": ["Codificaci\u00f3n del contendio"],
       "Continue": ["Continuar"],
       "Continue with the import": ["Continuar con la importaci\u00f3n"],
       "Custom encoding": ["Codificaci\u00f3n personalizada"],
       "Debug": ["Depurar"],
+      "dolibarr": ["Dolibarr"],
       "Download config": ["Exportar config"],
       "Drop": ["Descartar"],
+      "Each addon allows you to create API specific bridges and comes with a library of bridge templates and workflow jobs": [
+        ""
+      ],
+      "Email address where submission errors will be sent with the error log and the submission data": [
+        ""
+      ],
+      "Error notification receiver": ["Receptor de notificaciones"],
       "Export Forms Bridge config as JSON": [
         "Exportar configuraci\u00f3n como JSON"
       ],
+      "Export or import your configuration as a JSON to migrate your bridges to, or from, any other WordPress instance": [
+        ""
+      ],
       "financoop": ["FinanCoop"],
       "General": ["General"],
+      "gf": ["GravityForms"],
       "google-sheets": ["Google Sheets"],
       "Header-Name": ["Nombre-Cabecera"],
       "If your backend uses custom encoding, Forms Bridge will need a string payload. You can use the `forms_bridge_payload` hook to encode your form submission as string.": [
@@ -47,17 +65,17 @@
       "Import config": ["Importar config"],
       "Import Forms Bridge JSON config": ["Importa configuraci\u00f3n JSON"],
       "Integrations": ["Integraciones"],
-      "It has been an error on config import": [
+      "It has been an error with config import": [
         "Ha habido un error en la importaci\u00f3n de la configuraci\u00f3n"
       ],
-      "It seems you have no available integrations. If you want to use Forms Bridge, you should install one of the following plugins before you go.": [
+      "It seems you have no available integrations. If you want to use Forms Bridge, you should install, at least one of the following plugins before you can create form bridges.": [
         "Parece que no dispones de integraciones. Si quieres usar Forms Bridge, antes deber\u00e1s instalar alguna de las extensiones siguientes antes de continuar."
       ],
       "JSON syntax error": ["Error de sintaxis JSON"],
       "Load settings error": ["Error de carga de configuraci\u00f3n"],
-      "Loading config error": ["Error de carga de configuraci\u00f3n"],
+      "Loading...": [""],
       "Logging": ["Registrando"],
-      "Notification receiver": ["Receptor de notificaciones"],
+      "ninja": ["Ninja Forms"],
       "odoo": ["Odoo JSON-RPC"],
       "Remove": ["Eliminar"],
       "rest-api": ["REST API"],
@@ -66,24 +84,19 @@
       "Select how Forms Bridge should encode your form submissions.": [
         "Selecciona como quieres que Forms Bridge codifique las entradas de formularios"
       ],
-      "Somthing went wrong on the file upload": [
+      "Select which plugins you want to integrate with Forms Bridge": [""],
+      "Somthing went wrong with the file upload": [
         "Alguna cosa ha ido mal con la subida del fichero"
       ],
-      "Template submit error": ["Error de envio de plantilla"],
       "This name is already in use": ["Este nomre ya est\u00e1 en uso"],
       "Value": ["Valor"],
-      "When logging is activated, logs will be write to `wp-content\/uploads\/.forms-bridge.log` and read from them. If your server is not hardened, this file could be public to the web with confidencial data. Make sure to deactivate debugging once you've done.": [
-        "Cuando el registro est\u00e9 activo, los registros de escribir\u00e1n en `wp-content\/uploads\/.forms-bridge.log` y ser\u00e1n leidos de ah\u00ed. Si tu servidor no est\u00e1 protegido, este fichero ser\u00e1 acesible desde la web con informaci\u00f3n confidencial. Asegurate de desactivar la depuraci\u00f3n una vez hayas acabado."
+      "When debug mode is activated, logs will be write to the log file and readed from there. Make sure to deactivate the debug mode once you've done to erase this file contents.": [
+        ""
       ],
-      "zoho": ["Zoho"],
-      "\ud83d\udc4b Welcome! It seems you have more than one forms builder plugin installed. Before you continue, please, select which plugins do you want to integrate with Forms Bridge.": [
-        "\ud83d\udc4b Benvenida! Parece que dispones de m\u00e1s de un constructor de formularios. Antes de continuar, selecciona con que extensiones quieres que se integre Forms Bridge."
-      ],
+      "woo": ["WooCommerce"],
       "wpcf7": ["Contact Form 7"],
-      "gf": ["GravityForms"],
-      "ninja": ["Ninja Forms"],
       "wpforms": ["WPForms"],
-      "dolibarr": ["Dolibarr"]
+      "zoho": ["Zoho"]
     }
   }
 }
