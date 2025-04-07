@@ -630,7 +630,7 @@ abstract class Addon extends Singleton
         $dir = dirname($__FILE__) . '/' . $dirname;
 
         if (!is_dir($dir)) {
-            $res = mkdir($dir, 755, true);
+            $res = mkdir($dir, 0755, true);
             if (!$res) {
                 return [];
             }
