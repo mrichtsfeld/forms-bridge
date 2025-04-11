@@ -281,6 +281,22 @@ abstract class Integration extends Singleton
             2
         );
 
+        add_filter(
+            'forms_bridge_submission_id',
+            static function ($value) {
+                $integrations = self::integrations();
+                foreach ($integrations as $integration) {
+                    if ($submission_id = $integration->submission_id()) {
+                        return $submission_id;
+                    }
+                }
+
+                return $value;
+            },
+            10,
+            1
+        );
+
         // Gets curent submission uploads
         add_filter(
             'forms_bridge_uploads',
@@ -388,6 +404,8 @@ abstract class Integration extends Singleton
      * @return boolean Removal result.
      */
     abstract public function remove_form($form_id);
+
+    abstract public function submission_id();
 
     /**
      * Retrives the current form submission.

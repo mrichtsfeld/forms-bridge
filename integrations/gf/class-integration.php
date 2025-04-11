@@ -153,6 +153,14 @@ class Integration extends BaseIntegration
         GFFormsModel::delete_form($form_id);
     }
 
+    public function submission_id()
+    {
+        $submission = $this->submission(true);
+        if ($submission) {
+            return (string) $submission['id'];
+        }
+    }
+
     /**
      * Retrives the current submission data.
      *
@@ -172,7 +180,7 @@ class Integration extends BaseIntegration
         );
 
         if (!$submission) {
-            return null;
+            return;
         } elseif ($raw) {
             return $submission;
         }

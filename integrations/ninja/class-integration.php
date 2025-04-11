@@ -144,6 +144,14 @@ class Integration extends BaseIntegration
         return false;
     }
 
+    public function submission_id()
+    {
+        $submission = $this->submission(true);
+        if ($submission) {
+            return (string) $submission['actions']['save']['sub_id'];
+        }
+    }
+
     /**
      * Retrives the current form submission data.
      *

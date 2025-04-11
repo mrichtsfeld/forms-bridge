@@ -41,6 +41,8 @@ require_once 'includes/class-menu.php';
 require_once 'includes/class-settings-store.php';
 require_once 'includes/class-rest-settings-controller.php';
 require_once 'includes/class-json-finger.php';
+require_once 'includes/trait-bridge-custom-fields.php';
+require_once 'includes/trait-bridge-mutations.php';
 require_once 'includes/class-form-bridge.php';
 require_once 'includes/class-form-bridge-template.php';
 require_once 'includes/class-workflow-job.php';
@@ -247,6 +249,24 @@ class Forms_Bridge extends Base_Plugin
         wp_enqueue_style('wp-components');
     }
 
+    public static function submission_id()
+    {
+        $submission = apply_filters('forms_bridge_submission', [], true);
+
+        if (isset($submission['id'])) {
+            return (string) $submission['id'];
+        } elseif (
+            gettype($submission) === 'object' &&
+            method_exists($submission, 'get_posted_data_hash')
+        ) {
+            return (string) $submission->get_posted_data_hash();
+        } elseif (isset($submission['actions']['save']['sub_id'])) {
+            return (string) $submission['actions']['save']['sub_id'];
+        } elseif (isset($submission['entry_id'])) {
+            return $submission['entry_id'];
+        }
+    }
+
     /**
      * Proceed with the submission sub-routine.
      */
@@ -315,7 +335,11 @@ class Forms_Bridge extends Base_Plugin
                     }
                 }
 
-                $payload = $bridge->apply_mutation($submission);
+                $payload = $bridge->add_custom_fields($submission);
+                Logger::log('Submission payload with bridge custom fields');
+                Logger::log($payload);
+
+                $payload = $bridge->apply_mutation($payload);
                 Logger::log('Submission payload after mutation');
                 Logger::log($payload);
 

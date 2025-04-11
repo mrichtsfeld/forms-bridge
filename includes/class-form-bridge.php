@@ -11,6 +11,76 @@ if (!defined('ABSPATH')) {
  */
 abstract class Form_Bridge
 {
+    use Form_Bridge_Custom_Fields;
+    use Form_Bridge_Mutations;
+
+    public static $schema = [
+        'type' => 'object',
+        'additionalProperties' => false,
+        'properties' => [
+            'name' => ['type' => 'string'],
+            'form_id' => ['type' => 'string'],
+            'custom_fields' => [
+                'type' => 'array',
+                'items' => [
+                    'type' => 'object',
+                    'properties' => [
+                        'name' => ['type' => 'string'],
+                        'value' => ['type' => 'string'],
+                    ],
+                    'additionalProperties' => false,
+                    'required' => ['name', 'value'],
+                ],
+            ],
+            'mutations' => [
+                'type' => 'array',
+                'items' => [
+                    'type' => 'array',
+                    'items' => [
+                        'type' => 'object',
+                        'additionalProperties' => false,
+                        'properties' => [
+                            'from' => ['type' => 'string'],
+                            'to' => ['type' => 'string'],
+                            'cast' => [
+                                'type' => 'string',
+                                'enum' => [
+                                    'boolean',
+                                    'string',
+                                    'integer',
+                                    'number',
+                                    'json',
+                                    'csv',
+                                    'concat',
+                                    'join',
+                                    'inherit',
+                                    'copy',
+                                    'null',
+                                ],
+                            ],
+                        ],
+                        'additionalProperties' => false,
+                        'required' => ['from', 'to', 'cast'],
+                    ],
+                ],
+            ],
+            'template' => ['type' => 'string'],
+            'workflow' => [
+                'type' => 'array',
+                'items' => ['type' => 'string'],
+            ],
+            'is_valid' => ['type' => 'boolean'],
+        ],
+        'required' => [
+            'name',
+            'form_id',
+            'constants',
+            'mutations',
+            'workflow',
+            'is_valid',
+        ],
+    ];
+
     /**
      * Handles the form bridge's settings data.
      *
@@ -191,117 +261,5 @@ abstract class Form_Bridge
         }
 
         return new static($data, $this->api);
-    }
-
-    /**
-     * Apply cast mappers to data.
-     *
-     * @param array $data Array of data.
-     *
-     * @return array Data modified by the bridge's mappers.
-     */
-    final public function apply_mutation($data, $mutation = null)
-    {
-        $finger = new JSON_Finger($data);
-
-        if ($mutation === null) {
-            $mutation = $this->mutations[0] ?? [];
-        }
-
-        foreach ($mutation as $mapper) {
-            $is_valid =
-                JSON_Finger::validate($mapper['from']) &&
-                JSON_Finger::validate($mapper['to']);
-
-            if (!$is_valid) {
-                continue;
-            }
-
-            $isset = $finger->isset($mapper['from']);
-            if (!$isset) {
-                continue;
-            }
-
-            $value = $finger->get($mapper['from']);
-
-            if (
-                ($mapper['cast'] !== 'copy' &&
-                    $mapper['from'] !== $mapper['to']) ||
-                $mapper['cast'] === 'null'
-            ) {
-                $finger->unset($mapper['from']);
-            }
-
-            if ($mapper['cast'] !== 'null') {
-                $finger->set(
-                    $mapper['to'],
-                    $this->cast($value, $mapper['cast'], $mapper['from'])
-                );
-            }
-        }
-
-        return $finger->data();
-    }
-
-    /**
-     * Casts value to the given type.
-     *
-     * @param mixed $value Original value.
-     * @param string $type Target type to cast value.
-     *
-     * @return mixed
-     */
-    private function cast($value, $cast, $pointer)
-    {
-        if (strstr($pointer, '[]') !== false) {
-            return $this->cast_expanded($value, $cast, $pointer);
-        }
-
-        switch ($cast) {
-            case 'string':
-                return (string) $value;
-            case 'integer':
-                return (int) $value;
-            case 'number':
-                return (float) $value;
-            case 'boolean':
-                return (bool) $value;
-            case 'json':
-                return wp_json_encode($value, JSON_UNESCAPED_UNICODE);
-            case 'csv':
-                return implode(',', (array) $value);
-            case 'concat':
-                return implode(' ', (array) $value);
-            case 'join':
-                return implode('', (array) $value);
-            case 'inherit':
-                return $value;
-            case 'copy':
-                return $value;
-            case 'null':
-                return;
-            default:
-                return (string) $value;
-        }
-    }
-
-    private function cast_expanded($values, $cast, $pointer)
-    {
-        $parts = explode('[]', $pointer);
-        $before = $parts[0];
-        $after = implode('[]', array_slice($parts, 1));
-
-        if (empty($after)) {
-            return array_map(function ($value) use ($cast, $before) {
-                $this->cast($value, $cast, $before);
-            }, $values);
-        }
-
-        for ($i = 0; $i < count($values); $i++) {
-            $pointer = "{$before}[{$i}]{$after}";
-            $values[$i] = $this->cast($values[$i], $cast, $pointer);
-        }
-
-        return $values;
     }
 }

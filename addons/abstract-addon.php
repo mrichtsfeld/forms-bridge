@@ -50,68 +50,19 @@ abstract class Addon extends Singleton
      */
     protected static $bridge_template_class = '\FORMS_BRIDGE\Form_Bridge_Template';
 
-    protected static $default_config = [
-        'bridges' => [
-            'type' => 'array',
-            'items' => [
-                'type' => 'object',
-                'additionalProperties' => false,
-                'properties' => [
-                    'name' => ['type' => 'string'],
-                    'form_id' => ['type' => 'string'],
-                    'mutations' => [
-                        'type' => 'array',
-                        'items' => [
-                            'type' => 'array',
-                            'items' => [
-                                'type' => 'object',
-                                'additionalProperties' => false,
-                                'properties' => [
-                                    'from' => ['type' => 'string'],
-                                    'to' => ['type' => 'string'],
-                                    'cast' => [
-                                        'type' => 'string',
-                                        'enum' => [
-                                            'boolean',
-                                            'string',
-                                            'integer',
-                                            'number',
-                                            'json',
-                                            'csv',
-                                            'concat',
-                                            'join',
-                                            'inherit',
-                                            'copy',
-                                            'null',
-                                        ],
-                                    ],
-                                ],
-                                'additionalProperties' => false,
-                                'required' => ['from', 'to', 'cast'],
-                            ],
-                        ],
-                    ],
-                    'template' => ['type' => 'string'],
-                    'workflow' => [
-                        'type' => 'array',
-                        'items' => ['type' => 'string'],
-                    ],
-                    'is_valid' => ['type' => 'boolean'],
-                ],
-                'required' => [
-                    'name',
-                    'form_id',
-                    'mutations',
-                    'workflow',
-                    'is_valid',
-                ],
+    protected static function default_config()
+    {
+        return [
+            'bridges' => [
+                'type' => 'array',
+                'items' => Form_Bridge::$schema,
             ],
-        ],
-    ];
+        ];
+    }
 
     protected static function merge_setting_config($config)
     {
-        return forms_bridge_merge_object($config, self::$default_config);
+        return forms_bridge_merge_object($config, self::default_config());
     }
 
     /**
@@ -284,6 +235,26 @@ abstract class Addon extends Singleton
             $bridge['form_id'] = '';
         }
 
+        $custom_fields = array_filter(
+            (array) ($bridge['custom_fields'] ?? []),
+            static function ($custom_field) {
+                if (
+                    empty($custom_field['name']) ||
+                    empty($custom_field['value'])
+                ) {
+                    return;
+                }
+
+                if (!JSON_Finger::validate($custom_field['name'])) {
+                    return;
+                }
+
+                return true;
+            }
+        );
+
+        $bridge['custom_fields'] = $custom_fields;
+
         $bridge['workflow'] = array_map(
             'sanitize_text_field',
             (array) ($bridge['workflow'] ?? [])
@@ -292,15 +263,17 @@ abstract class Addon extends Singleton
         $mutations = [];
         foreach ((array) ($bridge['mutations'] ?? []) as $mappers) {
             $mappers = array_filter($mappers, static function ($mapper) {
-                extract($mapper);
-
-                if (empty($from) || empty($to) || empty($cast)) {
+                if (
+                    empty($mapper['from']) ||
+                    empty($mapper['to']) ||
+                    empty($mapper['cast'])
+                ) {
                     return;
                 }
 
                 if (
-                    !JSON_Finger::validate($from) ||
-                    !JSON_Finger::validate($to)
+                    !JSON_Finger::validate($mapper['from']) ||
+                    !JSON_Finger::validate($mapper['to'])
                 ) {
                     return;
                 }

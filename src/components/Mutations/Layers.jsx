@@ -134,8 +134,12 @@ export default function MutationLayers({ fields, mappers, setMappers }) {
       .concat([{ from: "", to: "", cast: "string" }])
       .concat(mappers.slice(index, mappers.length));
 
-    if (index === mappers.length - 1) {
-      setTimeout(() => tableWrapper.current.scrollTo(0, index * 100), 100);
+    if (index === mappers.length) {
+      setTimeout(
+        () =>
+          tableWrapper.current.scrollTo(0, tableWrapper.current.offsetHeight),
+        100
+      );
     }
 
     setMappers(newMappers);
@@ -170,13 +174,37 @@ export default function MutationLayers({ fields, mappers, setMappers }) {
             borderSpacing: "0px",
           }}
         >
+          <thead>
+            <tr>
+              <th aria-hidden="true"></th>
+              <th
+                scope="col"
+                style={{ textAlign: "left", padding: "1em 0 0 0.5em" }}
+              >
+                {__("From", "forms-bridge")}
+              </th>
+              <th
+                scope="col"
+                style={{ textAlign: "left", padding: "1em 0 0 0.5em" }}
+              >
+                {__("To", "forms-bridge")}
+              </th>
+              <th
+                scope="col"
+                style={{ textAlign: "left", padding: "1em 0 0 0.5em" }}
+              >
+                {__("Mutation", "forms-bridge")}
+              </th>
+              <th aria-hidden="true"></th>
+            </tr>
+          </thead>
+
           <tbody>
             {mappers.map(({ from, to, cast }, i) => (
               <tr key={i}>
                 <td>{i + 1}.</td>
                 <td>
                   <SelectControl
-                    placeholder={__("From", "forms-bridge")}
                     value={from}
                     onChange={(value) => setMapper("from", i, value)}
                     options={getFromOptions(fields, mappers.slice(0, i))}
@@ -186,7 +214,6 @@ export default function MutationLayers({ fields, mappers, setMappers }) {
                 </td>
                 <td>
                   <TextControl
-                    placeholder={__("To", "forms-bridge")}
                     style={mapperToStyle(to)}
                     value={to}
                     onChange={(value) => setMapper("to", i, value)}
@@ -196,7 +223,6 @@ export default function MutationLayers({ fields, mappers, setMappers }) {
                 </td>
                 <td>
                   <SelectControl
-                    placeholder={__("Cast as", "forms-bridge")}
                     value={cast || "string"}
                     onChange={(value) => setMapper("cast", i, value)}
                     options={castOptions}

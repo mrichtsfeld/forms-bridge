@@ -85,7 +85,7 @@ class Form_Bridge_Template
      *
      * @var array
      */
-    private static $schema = [
+    public static $schema = [
         'title' => ['type' => 'string'],
         'description' => ['type' => 'string'],
         'integrations' => [
@@ -161,6 +161,18 @@ class Form_Bridge_Template
             'properties' => [
                 'name' => ['type' => 'string'],
                 'form_id' => ['type' => 'string'],
+                'custom_fields' => [
+                    'type' => 'array',
+                    'items' => [
+                        'type' => 'object',
+                        'properties' => [
+                            'name' => ['type' => 'string'],
+                            'value' => ['type' => 'string'],
+                        ],
+                        'additionalProperties' => false,
+                        'required' => ['name', 'value'],
+                    ],
+                ],
                 'mutations' => [
                     'type' => 'array',
                     'items' => [
@@ -197,7 +209,11 @@ class Form_Bridge_Template
                     'items' => ['type' => 'string'],
                 ],
             ],
-            'required' => ['name', /* 'form_id', */ 'mutations'],
+            'required' => [
+                'name',
+                /* 'form_id', */ 'custom_fields',
+                'mutations',
+            ],
             'additionalProperties' => false,
         ],
         'backend' => [
@@ -353,6 +369,7 @@ class Form_Bridge_Template
                 'bridge' => [
                     'name' => '',
                     'form_id' => '',
+                    'custom_fields' => [],
                     'mutations' => [[]],
                     'workflow' => [],
                 ],

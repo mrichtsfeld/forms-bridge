@@ -2,7 +2,7 @@
 import { useForms } from "../../providers/Forms";
 import { useGeneral } from "../../providers/Settings";
 import useBridgeNames from "../../hooks/useBridgeNames";
-import Mutations from "../Mutations";
+import CustomFields from "../CustomFields";
 import Workflow from "../Workflow";
 import NewBridge from "./NewBridge";
 
@@ -144,16 +144,14 @@ export default function Bridge({
           flexWrap: "wrap",
         }}
       >
-        <Mutations
-          form={form}
-          mappers={data.mutations[0]}
-          setMappers={(mappers) =>
+        <CustomFields
+          customFields={data.custom_fields || []}
+          setCustomFields={(custom_fields) =>
             update({
               ...data,
-              mutations: [mappers].concat(data.mutations.slice(1)),
+              custom_fields,
             })
           }
-          includeFiles={!isMultipart}
         />
         <Workflow
           form={form}

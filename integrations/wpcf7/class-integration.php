@@ -134,12 +134,20 @@ class Integration extends BaseIntegration
         return !!$result;
     }
 
+    public function submission_id()
+    {
+        $submission = $this->submission(true);
+        if ($submission) {
+            return $submission->get_posted_data_hash();
+        }
+    }
+
     /**
      * Retrives the current submission data.
      *
      * @param boolean $raw Control if the submission is serialized before exit.
      *
-     * @return array Submission data.
+     * @return WPCF7_Submission|array Submission data.
      */
     public function submission($raw = false)
     {

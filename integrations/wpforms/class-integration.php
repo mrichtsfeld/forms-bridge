@@ -178,6 +178,14 @@ class Integration extends BaseIntegration
         return boolval($post->ID ?? false);
     }
 
+    public function submission_id()
+    {
+        $submission = $this->submission(true);
+        if ($submission) {
+            return $submission['entry_id'];
+        }
+    }
+
     /**
      * Retrives the current form submission data.
      *

@@ -1,0 +1,392 @@
+import JsonFinger from "../../lib/JsonFinger";
+
+const { TextControl, Button, Popover } = wp.components;
+const { useEffect, useState, useRef } = wp.element;
+const { __ } = wp.i18n;
+
+const tagOptions = [
+  {
+    label: __("Submission ID", "forms-bridge"),
+    value: "$submission_id",
+  },
+  {
+    label: __("Form ID", "forms-bridge"),
+    value: "$form_id",
+  },
+  {
+    label: __("Form title", "forms-bridge"),
+    value: "$form_title",
+  },
+  {
+    label: __("Site title", "forms-bridge"),
+    value: "$site_site",
+  },
+  {
+    label: __("Site description", "forms-bridge"),
+    value: "$site_description",
+  },
+  {
+    label: __("Site URL", "forms-bridge"),
+    value: "$site_url",
+  },
+  {
+    label: __("Blog URL", "forms-bridge"),
+    value: "$blog_url",
+  },
+  {
+    label: __("Admin email", "forms-bridge"),
+    value: "$admin_email",
+  },
+  {
+    label: __("WP Version", "forms-bridge"),
+    value: "$wp_version",
+  },
+  {
+    label: __("IP address", "forms-bridge"),
+    value: "$ip_address",
+  },
+  {
+    label: __("Referer", "forms-bridge"),
+    value: "$referer",
+  },
+  {
+    label: __("User agent", "forms-bridge"),
+    value: "$user_agent",
+  },
+  {
+    label: __("Browser locale", "forms-bridge"),
+    value: "$browser_locale",
+  },
+  {
+    label: __("Page locale", "forms-bridge"),
+    value: "$locale",
+  },
+  {
+    label: __("Page language", "forms-bridge"),
+    value: "$language",
+  },
+  {
+    label: __("Datetime", "forms-bridge"),
+    value: "$datetime",
+  },
+  {
+    label: __("ISO Date", "forms-bridge"),
+    value: "$iso_date",
+  },
+  {
+    label: __("Timestamp", "forms-bridge"),
+    value: "$timestamp",
+  },
+  {
+    label: __("User ID", "forms-bridge"),
+    value: "$user_id",
+  },
+  {
+    label: __("user_login", "forms-bridge"),
+    value: "$user_login",
+  },
+  {
+    label: __("User name", "forms-bridge"),
+    value: "$user_name",
+  },
+  {
+    label: __("User email", "forms-bridge"),
+    value: "$user_email",
+  },
+];
+
+const CSS = `.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-hide table tr td {
+  padding: 1em 0.25em;
+}
+
+.scrollbar-hide table tr td:first-child {
+  padding: 1em 0.5em 1em 5px;
+}
+
+.scrollbar-hide table tr td:last-child {
+  padding: 1em 10px 1em 0.25em;
+  white-space: nowrap;
+}
+
+.scrollbar-hide table tr:not(:last-child) td {
+  border-bottom: 1px solid #ccc;
+}
+
+.components-popover__content li:hover,
+.components-popover__content li:focus {
+  color: var(--wp-components-color-accent, var(--wp-admin-theme-color, #3858e9));
+}
+
+.components-popover__content li:focus {
+  margin: 1px;
+  outline: 1px solid;
+  border-radius: 0px;
+}`;
+
+const INVALID_TO_STYLE = {
+  "--wp-components-color-accent": "#cc1818",
+  "color":
+    "var(--wp-components-color-accent, var(--wp-admin-theme-color, #3858e9))",
+  "borderColor":
+    "var(--wp-components-color-accent, var(--wp-admin-theme-color, #3858e9))",
+};
+
+function useStyle(name = "") {
+  if (name.length && !JsonFinger.validate(name, "set")) {
+    return INVALID_TO_STYLE;
+  }
+
+  return {};
+}
+
+export default function CustomFieldsTable({ customFields, setCustomFields }) {
+  const tableWrapper = useRef();
+  const [tagSelector, setTagSelector] = useState(-1);
+
+  const setCustomField = (attr, index, value) => {
+    const newCustomFields = customFields.map((customField, i) => {
+      if (index === i) {
+        customField[attr] = value;
+      }
+
+      return { ...customField };
+    });
+
+    setCustomFields(newCustomFields);
+  };
+
+  const addCustomField = (index) => {
+    const newCustomFields = customFields
+      .slice(0, index)
+      .concat([{ name: "", value: "" }])
+      .concat(customFields.slice(index, customFields.length));
+
+    if (index === customFields.length) {
+      setTimeout(
+        () =>
+          tableWrapper.current.scrollTo(0, tableWrapper.current.offsetHeight),
+        100
+      );
+    }
+
+    setCustomFields(newCustomFields);
+  };
+
+  const dropCustomField = (index) => {
+    const newCustomFields = customFields
+      .slice(0, index)
+      .concat(customFields.slice(index + 1));
+
+    setCustomFields(newCustomFields);
+  };
+
+  useEffect(() => {
+    if (!customFields.length) addCustomField(0);
+  }, [customFields]);
+
+  const style = useRef(document.createElement("style"));
+  useEffect(() => {
+    style.current.appendChild(document.createTextNode(CSS));
+    document.head.appendChild(style.current);
+
+    return () => {
+      document.head.removeChild(style.current);
+    };
+  }, []);
+
+  return (
+    <>
+      <div ref={tableWrapper} className="scrollbar-hide" style={{ flex: 1 }}>
+        <table
+          style={{
+            width: "calc(100% + 10px)",
+            margin: "0 -5px",
+            borderSpacing: "0px",
+          }}
+        >
+          <thead>
+            <tr>
+              <th aria-hidden="true"></th>
+              <th
+                scope="col"
+                style={{ textAlign: "left", padding: "1em 0 0 0.5em" }}
+              >
+                {__("Name", "forms-bridge")}
+              </th>
+              <th
+                scope="col"
+                style={{ textAlign: "left", padding: "1em 0 0 0.5em" }}
+              >
+                {__("Value", "forms-bridge")}
+              </th>
+              <th aria-hidden="true"></th>
+            </tr>
+          </thead>
+          <tbody>
+            {customFields.map(({ name, value }, i) => (
+              <tr key={i}>
+                <td style={{ width: 0 }}>{i + 1}.</td>
+                <td>
+                  <TextControl
+                    style={useStyle(name)}
+                    value={name}
+                    onChange={(value) => setCustomField("name", i, value)}
+                    __nextHasNoMarginBottom
+                    __next40pxDefaultSize
+                  />
+                </td>
+                <td>
+                  <div style={{ display: "flex" }}>
+                    <div style={{ flex: 1 }}>
+                      <TextControl
+                        value={value}
+                        onChange={(value) => setCustomField("value", i, value)}
+                        __nextHasNoMarginBottom
+                        __next40pxDefaultSize
+                      />
+                    </div>
+                    <Button
+                      disabled={!name}
+                      style={{
+                        height: "40px",
+                        width: "40px",
+                        justifyContent: "center",
+                        marginLeft: "2px",
+                      }}
+                      size="compact"
+                      variant="primary"
+                      onClick={() => setTagSelector(i)}
+                      __next40pxDefaultSize
+                    >
+                      $
+                      {tagSelector === i && (
+                        <TagSelector
+                          tags={tagOptions}
+                          onChange={(tag) => {
+                            setTagSelector(-1);
+                            setCustomField("value", i, value + tag);
+                          }}
+                          onFocusOutside={() => setTagSelector(-1)}
+                        />
+                      )}
+                    </Button>
+                  </div>
+                </td>
+                <td style={{ width: 0 }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      marginLeft: "0.45em",
+                      gap: "0.45em",
+                    }}
+                  >
+                    <Button
+                      size="compact"
+                      variant="secondary"
+                      disabled={!name || !value}
+                      onClick={() => addCustomField(i + 1)}
+                      style={{
+                        width: "40px",
+                        height: "40px",
+                        justifyContent: "center",
+                      }}
+                      __next40pxDefaultSize
+                    >
+                      +
+                    </Button>
+                    <Button
+                      size="compact"
+                      isDestructive
+                      variant="secondary"
+                      onClick={() => dropCustomField(i)}
+                      style={{
+                        width: "40px",
+                        height: "40px",
+                        justifyContent: "center",
+                      }}
+                      __next40pxDefaultSize
+                    >
+                      -
+                    </Button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </>
+  );
+}
+
+function TagSelector({ tags, onChange, onFocusOutside }) {
+  const [focus, setFocus] = useState(0);
+
+  return (
+    <Popover onFocusOutside={onFocusOutside} offset={5} placement="right-start">
+      <div
+        style={{ position: "relative", paddingTop: "2.2em", height: "300px" }}
+      >
+        <label
+          for="bridge-tags-list"
+          style={{
+            position: "fixed",
+            top: "0px",
+            left: "0px",
+            width: "100%",
+            padding: "0.25em 0.5em",
+            borderBottom: "1px solid",
+            backgroundColor: "white",
+          }}
+        >
+          <strong>{__("Tags", "forms-bridge")}</strong>
+        </label>
+        <ul
+          id="bridge-tags-list"
+          style={{
+            width: "120px",
+            height: "100%",
+            overflowY: "auto",
+            margin: 0,
+          }}
+        >
+          {tags.map(({ label, value }, i) => (
+            <li
+              style={{ padding: "0.25em 0.5em", cursor: "pointer" }}
+              tabIndex="0"
+              role="button"
+              onKeyDown={(ev) => {
+                if (focus !== i) return;
+
+                if (ev.key === "Enter") {
+                  ev.stopPropagation();
+                  ev.preventDefault();
+                  onChange(value);
+                }
+              }}
+              onFocus={() => setFocus(i)}
+              onClick={(ev) => {
+                ev.preventDefault();
+                ev.stopPropagation();
+                onChange(value);
+              }}
+            >
+              {label}
+            </li>
+          ))}
+        </ul>
+      </div>
+    </Popover>
+  );
+}

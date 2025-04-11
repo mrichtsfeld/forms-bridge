@@ -27,7 +27,15 @@ export default function Bridges({ bridges, setBridges, Bridge }) {
   const tabs = bridges
     .map(
       (
-        { backend, form_id, name, mutations, workflow = [], ...customFields },
+        {
+          backend,
+          form_id,
+          name,
+          custom_fields,
+          mutations,
+          workflow = [],
+          ...customFields
+        },
         i
       ) => ({
         ...customFields,
@@ -35,6 +43,7 @@ export default function Bridges({ bridges, setBridges, Bridge }) {
         title: name,
         backend,
         form_id,
+        custom_fields,
         mutations,
         workflow,
         icon: (
@@ -96,7 +105,10 @@ export default function Bridges({ bridges, setBridges, Bridge }) {
     const copy = {
       ...bridge,
       workflow: bridge.workflow.map((job) => job),
-      mutations: JSON.parse(JSON.stringify(bridge.mutations || [[]])),
+      mutations: JSON.parse(
+        JSON.stringify(bridge.mutations || bridge.workflow.map(() => []))
+      ),
+      custom_fields: JSON.parse(JSON.stringify(bridge.custom_fields || [])),
     };
 
     let isUnique = false;

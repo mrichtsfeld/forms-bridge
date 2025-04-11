@@ -88,6 +88,13 @@ class Integration extends BaseIntegration
         return;
     }
 
+    public function submission_id()
+    {
+        if (self::$order_id) {
+            return (string) self::$order_id;
+        }
+    }
+
     public function submission($raw)
     {
         if (empty(self::$order_id)) {

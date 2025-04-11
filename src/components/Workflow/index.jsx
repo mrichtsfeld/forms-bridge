@@ -30,7 +30,7 @@ export default function Workflow({
       </Button>
       {open && (
         <Modal
-          title={__("Bridge workflow", "forms-bridge")}
+          title={__("Submission workflow", "forms-bridge")}
           onRequestClose={() => setOpen(false)}
         >
           <WorkflowProvider
@@ -39,9 +39,16 @@ export default function Workflow({
             workflow={workflow}
             includeFiles={includeFiles}
           >
+            <p style={{ marginTop: "-3rem", position: "absolute", zIndex: 1 }}>
+              {__(
+                "Process the form submission before it is sent to the backend over the bridge",
+                "forms-bridge"
+              )}
+            </p>
             <div
               style={{
-                width: "920px",
+                marginTop: "2rem",
+                width: "1080px",
                 maxWidth: "80vw",
                 height: "500px",
                 maxHeight: "80vh",
