@@ -60,6 +60,7 @@ export default function NewBridge({
       backend,
       form_id: formId,
       mutations: [[]],
+      custom_fields: [],
     });
 
     setName("");

@@ -2,11 +2,10 @@ const { useMemo } = wp.element;
 
 function useStyle(state, diff) {
   if (!diff) {
-    return { color: "inherit", display: "inline-block" };
+    return { color: "inherit" };
   }
 
   return {
-    display: "inline-block",
     color: state.enter
       ? "#4ab866"
       : state.exit
@@ -30,7 +29,9 @@ export default function WorkflowStageField({
 
   return (
     <div style={style}>
-      <strong>{name}</strong>
+      <span>
+        <strong>{name}</strong>
+      </span>
       <FieldSchema
         data={schema}
         showDiff={showDiff}
@@ -44,12 +45,12 @@ export default function WorkflowStageField({
 }
 
 function FieldSchema({ data, showDiff, enter, exit, mutated, touched }) {
-  const content = useMemo(() => {
+  return useMemo(() => {
     switch (data.type) {
       case "object":
         return (
           <ObjectProperties
-            data={data.properties}
+            properties={data.properties}
             showDiff={showDiff}
             enter={enter}
             exit={exit}
@@ -60,7 +61,7 @@ function FieldSchema({ data, showDiff, enter, exit, mutated, touched }) {
       case "array":
         return (
           <ArrayItems
-            data={data.items}
+            items={data.items}
             showDiff={showDiff}
             enter={enter}
             exit={exit}
@@ -69,31 +70,55 @@ function FieldSchema({ data, showDiff, enter, exit, mutated, touched }) {
           />
         );
       default:
-        return data.type;
+        return <div>{data.type}</div>;
     }
   }, [data]);
+}
+
+function ObjectProperties({
+  properties,
+  showDiff,
+  enter,
+  exit,
+  mutated,
+  touched,
+  arrayItem = false,
+}) {
+  const type = arrayItem ? "object[]" : "object";
 
   return (
-    <div
-      style={{
-        display: "inline",
-        marginLeft: "1em",
-        paddingLeft: "1em",
-        borderLeft: "1px solid",
-      }}
-    >
-      {content}
-    </div>
+    <>
+      <div>{type}</div>
+      <ul
+        style={{
+          paddingLeft: "15px",
+          marginBottom: 0,
+          marginTop: "5px",
+          marginLeft: "3px",
+          borderLeft: "1px dashed",
+        }}
+      >
+        {Object.keys(properties).map((prop) => (
+          <li>
+            <WorkflowStageField
+              name={prop}
+              schema={properties[prop]}
+              showDiff={showDiff}
+              enter={enter}
+              mutated={mutated}
+              touched={touched}
+              exit={exit}
+            />
+          </li>
+        ))}
+      </ul>
+    </>
   );
 }
 
-function ObjectProperties({ data, showDiff, enter, exit, mutated, touched }) {
-  return "object";
-}
-
-function ArrayItems({ data, showDiff, enter, exit, mutated, touched }) {
-  if (Array.isArray(data)) {
-    const types = data.reduce((types, { type }) => {
+function ArrayItems({ items, showDiff, enter, exit, mutated, touched }) {
+  if (Array.isArray(items)) {
+    const types = items.reduce((types, { type }) => {
       if (!types.includes(type)) {
         types.push(type);
       }
@@ -101,12 +126,32 @@ function ArrayItems({ data, showDiff, enter, exit, mutated, touched }) {
       return types;
     }, []);
 
-    if (types.length > 1) {
-      return "mixed[]";
-    }
-
-    return types[0] + "[]";
+    const type = types.length > 1 ? "mixed" : types[0];
+    return (
+      <ArrayItems
+        items={{ ...items[0], type }}
+        showDiff={showDiff}
+        enter={enter}
+        exit={exit}
+        mutated={mutated}
+        touched={touched}
+      />
+    );
   }
 
-  return data.type + "[]";
+  if (items.type === "object") {
+    return (
+      <ObjectProperties
+        properties={items.properties || {}}
+        showDiff={showDiff}
+        enter={enter}
+        exit={exit}
+        mutated={mutated}
+        touched={touched}
+        arrayItem
+      />
+    );
+  }
+
+  return <div>{items.type + "[]"}</div>;
 }
