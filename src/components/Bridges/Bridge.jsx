@@ -155,6 +155,7 @@ export default function Bridge({
         />
         <Workflow
           form={form}
+          customFields={data.custom_fields}
           mutations={data.mutations}
           workflow={data.workflow}
           setWorkflow={(workflow) => update({ ...data, workflow })}

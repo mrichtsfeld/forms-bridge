@@ -94,6 +94,7 @@ function applyJob(payload, job) {
 export default function WorkflowProvider({
   children,
   form,
+  customFields,
   mutations,
   workflow,
   includeFiles,
@@ -154,7 +155,14 @@ export default function WorkflowProvider({
         }
 
         return fields;
-      }, []);
+      }, [])
+      .concat(
+        customFields.map(({ name }) => ({
+          name,
+          label: name,
+          schema: { type: "string" },
+        }))
+      );
   }, [form]);
 
   const stage = useMemo(() => {
