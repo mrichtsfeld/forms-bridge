@@ -18,13 +18,7 @@ const LOGOS = {
   "zoho": zohoLogo,
 };
 
-const {
-  PanelBody,
-  ToggleControl,
-  __experimentalSpacer: Spacer,
-  Tooltip,
-} = wp.components;
-const { useMemo } = wp.element;
+const { PanelBody, __experimentalSpacer: Spacer } = wp.components;
 const { __ } = wp.i18n;
 
 export default function Addons() {
@@ -39,17 +33,6 @@ export default function Addons() {
       },
     });
 
-  const table = useMemo(() => {
-    const colLength = Object.keys(general.addons).length / 2;
-    return Object.keys(general.addons).reduce((rows, addon, i) => {
-      const rowIndex = i % colLength;
-      const row = rows[rowIndex] || {};
-      row[addon] = general.addons[addon];
-      rows[rowIndex] = row;
-      return rows;
-    }, []);
-  }, [general.addons]);
-
   return (
     <PanelBody title={__("Addons", "forms-bridge")} initialOpen={false}>
       <p>
@@ -59,33 +42,48 @@ export default function Addons() {
         )}
       </p>
       <Spacer paddingBottom="5px" />
-      {table.map((row, i) => (
-        <div key={i} style={{ display: "flex", justifyContent: "left" }}>
-          {Object.entries(row).map(([addon, enabled]) => (
-            <div style={{ width: "300px", display: "flex", padding: "20px 0" }}>
-              <ToggleControl
-                checked={enabled}
-                onChange={() => toggle(addon)}
-                __nextHasNoMarginBottom
+      <div style={{ display: "flex", flexWrap: "wrap", gap: "20px" }}>
+        {Object.keys(general.addons).map((addon) => (
+          <button
+            tabIndex={0}
+            style={{
+              width: "200px",
+              height: "180px",
+              borderRadius: "5px",
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "center",
+              alignItems: "center",
+              cursor: "pointer",
+              padding: "20px",
+              color: general.addons[addon]
+                ? "var(--wp-components-color-accent,var(--wp-admin-theme-color,#3858e9))"
+                : "inherit",
+              border: general.addons[addon] ? "2px solid" : "none",
+            }}
+            onClick={() => toggle(addon)}
+          >
+            <div style={{ flex: 1, display: "flex", alignItems: "center" }}>
+              <img
+                alt={addon}
+                src={"data:image/png;base64," + LOGOS[addon]}
+                width="100px"
+                height="50px"
+                style={{
+                  marginTop: "-8px",
+                  objectFit: "contain",
+                  objectPosition: "center",
+                  marginLeft: "5px",
+                }}
               />
-              <Tooltip text={__(addon, "forms-bridge")}>
-                <img
-                  alt={addon}
-                  src={"data:image/png;base64," + LOGOS[addon]}
-                  height="30px"
-                  width="95px"
-                  style={{
-                    marginTop: "-8px",
-                    objectFit: "contain",
-                    objectPosition: "left",
-                    marginLeft: "5px",
-                  }}
-                />
-              </Tooltip>
             </div>
-          ))}
-        </div>
-      ))}
+            <h4 style={{ margin: 0, fontSize: "1rem" }}>
+              {__(addon, "forms-bridge")}
+            </h4>
+          </button>
+        ))}
+      </div>
+      <Spacer paddingY="calc(10px)" />
     </PanelBody>
   );
 }
