@@ -34,7 +34,7 @@ export default function Addon() {
     const img = document.querySelector("#listmonk .addon-logo");
     if (!img) return;
     img.setAttribute("src", "data:image/png;base64," + logo);
-    img.style.width = "70px";
+    img.style.width = "90px";
   }, [root]);
 
   return (
