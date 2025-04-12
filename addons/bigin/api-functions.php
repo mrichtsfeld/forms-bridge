@@ -11,12 +11,20 @@ function forms_bridge_bigin_create_contact($payload, $bridge)
     ];
 
     $contact_fields = [
+        'Owner',
+        'Full_Name',
         'First_Name',
         'Email',
         'Phone',
+        'Mobile',
         'Title',
         'Account_Name',
         'Description',
+        'Mailing_Street',
+        'Mailing_City',
+        'Mailing_Zip',
+        'Mailing_State',
+        'Mailing_Country',
     ];
 
     foreach ($contact_fields as $field) {
@@ -41,6 +49,7 @@ function forms_bridge_bigin_create_contact($payload, $bridge)
     $response = $bridge
         ->patch([
             'name' => 'zoho-bigin-create-contact',
+            'scope' => 'ZohoBigin.modules.contacts.CREATE',
             'endpoint' => '/bigin/v2/Contacts/upsert',
             'template' => null,
         ])
@@ -64,6 +73,9 @@ function forms_bridge_bigin_create_account($payload, $bridge)
     ];
 
     $company_fields = [
+        'Owner',
+        'Phone',
+        'Website',
         'Billing_Street',
         'Billing_Code',
         'Billing_City',
@@ -81,6 +93,7 @@ function forms_bridge_bigin_create_account($payload, $bridge)
     $response = $bridge
         ->patch([
             'name' => 'zoho-bigin-create-account',
+            'scope' => 'ZohoBigin.modules.accounts.CREATE',
             'endpoint' => '/bigin/v2/Accounts/upsert',
             'template' => null,
         ])

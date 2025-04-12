@@ -4,8 +4,43 @@ if (!defined('ABSPATH')) {
     exit();
 }
 
+add_filter(
+    'forms_bridge_template_data',
+    function ($data, $template_name) {
+        if ($template_name === 'bigin-deals') {
+            $index = array_search(
+                'Tag',
+                array_column($data['bridge']['custom_fields'], 'name')
+            );
+
+            if ($index !== false) {
+                $field = &$data['bridge']['custom_fields'][$index];
+
+                $tags = array_filter(
+                    array_map('trim', explode(',', strval($field['value'])))
+                );
+                for ($i = 0; $i < count($tags); $i++) {
+                    $data['bridge']['custom_fields'][] = [
+                        'name' => "Tag[{$i}].name",
+                        'value' => $tags[$i],
+                    ];
+                }
+
+                array_splice($data['bridge']['custom_fields'], $index, 1);
+                $data['bridge']['custom_fields'] = array_values(
+                    $data['bridge']['custom_fields']
+                );
+            }
+        }
+
+        return $data;
+    },
+    10,
+    2
+);
+
 return [
-    'title' => __('Bigin Deals', 'forms-bridge'),
+    'title' => __('Deals', 'forms-bridge'),
     'description' => __(
         'Creates new deals on your Bigin pipelines',
         'forms-bridge'
@@ -64,11 +99,11 @@ return [
         [
             'ref' => '#form',
             'name' => 'title',
-            'default' => __('Bigin Deals', 'forms-bridge'),
+            'default' => __('Deals', 'forms-bridge'),
         ],
         [
-            'ref' => '#form/fields[]',
-            'name' => 'Owner',
+            'ref' => '#bridge/custom_fields[]',
+            'name' => 'Owner.id',
             'label' => __('Owner ID', 'forms-bridge'),
             'descritpion' => __(
                 'ID of the owner user of the deal',
@@ -78,7 +113,7 @@ return [
             'required' => true,
         ],
         [
-            'ref' => '#form/fields[]',
+            'ref' => '#bridge/custom_fields[]',
             'name' => 'Deal_Name',
             'label' => __('Deal name', 'forms-bridge'),
             'description' => __('Name of the pipeline deals', 'forms-bridge'),
@@ -86,7 +121,7 @@ return [
             'required' => true,
         ],
         [
-            'ref' => '#form/fields[]',
+            'ref' => '#bridge/custom_fields[]',
             'name' => 'Stage',
             'label' => __('Deal stage', 'forms-bridge'),
             'type' => 'options',
@@ -119,20 +154,20 @@ return [
             'required' => true,
         ],
         [
-            'ref' => '#form/fields[]',
+            'ref' => '#bridge/custom_fields[]',
             'name' => 'Sub_Pipeline',
             'label' => __('Pipeline name', 'forms-bridge'),
             'type' => 'string',
             'required' => true,
         ],
         [
-            'ref' => '#form/fields[]',
+            'ref' => '#bridge/custom_fields[]',
             'name' => 'Amount',
             'label' => __('Deal amount', 'forms-bridge'),
             'type' => 'number',
         ],
         [
-            'ref' => '#form/fields[]',
+            'ref' => '#bridge/custom_fields[]',
             'name' => 'Tag',
             'label' => __('Deal tags', 'forms-bridge'),
             'description' => __(
@@ -144,35 +179,6 @@ return [
     ],
     'form' => [
         'fields' => [
-            [
-                'name' => 'Owner',
-                'type' => 'hidden',
-                'required' => true,
-            ],
-            [
-                'name' => 'Deal_Name',
-                'type' => 'hidden',
-                'required' => true,
-            ],
-            [
-                'name' => 'Stage',
-                'type' => 'hidden',
-                'required' => true,
-            ],
-            [
-                'name' => 'Sub_Pipeline',
-                'type' => 'hidden',
-                'required' => true,
-            ],
-            [
-                'name' => 'Tag',
-                'type' => 'hidden',
-            ],
-            [
-                'name' => 'Amount',
-                'type' => 'hidden',
-                'required' => true,
-            ],
             [
                 'name' => 'Account_Name',
                 'label' => __('Company name', 'forms-bridge'),
@@ -225,7 +231,7 @@ return [
             [
                 'name' => 'Email',
                 'label' => __('Email', 'forms-bridge'),
-                'type' => 'text',
+                'type' => 'email',
                 'required' => true,
             ],
             [
@@ -253,11 +259,7 @@ return [
         'endpoint' => '/bigin/v2/Pipelines',
         'scope' =>
             'ZohoBigin.modules.contacts.CREATE,ZohoBigin.modules.accounts.CREATE,ZohoBigin.modules.pipelines.CREATE',
-        'workflow' => [
-            'zoho-bigin-account-name',
-            'zoho-bigin-contact-name',
-            'zoho-tags',
-        ],
+        'workflow' => ['bigin-account-name', 'bigin-contact-name'],
         'mutations' => [
             [
                 [

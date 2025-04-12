@@ -4,7 +4,7 @@ if (!defined('ABSPATH')) {
     exit();
 }
 
-function forms_bridge_zoho_meeting_dates($payload)
+function forms_bridge_bigin_appointment_dates($payload)
 {
     $duration = $payload['duration'] ?? 1;
 
@@ -16,12 +16,12 @@ function forms_bridge_zoho_meeting_dates($payload)
 }
 
 return [
-    'title' => __('Meeting dates', 'forms-bridge'),
+    'title' => __('Appointment dates', 'forms-bridge'),
     'description' => __(
-        'Sets meeting start and end time from "date" and "duration" fields',
+        'Sets appointment start and end time from "date" and "duration" fields',
         'forms-bridge'
     ),
-    'method' => 'forms_bridge_zoho_meeting_dates',
+    'method' => 'forms_bridge_bigin_appointment_dates',
     'input' => [
         [
             'name' => 'date',

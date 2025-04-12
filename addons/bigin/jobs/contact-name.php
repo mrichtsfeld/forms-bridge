@@ -4,9 +4,9 @@ if (!defined('ABSPATH')) {
     exit();
 }
 
-function forms_bridge_zoho_bigin_contact_name($payload, $bridge)
+function forms_bridge_bigin_contact_name($payload, $bridge)
 {
-    $contact = forms_bridge_zoho_bigin_create_contact($payload, $bridge);
+    $contact = forms_bridge_bigin_create_contact($payload, $bridge);
 
     if (is_wp_error($contact)) {
         return $contact;
@@ -20,12 +20,12 @@ function forms_bridge_zoho_bigin_contact_name($payload, $bridge)
 }
 
 return [
-    'title' => __('Bigin contact name', 'forms-bridge'),
+    'title' => __('Contact name', 'forms-bridge'),
     'description' => __(
         'Search for a contact by email or creates a new if it does\'t exists and replace the name by the ID on the payload',
         'forms-bridge'
     ),
-    'method' => 'forms_bridge_zoho_bigin_contact_name',
+    'method' => 'forms_bridge_bigin_contact_name',
     'input' => [
         [
             'name' => 'Email',

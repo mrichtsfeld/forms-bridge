@@ -116,7 +116,7 @@ class Zoho_Addon extends Addon
     {
         return [
             static::$api,
-            static::merge_setting_config([
+            self::merge_setting_config([
                 'credentials' => [
                     'type' => 'array',
                     'items' => [

@@ -6,7 +6,7 @@ if (!defined('ABSPATH')) {
 
 function forms_bridge_zoho_bigin_account_name($payload, $bridge)
 {
-    $account = forms_bridge_zoho_bigin_create_account($payload, $bridge);
+    $account = forms_bridge_bigin_create_account($payload, $bridge);
 
     if (is_wp_error($account)) {
         return $account;
@@ -20,7 +20,7 @@ function forms_bridge_zoho_bigin_account_name($payload, $bridge)
 }
 
 return [
-    'title' => __('Bigin account name', 'forms-bridge'),
+    'title' => __('Account name', 'forms-bridge'),
     'description' => __(
         'Search for an account by name or creates a new if it does\'t exists and replace the name by the ID on the payload',
         'forms-bridge'
@@ -31,6 +31,25 @@ return [
             'name' => 'Account_Name',
             'schema' => ['type' => 'string'],
             'required' => true,
+        ],
+        [
+            'name' => 'Owner',
+            'schema' => [
+                'type' => 'object',
+                'properties' => [
+                    'id' => ['type' => 'string'],
+                ],
+                'additionalProperties' => false,
+                'required' => ['id'],
+            ],
+        ],
+        [
+            'name' => 'Phone',
+            'schema' => ['type' => 'string'],
+        ],
+        [
+            'name' => 'Website',
+            'schema' => ['type' => 'string'],
         ],
         [
             'name' => 'Billing_Street',

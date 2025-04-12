@@ -5,7 +5,7 @@ if (!defined('ABSPATH')) {
 }
 
 return [
-    'title' => __('Bigin Appointments', 'forms-bridge'),
+    'title' => __('Appointments', 'forms-bridge'),
     'fields' => [
         [
             'ref' => '#backend',
@@ -63,8 +63,8 @@ return [
             'default' => __('Appointments', 'forms-bridge'),
         ],
         [
-            'ref' => '#form/fields[]',
-            'name' => 'Owner',
+            'ref' => '#bridge/custom_fields[]',
+            'name' => 'Owner.id',
             'label' => __('Owner ID', 'forms-bridge'),
             'descritpion' => __(
                 'ID of the owner user of the event',
@@ -74,7 +74,7 @@ return [
             'required' => true,
         ],
         [
-            'ref' => '#form/fields[]',
+            'ref' => '#bridge/custom_fields[]',
             'name' => 'Event_Title',
             'label' => __('Event title', 'forms-bridge'),
             'type' => 'string',
@@ -82,14 +82,14 @@ return [
             'default' => __('Web Appointment', 'forms-bridge'),
         ],
         [
-            'ref' => '#form/fields[]',
+            'ref' => '#bridge/custom_fields[]',
             'name' => 'All_day',
             'label' => __('Is all day event?', 'forms-bridge'),
             'type' => 'boolean',
             'default' => false,
         ],
         [
-            'ref' => '#form/fields[]',
+            'ref' => '#bridge/custom_fields[]',
             'name' => 'duration',
             'label' => __('Duration', 'forms-bridge'),
             'description' => __('Duration in hours', 'forms-bridge'),
@@ -99,27 +99,6 @@ return [
     ],
     'form' => [
         'fields' => [
-            [
-                'name' => 'Owner',
-                'type' => 'hidden',
-                'required' => true,
-            ],
-            [
-                'name' => 'Event_Title',
-                'type' => 'hidden',
-                'required' => true,
-            ],
-            [
-                'name' => 'All_day',
-                'type' => 'hidden',
-                'required' => true,
-            ],
-            [
-                'name' => 'duration',
-                'type' => 'hidden',
-                'required' => true,
-                'value' => '1',
-            ],
             [
                 'name' => 'First_Name',
                 'label' => __('First name', 'forms-bridge'),
@@ -287,11 +266,6 @@ return [
         'mutations' => [
             [
                 [
-                    'from' => 'Owner',
-                    'to' => 'Owner.id',
-                    'cast' => 'string',
-                ],
-                [
                     'from' => 'All_day',
                     'to' => 'All_day',
                     'cast' => 'boolean',
@@ -307,8 +281,8 @@ return [
         ],
         'workflow' => [
             'forms-bridge-date-fields-to-date',
-            'zoho-event-dates',
-            'zoho-bigin-appointment-participant',
+            'bigin-event-dates',
+            'bigin-appointment-participant',
         ],
     ],
     'backend' => [

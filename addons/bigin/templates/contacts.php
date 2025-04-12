@@ -5,7 +5,7 @@ if (!defined('ABSPATH')) {
 }
 
 return [
-    'title' => __('Bigin Contacts', 'forms-bridge'),
+    'title' => __('Contacts', 'forms-bridge'),
     'fields' => [
         [
             'ref' => '#backend',
@@ -58,6 +58,16 @@ return [
             'label' => __('Scope', 'forms-bridge'),
             'type' => 'string',
             'value' => 'ZohoBigin.modules.contacts.CREATE',
+        ],
+        [
+            'ref' => '#bridge/custom_fields[]',
+            'name' => 'Owner.id',
+            'label' => __('Owner ID', 'forms-bridge'),
+            'description' => __(
+                'ID of the owner user of the contact',
+                'forms-bridge'
+            ),
+            'type' => 'string',
         ],
         [
             'ref' => '#form',

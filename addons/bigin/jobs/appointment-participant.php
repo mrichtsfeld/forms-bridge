@@ -6,7 +6,7 @@ if (!defined('ABSPATH')) {
 
 function forms_bridge_bigin_appointment_participant($payload, $bridge)
 {
-    $contact = forms_bridge_zoho_bigin_create_contact($payload, $bridge);
+    $contact = forms_bridge_bigin_create_contact($payload, $bridge);
 
     if (is_wp_error($payload)) {
         return $payload;
@@ -22,7 +22,7 @@ function forms_bridge_bigin_appointment_participant($payload, $bridge)
 }
 
 return [
-    'title' => __('Bigin appointment participant', 'forms-bridge'),
+    'title' => __('Appointment participant', 'forms-bridge'),
     'description' => __(
         'Search for a contact or creates a new one and sets its ID as appointment participant',
         'forms-bridge'
@@ -30,22 +30,48 @@ return [
     'method' => 'forms_bridge_bigin_appointment_participant',
     'input' => [
         [
-            'name' => 'Email',
+            'name' => 'Last_Name',
             'schema' => ['type' => 'string'],
             'required' => true,
         ],
         [
             'name' => 'First_Name',
             'schema' => ['type' => 'string'],
-            'required' => true,
         ],
         [
-            'name' => 'Last_Name',
+            'name' => 'Full_Name',
             'schema' => ['type' => 'string'],
-            'required' => true,
+        ],
+        [
+            'name' => 'Email',
+            'schema' => ['type' => 'string'],
         ],
         [
             'name' => 'Phone',
+            'schema' => ['type' => 'string'],
+        ],
+        [
+            'name' => 'Mobile',
+            'schema' => ['type' => 'string'],
+        ],
+        [
+            'name' => 'Mailing_Street',
+            'schema' => ['type' => 'string'],
+        ],
+        [
+            'name' => 'Mailing_City',
+            'schema' => ['type' => 'string'],
+        ],
+        [
+            'name' => 'Mailing_Zip',
+            'schema' => ['type' => 'string'],
+        ],
+        [
+            'name' => 'Mailing_State',
+            'schema' => ['type' => 'string'],
+        ],
+        [
+            'name' => 'Mailing_Country',
             'schema' => ['type' => 'string'],
         ],
         [

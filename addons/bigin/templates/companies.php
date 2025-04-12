@@ -5,7 +5,7 @@ if (!defined('ABSPATH')) {
 }
 
 return [
-    'title' => __('Bigin Company Contact', 'forms-bridge'),
+    'title' => __('Company Contact', 'forms-bridge'),
     'fields' => [
         [
             'ref' => '#backend',
@@ -59,6 +59,16 @@ return [
             'type' => 'string',
             'value' =>
                 'ZohoBigin.modules.accounts.CREATE,ZohoBigin.modules.contacts.CREATE',
+        ],
+        [
+            'ref' => '#bridge/custom_fields[]',
+            'name' => 'Owner.id',
+            'label' => __('Owner ID', 'forms-bridge'),
+            'description' => __(
+                'ID of the owner user of the account',
+                'forms-bridge'
+            ),
+            'type' => 'string',
         ],
         [
             'ref' => '#form',
@@ -120,7 +130,7 @@ return [
             [
                 'name' => 'Email',
                 'label' => __('Email', 'forms-bridge'),
-                'type' => 'text',
+                'type' => 'email',
                 'required' => true,
             ],
             [
@@ -139,7 +149,7 @@ return [
         'endpoint' => '/bigin/v2/Contacts/upsert',
         'scope' =>
             'ZohoBigin.modules.accounts.CREATE,ZohoBigin.modules.contacts.CREATE',
-        'workflow' => ['zoho-bigin-account-name'],
+        'workflow' => ['bigin-account-name'],
         'mutations' => [],
     ],
     'backend' => [
