@@ -14,7 +14,6 @@ export default function Workflow({
   setMutationMappers,
   form,
   customFields,
-  includeFiles,
 }) {
   const [open, setOpen] = useState(false);
 
@@ -39,7 +38,6 @@ export default function Workflow({
             mutations={mutations}
             workflow={workflow}
             customFields={customFields}
-            includeFiles={includeFiles}
           >
             <p style={{ marginTop: "-3rem", position: "absolute", zIndex: 1 }}>
               {__(

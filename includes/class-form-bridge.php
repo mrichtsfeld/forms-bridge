@@ -124,6 +124,8 @@ abstract class Form_Bridge
                 return $this->backend();
             case 'content_type':
                 return $this->content_type();
+            case 'api_fields':
+                return $this->api_fields();
             case 'workflow':
                 return $this->workflow();
             default:
@@ -182,6 +184,11 @@ abstract class Form_Bridge
         }
 
         return $backend->content_type;
+    }
+
+    protected function api_fields()
+    {
+        return [];
     }
 
     /**

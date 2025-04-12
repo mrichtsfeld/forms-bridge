@@ -27,4 +27,22 @@ class Dolibarr_Form_Bridge extends Rest_Form_Bridge
     {
         return 'application/json';
     }
+
+    protected function api_fields()
+    {
+        $backend = $this->backend();
+
+        $res = $backend->get($this->endpoint, ['limit' => 1]);
+
+        if (is_wp_error($res)) {
+            return [];
+        }
+
+        $entry = $res['data'][0] ?? null;
+        if (empty($entry)) {
+            return [];
+        }
+
+        return array_keys($entry);
+    }
 }

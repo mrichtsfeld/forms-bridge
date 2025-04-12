@@ -5,6 +5,7 @@ import useBridgeNames from "../../hooks/useBridgeNames";
 import CustomFields from "../CustomFields";
 import Workflow from "../Workflow";
 import NewBridge from "./NewBridge";
+import { useApiContentType, useApiFields } from "../../providers/ApiSchema";
 
 const {
   TextControl,
@@ -44,18 +45,6 @@ export default function Bridge({
   const form = useMemo(() => {
     return forms.find((form) => form._id == data.form_id);
   }, [data.form_id]);
-
-  const backend = useMemo(() => {
-    return backends.find((backend) => backend.name === data.backend);
-  }, [data.backend]);
-
-  const isMultipart = useMemo(
-    () =>
-      backend?.headers.find((header) => header.name === "Content-Type")
-        ?.value === "multipart/form-data",
-
-    [backend]
-  );
 
   const [name, setName] = useState(data.name);
   const initialName = useRef(data.name);
@@ -168,7 +157,6 @@ export default function Bridge({
                 .concat(data.mutations.slice(mutation + 1)),
             });
           }}
-          includeFiles={!isMultipart}
         />
         <Button
           isDestructive

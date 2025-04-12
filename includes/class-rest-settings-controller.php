@@ -29,6 +29,36 @@ class REST_Settings_Controller extends Base_Controller
         self::register_forms_route();
         self::register_templates_route();
         self::register_workflow_jobs_route();
+        self::register_api_schema_route();
+    }
+
+    private static function register_api_schema_route()
+    {
+        $namespace = self::namespace();
+        $version = self::version();
+        register_rest_route(
+            "{$namespace}/v{$version}",
+            '/schema/(?P<bridge>.*)',
+            [
+                'methods' => WP_REST_Server::READABLE,
+                'callback' => static function ($request) {
+                    return self::api_schema($request['bridge']);
+                },
+                'permission_callback' => static function () {
+                    return self::permission_callback();
+                },
+                'args' => [
+                    'bridge' => [
+                        'description' => __(
+                            'Name of the bridge',
+                            'forms-bridge'
+                        ),
+                        'type' => 'string',
+                        'required' => true,
+                    ],
+                ],
+            ]
+        );
     }
 
     /**
@@ -208,6 +238,42 @@ class REST_Settings_Controller extends Base_Controller
                 ],
             ]
         );
+    }
+
+    private static function api_schema($bridge_name)
+    {
+        if (empty($bridge_name)) {
+            return new WP_Error(
+                'bad_request',
+                __('Bridge name is required', 'forms-bridge')
+            );
+        }
+
+        $bridge_name = sanitize_text_field(urldecode($bridge_name));
+        $bridge = null;
+        $bridges = apply_filters('forms_bridge_bridges', []);
+        foreach ($bridges as $candidate) {
+            if ($candidate->name === $bridge_name) {
+                $bridge = $candidate;
+                break;
+            }
+        }
+
+        if (empty($bridge)) {
+            return new WP_Error(
+                'not_found',
+                __('Bridge is unknown', 'forms-bridge'),
+                ['bridge' => $bridge_name]
+            );
+        }
+
+        $fields = $bridge->api_fields;
+        $content_type = $bridge->content_type;
+
+        return [
+            'fields' => $fields,
+            'content_type' => $content_type,
+        ];
     }
 
     /**

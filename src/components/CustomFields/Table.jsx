@@ -1,6 +1,7 @@
 import JsonFinger from "../../lib/JsonFinger";
+import { useApiFields } from "../../providers/ApiSchema";
 
-const { TextControl, Button, Popover } = wp.components;
+const { BaseControl, TextControl, Button, Popover } = wp.components;
 const { useEffect, useState, useRef } = wp.element;
 const { __ } = wp.i18n;
 
@@ -151,6 +152,8 @@ function useStyle(name = "") {
 }
 
 export default function CustomFieldsTable({ customFields, setCustomFields }) {
+  const apiFields = useApiFields();
+
   const tableWrapper = useRef();
   const [tagSelector, setTagSelector] = useState(-1);
 
@@ -208,6 +211,11 @@ export default function CustomFieldsTable({ customFields, setCustomFields }) {
   return (
     <>
       <div ref={tableWrapper} className="scrollbar-hide" style={{ flex: 1 }}>
+        <datalist id="api-fields-list">
+          {apiFields.map((field) => (
+            <option value={field}></option>
+          ))}
+        </datalist>
         <table
           style={{
             width: "calc(100% + 10px)",
@@ -234,17 +242,28 @@ export default function CustomFieldsTable({ customFields, setCustomFields }) {
             </tr>
           </thead>
           <tbody>
-            {customFields.map(({ name, value }, i) => (
-              <tr key={i}>
+            {customFields.map(({ name, value, index }, i) => (
+              <tr key={index}>
                 <td style={{ width: 0 }}>{i + 1}.</td>
                 <td>
-                  <TextControl
-                    style={useStyle(name)}
-                    value={name}
-                    onChange={(value) => setCustomField("name", i, value)}
-                    __nextHasNoMarginBottom
-                    __next40pxDefaultSize
-                  />
+                  <BaseControl __nextHasNoMarginBottom>
+                    <input
+                      type="text"
+                      list="api-fields-list"
+                      value={name}
+                      onChange={(ev) =>
+                        setCustomField("name", i, ev.target.value)
+                      }
+                      style={{
+                        height: "40px",
+                        paddingLeft: "12px",
+                        paddingRight: "12px",
+                        fontSize: "13px",
+                        borderRadius: "2px",
+                        width: "100%",
+                      }}
+                    />
+                  </BaseControl>
                 </td>
                 <td>
                   <div style={{ display: "flex" }}>

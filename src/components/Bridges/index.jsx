@@ -1,4 +1,5 @@
 // source
+import ApiSchemaProvider from "../../providers/ApiSchema";
 import CopyIcon from "../CopyIcon";
 
 const { TabPanel } = wp.components;
@@ -141,16 +142,18 @@ export default function Bridges({ bridges, setBridges, Bridge }) {
         {(bridge) => {
           bridge.name = bridge.name >= 0 ? bridges[+bridge.name].name : "add";
           return (
-            <Bridge
-              data={bridge}
-              remove={removeBridge}
-              update={(data) =>
-                updateBridge(
-                  bridges.findIndex(({ name }) => name === bridge.name),
-                  data
-                )
-              }
-            />
+            <ApiSchemaProvider bridge={bridge.name}>
+              <Bridge
+                data={bridge}
+                remove={removeBridge}
+                update={(data) =>
+                  updateBridge(
+                    bridges.findIndex(({ name }) => name === bridge.name),
+                    data
+                  )
+                }
+              />
+            </ApiSchemaProvider>
           );
         }}
       </TabPanel>
