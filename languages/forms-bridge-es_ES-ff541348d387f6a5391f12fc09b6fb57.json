@@ -61,7 +61,7 @@
       "Name": ["Nombre"],
       "Next": ["Siguiente"],
       "No input fields": [""],
-      "odoo": ["Odoo JSON-RPC"],
+      "odoo": ["Odoo"],
       "Output mutations: %s": [""],
       "Password": ["Contrase\u00f1a"],
       "Populate the form default values": [

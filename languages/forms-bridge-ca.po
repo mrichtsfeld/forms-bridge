@@ -2616,7 +2616,7 @@ msgstr ""
 
 #: assets/plugin.bundle.js addons/odoo/assets/addon.bundle.js:4719
 msgid "odoo"
-msgstr "Odoo JSON-RPC"
+msgstr "Odoo"
 
 #: addons/dolibarr/country-codes.php:170 includes/data/country-codes.php:179
 msgid "Oman"
