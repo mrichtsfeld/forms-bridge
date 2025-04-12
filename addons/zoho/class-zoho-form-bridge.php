@@ -71,7 +71,7 @@ class Zoho_Form_Bridge extends Form_Bridge
      *
      * @return Zoho_Credentials|null
      */
-    private function credential()
+    protected function credential()
     {
         return apply_filters(
             'forms_bridge_zoho_credential',

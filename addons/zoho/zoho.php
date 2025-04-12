@@ -52,13 +52,13 @@ class Zoho_Addon extends Addon
     protected function construct(...$args)
     {
         parent::construct(...$args);
-        self::custom_hooks();
+        static::custom_hooks();
     }
 
     /**
      * Addon custom hooks.
      */
-    private static function custom_hooks()
+    protected static function custom_hooks()
     {
         add_filter(
             'forms_bridge_zoho_credentials',
@@ -90,19 +90,6 @@ class Zoho_Addon extends Addon
             10,
             2
         );
-
-        add_filter(
-            'forms_bridge_prune_empties',
-            static function ($prune, $bridge) {
-                if ($bridge instanceof Zoho_Form_Bridge) {
-                    return true;
-                }
-
-                return $prune;
-            },
-            10,
-            2
-        );
     }
 
     /**
@@ -110,7 +97,7 @@ class Zoho_Addon extends Addon
      *
      * @return array List with available credentials instances.
      */
-    private static function credentials()
+    protected static function credentials()
     {
         return array_map(
             static function ($data) {
@@ -128,8 +115,8 @@ class Zoho_Addon extends Addon
     protected static function setting_config()
     {
         return [
-            self::$api,
-            self::merge_setting_config([
+            static::$api,
+            static::merge_setting_config([
                 'credentials' => [
                     'type' => 'array',
                     'items' => [

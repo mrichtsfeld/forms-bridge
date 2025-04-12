@@ -115,6 +115,7 @@ class Zoho_Form_Bridge_Template extends Form_Bridge_Template
             'form_id' => '',
             'endpoint' => '',
             'scope' => '',
+            'custom_fields' => [],
             'mutations' => [],
         ],
         'credential' => [
