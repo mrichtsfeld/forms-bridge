@@ -5,7 +5,7 @@ import BridgeStep from "./BridgeStep";
 const apiFetch = wp.apiFetch;
 const { useState, useEffect, useMemo, useRef } = wp.element;
 
-const FINANCOOP_HEADERS = ["X-Odoo-Db", "X-Odoo-Username", "X-Odoo-Api-Key"];
+const LISTMONK_HEADERS = ["api_user", "token"];
 
 const STEPS = [
   {
@@ -27,18 +27,17 @@ function debounce(fn, ms = 500) {
 }
 
 function validateBackendData(data) {
-  return FINANCOOP_HEADERS.reduce(
+  return LISTMONK_HEADERS.reduce(
     (isValid, field) => {
       return isValid && data.headers[field];
     },
     /https?\:\/\/[^\/]+\.\w\w+/.test(data.base_url)
   );
 }
-
-export default function FinanCoopTemplateWizard({ integration, onDone }) {
+export default function ListmonkTemplateWizard({ integration, onDone }) {
   const [{ backends }] = useGeneral();
   const [data, setData] = useState({});
-  const [campaigns, setCampaigns] = useState([]);
+  const [lists, setLists] = useState([]);
 
   const backendData = useMemo(() => {
     if (!data.backend?.name) return;
@@ -51,7 +50,7 @@ export default function FinanCoopTemplateWizard({ integration, onDone }) {
     const backendData = {
       name: data.backend.name,
       base_url: data.backend.base_url,
-      headers: FINANCOOP_HEADERS.reduce(
+      headers: LISTMONK_HEADERS.reduce(
         (headers, name) => ({
           ...headers,
           [name]: data.backend[name],
@@ -65,35 +64,39 @@ export default function FinanCoopTemplateWizard({ integration, onDone }) {
     }
   }, [data.backend, backends]);
 
-  const fetchCampaigns = useRef(
+  const fetchLists = useRef(
     debounce((data) => {
       const backend = {
         name: data.name,
         base_url: data.base_url,
-        headers: FINANCOOP_HEADERS.map((header) => ({
+        headers: LISTMONK_HEADERS.map((header) => ({
           name: header,
           value: data.headers[header],
         })),
       };
 
       apiFetch({
-        path: "forms-bridge/v1/financoop/campaigns",
+        path: "forms-bridge/v1/listmonk/lists",
         method: "POST",
         data: backend,
       })
-        .then(setCampaigns)
-        .catch(() => setCampaigns([]));
+        .then(setLists)
+        .catch(() => setLists([]));
     }, 500)
   ).current;
 
   useEffect(() => {
     if (!backendData) return;
-    fetchCampaigns(backendData);
+    fetchLists(backendData);
   }, [backendData]);
 
   useEffect(
-    () => setData({ ...data, bridge: { ...(data.bridge || {}), campaigns } }),
-    [campaigns]
+    () =>
+      setData({
+        ...data,
+        bridge: { ...(data.bridge || {}), mailingLists: lists },
+      }),
+    [lists]
   );
 
   return (

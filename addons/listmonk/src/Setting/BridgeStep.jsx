@@ -1,5 +1,5 @@
 import TemplateStep from "../../../../src/components/Templates/Steps/Step";
-import Field from "../../../../src/components/Templates/Field";
+import TemplateField from "../../../../src/components/Templates/Field";
 
 const { useMemo } = wp.element;
 const { __ } = wp.i18n;
@@ -7,15 +7,15 @@ const { __ } = wp.i18n;
 const fieldsOrder = ["name"];
 
 export default function BridgeStep({ fields, data, setData }) {
-  const campaigns = data.campaigns || [];
+  const mailingLists = data.mailingLists || [];
 
-  const campaignOptions = useMemo(
+  const listOptions = useMemo(
     () =>
-      campaigns.map(({ id, name }) => ({
+      mailingLists.map(({ id, name }) => ({
         value: id,
         label: name,
       })),
-    [campaigns]
+    [mailingLists]
   );
 
   const sortedFields = useMemo(
@@ -32,13 +32,13 @@ export default function BridgeStep({ fields, data, setData }) {
     [fields]
   );
 
-  const campaignIdField = useMemo(
-    () => sortedFields.find(({ name }) => name === "campaign_id"),
+  const listIdsField = useMemo(
+    () => sortedFields.find(({ name }) => name === "lists"),
     [sortedFields]
   );
 
   const filteredFields = useMemo(
-    () => sortedFields.filter(({ name }) => name !== "campaign_id"),
+    () => sortedFields.filter(({ name }) => name !== "lists"),
     [sortedFields]
   );
 
@@ -48,7 +48,7 @@ export default function BridgeStep({ fields, data, setData }) {
       description={__("Configure the bridge", "forms-bridge")}
     >
       {filteredFields.map((field) => (
-        <Field
+        <TemplateField
           data={{
             ...field,
             value: data[field.name] || "",
@@ -56,16 +56,17 @@ export default function BridgeStep({ fields, data, setData }) {
           }}
         />
       ))}
-      <Field
+      <TemplateField
         data={{
-          ...campaignIdField,
-          value: data.campaign_id || "",
+          ...listIdsField,
+          value: data.lists || "",
           type: "options",
-          options: campaignOptions,
-          onChange: (campaign_id) => setData({ campaign_id }),
-          description: !campaigns.length
+          options: listOptions,
+          onChange: (lists) => setData({ lists }),
+          multiple: true,
+          description: !mailingLists.length
             ? __(
-                "There is no active campaign. This can happens due to a wrong backend connexion, or because you have no active campaigns on your FinanCoop module. Please, fix this issue before createing new bridges.",
+                "There is no active mailing list. This can happens due to a wrong backend connexion, or because you have not created any list yet. Please, fix this issue before createing new bridges.",
                 "forms-bridge"
               )
             : null,
