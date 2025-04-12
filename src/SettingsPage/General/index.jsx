@@ -69,6 +69,48 @@ export default function GeneralSettings() {
       >
         <Exporter />
       </PanelBody>
+      <PanelBody title={__("Credits", "forms-bridge")} initialOpen={false}>
+        <ul>
+          <li>
+            🏠{" "}
+            <a href="https://forms-bridge.codeccoop.org" target="_blank">
+              {__("Website", "forms-bridge")}
+            </a>
+          </li>
+          <li>
+            📔{" "}
+            <a href="https://forms-bridge.codeccoop.org/docs/" target="_blank">
+              {__("Documentation", "forms-bridge")}
+            </a>
+          </li>
+          <li>
+            💬{" "}
+            <a
+              href="https://wordpress.org/support/plugin/forms-bridge/"
+              target="_blank"
+            >
+              {__("Support", "forms-bridge")}
+            </a>
+          </li>
+        </ul>
+        <p>
+          <strong>Forms Bridge</strong> has been created by{" "}
+          <a href="https://www.codeccoop.org" target="_blank">
+            Còdec
+          </a>
+          , a cooperative web development studio based on Barcelona.
+        </p>
+        <p>
+          Please rate our plugin on{" "}
+          <a
+            href="https://wordpress.org/support/plugin/forms-bridge/reviews/?new-post"
+            target="_blank"
+          >
+            WordPress.org
+          </a>{" "}
+          and help us to maintain this plugin alive 💖
+        </p>
+      </PanelBody>
     </>
   );
 }
