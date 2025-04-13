@@ -5,12 +5,12 @@ if (!defined('ABSPATH')) {
 }
 
 return [
-    'title' => __('Deal company', 'forms-bridge'),
+    'title' => __('Linked company', 'forms-bridge'),
     'description' => __(
-        'Creates a new company and adds its ID to the linkedCompaniesIds deal payload field',
+        'Creates a new company and inserts its ID in the linkedCompaniesIds array field of the payload',
         'forms-bridge'
     ),
-    'method' => 'forms_bridge_brevo_deal_company',
+    'method' => 'forms_bridge_brevo_linked_company',
     'input' => [
         [
             'name' => 'name',
@@ -50,7 +50,7 @@ return [
     ],
 ];
 
-function forms_bridge_brevo_deal_company($payload, $bridge)
+function forms_bridge_brevo_linked_company($payload, $bridge)
 {
     $company = forms_bridge_brevo_create_company($payload, $bridge);
 

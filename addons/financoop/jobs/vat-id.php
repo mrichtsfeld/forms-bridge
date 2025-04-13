@@ -6,24 +6,24 @@ if (!defined('ABSPATH')) {
 
 function forms_bridge_financoop_vat_id($payload)
 {
-    global $forms_bridge_country_codes;
+    global $forms_bridge_iso2_countries;
 
     $prefixed = preg_match('/^[A-Z]{2}/', $payload['vat'], $matches);
 
-    $country_code = $payload['country_code'] ?? null;
+    $country_code = strtoupper($payload['country_code'] ?? '');
 
     if ($prefixed) {
         $vat_prefix = $matches[0];
     } elseif ($country_code) {
-        $vat_prefix = strtoupper($country_code);
+        $vat_prefix = $country_code;
     } else {
         $vat_prefix = strtoupper(explode('_', get_locale())[0]);
     }
 
-    if (!isset($forms_bridge_country_codes[$vat_prefix])) {
+    if (!isset($forms_bridge_iso2_countries[$vat_prefix])) {
         if (
             !$country_code ||
-            !isset($forms_bridge_country_codes[$country_code])
+            !isset($forms_bridge_iso2_countries[$country_code])
         ) {
             return new WP_Error(
                 'invalid_country_code',

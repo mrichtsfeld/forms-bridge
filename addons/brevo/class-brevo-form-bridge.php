@@ -15,9 +15,9 @@ class Brevo_Form_Bridge extends Rest_Form_Bridge
      * Handles a custom http origin token to be unseted from headers
      * before submits.
      *
-     * @var string
+     * @var array<string>
      */
-    public const http_origin_token = 'brevo-http-origin';
+    public const api_headers = ['Accept', 'Content-Type', 'Api-Key'];
 
     /**
      * Gets bridge's default body encoding schema.
@@ -41,7 +41,7 @@ class Brevo_Form_Bridge extends Rest_Form_Bridge
     {
         add_filter(
             'http_request_args',
-            '\FORMS_BRIDGE\Brevo_Form_Bridge::decorate_headers',
+            '\FORMS_BRIDGE\Brevo_Form_Bridge::prepare_headers',
             10,
             1
         );
@@ -91,31 +91,98 @@ class Brevo_Form_Bridge extends Rest_Form_Bridge
 
     protected function api_fields()
     {
-        if ($this->method === 'POST') {
-            return [
-                'email',
-                'name',
-                'status',
-                'lists',
-                'list_uuids',
-                'preconfirm_subscriptions',
-                'attribs',
-            ];
-        }
+        if (strstr($this->endpoint, 'contacts')) {
+            $response = $this->patch([
+                'name' => 'brevo-contacts-attributes',
+                'endpoint' => '/v3/contacts/attributes',
+                'method' => 'GET',
+            ])->submit([]);
 
-        return [];
+            if (is_wp_error($response)) {
+                return [];
+            }
+
+            if ($this->endpoint === '/v3/contacts/doubleOptinConfirmation') {
+                $fields = [
+                    'email',
+                    'includeListIds',
+                    'excludeListIds',
+                    'templateId',
+                    'redirectionUrl',
+                    'attributes',
+                ];
+            } else {
+                $fields = [
+                    'email',
+                    'ext_id',
+                    'emailBlacklisted',
+                    'smsBlacklisted',
+                    'listIds',
+                    'updateEnabled',
+                    'smtpBlacklistSender',
+                    'attributes',
+                ];
+            }
+
+            foreach ($response['data']['attributes'] as $attribute) {
+                $fields[] = 'attributes.' . $attribute['name'];
+            }
+
+            return $fields;
+        } else {
+            preg_match('/\/([a-z]+)$/', $this->endpoint, $matches);
+            $module = $matches[1];
+            $response = $this->patch([
+                'endpoint' => "brevo-{$module}-attributes",
+                'endpoint' => "/v3/crm/attributes/{$module}",
+                'method' => 'GET',
+            ])->submit([]);
+
+            if (is_wp_error($response)) {
+                return [];
+            }
+
+            if ($module === 'companies') {
+                $fields = [
+                    'name',
+                    'countryCode',
+                    'linkedContactsIds',
+                    'linkedDealsIds',
+                    'attributes',
+                ];
+            } elseif ($module === 'deals') {
+                $fields = [
+                    'name',
+                    'linkedDealsIds',
+                    'linkedCompaniesIds',
+                    'attributes',
+                ];
+            }
+
+            foreach ($response['data'] as $attribute) {
+                $fields[] = 'attributes.' . $attribute['internalName'];
+            }
+
+            return $fields;
+        }
     }
 
-    public static function decorate_headers($args)
+    public static function prepare_headers($args)
     {
         if (isset($args['headers']['Api-Key'])) {
-            $args['headers']['api-key'] = $args['headers']['Api-Key'];
-            unset($args['headers']['Api-Key']);
+            $api_headers = [];
+            foreach ($args['headers'] as $name => $value) {
+                if (in_array($name, self::api_headers)) {
+                    $api_headers[strtolower($name)] = $value;
+                }
+            }
+
+            $args['headers'] = $api_headers;
         }
 
         remove_filter(
             'http_request_args',
-            '\FORMS_BRIDGE\Brevo_Form_Bridge::decorate_headers',
+            '\FORMS_BRIDGE\Brevo_Form_Bridge::prepare_headers',
             10,
             1
         );

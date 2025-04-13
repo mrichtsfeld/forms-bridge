@@ -14,12 +14,12 @@ add_filter(
         $job = new \FORMS_BRIDGE\Workflow_Job(
             'country-code',
             [
-                'title' => __('Country code', 'forms-bridge'),
+                'title' => __('ISO3 country code', 'forms-bridge'),
                 'description' => __(
-                    'Gets the ISO2 country code from country names and replace its value',
+                    'Gets the ISO3 country code from country names and replace its value',
                     'forms-bridge'
                 ),
-                'method' => 'forms_bridge_workflow_job_country_code',
+                'method' => 'forms_bridge_workflow_job_iso3_country_code',
                 'input' => [
                     [
                         'name' => 'country',
@@ -28,6 +28,10 @@ add_filter(
                     ],
                 ],
                 'output' => [
+                    [
+                        'name' => 'country',
+                        'schema' => ['type' => 'string'],
+                    ],
                     [
                         'name' => 'country_code',
                         'schema' => ['type' => 'string'],
@@ -47,19 +51,19 @@ add_filter(
     1
 );
 
-function forms_bridge_workflow_job_country_code($payload)
+function forms_bridge_workflow_job_iso3_country_code($payload)
 {
-    global $forms_bridge_country_codes;
+    global $forms_bridge_iso3_countries;
     $country_code = strtoupper($payload['country']);
 
-    if (!isset($forms_bridge_country_codes[$country_code])) {
+    if (!isset($forms_bridge_iso3_countries[$country_code])) {
         $countries_by_name = array_reduce(
-            array_keys($forms_bridge_country_codes),
-            function ($labels, $country_code) {
-                global $forms_bridge_country_codes;
-                $label = $forms_bridge_country_codes[$country_code];
-                $labels[$label] = $country_code;
-                return $labels;
+            array_keys($forms_bridge_iso3_countries),
+            function ($countries, $country_code) {
+                global $forms_bridge_iso3_countries;
+                $country = $forms_bridge_iso3_countries[$country_code];
+                $countries[$country] = $country_code;
+                return $countries;
             },
             []
         );

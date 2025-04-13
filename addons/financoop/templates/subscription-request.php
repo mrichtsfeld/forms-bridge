@@ -46,7 +46,7 @@ add_filter(
     2
 );
 
-global $forms_bridge_country_codes;
+global $forms_bridge_iso2_countries;
 
 return [
     'title' => __('Subscription Requests', 'forms-bridge'),
@@ -128,12 +128,12 @@ return [
                 'name' => 'country',
                 'type' => 'options',
                 'options' => array_map(function ($country_code) {
-                    global $forms_bridge_country_codes;
+                    global $forms_bridge_iso2_countries;
                     return [
                         'value' => $country_code,
-                        'label' => $forms_bridge_country_codes[$country_code],
+                        'label' => $forms_bridge_iso2_countries[$country_code],
                     ];
-                }, array_keys($forms_bridge_country_codes)),
+                }, array_keys($forms_bridge_iso2_countries)),
                 'required' => true,
             ],
             [

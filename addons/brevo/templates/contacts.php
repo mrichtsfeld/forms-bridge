@@ -16,12 +16,10 @@ add_filter(
             if ($index !== false) {
                 $field = $data['bridge']['custom_fields'][$index];
 
-                $list_ids = array_map('intval', explode(',', $field['value']));
-
-                for ($i = 0; $i < count($list_ids); $i++) {
+                for ($i = 0; $i < count($field['value']); $i++) {
                     $data['bridge']['custom_fields'][] = [
                         'name' => "listIds[{$i}]",
-                        'value' => $list_ids[$i],
+                        'value' => $field['value'][$i],
                     ];
 
                     $data['bridge']['mutations'][0][] = [

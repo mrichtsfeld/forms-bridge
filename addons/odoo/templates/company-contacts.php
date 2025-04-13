@@ -4,7 +4,7 @@ if (!defined('ABSPATH')) {
     exit();
 }
 
-global $forms_bridge_country_codes;
+global $forms_bridge_iso2_countries;
 
 return [
     'title' => __('Company Contacts', 'forms-bridge'),
@@ -18,7 +18,7 @@ return [
     'bridge' => [
         'model' => 'res.partner',
         'workflow' => [
-            'forms-bridge-country-code',
+            'forms-bridge-iso2-country-code',
             'odoo-vat-id',
             'odoo-contact-company-id',
         ],
@@ -60,12 +60,12 @@ return [
                 'name' => 'country',
                 'type' => 'options',
                 'options' => array_map(function ($country_code) {
-                    global $forms_bridge_country_codes;
+                    global $forms_bridge_iso2_countries;
                     return [
                         'value' => $country_code,
-                        'label' => $forms_bridge_country_codes[$country_code],
+                        'label' => $forms_bridge_iso2_countries[$country_code],
                     ];
-                }, array_keys($forms_bridge_country_codes)),
+                }, array_keys($forms_bridge_iso2_countries)),
                 'required' => true,
             ],
             [

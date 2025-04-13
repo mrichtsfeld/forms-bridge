@@ -94,7 +94,7 @@ export default function ListmonkTemplateWizard({ integration, onDone }) {
     () =>
       setData({
         ...data,
-        bridge: { ...(data.bridge || {}), mailingLists: lists },
+        bridge: { ...(data.bridge || {}), _lists: lists },
       }),
     [lists]
   );

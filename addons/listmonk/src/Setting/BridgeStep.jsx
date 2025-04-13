@@ -7,15 +7,15 @@ const { __ } = wp.i18n;
 const fieldsOrder = ["name"];
 
 export default function BridgeStep({ fields, data, setData }) {
-  const mailingLists = data.mailingLists || [];
+  const lists = data._lists || [];
 
   const listOptions = useMemo(
     () =>
-      mailingLists.map(({ id, name }) => ({
+      lists.map(({ id, name }) => ({
         value: id,
         label: name,
       })),
-    [mailingLists]
+    [lists]
   );
 
   const sortedFields = useMemo(
@@ -64,7 +64,7 @@ export default function BridgeStep({ fields, data, setData }) {
           options: listOptions,
           onChange: (lists) => setData({ lists }),
           multiple: true,
-          description: !mailingLists.length
+          description: !lists.length
             ? __(
                 "There is no active mailing list. This can happens due to a wrong backend connexion, or because you have not created any list yet. Please, fix this issue before createing new bridges.",
                 "forms-bridge"

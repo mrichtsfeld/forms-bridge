@@ -5,12 +5,12 @@ if (!defined('ABSPATH')) {
 }
 
 return [
-    'title' => __('Company contact', 'forms-bridge'),
+    'title' => __('Linked contact', 'forms-bridge'),
     'description' => __(
-        'Creates a new contact and sets its ID as on the linkedContactsIds list of the company payload',
+        'Creates a new contact and inserts its ID in the linkedContactsIds array field of the payload',
         'forms-bridge'
     ),
-    'method' => 'forms_bridge_brevo_company_contact',
+    'method' => 'forms_bridge_brevo_linked_contact',
     'input' => [
         [
             'name' => 'email',
@@ -66,7 +66,7 @@ return [
     ],
 ];
 
-function forms_bridge_brevo_company_contact($payload, $bridge)
+function forms_bridge_brevo_linked_contact($payload, $bridge)
 {
     $contact = forms_bridge_brevo_create_contact($payload, $bridge);
 

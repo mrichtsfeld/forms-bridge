@@ -72,6 +72,32 @@ class Brevo_Addon extends Rest_Addon
                     return REST_Settings_Controller::permission_callback();
                 },
             ]);
+
+            register_rest_route(
+                "{$namespace}/v{$version}",
+                '/brevo/pipelines',
+                [
+                    'methods' => WP_REST_Server::CREATABLE,
+                    'callback' => static function ($request) {
+                        $params = $request->get_json_params();
+                        return self::fetch_pipelines($params);
+                    },
+                    'permission_callback' => static function () {
+                        return REST_Settings_Controller::permission_callback();
+                    },
+                ]
+            );
+
+            register_rest_route("{$namespace}/v{$version}", '/brevo/products', [
+                'methods' => WP_REST_Server::CREATABLE,
+                'callback' => static function ($request) {
+                    $params = $request->get_json_params();
+                    return self::fetch_products($params);
+                },
+                'permission_callback' => static function () {
+                    return REST_Settings_Controller::permission_callback();
+                },
+            ]);
         });
     }
 
@@ -110,7 +136,7 @@ class Brevo_Addon extends Rest_Addon
         return new Http_Backend($params);
     }
 
-    public static function fetch_lists($backend_params)
+    private static function api_fetch($endpoint, $backend_params)
     {
         $backend = self::get_backend($backend_params);
 
@@ -133,13 +159,19 @@ class Brevo_Addon extends Rest_Addon
             );
         }
 
-        $endpoint = '/v3/contacts/lists';
+        add_filter(
+            'http_request_args',
+            '\FORMS_BRIDGE\Brevo_Form_Bridge::prepare_headers',
+            10,
+            1
+        );
+
         $response = $backend->get(
             $endpoint,
             [],
             [
                 'api-key' => $api_key,
-                'Accept' => 'application/json',
+                'accept' => 'application/json',
             ]
         );
 
@@ -147,7 +179,40 @@ class Brevo_Addon extends Rest_Addon
             return $response;
         }
 
-        return $response['data']['lists'];
+        return $response['data'];
+    }
+
+    private static function fetch_lists($backend_params)
+    {
+        $data = self::api_fetch('/v3/contacts/lists', $backend_params);
+        if (is_wp_error($data)) {
+            return [];
+        }
+
+        return $data['lists'];
+    }
+
+    private static function fetch_pipelines($backend_params)
+    {
+        $data = self::api_fetch(
+            '/v3/crm/pipeline/details/all',
+            $backend_params
+        );
+        if (is_wp_error($data)) {
+            return [];
+        }
+
+        return $data;
+    }
+
+    private static function fetch_products($backend_params)
+    {
+        $data = self::api_fetch('/v3/products', $backend_params);
+        if (is_wp_error($data)) {
+            return [];
+        }
+
+        return $data['products'];
     }
 }
 

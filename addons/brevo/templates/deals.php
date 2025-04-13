@@ -4,6 +4,8 @@ if (!defined('ABSPATH')) {
     exit();
 }
 
+global $forms_bridge_country_phone_codes;
+
 return [
     'title' => __('Deals', 'forms-bridge'),
     'description' => __(
@@ -40,11 +42,18 @@ return [
             'name' => 'endpoint',
             'label' => __('Endpoint', 'forms-bridge'),
             'type' => 'string',
-            'value' => '/v3/contacts',
+            'value' => '/v3/crm/deals',
         ],
         [
             'ref' => '#bridge/custom_fields[]',
-            'name' => 'attributes.deal_owner',
+            'name' => 'deal_name',
+            'label' => __('Deal name', 'forms-bridge'),
+            'type' => 'string',
+            'required' => true,
+        ],
+        [
+            'ref' => '#bridge/custom_fields[]',
+            'name' => 'deal_owner',
             'label' => __('Owner email', 'forms-bridge'),
             'description' => __(
                 'Email of the owner user of the deal',
@@ -55,14 +64,8 @@ return [
         ],
         [
             'ref' => '#bridge/custom_fields[]',
-            'name' => 'attributes.pipeline',
+            'name' => 'pipeline',
             'label' => __('Pipeline', 'forms-bridge'),
-            'type' => 'string',
-        ],
-        [
-            'ref' => '#bridge/custom_fields[]',
-            'name' => 'attributes.deal_stage',
-            'label' => __('Stage', 'forms-bridge'),
             'type' => 'string',
         ],
         [
@@ -85,27 +88,6 @@ return [
     'form' => [
         'title' => __('Deals', 'forms-bridge'),
         'fields' => [
-            [
-                'name' => 'company_name',
-                'label' => __('Company', 'forms-bridge'),
-                'type' => 'text',
-                'required' => true,
-            ],
-            [
-                'name' => 'phone',
-                'label' => __('Phone', 'forms-bridge'),
-                'type' => 'text',
-            ],
-            [
-                'name' => 'website',
-                'label' => __('Website', 'forms-bridge'),
-                'type' => 'url',
-            ],
-            [
-                'name' => 'industry',
-                'label' => __('Industry', 'forms-bridge'),
-                'type' => 'text',
-            ],
             [
                 'name' => 'email',
                 'label' => __('Your email', 'forms-bridge'),
@@ -149,28 +131,23 @@ return [
             ],
             [
                 [
-                    'from' => 'company_name',
+                    'from' => 'deal_name',
                     'to' => 'name',
                     'cast' => 'string',
                 ],
                 [
-                    'from' => 'phone',
-                    'to' => 'attributes.phone',
+                    'from' => 'pipeline',
+                    'to' => 'attributes.pipeline',
                     'cast' => 'string',
                 ],
                 [
-                    'from' => 'website',
-                    'to' => 'attributes.domain',
-                    'cast' => 'string',
-                ],
-                [
-                    'from' => 'industry',
-                    'to' => 'attributes.industry',
+                    'from' => 'deal_owner',
+                    'to' => 'attributes.deal_owner',
                     'cast' => 'string',
                 ],
             ],
         ],
-        'workflow' => ['brevo-company-contact', 'brevo-deal-company'],
+        'workflow' => ['brevo-linked-contact'],
     ],
     'backend' => [
         'base_url' => 'https://api.brevo.com',

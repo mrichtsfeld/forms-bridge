@@ -7,7 +7,11 @@ if (!defined('ABSPATH')) {
 global $forms_bridge_country_phone_codes;
 
 return [
-    'title' => __('Companies', 'forms-bridge'),
+    'title' => __('Company deals', 'forms-bridge'),
+    'description' => __(
+        'Creates a company and associate it with a deal',
+        'forms-bridge'
+    ),
     'fields' => [
         [
             'ref' => '#backend',
@@ -38,7 +42,31 @@ return [
             'name' => 'endpoint',
             'label' => __('Endpoint', 'forms-bridge'),
             'type' => 'string',
-            'value' => '/v3/companies',
+            'value' => '/v3/crm/deals',
+        ],
+        [
+            'ref' => '#bridge/custom_fields[]',
+            'name' => 'deal_name',
+            'label' => __('Deal name', 'forms-bridge'),
+            'type' => 'string',
+            'required' => true,
+        ],
+        [
+            'ref' => '#bridge/custom_fields[]',
+            'name' => 'deal_owner',
+            'label' => __('Owner email', 'forms-bridge'),
+            'description' => __(
+                'Email of the owner user of the deal',
+                'forms-bridge'
+            ),
+            'type' => 'string',
+            'required' => true,
+        ],
+        [
+            'ref' => '#bridge/custom_fields[]',
+            'name' => 'pipeline',
+            'label' => __('Pipeline', 'forms-bridge'),
+            'type' => 'string',
         ],
         [
             'ref' => '#backend/headers[]',
@@ -54,11 +82,11 @@ return [
         [
             'ref' => '#form',
             'name' => 'title',
-            'default' => __('Companies', 'forms-bridge'),
+            'default' => __('Company deals', 'forms-bridge'),
         ],
     ],
     'form' => [
-        'title' => __('Companies', 'forms-bridge'),
+        'title' => __('Company deals', 'forms-bridge'),
         'fields' => [
             [
                 'name' => 'company_name',
@@ -112,18 +140,9 @@ return [
             ],
         ],
     ],
-    'backend' => [
-        'base_url' => 'https://api.brevo.com',
-        'headers' => [
-            [
-                'name' => 'Accept',
-                'value' => 'application/json',
-            ],
-        ],
-    ],
     'bridge' => [
         'method' => 'POST',
-        'endpoint' => '/v3/companies',
+        'endpoint' => '/v3/crm/deals',
         'custom_fields' => [
             [
                 'name' => 'attributes.LANGUAGE',
@@ -171,7 +190,37 @@ return [
                     'cast' => 'string',
                 ],
             ],
+            [
+                [
+                    'from' => 'deal_name',
+                    'to' => 'name',
+                    'cast' => 'string',
+                ],
+                [
+                    'from' => 'pipeline',
+                    'to' => 'attributes.pipeline',
+                    'cast' => 'string',
+                ],
+                [
+                    'from' => 'deal_owner',
+                    'to' => 'attributes.deal_owner',
+                    'cast' => 'string',
+                ],
+            ],
         ],
-        'workflow' => ['brevo-linked-contact', 'brevo-country-phone-code'],
+        'workflow' => [
+            'brevo-linked-contact',
+            'brevo-country-phone-code',
+            'brevo-linked-company',
+        ],
+    ],
+    'backend' => [
+        'base_url' => 'https://api.brevo.com',
+        'headers' => [
+            [
+                'name' => 'Accept',
+                'value' => 'application/json',
+            ],
+        ],
     ],
 ];

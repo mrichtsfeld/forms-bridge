@@ -1,6 +1,6 @@
 // source
 import Bridges from "../../../../src/components/Bridges";
-import BrevoBridge from "../../../rest-api/src/Setting/Bridge";
+import BrevoBridge from "./Bridge";
 import useBrevoApi from "../hooks/useBrevoApi";
 
 const { PanelRow } = wp.components;
