@@ -84,6 +84,7 @@ export default function TemplateWizard({
 
   useEffect(() => {
     setData(defaults);
+    setStep(0);
   }, [defaults]);
 
   const groups = useMemo(() => {
