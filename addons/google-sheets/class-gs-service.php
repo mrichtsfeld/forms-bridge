@@ -85,7 +85,10 @@ class Google_Sheets_Service extends Singleton
             } else {
                 $sheet = null;
                 foreach ($sheets as $_sheet) {
-                    if ($_sheet->getProperties()['title'] === $tab_name) {
+                    if (
+                        strtolower($_sheet->getProperties()['title']) ===
+                        strtolower($tab_name)
+                    ) {
                         $sheet = $_sheet;
                         break;
                     }

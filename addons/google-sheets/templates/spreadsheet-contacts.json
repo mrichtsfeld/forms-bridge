@@ -36,5 +36,13 @@
         "type": "text"
       }
     ]
+  },
+  "bridge": {
+    "custom_fields": [
+      {
+        "name": "language",
+        "value": "$language"
+      }
+    ]
   }
 }
