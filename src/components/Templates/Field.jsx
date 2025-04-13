@@ -143,16 +143,16 @@ function OptionsField({
 }) {
   const constraints = {};
   if (required) constraints.required = true;
+  else {
+    options = [{ label: "", value: "" }].concat(
+      options.filter((opt) => opt.value)
+    );
+  }
 
   const style = { width: "100%" };
   if (error) {
     style.border = "1px solid red";
   }
-
-  useEffect(() => {
-    if (!options.length) return;
-    onChange(options[0].value);
-  }, [options]);
 
   return (
     <>

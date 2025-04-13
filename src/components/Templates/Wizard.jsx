@@ -76,6 +76,10 @@ export default function TemplateWizard({
         const group = refToGroup(field.ref);
         defaults[group] = defaults[group] || {};
         defaults[group][field.name] = field.default;
+      } else if (field.type === "options" && field.required) {
+        const group = refToGroup(field.ref);
+        defaults[group] = defaults[group] || {};
+        defaults[group][field.name] = field.options[0]?.value;
       }
 
       return defaults;
