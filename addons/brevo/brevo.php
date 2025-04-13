@@ -52,7 +52,7 @@ class Brevo_Addon extends Rest_Addon
 
     /**
      * Addon constructor. Inherits from the abstrac addon constructor and initializes
-     * the lists REST API endpoint.
+     * REST API endpoints.
      */
     protected function construct(...$args)
     {

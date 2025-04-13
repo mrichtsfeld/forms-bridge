@@ -14,6 +14,8 @@ if (!defined('ABSPATH')) {
  */
 class Zoho_Form_Bridge extends Form_Bridge
 {
+    private const api_headers = ['Authorization', 'Content-Type', 'Accept'];
+
     /**
      * Handles the oauth access token transient name.
      *
@@ -249,7 +251,6 @@ class Zoho_Form_Bridge extends Form_Bridge
                 'module' => $module,
             ],
             [
-                // 'Content-Type' => 'application/json',
                 'Accept' => 'application/json',
                 'Authorization' => 'Zoho-oauthtoken ' . $access_token,
             ]
@@ -273,11 +274,15 @@ class Zoho_Form_Bridge extends Form_Bridge
 
     public static function cleanup_headers($args)
     {
-        if (isset($args['headers']['Organization-Id'])) {
-            unset($args['headers']['Origin']);
-            unset($args['headers']['Client-Id']);
-            unset($args['headers']['Client-Secret']);
-            unset($args['headers']['Organization-Id']);
+        if (isset($args['headers']['Authorization'])) {
+            $api_headers = [];
+            foreach ($args['headers'] as $name => $value) {
+                if (in_array($name, self::api_headers)) {
+                    $api_headers[$name] = $value;
+                }
+            }
+
+            $args['headers'] = $api_headers;
         }
 
         remove_filter(
