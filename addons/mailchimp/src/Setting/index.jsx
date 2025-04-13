@@ -1,6 +1,6 @@
 // source
 import Bridges from "../../../../src/components/Bridges";
-import MailchimpBridge from "../../../rest-api/src/Setting/Bridge";
+import MailchimpBridge from "./Bridge";
 import useMailchimpApi from "../hooks/useMailchimpApi";
 
 const { PanelRow } = wp.components;

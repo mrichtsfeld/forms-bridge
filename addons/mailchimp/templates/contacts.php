@@ -7,7 +7,7 @@ if (!defined('ABSPATH')) {
 add_filter(
     'forms_bridge_template_data',
     function ($data, $template_name) {
-        if ($template_name === 'rest-api-mailchimp-contacts') {
+        if ($template_name === 'mailchimp-contacts') {
             $index = array_search(
                 'datacenter',
                 array_column($data['backend']['headers'], 'name')
@@ -20,16 +20,45 @@ add_filter(
                 $data['backend']['base_url']
             );
 
+            array_splice($data['backend']['headers'], $index, 1);
+
             $index = array_search(
                 'list_id',
-                array_column($data['fields'], 'name')
+                array_column($data['bridge']['custom_fields'], 'name')
             );
 
-            $list_id = $data['fields'][$index]['value'];
+            $list_id = $data['bridge']['custom_fields'][$index]['value'];
             $data['bridge']['endpoint'] = preg_replace(
                 '/\{list_id\}/',
                 $list_id,
                 $data['bridge']['endpoint']
+            );
+
+            array_splice($data['bridge']['custom_fields'], $index, 1);
+
+            $index = array_search(
+                'tags',
+                array_column($data['bridge']['custom_fields'], 'name')
+            );
+
+            if ($index !== false) {
+                $field = &$data['bridge']['custom_fields'][$index];
+
+                $tags = array_filter(
+                    array_map('trim', explode(',', strval($field['value'])))
+                );
+                for ($i = 0; $i < count($tags); $i++) {
+                    $data['bridge']['custom_fields'][] = [
+                        'name' => "tags[{$i}]",
+                        'value' => $tags[$i],
+                    ];
+                }
+
+                array_splice($data['bridge']['custom_fields'], $index, 1);
+            }
+
+            $data['bridge']['custom_fields'] = array_values(
+                $data['bridge']['custom_fields']
             );
         }
 
@@ -40,15 +69,8 @@ add_filter(
 );
 
 return [
-    'title' => __('MailChimp Contacts', 'forms-bridge'),
+    'title' => __('Contacts', 'forms-bridge'),
     'fields' => [
-        [
-            'ref' => '#backend',
-            'name' => 'base_url',
-            'label' => __('MailChimp API URL', 'forms-bridge'),
-            'type' => 'string',
-            'value' => 'https://{dc}.api.mailchimp.com',
-        ],
         [
             'ref' => '#backend',
             'name' => 'name',
@@ -56,113 +78,47 @@ return [
                 'Label of the MailChimp API backend connection',
                 'forms-bridge'
             ),
-            'type' => 'string',
-            'default' => 'MailChimp API',
-        ],
-        [
-            'ref' => '#bridge',
-            'name' => 'method',
-            'label' => __('Bridge HTTP method', 'forms-bridge'),
-            'type' => 'string',
-            'value' => 'POST',
         ],
         [
             'ref' => '#bridge',
             'name' => 'endpoint',
-            'label' => __('Bridge endpoint', 'forms-bridge'),
+            'label' => __('Endpoint', 'forms-bridge'),
             'type' => 'string',
             'value' => '/3.0/lists/{list_id}/members',
         ],
         [
             'ref' => '#backend/headers[]',
             'name' => 'api-key',
-            'label' => __('MailChimp API Key', 'forms-bridge'),
+            'label' => __('API key', 'forms-bridge'),
             'description' => __(
-                'You can get it from "SMTP & API" > "API Keys" page from your dashboard',
+                'Get it from your <a href="https://us1.admin.mailchimp.com/account/api/" target="_blank">dashboard</a>',
                 'forms-bridge'
             ),
-            'type' => 'string',
-            'required' => true,
-        ],
-        [
-            'ref' => '#form',
-            'name' => 'title',
-            'default' => __('Newsletter', 'forms-bridge'),
         ],
         [
             'ref' => '#backend/headers[]',
             'name' => 'datacenter',
             'label' => __('Datacenter', 'forms-bridge'),
-            'type' => 'options',
-            'options' => [
-                [
-                    'label' => 'us1',
-                    'value' => 'us1',
-                ],
-                [
-                    'label' => 'us2',
-                    'value' => 'us2',
-                ],
-                [
-                    'label' => 'us3',
-                    'value' => 'us3',
-                ],
-                [
-                    'label' => 'us4',
-                    'value' => 'us4',
-                ],
-                [
-                    'label' => 'us5',
-                    'value' => 'us5',
-                ],
-                [
-                    'label' => 'us6',
-                    'value' => 'us6',
-                ],
-                [
-                    'label' => 'us7',
-                    'value' => 'us7',
-                ],
-                [
-                    'label' => 'us8',
-                    'value' => 'us8',
-                ],
-                [
-                    'label' => 'us9',
-                    'value' => 'us9',
-                ],
-                [
-                    'label' => 'us10',
-                    'value' => 'us10',
-                ],
-                [
-                    'label' => 'us11',
-                    'value' => 'us11',
-                ],
-                [
-                    'label' => 'us12',
-                    'value' => 'us12',
-                ],
-                [
-                    'label' => 'us13',
-                    'value' => 'us13',
-                ],
-            ],
-            'required' => true,
-        ],
-        [
-            'ref' => '#bridge',
-            'name' => 'list_id',
-            'label' => __('Audience ID', 'forms-bridge'),
             'description' => __(
-                'You can find the ID on the settings tab of your segments',
+                'First part of the URL of your mailchimp account or last part of your API key',
                 'forms-bridge'
             ),
+        ],
+        [
+            'ref' => '#form',
+            'name' => 'title',
+            'label' => __('Form name', 'forms-bridge'),
+            'default' => __('Contacts', 'forms-bridge'),
+        ],
+        [
+            'ref' => '#bridge/custom_fields[]',
+            'name' => 'list_id',
+            'label' => __('Audience', 'forms-bridge'),
             'type' => 'string',
             'required' => true,
         ],
         [
-            'ref' => '#form/fields[]',
+            'ref' => '#bridge/custom_fields[]',
             'name' => 'status',
             'label' => __('Subscription status', 'forms-bridge'),
             'type' => 'options',
@@ -191,15 +147,20 @@ return [
             'default' => 'subscribed',
             'required' => true,
         ],
+        [
+            'ref' => '#bridge/custom_fields[]',
+            'name' => 'tags',
+            'label' => __('Subscription tags', 'forms-bridge'),
+            'description' => __(
+                'Tag names separated by commas',
+                'forms-bridge'
+            ),
+            'type' => 'string',
+        ],
     ],
     'form' => [
-        'title' => __('MailChimp Contacts', 'forms-bridge'),
+        'title' => __('Contacts', 'forms-bridge'),
         'fields' => [
-            [
-                'name' => 'status',
-                'type' => 'hidden',
-                'required' => true,
-            ],
             [
                 'name' => 'email_address',
                 'label' => __('Your email', 'forms-bridge'),
@@ -224,6 +185,20 @@ return [
     'bridge' => [
         'method' => 'POST',
         'endpoint' => '/3.0/lists/{list_id}/members',
+        'custom_fields' => [
+            [
+                'name' => 'language',
+                'value' => '$locale',
+            ],
+            [
+                'name' => 'ip_signup',
+                'value' => '$ip_address',
+            ],
+            [
+                'name' => 'timestamp_signup',
+                'value' => '$iso_date',
+            ],
+        ],
         'mutations' => [
             [
                 [
@@ -237,18 +212,6 @@ return [
                     'cast' => 'string',
                 ],
             ],
-            [
-                [
-                    'from' => 'locale',
-                    'to' => 'language',
-                    'cast' => 'string',
-                ],
-            ],
-        ],
-        'workflow' => [
-            'forms-bridge-current-locale',
-            'rest-api-mailchimp-contact-status',
-            'rest-api-mailchimp-authorization',
         ],
     ],
 ];

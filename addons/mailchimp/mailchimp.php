@@ -2,6 +2,10 @@
 
 namespace FORMS_BRIDGE;
 
+use WP_REST_Server;
+use HTTP_BRIDGE\Http_Backend;
+use WP_Error;
+
 if (!defined('ABSPATH')) {
     exit();
 }
@@ -45,104 +49,137 @@ class Mailchimp_Addon extends Rest_Addon
     protected static $bridge_template_class = '\FORMS_BRIDGE\Mailchimp_Form_Bridge_Template';
 
     /**
-     * Registers the setting and its fields.
-     *
-     * @return array Addon's settings configuration.
+     * Addon constructor. Inherits from the abstrac addon constructor and initializes
+     * REST API endpoints.
      */
-    protected static function setting_config()
+    protected function construct(...$args)
     {
-        return [
-            static::$api,
-            self::merge_setting_config([
-                'bridges' => [
-                    'type' => 'array',
-                    'items' => [
-                        'type' => 'object',
-                        'additionalProperties' => false,
-                        'properties' => [
-                            'backend' => ['type' => 'string'],
-                            'endpoint' => ['type' => 'string'],
-                            'method' => [
-                                'type' => 'string',
-                                'enum' => ['GET', 'POST', 'PUT', 'DELETE'],
-                            ],
-                        ],
-                        'required' => ['backend', 'endpoint', 'method'],
-                    ],
-                ],
-            ]),
-            [
-                'bridges' => [],
-            ],
-        ];
+        parent::construct(...$args);
+
+        add_action(
+            'rest_api_init',
+            static function () {
+                $namespace = REST_Settings_Controller::namespace();
+                $version = REST_Settings_Controller::version();
+
+                register_rest_route(
+                    "{$namespace}/v{$version}",
+                    '/mailchimp/lists',
+                    [
+                        'methods' => WP_REST_Server::CREATABLE,
+                        'callback' => static function ($request) {
+                            $params = $request->get_json_params();
+                            return self::fetch_lists($params);
+                        },
+                        'permission_callback' => static function () {
+                            return REST_Settings_Controller::permission_callback();
+                        },
+                    ]
+                );
+            },
+            10,
+            0
+        );
     }
 
     /**
-     * Apply settings' data validations before db updates.
+     * Backend instance getter. If backend isn't registered, add a
+     * ephemeral entry on the backends registry.
      *
-     * @param array $data Setting data.
+     * @param array $params Backend data.
      *
-     * @return array Validated setting data.
+     * @return Http_Backend
      */
-    protected static function validate_setting($data, $setting)
+    private static function get_backend($params)
     {
-        $data['bridges'] = self::validate_bridges(
-            $data['bridges'],
-            \HTTP_BRIDGE\Settings_Store::setting('general')->backends ?: []
+        if (isset($params['name'])) {
+            $backend = apply_filters(
+                'http_bridge_backend',
+                null,
+                $params['name']
+            );
+
+            if ($backend) {
+                return $backend;
+            }
+        }
+
+        $base_url = filter_var(
+            $params['base_url'] ?? null,
+            FILTER_VALIDATE_URL
         );
 
-        return $data;
+        if (!$base_url) {
+            $index = array_search(
+                'datacenter',
+                array_column($params['headers'], 'name')
+            );
+            if ($index === false) {
+                return;
+            }
+
+            $datacenter = $params['headers'][$index]['value'];
+            $params['base_url'] = "https://{$datacenter}.api.mailchimp.com";
+        }
+
+        $params['name'] = $params['name'] ?? '__mailchimp-' . time();
+        return new Http_Backend($params);
     }
 
-    /**
-     * Validate bridge settings. Filters bridges with inconsistencies with
-     * current store state.
-     *
-     * @param array $bridges Array with bridge configurations.
-     * @param array $backends Array with backends data.
-     *
-     * @return array Array with valid bridge configurations.
-     */
-    private static function validate_bridges($bridges, $backends)
+    private static function api_fetch($endpoint, $backend_params)
     {
-        if (!wp_is_numeric_array($bridges)) {
+        $backend = self::get_backend($backend_params);
+
+        if (empty($backend)) {
+            return new WP_Error(
+                'bad_request',
+                __('Backend is unkown', 'forms-bridge'),
+                ['params' => $backend_params]
+            );
+        }
+
+        $headers = $backend->headers;
+        $api_key = $headers['api-key'] ?? null;
+
+        if (empty($api_key)) {
+            return new WP_Error(
+                'unauthorized',
+                __('Invalid Brevo API credentials', 'forms-bridge'),
+                ['api_key' => $api_key]
+            );
+        }
+
+        add_filter(
+            'http_request_args',
+            '\FORMS_BRIDGE\Mailchimp_Form_Bridge::basic_auth',
+            10,
+            1
+        );
+
+        $response = $backend->get(
+            $endpoint,
+            [],
+            [
+                'api-key' => $api_key,
+                'accept' => 'application/json',
+            ]
+        );
+
+        if (is_wp_error($response)) {
+            return $response;
+        }
+
+        return $response['data'];
+    }
+
+    private static function fetch_lists($backend_params)
+    {
+        $data = self::api_fetch('/3.0/lists', $backend_params);
+        if (is_wp_error($data)) {
             return [];
         }
 
-        $backend_names = array_map(function ($backend) {
-            return $backend['name'];
-        }, $backends);
-
-        $http_methods = static::$bridge_class::allowed_methods;
-
-        $uniques = [];
-        $validated = [];
-        foreach ($bridges as $bridge) {
-            $bridge = self::validate_bridge($bridge, $uniques);
-
-            if (!$bridge) {
-                continue;
-            }
-
-            if (!in_array($bridge['backend'], $backend_names)) {
-                $bridge['backend'] = '';
-            }
-
-            if (!in_array($bridge['method'], $http_methods)) {
-                $bridge['method'] = 'POST';
-            }
-
-            $bridge['endpoint'] = $bridge['endpoint'] ?? '';
-
-            $bridge['is_valid'] =
-                $bridge['is_valid'] &&
-                !empty($bridge['endpoint']) &&
-                !empty($bridge['backend']);
-
-            $validated[] = $bridge;
-        }
-
-        return $validated;
+        return $data['lists'];
     }
 }
 
