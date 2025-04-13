@@ -49,6 +49,7 @@ export default function BrevoTemplateWizard({ integration, onDone }) {
   const [lists, setLists] = useState([]);
   const [products, setProducts] = useState([]);
   const [pipelines, setPipelines] = useState([]);
+  const [templates, setTemplates] = useState([]);
 
   const backendData = useMemo(() => {
     if (!data.backend?.name) return;
@@ -138,6 +139,27 @@ export default function BrevoTemplateWizard({ integration, onDone }) {
     }, 500)
   ).current;
 
+  const fetchTemplates = useRef(
+    debounce((data) => {
+      const backend = {
+        name: data.name,
+        base_url: data.base_url,
+        headers: BREVO_HEADERS.map((header) => ({
+          name: header,
+          value: data.headers[header],
+        })),
+      };
+
+      apiFetch({
+        path: "forms-bridge/v1/brevo/templates",
+        method: "POST",
+        data: backend,
+      })
+        .then(setTemplates)
+        .catch(() => setTemplates([]));
+    }, 500)
+  ).current;
+
   useEffect(() => {
     if (!backendData) return;
 
@@ -146,6 +168,7 @@ export default function BrevoTemplateWizard({ integration, onDone }) {
     (apiFields.includes("product") || apiFields.includes("products")) &&
       fetchProducts(backendData);
     apiFields.includes("pipeline") && fetchPipelines(backendData);
+    apiFields.includes("templateId") && fetchTemplates(backendData);
   }, [backendData, config]);
 
   useEffect(
@@ -157,6 +180,7 @@ export default function BrevoTemplateWizard({ integration, onDone }) {
           _lists: lists,
           _products: products,
           _pipelines: pipelines,
+          _templates: templates,
         },
       }),
     [lists, products, pipelines]

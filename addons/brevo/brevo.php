@@ -98,6 +98,21 @@ class Brevo_Addon extends Rest_Addon
                     return REST_Settings_Controller::permission_callback();
                 },
             ]);
+
+            register_rest_route(
+                "{$namespace}/v{$version}",
+                '/brevo/templates',
+                [
+                    'methods' => WP_REST_Server::CREATABLE,
+                    'callback' => static function ($request) {
+                        $params = $request->get_json_params();
+                        return self::fetch_templates($params);
+                    },
+                    'permission_callback' => static function () {
+                        return REST_Settings_Controller::permission_callback();
+                    },
+                ]
+            );
         });
     }
 
@@ -213,6 +228,16 @@ class Brevo_Addon extends Rest_Addon
         }
 
         return $data['products'];
+    }
+
+    private static function fetch_templates($backend_params)
+    {
+        $data = self::api_fetch('/v3/smtp/templates', $backend_params);
+        if (is_wp_error($data)) {
+            return [];
+        }
+
+        return $data['templates'];
     }
 }
 

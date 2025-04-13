@@ -12,12 +12,14 @@ const API_FIELDS = [
   "product",
   "products",
   "pipeline",
+  "templateId",
 ];
 
 export default function BridgeStep({ fields, data, setData }) {
   const lists = data._lists || [];
   const pipelines = data._pipelines || [];
   const products = data._products || [];
+  const templates = data._templates || [];
 
   const listOptions = useMemo(
     () =>
@@ -35,6 +37,15 @@ export default function BridgeStep({ fields, data, setData }) {
         label: name,
       })),
     [products]
+  );
+
+  const templateOptions = useMemo(
+    () =>
+      templates.map(({ id, name }) => ({
+        value: id,
+        label: name,
+      })),
+    [templates]
   );
 
   const pipelineOptions = useMemo(
@@ -89,6 +100,12 @@ export default function BridgeStep({ fields, data, setData }) {
               type: "options",
               options: pipelineOptions,
             };
+          } else if (field.name === "templateId") {
+            return {
+              ...field,
+              type: "options",
+              options: templateOptions,
+            };
           }
         }),
     [sortedFields]
@@ -114,6 +131,13 @@ export default function BridgeStep({ fields, data, setData }) {
             ...field,
             value: data[field.name] || "",
             onChange: (value) => setData({ [field.name]: value }),
+            description:
+              field.options.length === 0
+                ? __(
+                    "It seems there is no values for this field. Please, check your backend connection",
+                    "forms-bridge"
+                  )
+                : null,
           }}
         />
       ))}
