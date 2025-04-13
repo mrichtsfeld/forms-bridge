@@ -55,8 +55,6 @@ class Bigin_Form_Bridge extends Zoho_Form_Bridge
                 'module' => $module,
             ],
             [
-                'Origin' => self::http_origin_token,
-                // 'Content-Type' => 'application/json',
                 'Accept' => 'application/json',
                 'Authorization' => 'Zoho-oauthtoken ' . $access_token,
             ]
