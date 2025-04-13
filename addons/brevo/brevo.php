@@ -144,7 +144,7 @@ class Brevo_Addon extends Rest_Addon
         );
 
         if (!$base_url) {
-            return;
+            $params['base_url'] = 'https://api.brevo.com';
         }
 
         $params['name'] = $params['name'] ?? '__brevo-' . time();

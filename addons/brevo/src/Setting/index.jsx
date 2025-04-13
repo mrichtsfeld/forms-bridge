@@ -16,7 +16,7 @@ export default function BrevoSetting() {
     <>
       <p style={{ marginTop: 0 }}>
         {__(
-          "Bridge your forms to any backend or service with a REST API",
+          "Bridge your forms to Brevo and convert your web visitors to contacts",
           "forms-bridge"
         )}
       </p>

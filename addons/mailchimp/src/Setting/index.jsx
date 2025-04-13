@@ -15,10 +15,7 @@ export default function MailchimpSetting() {
   return (
     <>
       <p style={{ marginTop: 0 }}>
-        {__(
-          "Bridge your forms to any backend or service with a REST API",
-          "forms-bridge"
-        )}
+        {__("Create opt in forms to your MailChimp audiences", "forms-bridge")}
       </p>
       <PanelRow>
         <Bridges

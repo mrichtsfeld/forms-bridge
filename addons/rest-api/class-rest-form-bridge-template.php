@@ -15,13 +15,6 @@ class Rest_Form_Bridge_Template extends Form_Bridge_Template
      */
     protected static $default = [
         'fields' => [
-            // [
-            //     'ref' => '#bridge',
-            //     'name' => 'backend',
-            //     'label' => 'Backend',
-            //     'type' => 'string',
-            //     'required' => true,
-            // ],
             [
                 'ref' => '#bridge',
                 'name' => 'endpoint',

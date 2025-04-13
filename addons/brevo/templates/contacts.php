@@ -47,33 +47,20 @@ return [
     'fields' => [
         [
             'ref' => '#backend',
-            'name' => 'base_url',
-            'label' => __('Brevo API URL', 'forms-bridge'),
-            'type' => 'string',
-            'value' => 'https://api.brevo.com',
-        ],
-        [
-            'ref' => '#backend',
             'name' => 'name',
             'label' => __(
                 'Label of the Brevo API backend connection',
                 'forms-bridge'
             ),
-            'type' => 'string',
-            'default' => 'Brevo API',
         ],
         [
             'ref' => '#bridge',
             'name' => 'method',
-            'label' => __('HTTP method', 'forms-bridge'),
-            'type' => 'string',
             'value' => 'POST',
         ],
         [
             'ref' => '#bridge',
             'name' => 'endpoint',
-            'label' => __('Endpoint', 'forms-bridge'),
-            'type' => 'string',
             'value' => '/v3/contacts',
         ],
         [
@@ -81,11 +68,9 @@ return [
             'name' => 'api-key',
             'label' => __('Brevo API Key', 'forms-bridge'),
             'description' => __(
-                'You can get it from "SMTP & API" > "API Keys" page from your dashboard',
+                'Get it from your <a href="https://app.brevo.com/settings/keys/api" target="_blank">account</a>',
                 'forms-bridge'
             ),
-            'type' => 'string',
-            'required' => true,
         ],
         [
             'ref' => '#form',

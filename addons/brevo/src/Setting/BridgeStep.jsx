@@ -1,7 +1,7 @@
 import TemplateStep from "../../../../src/components/Templates/Steps/Step";
 import TemplateField from "../../../../src/components/Templates/Field";
 
-const { useMemo } = wp.element;
+const { useMemo, useEffect } = wp.element;
 const { __ } = wp.i18n;
 
 const fieldsOrder = ["name"];
@@ -110,6 +110,24 @@ export default function BridgeStep({ fields, data, setData }) {
         }),
     [sortedFields]
   );
+
+  useEffect(() => {
+    const defaults = {};
+
+    if (productOptions.length === 1) {
+      defaults.product = productOptions[0].value;
+    }
+
+    if (templateOptions.length === 1) {
+      defaults.templateId = templateOptions[0].value;
+    }
+
+    if (pipelineOptions.length === 1) {
+      defaults.pipeline = pipelines[0].value;
+    }
+
+    setData(defaults);
+  }, [productOptions, templateOptions, pipelineOptions]);
 
   return (
     <TemplateStep

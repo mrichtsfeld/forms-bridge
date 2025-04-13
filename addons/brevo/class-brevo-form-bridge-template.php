@@ -36,18 +36,21 @@ class Brevo_Form_Bridge_Template extends Rest_Form_Bridge_Template
                 'label' => 'Name',
                 'type' => 'string',
                 'required' => true,
+                'default' => 'Brevo API',
             ],
             [
                 'ref' => '#backend',
                 'name' => 'base_url',
                 'label' => 'Base URL',
                 'type' => 'string',
+                'value' => 'https://api.brevo.com',
             ],
             [
                 'ref' => '#backend/headers[]',
                 'name' => 'api-key',
                 'label' => 'API Key',
                 'type' => 'string',
+                'required' => true,
             ],
         ],
         'bridge' => [
@@ -56,32 +59,4 @@ class Brevo_Form_Bridge_Template extends Rest_Form_Bridge_Template
             'method' => 'POST',
         ],
     ];
-
-    /**
-     * Extends the common schema and adds custom properties.
-     *
-     * @param array $schema Common template data schema.
-     *
-     * @return array
-     */
-    protected function extend_schema($schema)
-    {
-        $schema['bridge']['properties'] = array_merge(
-            $schema['bridge']['properties'],
-            [
-                'backend' => ['type' => 'string'],
-                'endpoint' => ['type' => 'string'],
-                'method' => [
-                    'type' => 'string',
-                    'enum' => ['POST'],
-                ],
-            ]
-        );
-
-        $schema['bridge']['required'][] = 'backend';
-        $schema['bridge']['required'][] = 'endpoint';
-        $schema['bridge']['required'][] = 'method';
-
-        return $schema;
-    }
 }

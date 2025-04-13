@@ -28,12 +28,9 @@ function debounce(fn, ms = 500) {
 }
 
 function validateBackendData(data) {
-  return BREVO_HEADERS.reduce(
-    (isValid, field) => {
-      return isValid && data.headers[field];
-    },
-    /https?\:\/\/[^\/]+\.\w\w+/.test(data.base_url)
-  );
+  return BREVO_HEADERS.reduce((isValid, field) => {
+    return isValid && data.headers[field];
+  }, true);
 }
 export default function BrevoTemplateWizard({ integration, onDone }) {
   const [{ backends }] = useGeneral();
