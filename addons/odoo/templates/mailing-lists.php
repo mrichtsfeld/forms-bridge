@@ -4,6 +4,44 @@ if (!defined('ABSPATH')) {
     exit();
 }
 
+add_filter(
+    'forms_bridge_template_data',
+    function ($data, $template_name) {
+        if ($template_name === 'odoo-mailing-lists') {
+            $index = array_search(
+                'list_ids',
+                array_column($data['bridge']['custom_fields'], 'name')
+            );
+
+            if ($index !== false) {
+                $field = $data['bridge']['custom_fields'][$index];
+
+                for ($i = 0; $i < count($field['value']); $i++) {
+                    $data['bridge']['custom_fields'][] = [
+                        'name' => "list_ids[{$i}]",
+                        'value' => $field['value'][$i],
+                    ];
+
+                    $data['bridge']['mutations'][0][] = [
+                        'from' => "list_ids[{$i}]",
+                        'to' => "list_ids[{$i}]",
+                        'cast' => 'integer',
+                    ];
+                }
+
+                array_splice($data['bridge']['custom_fields'], $index, 1);
+                $data['bridge']['custom_fields'] = array_values(
+                    $data['bridge']['custom_fields']
+                );
+            }
+        }
+
+        return $data;
+    },
+    10,
+    2
+);
+
 return [
     'title' => __('Mailing Lists', 'forms-bridge'),
     'fields' => [
@@ -13,28 +51,27 @@ return [
             'default' => __('Mailing Lists', 'forms-bridge'),
         ],
         [
-            'ref' => '#form/fields[]',
+            'ref' => '#bridge/custom_fields[]',
             'name' => 'list_ids',
-            'label' => __('List IDs', 'forms-bridge'),
-            'description' => __('List IDs separated by commas', 'forms-bridge'),
+            'label' => __('Mailing lists', 'forms-bridge'),
             'type' => 'string',
             'required' => true,
         ],
     ],
     'bridge' => [
         'model' => 'mailing.contact',
-        'workflow' => ['odoo-mailing-list-ids', 'odoo-mailing-contact'],
+        'workflow' => ['odoo-mailing-contact'],
         'mutations' => [
             [
                 [
-                    'from' => 'firstname',
+                    'from' => 'first_name',
                     'to' => 'name[0]',
-                    'cast' => 'string',
+                    'cast' => 'copy',
                 ],
                 [
-                    'from' => 'lastname',
+                    'from' => 'last_name',
                     'to' => 'name[1]',
-                    'cast' => 'string',
+                    'cast' => 'copy',
                 ],
                 [
                     'from' => 'name',
@@ -47,19 +84,14 @@ return [
     'form' => [
         'fields' => [
             [
-                'name' => 'list_ids',
-                'type' => 'hidden',
-                'required' => true,
-            ],
-            [
                 'label' => __('First name', 'forms-bridge'),
-                'name' => 'firstname',
+                'name' => 'first_name',
                 'type' => 'text',
                 'required' => true,
             ],
             [
                 'label' => __('Last name', 'forms-bridge'),
-                'name' => 'lastname',
+                'name' => 'last_name',
                 'type' => 'text',
                 'required' => true,
             ],

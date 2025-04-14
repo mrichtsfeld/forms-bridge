@@ -143,7 +143,7 @@ function OptionsField({
 }) {
   const constraints = {};
   if (required) constraints.required = true;
-  else {
+  else if (!multiple) {
     options = [{ label: "", value: "" }].concat(
       options.filter((opt) => opt.value)
     );

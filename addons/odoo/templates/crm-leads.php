@@ -9,13 +9,30 @@ add_filter(
     function ($data, $template_name) {
         if ($template_name === 'odoo-crm-leads') {
             $index = array_search(
-                'owner',
-                array_column($data['form']['fields'], 'name')
+                'tag_ids',
+                array_column($data['bridge']['custom_fields'], 'name')
             );
 
             if ($index !== false) {
-                $field = &$data['form']['fields'][$index];
-                $field['value'] = base64_encode($field['value']);
+                $field = $data['bridge']['custom_fields'][$index];
+
+                for ($i = 0; $i < count($field['value']); $i++) {
+                    $data['bridge']['custom_fields'][] = [
+                        'name' => "tag_ids[{$i}]",
+                        'value' => $field['value'][$i],
+                    ];
+
+                    $data['bridge']['mutations'][0][] = [
+                        'from' => "tag_ids[{$i}]",
+                        'to' => "tag_ids[{$i}]",
+                        'cast' => 'integer',
+                    ];
+                }
+
+                array_splice($data['bridge']['custom_fields'], $index, 1);
+                $data['bridge']['custom_fields'] = array_values(
+                    $data['bridge']['custom_fields']
+                );
             }
         }
 
@@ -23,28 +40,6 @@ add_filter(
     },
     10,
     2
-);
-
-add_filter(
-    'forms_bridge_workflow_job_payload',
-    function ($payload, $job, $bridge) {
-        if (
-            $job->name === 'odoo-lead-owner-id' &&
-            $bridge->template === 'odoo-crm-leads'
-        ) {
-            if (isset($payload['owner_email'])) {
-                $payload['owner_email'] = base64_decode(
-                    $payload['owner_email']
-                );
-            } elseif (isset($payload['owner'])) {
-                $payload['owner'] = base64_decode($payload['owner']);
-            }
-        }
-
-        return $payload;
-    },
-    5,
-    3
 );
 
 return [
@@ -56,8 +51,8 @@ return [
             'default' => __('CRM Leads', 'forms-bridge'),
         ],
         [
-            'ref' => '#form/fields[]',
-            'name' => 'owner',
+            'ref' => '#bridge/custom_fields[]',
+            'name' => 'user_id',
             'label' => __('Owner email', 'forms-bridge'),
             'description' => __(
                 'Email of the owner user of the lead',
@@ -67,22 +62,27 @@ return [
             'required' => true,
         ],
         [
-            'ref' => '#form/fields[]',
-            'name' => 'name',
+            'ref' => '#bridge/custom_fields[]',
+            'name' => 'lead_name',
             'label' => __('Lead name', 'forms-bridge'),
             'type' => 'string',
             'required' => true,
             'default' => __('Web Lead', 'forms-bridge'),
         ],
         [
-            'ref' => '#form/fields[]',
+            'ref' => '#bridge/custom_fields[]',
             'name' => 'priority',
             'label' => __('Priority', 'forms-bridge'),
             'type' => 'number',
             'min' => 0,
             'max' => 3,
-            'required' => true,
             'default' => 1,
+        ],
+        [
+            'ref' => '#bridge/custom_fields[]',
+            'name' => 'tag_ids',
+            'label' => __('Lead tags', 'forms-bridge'),
+            'type' => 'string',
         ],
     ],
     'bridge' => [
@@ -90,42 +90,28 @@ return [
         'mutations' => [
             [
                 [
-                    'from' => 'priority',
-                    'to' => 'priority',
-                    'cast' => 'string',
+                    'from' => 'user_id',
+                    'to' => 'user_id',
+                    'cast' => 'integer',
                 ],
                 [
-                    'from' => 'owner',
-                    'to' => 'owner_email',
+                    'from' => 'contact_name',
+                    'to' => 'name',
+                    'cast' => 'string',
+                ],
+            ],
+            [
+                [
+                    'from' => 'lead_name',
+                    'to' => 'name',
                     'cast' => 'string',
                 ],
             ],
         ],
-        'workflow' => ['odoo-lead-owner-id', 'odoo-contact-id'],
+        'workflow' => ['odoo-crm-contact'],
     ],
     'form' => [
         'fields' => [
-            [
-                'name' => 'name',
-                'type' => 'hidden',
-                'required' => true,
-            ],
-            [
-                'name' => 'owner',
-                'type' => 'hidden',
-                'required' => true,
-            ],
-            [
-                'name' => 'priority',
-                'type' => 'hidden',
-                'required' => true,
-            ],
-            [
-                'name' => 'type',
-                'type' => 'hidden',
-                'value' => 'opportunity',
-                'required' => true,
-            ],
             [
                 'label' => __('Your name', 'forms-bridge'),
                 'name' => 'contact_name',

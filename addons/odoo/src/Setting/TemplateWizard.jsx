@@ -66,6 +66,9 @@ export default function OdooTemplateWizard({ integration, onDone }) {
 
   const [users, setUsers] = useState([]);
   const [products, setProducts] = useState([]);
+  const [tags, setTags] = useState([]);
+  const [teams, setTeams] = useState([]);
+  const [lists, setLists] = useState([]);
 
   const steps = useMemo(
     () =>
@@ -166,12 +169,82 @@ export default function OdooTemplateWizard({ integration, onDone }) {
     })
   ).current;
 
+  const fetchTags = useRef(
+    debounce((database, backend) => {
+      backend = {
+        ...backend,
+        headers: [
+          {
+            name: "Content-Type",
+            value: "application/json",
+          },
+        ],
+      };
+
+      apiFetch({
+        path: "forms-bridge/v1/odoo/tags",
+        method: "POST",
+        data: { backend, database },
+      })
+        .then(setTags)
+        .catch(() => setTags([]));
+    })
+  ).current;
+
+  const fetchTeams = useRef(
+    debounce((database, backend) => {
+      backend = {
+        ...backend,
+        headers: [
+          {
+            name: "Content-Type",
+            value: "application/json",
+          },
+        ],
+      };
+
+      apiFetch({
+        path: "forms-bridge/v1/odoo/teams",
+        method: "POST",
+        data: { backend, database },
+      })
+        .then(setTeams)
+        .catch(() => setTeams([]));
+    })
+  ).current;
+
+  const fetchLists = useRef(
+    debounce((database, backend) => {
+      backend = {
+        ...backend,
+        headers: [
+          {
+            name: "Content-Type",
+            value: "application/json",
+          },
+        ],
+      };
+
+      apiFetch({
+        path: "forms-bridge/v1/odoo/lists",
+        method: "POST",
+        data: { backend, database },
+      })
+        .then(setLists)
+        .catch(() => setLists([]));
+    })
+  ).current;
+
   useEffect(() => {
     if (!isValidBackend || !isValidDatabase) return;
 
     customFields.includes("user_id") && fetchUsers(data.database, data.backend);
     customFields.includes("product_id") &&
       fetchProducts(data.database, data.backend);
+    customFields.includes("tag_ids") && fetchTags(data.database, data.backend);
+    customFields.includes("team_id") && fetchTeams(data.database, data.backend);
+    customFields.includes("list_ids") &&
+      fetchLists(data.database, data.backend);
   }, [data.database, isValidDatabase, data.backend, isValidBackend, config]);
 
   useEffect(() => {
@@ -181,9 +254,12 @@ export default function OdooTemplateWizard({ integration, onDone }) {
         ...(data.bridge || {}),
         _users: users,
         _products: products,
+        _tags: tags,
+        _teams: teams,
+        _lists: lists,
       },
     });
-  }, [users]);
+  }, [users, products, tags, teams, lists]);
 
   return (
     <TemplateWizard

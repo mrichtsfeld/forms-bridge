@@ -4,6 +4,44 @@ if (!defined('ABSPATH')) {
     exit();
 }
 
+add_filter(
+    'forms_bridge_template_data',
+    function ($data, $template_name) {
+        if ($template_name === 'odoo-crm-team-leads') {
+            $index = array_search(
+                'tag_ids',
+                array_column($data['bridge']['custom_fields'], 'name')
+            );
+
+            if ($index !== false) {
+                $field = $data['bridge']['custom_fields'][$index];
+
+                for ($i = 0; $i < count($field['value']); $i++) {
+                    $data['bridge']['custom_fields'][] = [
+                        'name' => "tag_ids[{$i}]",
+                        'value' => $field['value'][$i],
+                    ];
+
+                    $data['bridge']['mutations'][0][] = [
+                        'from' => "tag_ids[{$i}]",
+                        'to' => "tag_ids[{$i}]",
+                        'cast' => 'integer',
+                    ];
+                }
+
+                array_splice($data['bridge']['custom_fields'], $index, 1);
+                $data['bridge']['custom_fields'] = array_values(
+                    $data['bridge']['custom_fields']
+                );
+            }
+        }
+
+        return $data;
+    },
+    10,
+    2
+);
+
 return [
     'title' => __('CRM Team Leads', 'forms-bridge'),
     'fields' => [
@@ -13,8 +51,8 @@ return [
             'default' => __('CRM Team Leads', 'forms-bridge'),
         ],
         [
-            'ref' => '#form/fields[]',
-            'name' => 'team',
+            'ref' => '#bridge/custom_fields[]',
+            'name' => 'team_id',
             'label' => __('Owner team', 'forms-bridge'),
             'description' => __(
                 'Name of the owner team of the lead',
@@ -24,22 +62,27 @@ return [
             'required' => true,
         ],
         [
-            'ref' => '#form/fields[]',
-            'name' => 'name',
+            'ref' => '#bridge/custom_fields[]',
+            'name' => 'lead_name',
             'label' => __('Lead name', 'forms-bridge'),
             'type' => 'string',
             'required' => true,
             'default' => __('Web Lead', 'forms-bridge'),
         ],
         [
-            'ref' => '#form/fields[]',
+            'ref' => '#bridge/custom_fields[]',
             'name' => 'priority',
             'label' => __('Priority', 'forms-bridge'),
             'type' => 'number',
             'min' => 0,
             'max' => 3,
-            'required' => true,
             'default' => 1,
+        ],
+        [
+            'ref' => '#bridge/custom_fields[]',
+            'name' => 'tag_ids',
+            'label' => __('Lead tags', 'forms-bridge'),
+            'type' => 'string',
         ],
     ],
     'bridge' => [
@@ -47,37 +90,28 @@ return [
         'mutations' => [
             [
                 [
-                    'from' => 'priority',
-                    'to' => 'priority',
+                    'from' => 'team_id',
+                    'to' => 'team_id',
+                    'cast' => 'integer',
+                ],
+                [
+                    'from' => 'contact_name',
+                    'to' => 'name',
+                    'cast' => 'string',
+                ],
+            ],
+            [
+                [
+                    'from' => 'lead_name',
+                    'to' => 'name',
                     'cast' => 'string',
                 ],
             ],
         ],
-        'workflow' => ['odoo-team-owner-id', 'odoo-contact-id'],
+        'workflow' => ['odoo-crm-contact'],
     ],
     'form' => [
         'fields' => [
-            [
-                'name' => 'name',
-                'type' => 'hidden',
-                'required' => true,
-            ],
-            [
-                'name' => 'team',
-                'type' => 'hidden',
-                'required' => true,
-            ],
-            [
-                'name' => 'priority',
-                'type' => 'hidden',
-                'required' => true,
-            ],
-            [
-                'name' => 'type',
-                'type' => 'hidden',
-                'value' => 'opportunity',
-                'required' => true,
-            ],
             [
                 'label' => __('Your name', 'forms-bridge'),
                 'name' => 'contact_name',

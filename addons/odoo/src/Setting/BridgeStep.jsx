@@ -6,11 +6,14 @@ const { __ } = wp.i18n;
 
 const fieldsOrder = ["name"];
 
-const API_FIELDS = ["user_id", "product_id"];
+const API_FIELDS = ["user_id", "product_id", "tag_ids", "team_id", "list_ids"];
 
 export default function BridgeStep({ fields, data, setData }) {
   const users = data._users || [];
   const products = data._products || [];
+  const tags = data._tags || [];
+  const teams = data._teams || [];
+  const lists = data._lists || [];
 
   const userOptions = useMemo(
     () =>
@@ -28,6 +31,33 @@ export default function BridgeStep({ fields, data, setData }) {
         label: name,
       })),
     [products]
+  );
+
+  const tagOptions = useMemo(
+    () =>
+      tags.map(({ id, name }) => ({
+        value: id,
+        label: name,
+      })),
+    [tags]
+  );
+
+  const teamOptions = useMemo(
+    () =>
+      teams.map(({ id, name }) => ({
+        value: id,
+        label: name,
+      })),
+    [teams]
+  );
+
+  const listOptions = useMemo(
+    () =>
+      lists.map(({ id, name }) => ({
+        value: id,
+        label: name,
+      })),
+    [lists]
   );
 
   const sortedFields = useMemo(
@@ -60,11 +90,31 @@ export default function BridgeStep({ fields, data, setData }) {
               type: "options",
               options: userOptions,
             };
-          } else if (field.name === "product") {
+          } else if (field.name === "product_id") {
             return {
               ...field,
               type: "options",
               options: productOptions,
+            };
+          } else if (field.name === "tag_ids") {
+            return {
+              ...field,
+              type: "options",
+              options: tagOptions,
+              multiple: true,
+            };
+          } else if (field.name === "team_id") {
+            return {
+              ...field,
+              type: "options",
+              options: teamOptions,
+            };
+          } else if (field.name === "list_ids") {
+            return {
+              ...field,
+              type: "options",
+              options: listOptions,
+              multiple: true,
             };
           }
         }),
@@ -80,6 +130,10 @@ export default function BridgeStep({ fields, data, setData }) {
 
     if (userOptions.length === 1) {
       defaults.user_id = userOptions[0].value;
+    }
+
+    if (teamOptions.length === 1) {
+      defaults.team_id = teamOptions[0].value;
     }
 
     setData(defaults);

@@ -74,6 +74,39 @@ class Odoo_Addon extends Addon
                         return REST_Settings_Controller::permission_callback();
                     },
                 ]);
+
+                register_rest_route("{$namespace}/v{$version}", '/odoo/tags', [
+                    'methods' => WP_REST_Server::CREATABLE,
+                    'callback' => static function ($request) {
+                        $params = $request->get_json_params();
+                        return self::fetch_tags($params);
+                    },
+                    'permission_callback' => static function () {
+                        return REST_Settings_Controller::permission_callback();
+                    },
+                ]);
+
+                register_rest_route("{$namespace}/v{$version}", '/odoo/teams', [
+                    'methods' => WP_REST_Server::CREATABLE,
+                    'callback' => static function ($request) {
+                        $params = $request->get_json_params();
+                        return self::fetch_teams($params);
+                    },
+                    'permission_callback' => static function () {
+                        return REST_Settings_Controller::permission_callback();
+                    },
+                ]);
+
+                register_rest_route("{$namespace}/v{$version}", '/odoo/lists', [
+                    'methods' => WP_REST_Server::CREATABLE,
+                    'callback' => static function ($request) {
+                        $params = $request->get_json_params();
+                        return self::fetch_lists($params);
+                    },
+                    'permission_callback' => static function () {
+                        return REST_Settings_Controller::permission_callback();
+                    },
+                ]);
             },
             10,
             0
@@ -362,6 +395,39 @@ class Odoo_Addon extends Addon
         }
 
         return $users;
+    }
+
+    private static function fetch_tags($params)
+    {
+        $tags = self::rpc_fetch('crm.tag', $params, ['id', 'name']);
+
+        if (is_wp_error($tags)) {
+            return [];
+        }
+
+        return $tags;
+    }
+
+    private static function fetch_teams($params)
+    {
+        $tags = self::rpc_fetch('crm.team', $params, ['id', 'name']);
+
+        if (is_wp_error($tags)) {
+            return [];
+        }
+
+        return $tags;
+    }
+
+    private static function fetch_lists($params)
+    {
+        $tags = self::rpc_fetch('mailing.list', $params, ['id', 'name']);
+
+        if (is_wp_error($tags)) {
+            return [];
+        }
+
+        return $tags;
     }
 }
 
