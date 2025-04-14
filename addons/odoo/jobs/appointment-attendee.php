@@ -4,28 +4,44 @@ if (!defined('ABSPATH')) {
     exit();
 }
 
-function forms_bridge_odoo_appointment_attendee($payload, $bridge)
+function forms_bridge_odoo_appointment_attendees($payload, $bridge)
 {
-    $payload = forms_bridge_odoo_contact_id_by_email($payload, $bridge);
+    $partner = forms_bridge_odoo_create_partner($payload, $bridge);
 
-    if (is_wp_error($payload)) {
-        return $payload;
+    if (is_wp_error($partner)) {
+        return $partner;
     }
 
     $payload['partner_ids'] = (array) ($payload['partner_ids'] ?? []);
-    $payload['partner_ids'][] = $payload['partner_id'];
-    unset($payload['partner_id']);
+    $payload['partner_ids'][] = $partner['id'];
+
+    if (isset($payload['user_id'])) {
+        $user_response = $bridge
+            ->patch([
+                'name' => 'odoo-get-user-by-id',
+                'model' => 'res.users',
+                'method' => 'read',
+            ])
+            ->submit([$payload['user_id']]);
+
+        if (is_wp_error($user_response)) {
+            return $user_response;
+        }
+
+        $payload['partner_ids'][] =
+            $user_response['data']['result'][0]['partner_id'][0];
+    }
 
     return $payload;
 }
 
 return [
-    'title' => __('Appointment attendee', 'forms-bridge'),
+    'title' => __('Appointment attendees', 'forms-bridge'),
     'description' => __(
-        'Search for partner by email or creates a new one and sets it as the appointment attendee',
+        'Search for partner by email or creates a new one and sets it as the appointment attendee. If user_id, also adds user as attendee.',
         'forms-bridge'
     ),
-    'method' => 'forms_bridge_odoo_appointment_attendee',
+    'method' => 'forms_bridge_odoo_appointment_attendees',
     'input' => [
         [
             'name' => 'email',
@@ -33,7 +49,7 @@ return [
             'required' => true,
         ],
         [
-            'name' => 'contact_name',
+            'name' => 'name',
             'schema' => ['type' => 'string'],
             'required' => true,
         ],
@@ -49,8 +65,16 @@ return [
             'name' => 'parent_id',
             'schema' => ['type' => 'string'],
         ],
+        [
+            'name' => 'user_id',
+            'schema' => ['type' => 'integer'],
+        ],
     ],
     'output' => [
+        [
+            'name' => 'user_id',
+            'schema' => ['type' => 'integer'],
+        ],
         [
             'name' => 'partner_ids',
             'schema' => [

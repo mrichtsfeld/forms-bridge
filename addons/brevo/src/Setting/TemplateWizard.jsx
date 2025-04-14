@@ -32,12 +32,13 @@ function validateBackendData(data) {
     return isValid && data.headers[field];
   }, true);
 }
+
 export default function BrevoTemplateWizard({ integration, onDone }) {
   const [{ backends }] = useGeneral();
 
   const config = useTemplateConfig();
-  const configFields = useMemo(() => config?.fields || [], [config]);
-  const apiFields = configFields
+  const configFields = config?.fields || [];
+  const customFields = configFields
     .filter((field) => field.ref === "#bridge/custom_fields[]")
     .map((field) => field.name);
 
@@ -160,12 +161,13 @@ export default function BrevoTemplateWizard({ integration, onDone }) {
   useEffect(() => {
     if (!backendData) return;
 
-    (apiFields.includes("listIds") || apiFields.includes("includeListIds")) &&
+    (customFields.includes("listIds") ||
+      customFields.includes("includeListIds")) &&
       fetchLists(backendData);
-    (apiFields.includes("product") || apiFields.includes("products")) &&
+    (customFields.includes("product") || customFields.includes("products")) &&
       fetchProducts(backendData);
-    apiFields.includes("pipeline") && fetchPipelines(backendData);
-    apiFields.includes("templateId") && fetchTemplates(backendData);
+    customFields.includes("pipeline") && fetchPipelines(backendData);
+    customFields.includes("templateId") && fetchTemplates(backendData);
   }, [backendData, config]);
 
   useEffect(

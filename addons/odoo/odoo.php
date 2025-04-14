@@ -2,6 +2,10 @@
 
 namespace FORMS_BRIDGE;
 
+use WP_REST_Server;
+use HTTP_BRIDGE\Http_Backend;
+use WP_Error;
+
 if (!defined('ABSPATH')) {
     exit();
 }
@@ -22,7 +26,7 @@ class Odoo_Addon extends Addon
      *
      * @var string
      */
-    protected static $name = 'Odoo JSON-RPC';
+    protected static $name = 'Odoo';
 
     /**
      * Handles the addon's API name.
@@ -53,6 +57,27 @@ class Odoo_Addon extends Addon
     {
         parent::construct(...$args);
         self::custom_hooks();
+
+        add_action(
+            'rest_api_init',
+            static function () {
+                $namespace = REST_Settings_Controller::namespace();
+                $version = REST_Settings_Controller::version();
+
+                register_rest_route("{$namespace}/v{$version}", '/odoo/users', [
+                    'methods' => WP_REST_Server::CREATABLE,
+                    'callback' => static function ($request) {
+                        $params = $request->get_json_params();
+                        return self::fetch_users($params);
+                    },
+                    'permission_callback' => static function () {
+                        return REST_Settings_Controller::permission_callback();
+                    },
+                ]);
+            },
+            10,
+            0
+        );
     }
 
     /**
@@ -263,6 +288,80 @@ class Odoo_Addon extends Addon
         }
 
         return $validated;
+    }
+
+    private static function rpc_fetch($model, $params, $fields = [])
+    {
+        $database_params = $params['database'];
+        $backend_params = $params['backend'];
+        $database_params['backend'] = $backend_params['name'];
+
+        if (!$database_params['backend']) {
+            return new WP_Error(
+                'bad_request',
+                __('Invalid database params', 'forms-bridge'),
+                ['backend' => $database_params, 'database' => $database_params]
+            );
+        }
+
+        add_filter(
+            'forms_bridge_odoo_db',
+            static function ($database, $name) use ($database_params) {
+                if ($database instanceof Odoo_DB) {
+                    return $database;
+                }
+
+                if ($name === $database_params['name']) {
+                    return new Odoo_DB($database_params);
+                }
+            },
+            20,
+            2
+        );
+
+        add_filter(
+            'http_bridge_backend',
+            static function ($backend, $name) use ($backend_params) {
+                if ($backend instanceof Http_Backend) {
+                    return $backend;
+                }
+
+                if ($name === $backend_params['name']) {
+                    return new Http_Backend($backend_params);
+                }
+            },
+            20,
+            2
+        );
+
+        $bridge = new Odoo_Form_Bridge(
+            [
+                'name' => "odoo-rpc-{$model}-fetch",
+                'database' => $database_params['name'],
+                'model' => $model,
+                'method' => 'search_read',
+            ],
+            'odoo'
+        );
+
+        $response = $bridge->submit([], $fields);
+
+        if (is_wp_error($response)) {
+            return $response;
+        }
+
+        return $response['data']['result'];
+    }
+
+    private static function fetch_users($params)
+    {
+        $users = self::rpc_fetch('res.users', $params, ['id', 'email']);
+
+        if (is_wp_error($users)) {
+            return [];
+        }
+
+        return $users;
     }
 }
 

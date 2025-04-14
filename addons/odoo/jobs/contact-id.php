@@ -24,7 +24,7 @@ function forms_bridge_odoo_contact_id_by_email($payload, $bridge)
     if (is_wp_error($response)) {
         $contact = [
             'is_company' => false,
-            'name' => $payload['contact_name'],
+            'name' => $payload['name'],
             'email' => $payload['email'],
         ];
 
@@ -48,13 +48,10 @@ function forms_bridge_odoo_contact_id_by_email($payload, $bridge)
             return $response;
         }
 
-        $contact_id = $response['data']['result'];
+        return $response['data']['result'];
     } else {
-        $contact_id = $response['data']['result'][0];
+        return $response['data']['result'][0];
     }
-
-    $payload['partner_id'] = $contact_id;
-    return $payload;
 }
 
 return [

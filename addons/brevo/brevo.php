@@ -58,62 +58,75 @@ class Brevo_Addon extends Rest_Addon
     {
         parent::construct(...$args);
 
-        add_action('rest_api_init', static function () {
-            $namespace = REST_Settings_Controller::namespace();
-            $version = REST_Settings_Controller::version();
+        add_action(
+            'rest_api_init',
+            static function () {
+                $namespace = REST_Settings_Controller::namespace();
+                $version = REST_Settings_Controller::version();
 
-            register_rest_route("{$namespace}/v{$version}", '/brevo/lists', [
-                'methods' => WP_REST_Server::CREATABLE,
-                'callback' => static function ($request) {
-                    $params = $request->get_json_params();
-                    return self::fetch_lists($params);
-                },
-                'permission_callback' => static function () {
-                    return REST_Settings_Controller::permission_callback();
-                },
-            ]);
+                register_rest_route(
+                    "{$namespace}/v{$version}",
+                    '/brevo/lists',
+                    [
+                        'methods' => WP_REST_Server::CREATABLE,
+                        'callback' => static function ($request) {
+                            $params = $request->get_json_params();
+                            return self::fetch_lists($params);
+                        },
+                        'permission_callback' => static function () {
+                            return REST_Settings_Controller::permission_callback();
+                        },
+                    ]
+                );
 
-            register_rest_route(
-                "{$namespace}/v{$version}",
-                '/brevo/pipelines',
-                [
-                    'methods' => WP_REST_Server::CREATABLE,
-                    'callback' => static function ($request) {
-                        $params = $request->get_json_params();
-                        return self::fetch_pipelines($params);
-                    },
-                    'permission_callback' => static function () {
-                        return REST_Settings_Controller::permission_callback();
-                    },
-                ]
-            );
+                register_rest_route(
+                    "{$namespace}/v{$version}",
+                    '/brevo/pipelines',
+                    [
+                        'methods' => WP_REST_Server::CREATABLE,
+                        'callback' => static function ($request) {
+                            $params = $request->get_json_params();
+                            return self::fetch_pipelines($params);
+                        },
+                        'permission_callback' => static function () {
+                            return REST_Settings_Controller::permission_callback();
+                        },
+                    ]
+                );
 
-            register_rest_route("{$namespace}/v{$version}", '/brevo/products', [
-                'methods' => WP_REST_Server::CREATABLE,
-                'callback' => static function ($request) {
-                    $params = $request->get_json_params();
-                    return self::fetch_products($params);
-                },
-                'permission_callback' => static function () {
-                    return REST_Settings_Controller::permission_callback();
-                },
-            ]);
+                register_rest_route(
+                    "{$namespace}/v{$version}",
+                    '/brevo/products',
+                    [
+                        'methods' => WP_REST_Server::CREATABLE,
+                        'callback' => static function ($request) {
+                            $params = $request->get_json_params();
+                            return self::fetch_products($params);
+                        },
+                        'permission_callback' => static function () {
+                            return REST_Settings_Controller::permission_callback();
+                        },
+                    ]
+                );
 
-            register_rest_route(
-                "{$namespace}/v{$version}",
-                '/brevo/templates',
-                [
-                    'methods' => WP_REST_Server::CREATABLE,
-                    'callback' => static function ($request) {
-                        $params = $request->get_json_params();
-                        return self::fetch_templates($params);
-                    },
-                    'permission_callback' => static function () {
-                        return REST_Settings_Controller::permission_callback();
-                    },
-                ]
-            );
-        });
+                register_rest_route(
+                    "{$namespace}/v{$version}",
+                    '/brevo/templates',
+                    [
+                        'methods' => WP_REST_Server::CREATABLE,
+                        'callback' => static function ($request) {
+                            $params = $request->get_json_params();
+                            return self::fetch_templates($params);
+                        },
+                        'permission_callback' => static function () {
+                            return REST_Settings_Controller::permission_callback();
+                        },
+                    ]
+                );
+            },
+            10,
+            0
+        );
     }
 
     /**

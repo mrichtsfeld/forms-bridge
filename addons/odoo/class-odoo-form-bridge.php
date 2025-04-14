@@ -35,11 +35,21 @@ class Odoo_Form_Bridge extends Form_Bridge
      * @param string $service RPC service name.
      * @param string $method RPC method name.
      * @param array $args RPC request arguments.
+     * @param array $more_args RPC additional arguments.
      *
      * @return array JSON-RPC conformant payload.
      */
-    public static function rpc_payload($session_id, $service, $method, $args)
-    {
+    public static function rpc_payload(
+        $session_id,
+        $service,
+        $method,
+        $args,
+        $more_args = null
+    ) {
+        if (!empty($more_args)) {
+            $args[] = $more_args;
+        }
+
         return [
             'jsonrpc' => '2.0',
             'method' => 'call',
@@ -206,14 +216,13 @@ class Odoo_Form_Bridge extends Form_Bridge
             $this->model,
             'fields_get',
             [],
-            [],
         ]);
 
         $response = $this->backend()->post(self::endpoint, $payload);
 
         $result = self::rpc_response($response);
         if (is_wp_error($result)) {
-            return $result;
+            return [];
         }
 
         return array_keys($result);
@@ -227,7 +236,7 @@ class Odoo_Form_Bridge extends Form_Bridge
      *
      * @return array|WP_Error Http request response.
      */
-    protected function do_submit($payload, $attachments = [])
+    protected function do_submit($payload, $more_args = null)
     {
         $db = $this->database();
 
@@ -239,14 +248,20 @@ class Odoo_Form_Bridge extends Form_Bridge
 
         [$sid, $uid] = $session;
 
-        $payload = self::rpc_payload($sid, 'object', 'execute', [
-            $db->name,
-            $uid,
-            $db->password,
-            $this->model,
-            $this->method ?? 'create',
-            $payload,
-        ]);
+        $payload = self::rpc_payload(
+            $sid,
+            'object',
+            'execute',
+            [
+                $db->name,
+                $uid,
+                $db->password,
+                $this->model,
+                $this->method ?? 'create',
+                $payload,
+            ],
+            $more_args
+        );
 
         $payload = apply_filters('forms_bridge_rpc_payload', $payload, $this);
 

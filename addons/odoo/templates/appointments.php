@@ -4,59 +4,6 @@ if (!defined('ABSPATH')) {
     exit();
 }
 
-add_filter(
-    'forms_bridge_template_data',
-    function ($data, $template_name) {
-        if ($template_name === 'odoo-appointments') {
-            $index = array_search(
-                'owner',
-                array_column($data['form']['fields'], 'name')
-            );
-
-            if ($index !== false) {
-                $field = &$data['form']['fields'][$index];
-                $field['value'] = base64_encode($field['value']);
-            }
-
-            $index = array_search(
-                'allday',
-                array_column($data['form']['fields'], 'name')
-            );
-
-            if ($index !== false) {
-                $field = &$data['form']['fields'][$index];
-                $field['value'] = $field['value'] ? '1' : '0';
-            }
-        }
-
-        return $data;
-    },
-    10,
-    2
-);
-
-add_filter(
-    'forms_bridge_workflow_job_payload',
-    function ($payload, $job, $bridge) {
-        if (
-            $job->name === 'odoo-appointment-owner' &&
-            $bridge->template === 'odoo-appointments'
-        ) {
-            if (isset($payload['owner_email'])) {
-                $payload['owner_email'] = base64_decode(
-                    $payload['owner_email']
-                );
-            } elseif (isset($payload['owner'])) {
-                $payload['owner'] = base64_decode($payload['owner']);
-            }
-        }
-
-        return $payload;
-    },
-    5,
-    3
-);
-
 return [
     'title' => __('Appointments', 'forms-bridge'),
     'fields' => [
@@ -66,8 +13,8 @@ return [
             'default' => __('Appointments', 'forms-bridge'),
         ],
         [
-            'ref' => '#form/fields[]',
-            'name' => 'owner',
+            'ref' => '#bridge/custom_fields[]',
+            'name' => 'user_id',
             'label' => __('Owner email', 'forms-bridge'),
             'description' => __(
                 'Email of the owner user of the appointment',
@@ -77,22 +24,22 @@ return [
             'required' => true,
         ],
         [
-            'ref' => '#form/fields[]',
-            'name' => 'name',
+            'ref' => '#bridge/custom_fields[]',
+            'name' => 'event_name',
             'label' => __('Appointment name', 'forms-bridge'),
             'type' => 'string',
             'required' => true,
             'default' => __('Web Appointment', 'forms-bridge'),
         ],
         [
-            'ref' => '#form/fields[]',
+            'ref' => '#bridge/custom_fields[]',
             'name' => 'allday',
             'label' => __('Is all day event?', 'forms-bridge'),
             'type' => 'boolean',
             'default' => false,
         ],
         [
-            'ref' => '#form/fields[]',
+            'ref' => '#bridge/custom_fields[]',
             'name' => 'duration',
             'label' => __('Duration (Hours)', 'forms-bridge'),
             'type' => 'number',
@@ -104,6 +51,16 @@ return [
         'mutations' => [
             [
                 [
+                    'from' => 'user_id',
+                    'to' => 'user_id',
+                    'cast' => 'integer',
+                ],
+                [
+                    'from' => 'your-name',
+                    'to' => 'name',
+                    'cast' => 'string',
+                ],
+                [
                     'from' => 'allday',
                     'to' => 'allday',
                     'cast' => 'boolean',
@@ -113,11 +70,6 @@ return [
                     'to' => 'duration',
                     'cast' => 'number',
                 ],
-                [
-                    'from' => 'owner',
-                    'to' => 'owner_email',
-                    'cast' => 'string',
-                ],
             ],
             [
                 [
@@ -126,38 +78,25 @@ return [
                     'cast' => 'string',
                 ],
             ],
+            [],
+            [
+                [
+                    'from' => 'event_name',
+                    'to' => 'name',
+                    'cast' => 'string',
+                ],
+            ],
         ],
         'workflow' => [
             'forms-bridge-date-fields-to-date',
             'odoo-appointment-dates',
-            'odoo-appointment-owner',
             'odoo-appointment-attendee',
         ],
     ],
     'form' => [
         'fields' => [
             [
-                'name' => 'name',
-                'type' => 'hidden',
-                'required' => true,
-            ],
-            [
-                'name' => 'owner',
-                'type' => 'hidden',
-                'required' => true,
-            ],
-            [
-                'name' => 'allday',
-                'type' => 'hidden',
-                'required' => true,
-            ],
-            [
-                'name' => 'duration',
-                'type' => 'hidden',
-                'required' => true,
-            ],
-            [
-                'name' => 'contact_name',
+                'name' => 'your-name',
                 'label' => __('Your name', 'forms-bridge'),
                 'type' => 'text',
                 'required' => true,
