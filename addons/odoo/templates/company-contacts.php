@@ -20,8 +20,55 @@ return [
         'workflow' => [
             'forms-bridge-iso2-country-code',
             'odoo-vat-id',
-            'odoo-contact-company-id',
+            'odoo-contact-company',
+            'odoo-skip-if-partner-exists',
         ],
+        'custom_fields' => [
+            [
+                'name' => 'contact_lang',
+                'value' => '$locale',
+            ],
+        ],
+        'mutations' => [
+            [],
+            [
+                [
+                    'from' => 'country',
+                    'to' => 'country',
+                    'cast' => 'null',
+                ],
+            ],
+            [
+                [
+                    'from' => 'company_name',
+                    'to' => 'name',
+                    'cast' => 'string',
+                ],
+            ],
+            [
+                [
+                    'from' => 'contact_name',
+                    'to' => 'name',
+                    'cast' => 'string',
+                ],
+                [
+                    'from' => 'contact_email',
+                    'to' => 'email',
+                    'cast' => 'string',
+                ],
+                [
+                    'from' => 'contact_phone',
+                    'to' => 'phone',
+                    'cast' => 'string',
+                ],
+                [
+                    'from' => 'contact_lang',
+                    'to' => 'lang',
+                    'cast' => 'string',
+                ],
+            ],
+        ],
+        [],
     ],
     'form' => [
         'fields' => [
@@ -70,7 +117,7 @@ return [
             ],
             [
                 'label' => __('Your name', 'forms-bridge'),
-                'name' => 'name',
+                'name' => 'contact_name',
                 'type' => 'text',
                 'required' => true,
             ],
@@ -82,13 +129,13 @@ return [
             ],
             [
                 'label' => __('Your email', 'forms-bridge'),
-                'name' => 'email',
+                'name' => 'contact_email',
                 'type' => 'email',
                 'required' => true,
             ],
             [
                 'label' => __('Your phone', 'forms-bridge'),
-                'name' => 'phone',
+                'name' => 'contact_phone',
                 'type' => 'text',
             ],
         ],

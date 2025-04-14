@@ -86,6 +86,7 @@ class Workflow_Job
                 'properties' => [
                     'name' => ['type' => 'string'],
                     'touch' => ['type' => 'boolean'],
+                    'forward' => ['type' => 'boolean'],
                     'schema' => [
                         'type' => 'object',
                         'properties' => [

@@ -58,19 +58,21 @@ function applyJob(payload, job) {
     let addToPayload;
     if (input) {
       if (!exists) {
-        addToPayload = true;
-        enter.add(output.name);
+        if (!output.forward) {
+          addToPayload = true;
+          enter.add(output.name);
+
+          if (!checkType(input.schema, output.schema)) {
+            touched.add(output.name);
+            addToPayload = true;
+          }
+        }
       } else if (output.touch) {
         addToPayload = true;
         touched.add(output.name);
       }
-
-      if (!checkType(input.schema, output.schema)) {
-        touched.add(output.name);
-        addToPayload = true;
-      }
     } else {
-      addToPayload = true;
+      addToPayload = output.forward;
       enter.add(output.name);
     }
 

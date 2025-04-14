@@ -7,14 +7,15 @@ if (!defined('ABSPATH')) {
 function forms_bridge_odoo_create_partner($payload, $bridge)
 {
     $partner = [
+        'is_company' => false,
         'name' => $payload['name'],
     ];
 
     $partner_fields = [
-        'complete_name',
+        // 'complete_name',
         'title',
         'parent_id',
-        'parent_name',
+        // 'parent_name',
         'lang',
         'vat',
         'website',
@@ -28,10 +29,9 @@ function forms_bridge_odoo_create_partner($payload, $bridge)
         'email',
         'phone',
         'mobile',
-        'is_company',
         'is_public',
-        'company_id',
-        'company_name',
+        // 'company_id',
+        // 'company_name',
         'additional_info',
     ];
 
@@ -41,10 +41,10 @@ function forms_bridge_odoo_create_partner($payload, $bridge)
         }
     }
 
-    $query = [['name', '=', $payload['name']]];
+    $query = [['name', '=', $partner['name']]];
 
     if (isset($partner['email'])) {
-        $query[] = ['email', '=', $payload['email']];
+        $query[] = ['email', '=', $partner['email']];
     }
 
     $response = $bridge
@@ -75,6 +75,90 @@ function forms_bridge_odoo_create_partner($payload, $bridge)
     $response = $bridge
         ->patch([
             'name' => 'odoo-get-partner-data',
+            'method' => 'read',
+            'model' => 'res.partner',
+        ])
+        ->submit([$response['data']['result']]);
+
+    if (is_wp_error($response)) {
+        return $response;
+    }
+
+    return $response['data']['result'][0];
+}
+
+function forms_bridge_odoo_create_company($payload, $bridge)
+{
+    $company = [
+        'is_company' => true,
+        'name' => $payload['name'],
+    ];
+
+    $company_fields = [
+        // 'complete_name',
+        // 'parent_id',
+        // 'parent_name',
+        'lang',
+        'vat',
+        'website',
+        'street',
+        'street2',
+        'zip',
+        'city',
+        'country_code',
+        'email',
+        'phone',
+        'mobile',
+        'is_public',
+        // 'company_id',
+        // 'company_name',
+        'additional_info',
+    ];
+
+    foreach ($company_fields as $field) {
+        if (isset($payload[$field])) {
+            $company[$field] = $payload[$field];
+        }
+    }
+
+    $query = [['name', '=', $company['name']]];
+
+    if (isset($company['email'])) {
+        $query[] = ['email', '=', $company['email']];
+    }
+
+    if (isset($company['vat'])) {
+        $query[] = ['vat', '=', $company['vat']];
+    }
+
+    $response = $bridge
+        ->patch([
+            'name' => 'odoo-search-company',
+            'template' => null,
+            'method' => 'search_read',
+            'model' => 'res.partner',
+        ])
+        ->submit($query);
+
+    if (!is_wp_error($response)) {
+        return $response['data']['result'][0];
+    }
+
+    $response = $bridge
+        ->patch([
+            'name' => 'odoo-create-company',
+            'method' => 'create',
+            'model' => 'res.partner',
+        ])
+        ->submit($company);
+
+    if (is_wp_error($response)) {
+        return $response;
+    }
+
+    $response = $bridge
+        ->patch([
+            'name' => 'odoo-get-company-data',
             'method' => 'read',
             'model' => 'res.partner',
         ])

@@ -68,6 +68,7 @@ return [
         [
             'name' => 'vat',
             'schema' => ['type' => 'string'],
+            'touch' => true,
         ],
         [
             'name' => 'country_code',

@@ -54,16 +54,48 @@ return [
             'required' => true,
         ],
         [
-            'name' => 'phone',
+            'name' => 'title',
             'schema' => ['type' => 'string'],
+        ],
+        [
+            'name' => 'lang',
+            'schema' => ['type' => 'string'],
+        ],
+        [
+            'name' => 'vat',
+            'schema' => ['type' => 'string'],
+        ],
+        [
+            'name' => 'employee',
+            'schema' => ['type' => 'boolean'],
         ],
         [
             'name' => 'function',
             'schema' => ['type' => 'string'],
         ],
         [
-            'name' => 'parent_id',
+            'name' => 'mobile',
             'schema' => ['type' => 'string'],
+        ],
+        [
+            'name' => 'phone',
+            'schema' => ['type' => 'string'],
+        ],
+        [
+            'name' => 'website',
+            'schema' => ['type' => 'string'],
+        ],
+        [
+            'name' => 'parent_id',
+            'schema' => ['type' => 'integer'],
+        ],
+        [
+            'name' => 'additional_info',
+            'schema' => ['type' => 'string'],
+        ],
+        [
+            'name' => 'is_public',
+            'schema' => ['type' => 'boolean'],
         ],
         [
             'name' => 'user_id',
