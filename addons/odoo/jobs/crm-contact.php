@@ -6,14 +6,18 @@ if (!defined('ABSPATH')) {
 
 function forms_bridge_odoo_crm_lead_contact($payload, $bridge)
 {
-    $payload['email_from'] = $payload['email'];
-
-    $contact = $payload;
-
-    $result = forms_bridge_odoo_contact_id_by_email($contact, $bridge);
+    $partner = forms_bridge_odoo_create_partner($payload, $bridge);
 
     if (is_wp_error($result)) {
-        return $result;
+        return $partner;
+    }
+
+    $payload['email_from'] = $partner['email'];
+
+    if (!empty($partner['parent_id'][0])) {
+        $payload['partner_id'] = $partner['parent_id'][0];
+    } else {
+        $payload['partner_id'] = $partner['id'];
     }
 
     return $payload;
@@ -22,7 +26,7 @@ function forms_bridge_odoo_crm_lead_contact($payload, $bridge)
 return [
     'title' => __('CRM lead contact', 'forms-bridge'),
     'description' => __(
-        'Search for a partner by email or creates a new and sets its email as the email_from payload attribute',
+        'Creates a new contact and sets its email as the email_from value on the payload',
         'forms-bridge'
     ),
     'method' => 'forms_bridge_odoo_crm_lead_contact',
@@ -33,12 +37,32 @@ return [
             'required' => true,
         ],
         [
-            'name' => 'contact_name',
+            'name' => 'name',
             'schema' => ['type' => 'string'],
             'required' => true,
         ],
         [
-            'name' => 'parent_id',
+            'name' => 'title',
+            'schema' => ['type' => 'string'],
+        ],
+        [
+            'name' => 'lang',
+            'schema' => ['type' => 'string'],
+        ],
+        [
+            'name' => 'vat',
+            'schema' => ['type' => 'string'],
+        ],
+        [
+            'name' => 'employee',
+            'schema' => ['type' => 'boolean'],
+        ],
+        [
+            'name' => 'function',
+            'schema' => ['type' => 'string'],
+        ],
+        [
+            'name' => 'mobile',
             'schema' => ['type' => 'string'],
         ],
         [
@@ -46,14 +70,50 @@ return [
             'schema' => ['type' => 'string'],
         ],
         [
-            'name' => 'function',
+            'name' => 'website',
             'schema' => ['type' => 'string'],
+        ],
+        [
+            'name' => 'street',
+            'schema' => ['type' => 'string'],
+        ],
+        [
+            'name' => 'street2',
+            'schema' => ['type' => 'string'],
+        ],
+        [
+            'name' => 'zip',
+            'schema' => ['type' => 'string'],
+        ],
+        [
+            'name' => 'city',
+            'schema' => ['type' => 'string'],
+        ],
+        [
+            'name' => 'country_code',
+            'schema' => ['type' => 'string'],
+        ],
+        [
+            'name' => 'parent_id',
+            'schema' => ['type' => 'integer'],
+        ],
+        [
+            'name' => 'additional_info',
+            'schema' => ['type' => 'string'],
+        ],
+        [
+            'name' => 'is_public',
+            'schema' => ['type' => 'boolean'],
         ],
     ],
     'output' => [
         [
             'name' => 'email_from',
             'schema' => ['type' => 'string'],
+        ],
+        [
+            'name' => 'partner_id',
+            'schema' => ['type' => 'integer'],
         ],
     ],
 ];

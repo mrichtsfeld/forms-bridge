@@ -72,7 +72,7 @@ function applyJob(payload, job) {
         touched.add(output.name);
       }
     } else {
-      addToPayload = output.forward;
+      addToPayload = true;
       enter.add(output.name);
     }
 

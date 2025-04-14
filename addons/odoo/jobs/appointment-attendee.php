@@ -86,6 +86,26 @@ return [
             'schema' => ['type' => 'string'],
         ],
         [
+            'name' => 'street',
+            'schema' => ['type' => 'string'],
+        ],
+        [
+            'name' => 'street2',
+            'schema' => ['type' => 'string'],
+        ],
+        [
+            'name' => 'zip',
+            'schema' => ['type' => 'string'],
+        ],
+        [
+            'name' => 'city',
+            'schema' => ['type' => 'string'],
+        ],
+        [
+            'name' => 'country_code',
+            'schema' => ['type' => 'string'],
+        ],
+        [
             'name' => 'parent_id',
             'schema' => ['type' => 'integer'],
         ],
@@ -96,10 +116,6 @@ return [
         [
             'name' => 'is_public',
             'schema' => ['type' => 'boolean'],
-        ],
-        [
-            'name' => 'user_id',
-            'schema' => ['type' => 'integer'],
         ],
     ],
     'output' => [

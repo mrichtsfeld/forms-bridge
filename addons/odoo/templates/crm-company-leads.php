@@ -6,49 +6,6 @@ if (!defined('ABSPATH')) {
 
 global $forms_bridge_iso2_countries;
 
-add_filter(
-    'forms_bridge_template_data',
-    function ($data, $template_name) {
-        if ($template_name === 'odoo-crm-company-leads') {
-            $index = array_search(
-                'owner',
-                array_column($data['form']['fields'], 'name')
-            );
-
-            if ($index !== false) {
-                $field = &$data['form']['fields'][$index];
-                $field['value'] = base64_encode($field['value']);
-            }
-        }
-
-        return $data;
-    },
-    10,
-    2
-);
-
-add_filter(
-    'forms_bridge_workflow_job_payload',
-    function ($payload, $job, $bridge) {
-        if (
-            $job->name === 'odoo-lead-owner-id' &&
-            $bridge->template === 'odoo-crm-company-leads'
-        ) {
-            if (isset($payload['owner_email'])) {
-                $payload['owner_email'] = base64_decode(
-                    $payload['owner_email']
-                );
-            } elseif (isset($payload['owner'])) {
-                $payload['owner'] = base64_decode($payload['owner']);
-            }
-        }
-
-        return $payload;
-    },
-    5,
-    3
-);
-
 return [
     'title' => __('CRM Company Leads', 'forms-bridge'),
     'fields' => [
@@ -58,8 +15,8 @@ return [
             'default' => __('CRM Company Leads', 'forms-bridge'),
         ],
         [
-            'ref' => '#form/fields[]',
-            'name' => 'owner',
+            'ref' => '#bridge/custom_fields[]',
+            'name' => 'user_id',
             'label' => __('Owner email', 'forms-bridge'),
             'description' => __(
                 'Email of the owner user of the lead',
@@ -69,21 +26,20 @@ return [
             'required' => true,
         ],
         [
-            'ref' => '#form/fields[]',
-            'name' => 'name',
+            'ref' => '#bridge/custom_fields[]',
+            'name' => 'lead_name',
             'label' => __('Lead name', 'forms-bridge'),
             'type' => 'string',
             'required' => true,
             'default' => __('Web Lead', 'forms-bridge'),
         ],
         [
-            'ref' => '#form/fields[]',
+            'ref' => '#bridge/custom_fields[]',
             'name' => 'priority',
             'label' => __('Priority', 'forms-bridge'),
             'type' => 'number',
             'min' => 0,
             'max' => 3,
-            'required' => true,
             'default' => 1,
         ],
     ],
@@ -96,44 +52,55 @@ return [
                     'to' => 'priority',
                     'cast' => 'string',
                 ],
+            ],
+            [
                 [
-                    'from' => 'owner',
-                    'to' => 'owner_email',
+                    'from' => 'country',
+                    'to' => 'country',
+                    'cast' => 'null',
+                ],
+            ],
+            [
+                [
+                    'from' => 'company_name',
+                    'to' => 'name',
+                    'cast' => 'string',
+                ],
+            ],
+            [
+                [
+                    'from' => 'contact_name',
+                    'to' => 'name',
+                    'cast' => 'string',
+                ],
+                [
+                    'from' => 'contact_email',
+                    'to' => 'email',
+                    'cast' => 'string',
+                ],
+                [
+                    'from' => 'contact_phone',
+                    'to' => 'phone',
+                    'cast' => 'string',
+                ],
+            ],
+            [
+                [
+                    'from' => 'lead_name',
+                    'to' => 'name',
                     'cast' => 'string',
                 ],
             ],
         ],
         'workflow' => [
-            'odoo-lead-owner-id',
             'forms-bridge-iso2-country-code',
             'odoo-vat-id',
-            'odoo-company-id',
+            'odoo-contact-company',
             'odoo-crm-contact',
         ],
     ],
     'form' => [
         'fields' => [
-            [
-                'name' => 'name',
-                'type' => 'hidden',
-                'required' => true,
-            ],
-            [
-                'name' => 'owner',
-                'type' => 'hidden',
-                'required' => true,
-            ],
-            [
-                'name' => 'priority',
-                'type' => 'hidden',
-                'required' => true,
-            ],
-            [
-                'name' => 'type',
-                'type' => 'hidden',
-                'value' => 'opportunity',
-                'required' => true,
-            ],
             [
                 'label' => __('Company name', 'forms-bridge'),
                 'name' => 'company_name',
@@ -191,13 +158,13 @@ return [
             ],
             [
                 'label' => __('Your email', 'forms-bridge'),
-                'name' => 'email',
+                'name' => 'contact_email',
                 'type' => 'email',
                 'required' => true,
             ],
             [
                 'label' => __('Your phone', 'forms-bridge'),
-                'name' => 'phone',
+                'name' => 'contact_phone',
                 'type' => 'text',
             ],
             [

@@ -4,6 +4,8 @@ if (!defined('ABSPATH')) {
     exit();
 }
 
+global $forms_bridge_iso2_countries;
+
 return [
     'title' => __('Contacts', 'forms-bridge'),
     'fields' => [
@@ -15,6 +17,16 @@ return [
     ],
     'bridge' => [
         'model' => 'res.partner',
+        'custom_fields' => [
+            [
+                'name' => 'is_company',
+                'value' => '0',
+            ],
+            [
+                'name' => 'lang',
+                'value' => '$locale',
+            ],
+        ],
         'mutations' => [
             [
                 [
@@ -22,20 +34,30 @@ return [
                     'to' => 'is_company',
                     'cast' => 'boolean',
                 ],
+                [
+                    'from' => 'your-name',
+                    'to' => 'name',
+                    'cast' => 'string',
+                ],
+            ],
+            [
+                [
+                    'from' => 'country',
+                    'to' => 'country',
+                    'cast' => 'null',
+                ],
             ],
         ],
-        'workflow' => ['odoo-skip-if-contact-exists'],
+        'workflow' => [
+            'forms-bridge-iso2-country-code',
+            'odoo-skip-if-partner-exists',
+        ],
     ],
     'form' => [
         'fields' => [
             [
-                'name' => 'is_company',
-                'type' => 'hidden',
-                'value' => '0',
-            ],
-            [
                 'label' => __('Your name', 'forms-bridge'),
-                'name' => 'name',
+                'name' => 'your-name',
                 'type' => 'text',
                 'required' => true,
             ],
@@ -64,6 +86,19 @@ return [
                 'label' => __('Zip code', 'forms-bridge'),
                 'name' => 'zip',
                 'type' => 'text',
+            ],
+            [
+                'label' => __('Country', 'forms-bridge'),
+                'name' => 'country',
+                'type' => 'options',
+                'options' => array_map(function ($country_code) {
+                    global $forms_bridge_iso2_countries;
+                    return [
+                        'value' => $country_code,
+                        'label' => $forms_bridge_iso2_countries[$country_code],
+                    ];
+                }, array_keys($forms_bridge_iso2_countries)),
+                'required' => true,
             ],
         ],
     ],

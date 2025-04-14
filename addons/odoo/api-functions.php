@@ -12,10 +12,8 @@ function forms_bridge_odoo_create_partner($payload, $bridge)
     ];
 
     $partner_fields = [
-        // 'complete_name',
         'title',
         'parent_id',
-        // 'parent_name',
         'lang',
         'vat',
         'website',
@@ -30,8 +28,6 @@ function forms_bridge_odoo_create_partner($payload, $bridge)
         'phone',
         'mobile',
         'is_public',
-        // 'company_id',
-        // 'company_name',
         'additional_info',
     ];
 
@@ -95,9 +91,6 @@ function forms_bridge_odoo_create_company($payload, $bridge)
     ];
 
     $company_fields = [
-        // 'complete_name',
-        // 'parent_id',
-        // 'parent_name',
         'lang',
         'vat',
         'website',
@@ -110,8 +103,6 @@ function forms_bridge_odoo_create_company($payload, $bridge)
         'phone',
         'mobile',
         'is_public',
-        // 'company_id',
-        // 'company_name',
         'additional_info',
     ];
 
