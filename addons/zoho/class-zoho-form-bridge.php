@@ -193,7 +193,8 @@ class Zoho_Form_Bridge extends Form_Bridge
 
         $payload = wp_is_numeric_array($payload) ? $payload : [$payload];
 
-        $response = $this->backend->post(
+        $method = strtolower($this->method ?? 'POST');
+        $response = $this->backend->$method(
             $this->endpoint,
             ['data' => $payload],
             [

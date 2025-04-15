@@ -3,6 +3,7 @@
 namespace FORMS_BRIDGE;
 
 use Exception;
+use HTTP_BRIDGE\Http_Backend;
 use ReflectionClass;
 use WPCT_ABSTRACT\Singleton;
 
@@ -15,6 +16,8 @@ if (!defined('ABSPATH')) {
  */
 abstract class Addon extends Singleton
 {
+    public static $addons = [];
+
     /**
      * Handles addon's registry option name.
      *
@@ -50,6 +53,11 @@ abstract class Addon extends Singleton
      */
     protected static $bridge_template_class = '\FORMS_BRIDGE\Form_Bridge_Template';
 
+    /**
+     * Addon's default config getter.
+     *
+     * @return array
+     */
     protected static function default_config()
     {
         return [
@@ -60,6 +68,13 @@ abstract class Addon extends Singleton
         ];
     }
 
+    /**
+     * Merges addon's config with defaults and returns the result.
+     *
+     * @param array $config Addon config.
+     *
+     * @return array
+     */
     protected static function merge_setting_config($config)
     {
         return forms_bridge_merge_object($config, self::default_config());
@@ -338,6 +353,8 @@ abstract class Addon extends Singleton
             10,
             3
         );
+
+        self::$addons[static::$api] = $this;
     }
 
     /**
@@ -358,6 +375,118 @@ abstract class Addon extends Singleton
     final protected static function setting()
     {
         return Forms_Bridge::setting(static::$api);
+    }
+
+    /**
+     * Proxy to the addons' do_ping private method.
+     *
+     * @params string $api Target API name.
+     * @params array $backend Backend data to be used on the request.
+     * @params WP_REST_Request $request Current REST request.
+     *
+     * @return array Ping result.
+     */
+    final public static function ping($api, $backend, $request)
+    {
+        self::temp_backend_registration($backend);
+        self::$addons[$api]->do_ping($backend['name'], $request);
+    }
+
+    /**
+     * Performs a request against the backend to check the connexion status.
+     *
+     * @param string $backend Target backend name.
+     * @params WP_REST_Request $request Current REST request.
+     *
+     * @return array Ping result.
+     */
+    abstract protected function do_ping($backend, $request);
+
+    /**
+     * Proxy to the addons' do_fetch private method.
+     *
+     * @param string $api Target API name.
+     * @param array $backend Backend data to be used on the request.
+     * @param string $endpoint Target endpoint name.
+     * @params WP_REST_Request $request Current REST request.
+     *
+     * @return array Fetched records.
+     */
+    final public static function fetch($api, $backend, $endpoint, $request)
+    {
+        self::temp_backend_registration($backend);
+        return self::$addons[$api]->do_fetch(
+            $backend['name'],
+            $endpoint,
+            $request
+        );
+    }
+
+    /**
+     * Performs a GET request against the backend endpoint and retrive the response data.
+     *
+     * @param string $backend Target backend name.
+     * @param string $endpoint Target endpoint name.
+     * @params WP_REST_Request $request Current REST request.
+     *
+     * @return array Fetched records.
+     */
+    abstract protected function do_fetch($backend, $endpoint, $request);
+
+    /**
+     * Proxy to the addons' get_schema private method.
+     *
+     * @param string $api Target API name.
+     * @param array $backend Backend data to be used on the request.
+     * @param string $endpoint Target endpoint name.
+     * @params WP_REST_Request $request Current REST request.
+     *
+     * @return array List of fields and content type of the endpoint.
+     */
+    final public static function schema($api, $backend, $endpoint, $request)
+    {
+        self::temp_backend_registration($backend);
+        return self::$addons[$api]->get_schema(
+            $backend['name'],
+            $endpoint,
+            $request
+        );
+    }
+
+    /**
+     * Performs an introspection of the backend endpoint and returns API fields
+     * and accepted content type.
+     *
+     * @param string $backend Target backend name.
+     * @param string $endpoint Target endpoint name.
+     * @params WP_REST_Request $request Current REST request.
+     *
+     * @return array List of fields and content type of the endpoint.
+     */
+    abstract protected function get_schema($backend, $endpoint, $request);
+
+    /**
+     * Ephemeral backend registration as an interceptor to allow
+     * api fetch, ping and introspection of non registered backends.
+     *
+     * @param array $data Backend data.
+     */
+    private static function temp_backend_registration($data)
+    {
+        add_filter(
+            'http_bridge_backend',
+            static function ($backend, $name) use ($data) {
+                if ($backend instanceof Http_Backend) {
+                    return $backend;
+                }
+
+                if ($name === $data['name']) {
+                    return new Http_Backend($data);
+                }
+            },
+            2,
+            90
+        );
     }
 
     /**
@@ -453,6 +582,7 @@ abstract class Addon extends Singleton
                     [],
                     static::$api
                 );
+
                 $workflow_jobs = apply_filters(
                     'forms_bridgr_workflow_jobs',
                     [],
@@ -490,6 +620,7 @@ abstract class Addon extends Singleton
                     [],
                     static::$api
                 );
+
                 $workflow_jobs = apply_filters(
                     'forms_bridge_workflow_jobs',
                     [],

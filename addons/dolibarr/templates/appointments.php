@@ -74,6 +74,7 @@ return [
             'label' => __('Duration (Hours)', 'forms-bridge'),
             'type' => 'number',
             'default' => 1,
+            'required' => true,
         ],
     ],
     'form' => [
@@ -239,16 +240,6 @@ return [
         'method' => 'POST',
         'mutations' => [
             [
-                [
-                    'from' => 'type_code',
-                    'to' => 'type_code',
-                    'cast' => 'string',
-                ],
-                [
-                    'from' => 'fulldayevent',
-                    'to' => 'fulldayevent',
-                    'cast' => 'string',
-                ],
                 [
                     'from' => 'duration',
                     'to' => 'duration',

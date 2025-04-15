@@ -435,31 +435,6 @@ class Form_Bridge_Template
             10,
             2
         );
-
-        add_filter(
-            'forms_bridge_template',
-            function ($template, $name) {
-                if ($template instanceof Form_Bridge_Template) {
-                    return $template;
-                }
-
-                if (is_wp_error($this->config)) {
-                    return $template;
-                }
-
-                if ($name === $this->name) {
-                    return $this;
-                }
-            },
-            10,
-            2
-        );
-
-        add_action('forms_bridge_use_template', function ($data) {
-            if ($data['name'] === $this->name) {
-                $this->use_template($data['fields'], $data['integration']);
-            }
-        });
     }
 
     /**
@@ -507,7 +482,7 @@ class Form_Bridge_Template
      * @param array $fields User input fields data.
      * @param string $integration Target integration.
      */
-    private function use_template($fields, $integration)
+    public function use($fields, $integration)
     {
         $template = $this->config;
 

@@ -2,6 +2,7 @@ import { useGeneral } from "../../../../src/providers/Settings";
 import TemplateWizard from "../../../../src/components/Templates/Wizard";
 import BridgeStep from "./BridgeStep";
 import { useTemplateConfig } from "../../../../src/providers/Templates";
+import { debounce } from "../../../../src/lib/utils";
 
 const apiFetch = wp.apiFetch;
 const { useState, useEffect, useMemo, useRef } = wp.element;
@@ -18,96 +19,79 @@ const STEPS = [
   },
 ];
 
-function debounce(fn, ms = 500) {
-  let timeout;
+function validateBackend(data) {
+  if (!data?.name) return false;
 
-  return (...args) => {
-    clearTimeout(timeout);
-    timeout = setTimeout(() => fn(...args), ms);
-  };
-}
-
-function validateBackendData(data) {
   return MAILCHIMP_HEADERS.reduce((isValid, field) => {
-    return isValid && data.headers[field];
+    return isValid && data.headers.find(({ name }) => name === field)?.value;
   }, true);
 }
+
 export default function MailchimpTemplateWizard({ integration, onDone }) {
   const [{ backends }] = useGeneral();
 
   const config = useTemplateConfig();
   const configFields = useMemo(() => config?.fields || [], [config]);
-  const apiFields = configFields
-    .filter((field) => field.ref === "#bridge/custom_fields[]")
-    .map((field) => field.name);
+  const customFields = useMemo(() => {
+    return configFields
+      .filter((field) => field.ref === "#bridge/custom_fields[]")
+      .map((field) => field.name);
+  }, [configFields]);
 
   const [data, setData] = useState({});
 
   const [lists, setLists] = useState([]);
 
-  const backendData = useMemo(() => {
+  const backend = useMemo(() => {
     if (!data.backend?.name) return;
-    const backend = backends.find(({ name }) => name === data.backend.name);
 
-    if (backend && validateBackendData(backend)) {
+    let backend = backends.find(({ name }) => name === data.backend.name);
+    if (validateBackend(backend)) {
       return backend;
     }
 
-    const backendData = {
+    backend = {
       name: data.backend.name,
-      base_url: data.backend.base_url,
-      headers: MAILCHIMP_HEADERS.reduce(
-        (headers, name) => ({
-          ...headers,
-          [name]: data.backend[name],
-        }),
-        {}
-      ),
+      headers: MAILCHIMP_HEADERS.map((header) => ({
+        name: header,
+        value: data.backend[header],
+      })),
     };
 
-    if (validateBackendData(backendData)) {
-      return backendData;
+    if (validateBackend(backend)) {
+      return backend;
     }
   }, [data.backend, backends]);
 
-  const fetchLists = useRef(
-    debounce((data) => {
-      const backend = {
-        name: data.name,
-        base_url: data.base_url,
-        headers: MAILCHIMP_HEADERS.map((header) => ({
-          name: header,
-          value: data.headers[header],
-        })),
-      };
+  const fetch = useRef((module, then, backend) => {
+    apiFetch({
+      path: `forms-bridge/v1/mailchimp/${module}`,
+      method: "POST",
+      data: backend,
+    })
+      .then(then)
+      .catch(() => then([]));
+  }).current;
 
-      apiFetch({
-        path: "forms-bridge/v1/mailchimp/lists",
-        method: "POST",
-        data: backend,
-      })
-        .then(setLists)
-        .catch(() => setLists([]));
-    }, 500)
+  const fetchLists = useRef(
+    debounce((backend) => fetch("lists", setLists, backend), 1e3)
   ).current;
 
   useEffect(() => {
-    if (!backendData) return;
+    if (!backend) return;
 
-    apiFields.includes("list_id") && fetchLists(backendData);
-  }, [backendData, config]);
+    customFields.includes("list_id") && fetchLists(backend);
+  }, [backend, customFields]);
 
-  useEffect(
-    () =>
-      setData({
-        ...data,
-        bridge: {
-          ...(data.bridge || {}),
-          _lists: lists,
-        },
-      }),
-    [lists]
-  );
+  useEffect(() => {
+    setData({
+      ...data,
+      bridge: {
+        ...(data.bridge || {}),
+        _lists: lists,
+      },
+    });
+  }, [lists]);
 
   return (
     <TemplateWizard

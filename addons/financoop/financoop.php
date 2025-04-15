@@ -188,6 +188,84 @@ class Finan_Coop_Addon extends Rest_Addon
             })
         );
     }
+
+    /**
+     * Performs a request against the backend to check the connexion status.
+     *
+     * @param string $backend Target backend name.
+     * @params WP_REST_Request $request Current REST request.
+     *
+     * @return array Ping result.
+     */
+    protected function do_ping($backend, $request)
+    {
+        $bridge = new Finan_Coop_Form_Bridge(
+            [
+                'name' => '__financoop-' . time(),
+                'endpoint' => '/api/campaigns',
+                'method' => 'GET',
+                'backend' => $backend,
+            ],
+            self::$api
+        );
+
+        $response = $bridge->submit([]);
+        return ['success' => !is_wp_error($response)];
+    }
+
+    /**
+     * Performs a GET request against the backend endpoint and retrive the response data.
+     *
+     * @param string $backend Target backend name.
+     * @param string $endpoint Target endpoint name.
+     * @params WP_REST_Request $request Current REST request.
+     *
+     * @return array Fetched records.
+     */
+    protected function do_fetch($backend, $endpoint, $request)
+    {
+        $bridge = new Finan_Coop_Form_Bridge(
+            [
+                'name' => '__financoop-' . time(),
+                'endpoint' => $endpoint,
+                'backend' => $backend,
+                'method' => 'GET',
+            ],
+            self::$api
+        );
+
+        $response = $bridge->submit([]);
+        if (is_wp_error($response)) {
+            return [];
+        }
+
+        return $response['data']['data'];
+    }
+
+    /**
+     * Performs an introspection of the backend endpoint and returns API fields
+     * and accepted content type.
+     *
+     * @param string $backend Target backend name.
+     * @param string $endpoint Target endpoint name.
+     * @params WP_REST_Request $request Current REST request.
+     *
+     * @return array List of fields and content type of the endpoint.
+     */
+    protected function get_schema($backend, $endpoint, $request)
+    {
+        $bridge = new Finan_Coop_Form_Bridge(
+            [
+                'name' => '__financoop-' . time(),
+                'endpoint' => $endpoint,
+                'backend' => $backend,
+                'method' => 'GET',
+            ],
+            self::$api
+        );
+
+        return $bridge->api_fields;
+    }
 }
 
 Finan_Coop_Addon::setup();

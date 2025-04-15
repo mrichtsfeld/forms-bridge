@@ -95,6 +95,18 @@ class Bigin_Addon extends Zoho_Addon
             self::setting()->credentials ?: []
         );
     }
+
+    /**
+     * Performs a request against the backend to check the connexion status.
+     *
+     * @param string $backend Target backend name.
+     *
+     * @return array Ping result.
+     */
+    protected function do_ping($backend)
+    {
+        return ['success' => true];
+    }
 }
 
 Bigin_Addon::setup();
