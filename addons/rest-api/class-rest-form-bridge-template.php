@@ -9,47 +9,54 @@ if (!defined('ABSPATH')) {
 class Rest_Form_Bridge_Template extends Form_Bridge_Template
 {
     /**
-     * Handles the template default values.
+     * Template default config getter.
      *
-     * @var array
+     * @return array
      */
-    protected static $default = [
-        'fields' => [
-            [
-                'ref' => '#bridge',
-                'name' => 'endpoint',
-                'label' => 'Endpoint',
-                'type' => 'string',
-                'required' => true,
+    protected static function defaults()
+    {
+        return [
+            'fields' => [
+                [
+                    'ref' => '#bridge',
+                    'name' => 'endpoint',
+                    'label' => __('Endpoint', 'forms-bridge'),
+                    'type' => 'string',
+                    'required' => true,
+                ],
+                [
+                    'ref' => '#bridge',
+                    'name' => 'method',
+                    'label' => __('Method', 'forms-bridge'),
+                    'type' => 'options',
+                    'options' => [
+                        [
+                            'value' => 'GET',
+                            'label' => 'GET',
+                        ],
+                        [
+                            'value' => 'POST',
+                            'label' => 'POST',
+                        ],
+                        [
+                            'value' => 'PUT',
+                            'label' => 'PUT',
+                        ],
+                        [
+                            'value' => 'DELETE',
+                            'label' => 'DELETE',
+                        ],
+                    ],
+                    'required' => true,
+                    'default' => 'POST',
+                ],
             ],
-            [
-                'ref' => '#bridge',
-                'name' => 'method',
-                'label' => 'Method',
-                'type' => 'string',
-                'required' => true,
-                'default' => 'POST',
+            'bridge' => [
+                'endpoint' => '',
+                'method' => 'POST',
             ],
-            [
-                'ref' => '#backend',
-                'name' => 'name',
-                'label' => 'Name',
-                'type' => 'string',
-                'required' => true,
-            ],
-            [
-                'ref' => '#backend',
-                'name' => 'base_url',
-                'label' => 'Base URL',
-                'type' => 'string',
-            ],
-        ],
-        'bridge' => [
-            'backend' => '',
-            'endpoint' => '',
-            'method' => 'POST',
-        ],
-    ];
+        ];
+    }
 
     /**
      * Sets the template api, extends the common schema and inherits the parent's
