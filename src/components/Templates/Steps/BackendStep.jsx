@@ -9,7 +9,7 @@ const { SelectControl } = wp.components;
 const { useMemo, useState, useEffect } = wp.element;
 const { __ } = wp.i18n;
 
-const fieldsOrder = ["name", "base_url", "headers"];
+const FIELDS_ORDER = ["name", "base_url", "headers"];
 
 function validateBackend(backend, schema, fields) {
   const isValid = fields.reduce((isValid, { name, ref, required }) => {
@@ -41,7 +41,7 @@ function validateBackend(backend, schema, fields) {
   }, isValid);
 }
 
-export default function BackendStep({ fields, data, setData }) {
+export default function BackendStep({ fields, data, setData, wired }) {
   const [{ backends }] = useGeneral();
   const names = useBackendNames();
   const { backend: schema } = useTemplateConfig();
@@ -92,7 +92,7 @@ export default function BackendStep({ fields, data, setData }) {
   }, [backend]);
 
   const sortedFields = useMemo(
-    () => sortByNamesOrder(fields, fieldsOrder),
+    () => sortByNamesOrder(fields, FIELDS_ORDER),
     [fields]
   );
 
@@ -103,25 +103,32 @@ export default function BackendStep({ fields, data, setData }) {
 
   const nameField = useMemo(() => sortedFields[0], [sortedFields]);
 
-  const nameConflict = useMemo(() => names.has(name.trim()), [names, name]);
+  const nameConflict = useMemo(
+    () => data.name !== name.trim() && names.has(name.trim()),
+    [names, name]
+  );
 
   useEffect(() => {
-    if (!nameConflict && name) setData({ name });
+    if (!nameConflict && name) setData({ name: name.trim() });
   }, [name, nameConflict]);
 
   useEffect(() => {
     if (!data.name) return;
 
-    if (names.has(data.name.trim())) {
+    if (data.name && names.has(data.name.trim())) {
       setReuse(data.name);
-    } else {
+    } else if (data.name !== name) {
       setName(data.name);
     }
   }, [data.name]);
 
+  const title =
+    __("Backend", "forms-bridge") +
+    (wired === true ? " 👌" : wired === false ? " 👎" : " ⏳");
+
   return (
     <TemplateStep
-      name={__("Backend", "forms-bridge")}
+      name={title}
       description={__(
         "Configure the backend to bridge your form to",
         "forms-bridge"
@@ -138,16 +145,16 @@ export default function BackendStep({ fields, data, setData }) {
       )}
       {!reuse && (
         <Field
+          data={{
+            ...nameField,
+            value: name,
+            onChange: setName,
+          }}
           error={
             nameConflict
               ? __("This name is already in use", "forms-bridge")
               : false
           }
-          data={{
-            ...nameField,
-            value: name || "",
-            onChange: setName,
-          }}
         />
       )}
       {filteredFields.map((field) => (

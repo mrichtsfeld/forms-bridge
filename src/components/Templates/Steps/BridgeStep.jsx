@@ -17,7 +17,10 @@ export default function BridgeStep({ fields, data, setData }) {
     [fields]
   );
 
-  const nameConflict = useMemo(() => names.has(name.trim()), [names, name]);
+  const nameConflict = useMemo(
+    () => data.name !== name.trim() && names.has(name.trim()),
+    [names, name]
+  );
 
   useEffect(() => {
     if (name && !nameConflict) setData({ name });

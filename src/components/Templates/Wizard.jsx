@@ -4,12 +4,15 @@ import {
   useSubmitTemplate,
   useTemplate,
 } from "../../providers/Templates";
+import useCurrentApi from "../../hooks/useCurrentApi";
 import BackendStep from "./Steps/BackendStep";
 import FormStep from "./Steps/FormStep";
 import BridgeStep from "./Steps/BridgeStep";
+import { debounce } from "../../lib/utils";
 
 const { Button } = wp.components;
-const { useMemo, useState, useEffect } = wp.element;
+const { useMemo, useState, useEffect, useRef } = wp.element;
+const apiFetch = wp.apiFetch;
 const { __ } = wp.i18n;
 
 const DEFAULT_STEPS = [
@@ -42,6 +45,9 @@ export default function TemplateWizard({
   setData,
   onDone,
 }) {
+  const api = useCurrentApi();
+  const [wired, setWired] = useState(null);
+
   const sortedSteps = useMemo(() => {
     return DEFAULT_STEPS.reduce((steps, defaultStep, i) => {
       if (steps.find((step) => step.name === defaultStep.name)) {
@@ -116,7 +122,10 @@ export default function TemplateWizard({
     }, true);
   }, [fields, step, data]);
 
-  const { name: group, component: StepComponent } = sortedSteps[step];
+  const { name: group, component: StepComponent } = useMemo(
+    () => sortedSteps[step],
+    [sortedSteps, step]
+  );
 
   const submit = () => {
     if (!isValid) return;
@@ -186,6 +195,39 @@ export default function TemplateWizard({
     setData({ ...data, [group]: groupData });
   };
 
+  const pingBackend = useRef(
+    debounce((api, backend, credential = {}) => {
+      backend = {
+        name: backend.name,
+        base_url: backend.base_url,
+        headers: Object.keys(backend)
+          .filter((key) => !["name", "base_url"].includes(key))
+          .map((key) => ({
+            name: key,
+            value: backend[key],
+          })),
+      };
+
+      apiFetch({
+        path: `forms-bridge/v1/${api}/ping`,
+        method: "POST",
+        data: { backend, credential },
+      })
+        .then(({ success }) => setWired(success))
+        .catch(() => setWired(false));
+    }),
+    500
+  ).current;
+
+  useEffect(() => {
+    setWired(null);
+  }, [data.backend]);
+
+  useEffect(() => {
+    if (group !== "backend" || !isStepDone || wired === true) return;
+    pingBackend(api, data.backend, data.credential);
+  }, [wired, isStepDone, data.backend]);
+
   const moveStep = (direction) => {
     let newStep = step + direction;
     let group = sortedSteps[newStep].name;
@@ -204,6 +246,8 @@ export default function TemplateWizard({
     setStep(newStep);
   };
 
+  const canGoForward = isStepDone && (group === "backend" ? wired : true);
+
   if (!config || !config.fields.length) return;
 
   return (
@@ -213,6 +257,7 @@ export default function TemplateWizard({
         fields={groups[group] || []}
         data={data[group] || {}}
         setData={patchData}
+        wired={wired}
       />
       <div
         style={{
@@ -232,7 +277,7 @@ export default function TemplateWizard({
         </Button>
         {step < sortedSteps.length - 1 ? (
           <Button
-            disabled={!isStepDone}
+            disabled={!canGoForward}
             variant="secondary"
             onClick={() => moveStep(1)}
           >
