@@ -1,6 +1,7 @@
 import TemplateStep from "./Step";
 import Field from "../Field";
 import useBridgeNames from "../../../hooks/useBridgeNames";
+import { sortByNamesOrder } from "../../../lib/utils";
 
 const { useMemo, useState, useEffect } = wp.element;
 const { __ } = wp.i18n;
@@ -8,51 +9,19 @@ const { __ } = wp.i18n;
 const fieldsOrder = ["name"];
 
 export default function BridgeStep({ fields, data, setData }) {
-  const bridgeNames = useBridgeNames();
-  const [bridgeName, setBridgeName] = useState(data.name || "");
+  const names = useBridgeNames();
+  const [name, setName] = useState("");
 
   const sortedFields = useMemo(
-    () =>
-      fields.sort((a, b) => {
-        if (!fieldsOrder.includes(a.name)) {
-          return 1;
-        } else if (!fieldsOrder.includes(b.name)) {
-          return -1;
-        } else {
-          fieldsOrder.indexOf(a.name) - fieldsOrder.indexOf(b.name);
-        }
-      }),
+    () => sortByNamesOrder(fields, fieldsOrder),
     [fields]
   );
 
-  const filteredFields = useMemo(
-    () => sortedFields.filter(({ name }) => name !== "name"),
-    [sortedFields]
-  );
-
-  const nameField = useMemo(
-    () => sortedFields.find(({ name }) => name),
-    [sortedFields]
-  );
-
-  const nameConflict = useMemo(
-    () => (bridgeName && bridgeNames.has(bridgeName.trim())) || false,
-    [bridgeNames, bridgeName]
-  );
+  const nameConflict = useMemo(() => names.has(name.trim()), [names, name]);
 
   useEffect(() => {
-    if (!data.name) return;
-
-    if (data.name !== bridgeName) {
-      setNewName(data.name);
-    }
-  }, [data.name]);
-
-  useEffect(() => {
-    if (!nameConflict && bridgeName) {
-      setData({ name: bridgeName });
-    }
-  }, [bridgeName]);
+    if (name && !nameConflict) setData({ name });
+  }, [name, nameConflict]);
 
   return (
     <TemplateStep
@@ -60,18 +29,18 @@ export default function BridgeStep({ fields, data, setData }) {
       description={__("Configure the bridge", "forms-bridge")}
     >
       <Field
+        data={{
+          ...sortedFields[0],
+          value: name,
+          onChange: setName,
+        }}
         error={
           nameConflict
             ? __("This name is already in use", "forms-bridge")
             : false
         }
-        data={{
-          ...nameField,
-          value: bridgeName || "",
-          onChange: setBridgeName,
-        }}
       />
-      {filteredFields.map((field) => (
+      {sortedFields.slice(1).map((field) => (
         <Field
           data={{
             ...field,

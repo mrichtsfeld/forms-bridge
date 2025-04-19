@@ -12,24 +12,18 @@ const { Button } = wp.components;
 const { useMemo, useState, useEffect } = wp.element;
 const { __ } = wp.i18n;
 
-const defaultSteps = [
+const DEFAULT_STEPS = [
   {
     name: "backend",
-    step: ({ fields, data, setData }) => (
-      <BackendStep fields={fields} data={data} setData={setData} />
-    ),
+    component: BackendStep,
   },
   {
     name: "form",
-    step: ({ fields, data, setData }) => (
-      <FormStep fields={fields} data={data} setData={setData} />
-    ),
+    component: FormStep,
   },
   {
     name: "bridge",
-    step: ({ fields, data, setData }) => (
-      <BridgeStep fields={fields} data={data} setData={setData} />
-    ),
+    component: BridgeStep,
   },
 ];
 
@@ -48,22 +42,19 @@ export default function TemplateWizard({
   setData,
   onDone,
 }) {
-  const sortedSteps = useMemo(
-    () =>
-      defaultSteps
-        .reduce((steps, defaultStep, i) => {
-          if (steps.find((step) => step.name === defaultStep.name)) {
-            return steps;
-          }
+  const sortedSteps = useMemo(() => {
+    return DEFAULT_STEPS.reduce((steps, defaultStep, i) => {
+      if (steps.find((step) => step.name === defaultStep.name)) {
+        return steps;
+      }
 
-          return steps.concat({ order: i * 10, ...defaultStep });
-        }, steps)
-        .filter(({ step }) => step)
-        .sort((a, b) => a.order - b.order),
-    [steps]
-  );
+      return steps.concat({ order: i * 10, ...defaultStep });
+    }, steps)
+      .filter(({ component }) => component)
+      .sort((a, b) => a.order - b.order);
+  }, [steps]);
 
-  const config = useTemplateConfig();
+  const config = useTemplateConfig(integration);
   const [template] = useTemplate();
   const submitTemplate = useSubmitTemplate();
 
@@ -125,7 +116,7 @@ export default function TemplateWizard({
     }, true);
   }, [fields, step, data]);
 
-  const { name: group, step: Step } = sortedSteps[step];
+  const { name: group, component: StepComponent } = sortedSteps[step];
 
   const submit = () => {
     if (!isValid) return;
@@ -152,20 +143,20 @@ export default function TemplateWizard({
           field.value = field.default;
         } else if (!field.required) {
           switch (field.type) {
-            case "text":
-              field.value = "";
-              break;
-            case "number":
-              field.value = 0;
-              break;
+            // case "text":
+            //   field.value = "";
+            //   break;
+            // case "number":
+            //   field.value = 0;
+            //   break;
             case "options":
               field.value = [];
               break;
             case "boolean":
               field.value = false;
               break;
-            default:
-              field.value = "";
+            // default:
+            //   field.value = "";
           }
         }
 
@@ -174,10 +165,21 @@ export default function TemplateWizard({
     }).finally(() => onDone());
   };
 
-  const patchData = (patch) => {
+  const patchData = (patch = null) => {
+    const groupDefaults = defaults[group] || {};
+    const current = data[group] || {};
+
+    if (patch !== null) {
+      patch = {
+        ...current,
+        ...patch,
+      };
+    } else {
+      patch = {};
+    }
+
     const groupData = {
-      ...(defaults[group] || {}),
-      ...(data[group] || {}),
+      ...groupDefaults,
       ...patch,
     };
 
@@ -207,7 +209,7 @@ export default function TemplateWizard({
   return (
     <div style={{ minWidth: "575px", minHeight: "125px" }}>
       <hr style={{ margin: "1rem 0" }} />
-      <Step
+      <StepComponent
         fields={groups[group] || []}
         data={data[group] || {}}
         setData={patchData}

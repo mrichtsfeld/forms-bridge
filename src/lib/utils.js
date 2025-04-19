@@ -16,3 +16,19 @@ export function validateUrl(url) {
 
   return url.protocol === "http:" || url.protocol === "https:";
 }
+
+export function sortByNamesOrder(items, order) {
+  return items.sort((a, b) => {
+    if (!order.includes(a.name)) {
+      return 1;
+    } else if (!order.includes(b.name)) {
+      return -1;
+    } else {
+      return order.indexOf(a.name) - order.indexOf(b.name);
+    }
+  });
+}
+
+export function prependEmptyOption(options) {
+  return [{ label: "", value: "" }].concat(options);
+}

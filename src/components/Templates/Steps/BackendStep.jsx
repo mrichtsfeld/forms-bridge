@@ -1,7 +1,9 @@
 import { useGeneral } from "../../../providers/Settings";
+import { useTemplateConfig } from "../../../providers/Templates";
 import useBackendNames from "../../../hooks/useBackendNames";
 import TemplateStep from "./Step";
 import Field from "../Field";
+import { sortByNamesOrder, prependEmptyOption } from "../../../lib/utils";
 
 const { SelectControl } = wp.components;
 const { useMemo, useState, useEffect } = wp.element;
@@ -9,96 +11,113 @@ const { __ } = wp.i18n;
 
 const fieldsOrder = ["name", "base_url", "headers"];
 
+function validateBackend(backend, schema, fields) {
+  const isValid = fields.reduce((isValid, { name, ref, required }) => {
+    if (!isValid || !required) return isValid;
+
+    let value;
+    if (ref === "#backend/headers[]") {
+      value = backend.headers.find((header) => header.name === name)?.value;
+    } else {
+      value = backend[name];
+    }
+
+    return value !== undefined && value !== null;
+  }, true);
+
+  if (!isValid) return isValid;
+
+  if (schema.base_url && backend.base_url !== schema.base_url) {
+    return false;
+  }
+
+  return schema.headers.reduce((isValid, { name, value }) => {
+    if (!isValid) return isValid;
+
+    const header = backend.headers.find((header) => header.name === name);
+    if (!header) return false;
+
+    return header.value === value;
+  }, isValid);
+}
+
 export default function BackendStep({ fields, data, setData }) {
   const [{ backends }] = useGeneral();
-  const backendNames = useBackendNames();
-  const [backendName, setBackendName] = useState(
-    backendNames.has(data.name) ? data.name : ""
-  );
-  const [newName, setNewName] = useState(data.name || "");
+  const names = useBackendNames();
+  const { backend: schema } = useTemplateConfig();
 
-  const backendOptions = [{ label: "", value: "" }].concat(
-    Array.from(backendNames).map((name) => ({ label: name, value: name }))
+  const validBackends = useMemo(
+    () =>
+      backends.filter((backend) => validateBackend(backend, schema, fields)),
+    [backends]
   );
+
+  const backendOptions = useMemo(() => {
+    return prependEmptyOption(
+      validBackends.map(({ name }) => ({ label: name, value: name }))
+    );
+  }, [validBackends]);
+
+  const [reuse, setReuse] = useState("");
+  const [previousReuse, setPreviousReuse] = useState("");
+
+  if (reuse !== previousReuse) {
+    setPreviousReuse(reuse);
+    setData();
+  }
+
+  const [name, setName] = useState("");
 
   const backend = useMemo(
-    () => backends.find(({ name }) => name === backendName),
-    [backends, backendName]
+    () => validBackends.find(({ name }) => name === reuse),
+    [validBackends, reuse]
   );
 
   useEffect(() => {
-    if (backend) {
-      const headers = backend.headers
-        .filter(({ name }) => fields.find((field) => field.name === name))
-        .reduce(
-          (headers, header) => ({
-            ...headers,
-            [header.name]: header.value,
-          }),
-          {}
-        );
+    if (!backend) return;
 
-      setData({
+    const headers = backend.headers.reduce(
+      (headers, header) => ({
         ...headers,
-        name: backend.name,
-        base_url: backend.base_url,
-      });
-    } else {
-      setData(Object.fromEntries(fields.map(({ name }) => [name, null])));
-    }
+        [header.name]: header.value,
+      }),
+      {}
+    );
+
+    setData({
+      ...headers,
+      name: backend.name,
+      base_url: backend.base_url,
+    });
   }, [backend]);
 
   const sortedFields = useMemo(
-    () =>
-      fields.sort((a, b) => {
-        if (!fieldsOrder.includes(a.name)) {
-          return 1;
-        } else if (!fieldsOrder.includes(b.name)) {
-          return -1;
-        } else {
-          fieldsOrder.indexOf(a.name) - fieldsOrder.indexOf(b.name);
-        }
-      }),
+    () => sortByNamesOrder(fields, fieldsOrder),
     [fields]
   );
 
-  const filteredFields = useMemo(
-    () =>
-      backendName ? [] : sortedFields.filter(({ name }) => name !== "name"),
-    [backendName, sortedFields]
-  );
+  const filteredFields = useMemo(() => {
+    if (backend) return [];
+    return sortedFields.slice(1);
+  }, [backend, sortedFields]);
 
-  const nameField = useMemo(
-    () => sortedFields.find(({ name }) => name === "name"),
-    [sortedFields]
-  );
+  const nameField = useMemo(() => sortedFields[0], [sortedFields]);
 
-  const nameConflict = useMemo(
-    () => (newName && backendNames.has(newName.trim())) || false,
-    [backendNames, newName]
-  );
+  const nameConflict = useMemo(() => names.has(name.trim()), [names, name]);
+
+  useEffect(() => {
+    if (!nameConflict && name) setData({ name });
+  }, [name, nameConflict]);
 
   useEffect(() => {
     if (!data.name) return;
 
-    if (!backendName && backendNames.has(data.name)) {
-      setBackendName(data.name);
-    } else if (data.name !== newName) {
-      setNewName(data.name);
+    if (names.has(data.name.trim())) {
+      setReuse(data.name);
+    } else {
+      setName(data.name);
     }
   }, [data.name]);
-
-  useEffect(() => {
-    if (!nameConflict && newName) {
-      setData({ name: newName });
-    }
-  }, [newName]);
-
-  useEffect(() => {
-    if (backendName) {
-      setNewName("");
-    }
-  }, [backendName]);
 
   return (
     <TemplateStep
@@ -108,14 +127,16 @@ export default function BackendStep({ fields, data, setData }) {
         "forms-bridge"
       )}
     >
-      <SelectControl
-        label={__("Reuse backend", "forms-bridge")}
-        value={backendName}
-        options={backendOptions}
-        onChange={(value) => setBackendName(value)}
-        __nextHasNoMarginBottom
-      />
-      {!backendName && (
+      {backendOptions.length > 0 && (
+        <SelectControl
+          label={__("Reuse an existing backend", "forms-bridge")}
+          value={reuse}
+          options={backendOptions}
+          onChange={setReuse}
+          __nextHasNoMarginBottom
+        />
+      )}
+      {!reuse && (
         <Field
           error={
             nameConflict
@@ -124,8 +145,8 @@ export default function BackendStep({ fields, data, setData }) {
           }
           data={{
             ...nameField,
-            value: newName || "",
-            onChange: setNewName,
+            value: name || "",
+            onChange: setName,
           }}
         />
       )}

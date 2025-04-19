@@ -62,10 +62,10 @@ export default function TemplatesProvider({ children }) {
     wpfb.emit("loading", true);
 
     return apiFetch({
-      path: "forms-bridge/v1/templates/" + template,
+      path: "forms-bridge/v1/templates",
       method: "POST",
       data: {
-        template,
+        name: template,
         integration,
         fields,
       },

@@ -15,6 +15,7 @@ export default function Templates({ Wizard }) {
   const templates = useTemplates();
   const [, setTemplate] = useTemplate();
 
+  const [templateData, setTemplateData] = useState({});
   const [done, setDone] = useState(false);
 
   const templateOptions = [{ label: "", value: "" }].concat(
@@ -52,9 +53,7 @@ export default function Templates({ Wizard }) {
   }, [integrations]);
 
   useEffect(() => {
-    if (done) {
-      setTemplate(null);
-    }
+    if (done) setTemplate(null);
   }, [done]);
 
   useEffect(() => {
@@ -128,7 +127,12 @@ export default function Templates({ Wizard }) {
               />
             </>
           )}
-          <Wizard integration={integration} onDone={() => setDone(true)} />
+          <Wizard
+            integration={integration}
+            onDone={() => setDone(true)}
+            data={templateData}
+            setData={setTemplateData}
+          />
         </Modal>
       )}
     </>
