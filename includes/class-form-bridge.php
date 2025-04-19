@@ -18,17 +18,38 @@ abstract class Form_Bridge
         'type' => 'object',
         'additionalProperties' => false,
         'properties' => [
-            'name' => ['type' => 'string'],
-            'form_id' => ['type' => 'string'],
-            'backend' => ['type' => 'string'],
-            'credential' => ['type' => 'string'],
+            'name' => [
+                'type' => 'string',
+                'minLength' => 1,
+            ],
+            'form_id' => [
+                'type' => 'string',
+                'minLength' => 1,
+                'default' => '',
+            ],
+            'backend' => [
+                'type' => 'string',
+                'minLength' => 1,
+                'default' => '',
+            ],
+            'credential' => [
+                'type' => 'string',
+                'minLength' => 1,
+                'default' => '',
+            ],
             'custom_fields' => [
                 'type' => 'array',
                 'items' => [
                     'type' => 'object',
                     'properties' => [
-                        'name' => ['type' => 'string'],
-                        'value' => ['type' => 'string'],
+                        'name' => [
+                            'type' => 'string',
+                            'minLength' => 1,
+                        ],
+                        'value' => [
+                            'type' => 'string',
+                            'minLength' => 1,
+                        ],
                     ],
                     'additionalProperties' => false,
                     'required' => ['name', 'value'],
@@ -42,8 +63,14 @@ abstract class Form_Bridge
                         'type' => 'object',
                         'additionalProperties' => false,
                         'properties' => [
-                            'from' => ['type' => 'string'],
-                            'to' => ['type' => 'string'],
+                            'from' => [
+                                'type' => 'string',
+                                'minLength' => 1,
+                            ],
+                            'to' => [
+                                'type' => 'string',
+                                'minLength' => 1,
+                            ],
                             'cast' => [
                                 'type' => 'string',
                                 'enum' => [
@@ -68,7 +95,10 @@ abstract class Form_Bridge
             ],
             'workflow' => [
                 'type' => 'array',
-                'items' => ['type' => 'string'],
+                'items' => [
+                    'type' => 'string',
+                    'minLength' => 1,
+                ],
             ],
             'is_valid' => ['type' => 'boolean'],
         ],

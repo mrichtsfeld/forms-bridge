@@ -739,6 +739,7 @@ class Form_Bridge_Template
             $create_credential =
                 !empty($data['credential']['name']) &&
                 !$this->credential_exists($data['credential']['name']);
+
             if ($create_credential) {
                 $result = $this->create_credential($data['credential']);
 

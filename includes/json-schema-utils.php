@@ -12,6 +12,10 @@ function forms_bridge_validate_with_schema($data, $schema)
 {
     $is_valid = rest_validate_value_from_schema($data, $schema);
     if (is_wp_error($is_valid)) {
+        if (isset($schema['default'])) {
+            return $schema['default'];
+        }
+
         return $is_valid;
     }
 
@@ -83,7 +87,6 @@ function forms_bridge_merge_collection($collection, $default, $schema = [])
             }
         }
     } elseif ($schema['type'] === 'array') {
-        $a = 1;
         // TODO: Handle matrix case
     }
 
