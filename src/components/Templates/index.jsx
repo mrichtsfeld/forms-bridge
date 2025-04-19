@@ -16,6 +16,7 @@ export default function Templates({ Wizard }) {
   const [, setTemplate] = useTemplate();
 
   const [templateData, setTemplateData] = useState({});
+  const [wired, setWired] = useState(null);
   const [done, setDone] = useState(false);
 
   const templateOptions = [{ label: "", value: "" }].concat(
@@ -132,6 +133,8 @@ export default function Templates({ Wizard }) {
             onDone={() => setDone(true)}
             data={templateData}
             setData={setTemplateData}
+            wired={wired}
+            setWired={setWired}
           />
         </Modal>
       )}

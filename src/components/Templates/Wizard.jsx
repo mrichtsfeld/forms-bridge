@@ -43,10 +43,11 @@ export default function TemplateWizard({
   steps = [],
   data,
   setData,
+  wired,
+  setWired,
   onDone,
 }) {
   const api = useCurrentApi();
-  const [wired, setWired] = useState(null);
 
   const sortedSteps = useMemo(() => {
     return DEFAULT_STEPS.reduce((steps, defaultStep, i) => {
@@ -219,8 +220,15 @@ export default function TemplateWizard({
     500
   ).current;
 
+  const fromBackend = useRef(data.backend);
   useEffect(() => {
-    setWired(null);
+    if (JSON.stringify(data.backend) !== JSON.stringify(fromBackend.current)) {
+      setWired(null);
+    }
+
+    return () => {
+      fromBackend.current = data.backend;
+    };
   }, [data.backend]);
 
   useEffect(() => {
