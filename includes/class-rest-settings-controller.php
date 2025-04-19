@@ -234,43 +234,6 @@ class REST_Settings_Controller extends Base_Controller
                 continue;
             }
 
-            register_rest_route(
-                "{$namespace}/v{$version}",
-                "/{$api}/ping/(?<backend>.+)",
-                [
-                    'methods' => WP_REST_Server::READABLE,
-                    'callback' => static function ($request) use ($api) {
-                        $backend = apply_filters(
-                            'forms_bridge_backend',
-                            null,
-                            $request['backend']
-                        );
-                        if (empty($backend)) {
-                            return new WP_Error(
-                                'not_found',
-                                __('Backend is unknown', 'forms-bridge'),
-                                ['status' => 404]
-                            );
-                        }
-
-                        return Addon::ping($api, $backend, $request);
-                    },
-                    'permission_callback' => static function () {
-                        return self::permission_callback();
-                    },
-                    'args' => [
-                        'backend' => [
-                            'description' => __(
-                                'Name of the registered backend',
-                                'forms-bridge'
-                            ),
-                            'type' => 'string',
-                            'required' => true,
-                        ],
-                    ],
-                ]
-            );
-
             register_rest_route("{$namespace}/v{$version}", "/{$api}/ping", [
                 'methods' => WP_REST_Server::CREATABLE,
                 'callback' => static function ($request) use ($api) {
@@ -313,10 +276,21 @@ class REST_Settings_Controller extends Base_Controller
                                     'additionalProperties' => false,
                                 ],
                             ],
-                            'required' => ['name', 'base_url', 'headers'],
-                            'additionalProperties' => false,
                         ],
+                        'additionalProperties' => false,
                         'required' => true,
+                    ],
+                    'credential' => [
+                        'description' => __('API credentials', 'forms-bridge'),
+                        'type' => 'object',
+                        'properties' => [
+                            'name' => [
+                                'type' => 'string',
+                                'minLength' => 1,
+                            ],
+                        ],
+                        'additionalProperties' => true,
+                        'required' => false,
                     ],
                 ],
             ]);
@@ -335,62 +309,13 @@ class REST_Settings_Controller extends Base_Controller
                 continue;
             }
 
-            register_rest_route(
-                "{$namespace}/v{$version}",
-                "/{$api}/fetch/(?<backend>.+)",
-                [
-                    'methods' => WP_REST_Server::READABLE,
-                    'callback' => static function ($request) use ($api) {
-                        $backend = apply_filters(
-                            'forms_bridge_backend',
-                            null,
-                            $request['backend']
-                        );
-                        if (empty($backend)) {
-                            return new WP_Error(
-                                'not_found',
-                                __('Backend is unknown', 'forms-bridge'),
-                                ['status' => 404]
-                            );
-                        }
-
-                        return Addon::fetch(
-                            $api,
-                            $backend,
-                            $request['endpoint'],
-                            $request
-                        );
-                    },
-                    'permission_callback' => static function () {
-                        return self::permission_callback();
-                    },
-                    'args' => [
-                        'backend' => [
-                            'description' => __(
-                                'Name of the registered backend',
-                                'forms-bridge'
-                            ),
-                            'type' => 'string',
-                            'required' => true,
-                        ],
-                        'endpoint' => [
-                            'description' => __(
-                                'Target endpoint name',
-                                'forms-bridge'
-                            ),
-                            'type' => 'string',
-                            'required' => true,
-                        ],
-                    ],
-                ]
-            );
-
             register_rest_route("{$namespace}/v{$version}", "/{$api}/fetch", [
                 'methods' => WP_REST_Server::CREATABLE,
                 'callback' => static function ($request) use ($api) {
                     [$backend] = \HTTP_BRIDGE\Settings_Store::validate_backends(
                         [$request['backend']]
                     );
+
                     if (empty($backend)) {
                         return new WP_Error(
                             'bad_request',
@@ -403,7 +328,7 @@ class REST_Settings_Controller extends Base_Controller
                         $api,
                         $backend,
                         $request['endpoint'],
-                        $request
+                        $request['credential']
                     );
                 },
                 'permission_callback' => static function () {
@@ -443,6 +368,18 @@ class REST_Settings_Controller extends Base_Controller
                         'type' => 'string',
                         'required' => true,
                     ],
+                    'credential' => [
+                        'description' => __('API credentials', 'forms-bridge'),
+                        'type' => 'object',
+                        'properties' => [
+                            'name' => [
+                                'type' => 'string',
+                                'minLength' => 1,
+                            ],
+                        ],
+                        'additionalProperties' => true,
+                        'required' => false,
+                    ],
                 ],
             ]);
         }
@@ -459,56 +396,6 @@ class REST_Settings_Controller extends Base_Controller
             if (!$enabled) {
                 continue;
             }
-
-            register_rest_route(
-                "{$namespace}/v{$version}",
-                "/{$api}/schema/(?P<backend>.*)",
-                [
-                    'methods' => WP_REST_Server::READABLE,
-                    'callback' => static function ($request) use ($api) {
-                        $backend = array_filters(
-                            'forms_bridge_backend',
-                            null,
-                            $request['backend']
-                        );
-                        if (empty($backend)) {
-                            return new WP_Error(
-                                'not_found',
-                                __('Backend is unknown', 'forms-bridge'),
-                                ['status' => 404]
-                            );
-                        }
-
-                        return Addon::schema(
-                            $api,
-                            $backend,
-                            $request['endpoint'],
-                            $request
-                        );
-                    },
-                    'permission_callback' => static function () {
-                        return self::permission_callback();
-                    },
-                    'args' => [
-                        'backend' => [
-                            'description' => __(
-                                'Name of the registered backend',
-                                'forms-bridge'
-                            ),
-                            'type' => 'string',
-                            'required' => true,
-                        ],
-                        'endpoint' => [
-                            'description' => __(
-                                'Target endpoint name',
-                                'forms-bridge'
-                            ),
-                            'type' => 'string',
-                            'required' => true,
-                        ],
-                    ],
-                ]
-            );
 
             register_rest_route("{$namespace}/v{$version}", "/{$api}/schema", [
                 'methods' => WP_REST_Server::CREATABLE,
@@ -528,7 +415,7 @@ class REST_Settings_Controller extends Base_Controller
                         $api,
                         $backend,
                         $request['endpoint'],
-                        $request
+                        $request['credential']
                     );
                 },
                 'permission_callback' => static function () {
@@ -567,6 +454,18 @@ class REST_Settings_Controller extends Base_Controller
                         ),
                         'type' => 'string',
                         'required' => true,
+                    ],
+                    'credential' => [
+                        'description' => __('API credentials', 'forms-bridge'),
+                        'type' => 'object',
+                        'properties' => [
+                            'name' => [
+                                'type' => 'string',
+                                'minLength' => 1,
+                            ],
+                        ],
+                        'additionalProperties' => true,
+                        'required' => false,
                     ],
                 ],
             ]);

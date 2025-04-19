@@ -130,9 +130,8 @@ abstract class Form_Bridge
     /**
      * Stores the form bridge's data as a private attribute.
      */
-    public function __construct($data, $api)
+    public function __construct($data)
     {
-        $this->api = $api;
         $this->data = $data;
     }
 
