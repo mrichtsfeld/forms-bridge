@@ -688,9 +688,9 @@ class Form_Bridge_Template
         );
 
         try {
-            $create_form = $this->form_exists(
+            $create_form = !$this->form_exists(
                 $data['form']['id'] ?? null,
-                $data['integration']
+                $integration
             );
 
             if ($create_form) {
