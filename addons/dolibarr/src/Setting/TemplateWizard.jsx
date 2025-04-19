@@ -5,7 +5,7 @@ import { useTemplateConfig } from "../../../../src/providers/Templates";
 import { debounce, validateUrl } from "../../../../src/lib/utils";
 
 const apiFetch = wp.apiFetch;
-const { useState } = wp.element;
+const { useState, useMemo, useRef, useEffect } = wp.element;
 
 const STEPS = [
   {

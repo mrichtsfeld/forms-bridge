@@ -58,14 +58,17 @@ class Rest_Addon extends Addon
                         'type' => 'object',
                         'additionalProperties' => false,
                         'properties' => [
-                            'backend' => ['type' => 'string'],
-                            'endpoint' => ['type' => 'string'],
+                            'endpoint' => [
+                                'type' => 'string',
+                                'minLength' => 1,
+                            ],
                             'method' => [
                                 'type' => 'string',
                                 'enum' => ['GET', 'POST', 'PUT', 'DELETE'],
+                                'default' => 'POST',
                             ],
                         ],
-                        'required' => ['backend', 'endpoint', 'method'],
+                        'required' => ['endpoint', 'method'],
                     ],
                 ],
             ]),

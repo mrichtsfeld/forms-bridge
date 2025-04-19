@@ -9,62 +9,51 @@ if (!defined('ABSPATH')) {
 class Dolibarr_Form_Bridge_Template extends Rest_Form_Bridge_Template
 {
     /**
-     * Handles the template default values.
+     * Template default config getter.
      *
-     * @var array
+     * @return array
      */
-    protected static $default = [
-        'fields' => [
+    protected static function defaults()
+    {
+        return forms_bridge_merge_object(
             [
-                'ref' => '#bridge',
-                'name' => 'endpoint',
-                'label' => 'Endpoint',
-                'type' => 'string',
-                'required' => true,
-            ],
-            [
-                'ref' => '#backend',
-                'name' => 'name',
-                'label' => 'Name',
-                'type' => 'string',
-                'required' => true,
-                'default' => 'Dolibarr',
-            ],
-            [
-                'ref' => '#backend',
-                'name' => 'base_url',
-                'label' => 'Base URL',
-                'type' => 'string',
-                'required' => true,
-            ],
-            [
-                'ref' => '#backend/headers[]',
-                'name' => 'DOLAPIKEY',
-                'label' => 'API key',
-                'type' => 'string',
-                'required' => true,
-            ],
-        ],
-        'bridge' => [
-            'backend' => '',
-            'form_id' => '',
-            'endpoint' => '',
-            'api_key' => '',
-        ],
-        'backend' => [
-            'name' => 'Dolibarr',
-            'headers' => [
-                [
-                    'name' => 'Content-Type',
-                    'value' => 'application/json',
+                'fields' => [
+                    [
+                        'ref' => '#backend',
+                        'name' => 'name',
+                        'default' => 'Dolibarr',
+                    ],
+                    [
+                        'ref' => '#backend/headers[]',
+                        'name' => 'DOLAPIKEY',
+                        'label' => __('API key', 'forms-bridge'),
+                        'type' => 'string',
+                        'required' => true,
+                    ],
+                    [
+                        'ref' => '#bridge',
+                        'name' => 'method',
+                        'value' => 'POST',
+                    ],
                 ],
-                [
-                    'name' => 'Accept',
-                    'value' => 'application/json',
+                'bridge' => [
+                    'endpoint' => '',
+                    'method' => 'POST',
+                ],
+                'backend' => [
+                    'name' => 'Dolibarr',
+                    'headers' => [
+                        [
+                            'name' => 'Accept',
+                            'value' => 'application/json',
+                        ],
+                    ],
                 ],
             ],
-        ],
-    ];
+            parent::defaults(),
+            self::$schema
+        );
+    }
 
     /**
      * Extends the common schema and adds custom properties.
