@@ -8,7 +8,6 @@ if (!defined('ABSPATH')) {
 
 require_once FORMS_BRIDGE_ADDONS_DIR . '/zoho/zoho.php';
 
-require_once 'class-bigin-credential.php';
 require_once 'class-bigin-form-bridge.php';
 require_once 'class-bigin-form-bridge-template.php';
 
@@ -56,7 +55,10 @@ class Bigin_Addon extends Zoho_Addon
                     $credentials = [];
                 }
 
-                return array_merge($credentials, self::credentials());
+                return array_merge(
+                    $credentials,
+                    self::setting()->credentials ?: []
+                );
             },
             10,
             1
@@ -65,34 +67,19 @@ class Bigin_Addon extends Zoho_Addon
         add_filter(
             'forms_bridge_bigin_credential',
             static function ($credential, $name) {
-                if ($credential instanceof Bigin_Credential) {
+                if ($credential) {
                     return $credential;
                 }
 
-                $credentials = self::credentials();
+                $credentials = self::setting()->credentials ?: [];
                 foreach ($credentials as $credential) {
-                    if ($credential->name === $name) {
+                    if ($credential['name'] === $name) {
                         return $credential;
                     }
                 }
             },
             10,
             2
-        );
-    }
-
-    /**
-     * Addon credentials' instances getter.
-     *
-     * @return array List with available credentials instances.
-     */
-    protected static function credentials()
-    {
-        return array_map(
-            static function ($data) {
-                return new Bigin_Credential($data);
-            },
-            self::setting()->credentials ?: []
         );
     }
 

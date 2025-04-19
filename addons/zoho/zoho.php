@@ -6,7 +6,6 @@ if (!defined('ABSPATH')) {
     exit();
 }
 
-require_once 'class-zoho-credential.php';
 require_once 'class-zoho-form-bridge.php';
 require_once 'class-zoho-form-bridge-template.php';
 
@@ -67,7 +66,10 @@ class Zoho_Addon extends Addon
                     $credentials = [];
                 }
 
-                return array_merge($credentials, self::credentials());
+                return array_merge(
+                    $credentials,
+                    self::setting()->credentials ?: []
+                );
             },
             10,
             1
@@ -76,34 +78,19 @@ class Zoho_Addon extends Addon
         add_filter(
             'forms_bridge_zoho_credential',
             static function ($credential, $name) {
-                if ($credential instanceof Zoho_Credential) {
+                if ($credential) {
                     return $credential;
                 }
 
-                $credentials = self::credentials();
+                $credentials = self::setting()->credentials ?: [];
                 foreach ($credentials as $credential) {
-                    if ($credential->name === $name) {
+                    if ($credential['name'] === $name) {
                         return $credential;
                     }
                 }
             },
             10,
             2
-        );
-    }
-
-    /**
-     * Addon credentials' instances getter.
-     *
-     * @return array List with available credentials instances.
-     */
-    protected static function credentials()
-    {
-        return array_map(
-            static function ($data) {
-                return new Zoho_Credential($data);
-            },
-            self::setting()->credentials ?: []
         );
     }
 
@@ -123,18 +110,28 @@ class Zoho_Addon extends Addon
                         'type' => 'object',
                         'additionalProperties' => false,
                         'properties' => [
-                            'name' => ['type' => 'string'],
-                            'organization_id' => ['type' => 'string'],
-                            'client_id' => ['type' => 'string'],
-                            'client_secret' => ['type' => 'string'],
-                            'backend' => ['type' => 'string'],
+                            'name' => [
+                                'type' => 'string',
+                                'minLength' => 1,
+                            ],
+                            'organization_id' => [
+                                'type' => 'string',
+                                'minLength' => 1,
+                            ],
+                            'client_id' => [
+                                'type' => 'string',
+                                'minLength' => 1,
+                            ],
+                            'client_secret' => [
+                                'type' => 'string',
+                                'minLength' => 1,
+                            ],
                         ],
                         'required' => [
                             'name',
                             'organization_id',
                             'client_id',
                             'client_secret',
-                            'backend',
                         ],
                     ],
                 ],
@@ -144,9 +141,14 @@ class Zoho_Addon extends Addon
                         'type' => 'object',
                         'additionalProperties' => false,
                         'properties' => [
-                            'credential' => ['type' => 'string'],
-                            'endpoint' => ['type' => 'string'],
-                            'scope' => ['type' => 'string'],
+                            'endpoint' => [
+                                'type' => 'string',
+                                'minLength' => 1,
+                            ],
+                            'scope' => [
+                                'type' => 'string',
+                                'minLength' => 1,
+                            ],
                         ],
                         'required' => ['credential', 'endpoint', 'scope'],
                     ],
@@ -168,66 +170,12 @@ class Zoho_Addon extends Addon
      */
     protected static function validate_setting($data, $setting)
     {
-        $backends =
-            \HTTP_BRIDGE\Settings_Store::setting('general')->backends ?: [];
-
-        $data['credentials'] = self::validate_credentials(
-            $data['credentials'],
-            $backends
-        );
-
         $data['bridges'] = self::validate_bridges(
             $data['bridges'],
             $data['credentials']
         );
 
         return $data;
-    }
-
-    /**
-     * Credentials setting field validation. Filters inconsistent keys
-     * based on the Http_Bridge's backends store state.
-     *
-     * @param array $credentials Collection of credentials data.
-     * @param array $backends
-     *
-     * @return array Validated credentials.
-     */
-    private static function validate_credentials($credentials, $backends)
-    {
-        if (!wp_is_numeric_array($credentials)) {
-            return [];
-        }
-
-        $backend_names = array_map(function ($backend) {
-            return $backend['name'];
-        }, $backends);
-
-        $uniques = [];
-        $validated = [];
-        foreach ($credentials as $credential) {
-            if (empty($credential['name'])) {
-                continue;
-            }
-
-            if (in_array($credential['name'], $uniques)) {
-                continue;
-            }
-
-            if (!in_array($credential['backend'] ?? null, $backend_names)) {
-                $credential['backend'] = '';
-            }
-
-            $credential['organization_id'] =
-                $credential['organization_id'] ?? '';
-            $credential['client_id'] = $credential['client_id'] ?? '';
-            $credential['client_secret'] = $credential['client_secret'] ?? '';
-
-            $validated[] = $credential;
-            $uniques[] = $credential['name'];
-        }
-
-        return $validated;
     }
 
     /**
@@ -269,7 +217,7 @@ class Zoho_Addon extends Addon
                 $bridge['is_valid'] &&
                 !empty($bridge['endpoint']) &&
                 !empty($bridge['scope']) &&
-                !empty($bridge['endpoint']);
+                !empty($bridge['credential']);
 
             $validated[] = $bridge;
         }
