@@ -11,6 +11,8 @@ if (!defined('ABSPATH')) {
  */
 class Mailchimp_Form_Bridge extends Rest_Form_Bridge
 {
+    protected $api = 'mailchimp';
+
     /**
      * Gets bridge's default body encoding schema.
      *
@@ -51,19 +53,86 @@ class Mailchimp_Form_Bridge extends Rest_Form_Bridge
     {
         if (strstr($this->endpoint, '/lists/') !== false) {
             $fields = [
-                'email_address',
-                'status',
-                'email_type',
-                'interests',
-                'language',
-                'vip',
-                'location',
-                'marketing_permissions',
-                'ip_signup',
-                'ip_opt',
-                'timestamp_opt',
-                'tags',
-                'merge_fields',
+                [
+                    'name' => 'email_address',
+                    'schema' => ['type' => 'string'],
+                    'required' => true,
+                ],
+                [
+                    'name' => 'status',
+                    'schema' => ['type' => 'string'],
+                    'required' => true,
+                ],
+                [
+                    'name' => 'email_type',
+                    'schema' => ['type' => 'string'],
+                ],
+                [
+                    'name' => 'interests',
+                    'schema' => [
+                        'type' => 'object',
+                        'properties' => [],
+                    ],
+                ],
+                [
+                    'name' => 'language',
+                    'schema' => ['type' => 'string'],
+                ],
+                [
+                    'name' => 'vip',
+                    'schema' => ['type' => 'boolean'],
+                ],
+                [
+                    'name' => 'location',
+                    'schema' => [
+                        'type' => 'object',
+                        'properties' => [
+                            'latitude' => ['type' => 'number'],
+                            'longitude' => ['type' => 'number'],
+                        ],
+                    ],
+                ],
+                [
+                    'name' => 'marketing_permissions',
+                    'schema' => [
+                        'type' => 'array',
+                        'items' => [
+                            'type' => 'object',
+                            'properties' => [
+                                'marketing_permission_id' => [
+                                    'type' => 'string',
+                                ],
+                                'enabled' => ['type' => 'boolean'],
+                            ],
+                        ],
+                    ],
+                ],
+                [
+                    'name' => 'ip_signup',
+                    'schema' => ['type' => 'string'],
+                ],
+                [
+                    'name' => 'ip_opt',
+                    'schema' => ['type' => 'string'],
+                ],
+                [
+                    'name' => 'timestamp_opt',
+                    'schema' => ['type' => 'string'],
+                ],
+                [
+                    'name' => 'tags',
+                    'schema' => [
+                        'type' => 'array',
+                        'items' => ['type' => 'string'],
+                    ],
+                ],
+                [
+                    'name' => 'merge_fields',
+                    'schema' => [
+                        'type' => 'object',
+                        'properties' => [],
+                    ],
+                ],
             ];
 
             $fields_endpoint = str_replace(
@@ -71,6 +140,7 @@ class Mailchimp_Form_Bridge extends Rest_Form_Bridge
                 '/merge-fields',
                 $this->endpoint
             );
+
             $response = $this->patch([
                 'name' => 'mailchimp-get-merge-fields',
                 'endpoint' => $fields_endpoint,
@@ -82,7 +152,10 @@ class Mailchimp_Form_Bridge extends Rest_Form_Bridge
             }
 
             foreach ($response['data']['merge_fields'] as $field) {
-                $fields[] = 'merge_fields.' . $field['tag'];
+                $fields[] = [
+                    'name' => 'merge_fields.' . $field['tag'],
+                    'schema' => ['type' => 'string'],
+                ];
             }
 
             return $fields;

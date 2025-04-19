@@ -1,8 +1,8 @@
 import { useGeneral } from "../../../../src/providers/Settings";
 import TemplateWizard from "../../../../src/components/Templates/Wizard";
-import BridgeStep from "./BridgeStep";
 import { useTemplateConfig } from "../../../../src/providers/Templates";
 import { debounce } from "../../../../src/lib/utils";
+import MailchimpBridgeStep from "./BridgeStep";
 
 const apiFetch = wp.apiFetch;
 const { useState, useEffect, useMemo, useRef } = wp.element;
@@ -12,9 +12,7 @@ const MAILCHIMP_HEADERS = ["api-key", "datacenter"];
 const STEPS = [
   {
     name: "bridge",
-    step: ({ fields, data, setData }) => (
-      <BridgeStep fields={fields} data={data} setData={setData} />
-    ),
+    component: MailchimpBridgeStep,
     order: 20,
   },
 ];
@@ -27,7 +25,12 @@ function validateBackend(data) {
   }, true);
 }
 
-export default function MailchimpTemplateWizard({ integration, onDone }) {
+export default function MailchimpTemplateWizard({
+  integration,
+  wired,
+  setWired,
+  onDone,
+}) {
   const [{ backends }] = useGeneral();
 
   const config = useTemplateConfig();
@@ -52,6 +55,7 @@ export default function MailchimpTemplateWizard({ integration, onDone }) {
 
     backend = {
       name: data.backend.name,
+      base_url: data.backend.base_url,
       headers: MAILCHIMP_HEADERS.map((header) => ({
         name: header,
         value: data.backend[header],
@@ -63,22 +67,22 @@ export default function MailchimpTemplateWizard({ integration, onDone }) {
     }
   }, [data.backend, backends]);
 
-  const fetch = useRef((module, then, backend) => {
+  const fetch = useRef((endpoint, then, backend) => {
     apiFetch({
-      path: `forms-bridge/v1/mailchimp/${module}`,
+      path: "forms-bridge/v1/mailchimp/fetch",
       method: "POST",
-      data: backend,
+      data: { backend, endpoint },
     })
       .then(then)
       .catch(() => then([]));
   }).current;
 
   const fetchLists = useRef(
-    debounce((backend) => fetch("lists", setLists, backend), 1e3)
+    debounce((backend) => fetch("/3.0/lists", setLists, backend), 1e3)
   ).current;
 
   useEffect(() => {
-    if (!backend) return;
+    if (!backend || !wired) return;
 
     customFields.includes("list_id") && fetchLists(backend);
   }, [backend, customFields]);
@@ -98,6 +102,8 @@ export default function MailchimpTemplateWizard({ integration, onDone }) {
       integration={integration}
       data={data}
       setData={setData}
+      wired={wired}
+      setWired={setWired}
       onDone={onDone}
       steps={STEPS}
     />

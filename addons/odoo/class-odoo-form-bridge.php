@@ -14,6 +14,8 @@ if (!defined('ABSPATH')) {
  */
 class Odoo_Form_Bridge extends Form_Bridge
 {
+    protected $api = 'odoo';
+
     /**
      * Handles the Odoo JSON-RPC well known endpoint.
      *

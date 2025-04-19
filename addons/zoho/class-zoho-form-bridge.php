@@ -15,6 +15,8 @@ if (!defined('ABSPATH')) {
  */
 class Zoho_Form_Bridge extends Form_Bridge
 {
+    protected $api = 'zoho';
+
     private const api_headers = ['Authorization', 'Content-Type', 'Accept'];
 
     /**

@@ -11,6 +11,8 @@ if (!defined('ABSPATH')) {
  */
 class Google_Sheets_Form_Bridge extends Form_Bridge
 {
+    protected $api = 'google-sheets';
+
     /**
      * Performs a gRPC request to the Google Sheets API.
      *

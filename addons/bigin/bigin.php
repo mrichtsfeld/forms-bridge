@@ -87,10 +87,11 @@ class Bigin_Addon extends Zoho_Addon
      * Performs a request against the backend to check the connexion status.
      *
      * @param string $backend Target backend name.
+     * @params array $credential Current REST request.
      *
      * @return array Ping result.
      */
-    protected function do_ping($backend)
+    protected function do_ping($backend, $credential = [])
     {
         return ['success' => true];
     }

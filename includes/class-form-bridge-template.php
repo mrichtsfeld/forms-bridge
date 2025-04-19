@@ -337,15 +337,17 @@ class Form_Bridge_Template
      */
     private static function validate_config($name, $config)
     {
+        $schema = apply_filters(
+            'forms_bridge_template_schema',
+            self::extend_schema(static::$schema),
+            $name
+        );
+
         $schema = [
             '$schema' => 'https://json-schema.org/draft/2020-12/schema',
             'type' => 'object',
             'additionalProperties' => false,
-            'properties' => apply_filters(
-                'forms_bridge_template_schema',
-                static::$schema,
-                $name
-            ),
+            'properties' => $schema,
             'required' => ['title', 'integrations', 'fields', 'form', 'bridge'],
         ];
 
@@ -480,10 +482,13 @@ class Form_Bridge_Template
         add_filter(
             'forms_bridge_template_data',
             function ($data, $template_name) {
-                if (
-                    $template_name === $this->name &&
-                    isset($data['bridge']['credential'])
-                ) {
+                if ($template_name !== $this->name) {
+                    return $data;
+                }
+
+                $data['bridge']['backend'] = $data['backend']['name'];
+
+                if (isset($data['bridge']['credential']['name'])) {
                     $data['bridge']['credential'] = $data['credential']['name'];
                 }
 
@@ -536,6 +541,18 @@ class Form_Bridge_Template
             'form' => $this->config['form'],
             'credential' => $this->config['credential'],
         ];
+    }
+
+    /**
+     * Extends the common schema and adds custom properties.
+     *
+     * @param array $schema Common template data schema.
+     *
+     * @return array
+     */
+    protected static function extend_schema($schema)
+    {
+        return $schema;
     }
 
     /**

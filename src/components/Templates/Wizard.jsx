@@ -198,6 +198,8 @@ export default function TemplateWizard({
 
   const pingBackend = useRef(
     debounce((api, backend, credential = {}) => {
+      if (!backend) return;
+
       backend = {
         name: backend.name,
         base_url: backend.base_url,

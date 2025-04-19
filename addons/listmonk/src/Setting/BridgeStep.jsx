@@ -1,7 +1,6 @@
 import BridgeStep from "../../../../src/components/Templates/Steps/BridgeStep";
 
 const { useMemo } = wp.element;
-const { __ } = wp.i18n;
 
 const API_FIELDS = ["lists"];
 

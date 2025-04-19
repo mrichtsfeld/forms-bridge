@@ -54,18 +54,4 @@ class Dolibarr_Form_Bridge_Template extends Rest_Form_Bridge_Template
             self::$schema
         );
     }
-
-    /**
-     * Extends the common schema and adds custom properties.
-     *
-     * @param array $schema Common template data schema.
-     *
-     * @return array
-     */
-    protected function extend_schema($schema)
-    {
-        $schema = parent::extend_schema($schema);
-        $schema['bridge']['properties']['method']['enum'] = ['POST'];
-        return $schema;
-    }
 }

@@ -50,19 +50,6 @@ class Google_Sheets_Form_Bridge_Template extends Form_Bridge_Template
      */
     public function __construct($file, $config, $api)
     {
-        add_filter(
-            'forms_bridge_template_schema',
-            function ($schema, $template_name) {
-                if ($template_name === $this->name) {
-                    $schema = $this->extend_schema($schema);
-                }
-
-                return $schema;
-            },
-            10,
-            2
-        );
-
         parent::__construct($file, $config, $api);
 
         add_filter(
@@ -87,7 +74,7 @@ class Google_Sheets_Form_Bridge_Template extends Form_Bridge_Template
      *
      * @return array
      */
-    private function extend_schema($schema)
+    protected static function extend_schema($schema)
     {
         $schema['bridge']['properties'] = array_merge(
             $schema['bridge']['properties'],

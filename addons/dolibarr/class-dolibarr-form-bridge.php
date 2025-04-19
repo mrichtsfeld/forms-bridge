@@ -11,6 +11,8 @@ if (!defined('ABSPATH')) {
  */
 class Dolibarr_Form_Bridge extends Rest_Form_Bridge
 {
+    protected $api = 'dolibarr';
+
     /**
      * Handles allowed HTTP method.
      *
@@ -28,7 +30,7 @@ class Dolibarr_Form_Bridge extends Rest_Form_Bridge
         return 'application/json';
     }
 
-    protected function api_fields()
+    protected function api_schema()
     {
         $backend = $this->backend();
 

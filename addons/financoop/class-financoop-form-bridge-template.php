@@ -113,11 +113,4 @@ class Finan_Coop_Form_Bridge_Template extends Rest_Form_Bridge_Template
             2
         );
     }
-
-    protected function extend_schema($schema)
-    {
-        $schema = parent::extend_schema($schema);
-        $schema['bridge']['properties']['method']['enum'] = ['POST'];
-        return $schema;
-    }
 }

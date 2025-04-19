@@ -13,6 +13,8 @@ if (!defined('ABSPATH')) {
  */
 class Listmonk_Form_Bridge extends Rest_Form_Bridge
 {
+    protected $api = 'listmonk';
+
     /**
      * Handles a custom http origin token to be unseted from headers
      * before submits.

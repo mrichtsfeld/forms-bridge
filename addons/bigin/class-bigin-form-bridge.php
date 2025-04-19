@@ -11,6 +11,8 @@ if (!defined('ABSPATH')) {
  */
 class Bigin_Form_Bridge extends Zoho_Form_Bridge
 {
+    protected $api = 'bigin';
+
     /**
      * Bridge's API key private getter.
      *
