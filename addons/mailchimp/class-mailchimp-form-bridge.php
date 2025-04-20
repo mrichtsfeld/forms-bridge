@@ -49,7 +49,7 @@ class Mailchimp_Form_Bridge extends Rest_Form_Bridge
         return $response;
     }
 
-    protected function api_fields()
+    protected function api_schema()
     {
         if (strstr($this->endpoint, '/lists/') !== false) {
             $fields = [

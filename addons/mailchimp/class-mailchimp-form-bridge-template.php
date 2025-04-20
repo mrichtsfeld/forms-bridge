@@ -151,32 +151,4 @@ class Mailchimp_Form_Bridge_Template extends Rest_Form_Bridge_Template
             3
         );
     }
-
-    /**
-     * Extends the common schema and adds custom properties.
-     *
-     * @param array $schema Common template data schema.
-     *
-     * @return array
-     */
-    protected function extend_schema($schema)
-    {
-        $schema['bridge']['properties'] = array_merge(
-            $schema['bridge']['properties'],
-            [
-                'backend' => ['type' => 'string'],
-                'endpoint' => ['type' => 'string'],
-                'method' => [
-                    'type' => 'string',
-                    'enum' => ['GET', 'POST', 'PUT', 'DELETE'],
-                ],
-            ]
-        );
-
-        $schema['bridge']['required'][] = 'backend';
-        $schema['bridge']['required'][] = 'endpoint';
-        $schema['bridge']['required'][] = 'method';
-
-        return $schema;
-    }
 }
