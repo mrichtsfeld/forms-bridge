@@ -162,6 +162,7 @@ abstract class Addon extends Singleton
 
             if ($enabled) {
                 require_once "{$addon_dir}/{$addon}.php";
+                self::$addons[$addon]->mount();
             }
         }
 
@@ -339,6 +340,7 @@ abstract class Addon extends Singleton
 
         $bridge['is_valid'] =
             !empty($bridge['form_id']) && !empty($bridge['backend']);
+
         return $bridge;
     }
 
@@ -388,6 +390,11 @@ abstract class Addon extends Singleton
             throw new Exception('Invalid addon registration');
         }
 
+        self::$addons[static::$api] = $this;
+    }
+
+    public function mount()
+    {
         add_action(
             'init',
             static function () {
@@ -417,8 +424,6 @@ abstract class Addon extends Singleton
             10,
             3
         );
-
-        self::$addons[static::$api] = $this;
     }
 
     /**
