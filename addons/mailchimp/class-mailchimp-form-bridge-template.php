@@ -131,31 +131,4 @@ class Mailchimp_Form_Bridge_Template extends Rest_Form_Bridge_Template
             self::$schema
         );
     }
-
-    /**
-     * Sets the template api, extends the common schema and inherits the parent's
-     * constructor.
-     *
-     * @param string $file Source file path of the template config.
-     * @param array $config Template config data.
-     */
-    public function __construct($file, $config, $api)
-    {
-        parent::__construct($file, $config, $api);
-
-        add_filter(
-            'forms_bridge_template_data',
-            function ($data, $template_name) {
-                if ($template_name === $this->name) {
-                    if (!empty($data['backend']['name'])) {
-                        $data['bridge']['backend'] = $data['backend']['name'];
-                    }
-                }
-
-                return $data;
-            },
-            10,
-            3
-        );
-    }
 }

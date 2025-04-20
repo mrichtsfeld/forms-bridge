@@ -2,7 +2,6 @@
 
 namespace FORMS_BRIDGE;
 
-use FORMS_BRIDGE\Forms_Bridge as Forms_Bridge;
 use TypeError;
 use WP_Error;
 
@@ -82,12 +81,59 @@ class Zoho_Form_Bridge extends Form_Bridge
 
     private function check_oauth_scope($scope, $required)
     {
-        $scopes = array_map('trim', explode(',', $scope));
-        $requireds = array_map('trim', explode(',', $scope));
+        $scopes = array_filter(array_map('trim', explode(',', $scope)));
+        $requireds = array_filter(array_map('trim', explode(',', $required)));
 
         $is_valid = true;
         foreach ($requireds as $required) {
-            $is_valid = $is_valid && in_array($required, $scopes);
+            [$rapp, $rmodule, $rsubmodule, $rpermission] = explode(
+                '.',
+                $required
+            );
+
+            if (empty($rpermission)) {
+                $rpermission = $rsubmodule;
+                $rsubmodule = null;
+            }
+
+            $match = false;
+            foreach ($scopes as $scope) {
+                [$sapp, $smodule, $ssubmodule, $spermission] = explode(
+                    '.',
+                    $scope
+                );
+
+                if (empty($spermission)) {
+                    $spermission = $ssubmodule;
+                    $ssubmodule = null;
+                }
+
+                if ($rapp !== $sapp) {
+                    continue;
+                }
+
+                if ($rmodule !== $smodule) {
+                    continue;
+                }
+
+                if ($rsubmodule) {
+                    if ($ssubmodule === null && $spermission === 'ALL') {
+                        $match = true;
+                        break;
+                    } elseif ($rsubmodule !== $ssubmodule) {
+                        continue;
+                    }
+                }
+
+                $match =
+                    $spermission === 'ALL' || $spermission === $rpermission;
+
+                if ($match) {
+                    break;
+                }
+            }
+
+            $is_valid = $is_valid && $match;
         }
 
         return $is_valid;
@@ -97,28 +143,35 @@ class Zoho_Form_Bridge extends Form_Bridge
      * Performs an authentication request to the zoho oauth server using
      * the bridge credentials.
      */
-    protected function get_access_token()
+    protected function get_access_token($token = null)
     {
-        $token = get_transient(self::token_transient);
+        if (!$token) {
+            $transient = get_transient(self::token_transient);
 
-        if ($token) {
-            try {
-                $token = json_decode($token, true);
-            } catch (TypeError) {
-                $token = false;
+            if ($transient) {
+                try {
+                    $token = json_decode($transient, true);
+                } catch (TypeError) {
+                    $token = false;
+                }
             }
-        }
 
-        if (
-            is_array($token) &&
-            isset($token['access_token'], $token['expires_at'])
-        ) {
             if (
-                $token['expires_at'] < time() - 10 &&
+                $token &&
                 $this->check_oauth_scope($token['scope'], $this->scope)
             ) {
-                return $token['access_token'];
+                if ($token['expires_at'] > time()) {
+                    return $token['access_token'];
+                } else {
+                    $refreshed = $this->get_access_token(true);
+
+                    if ($refreshed) {
+                        return $refreshed;
+                    }
+                }
             }
+        } else {
+            $refresh = true;
         }
 
         $base_url = $this->backend->base_url;
@@ -141,19 +194,28 @@ class Zoho_Form_Bridge extends Form_Bridge
 
         $credential = $this->credential();
 
-        $scope = $this->scope ?: 'ZohoCRM.';
+        $scope = $this->scope ?: 'ZohoCRM.modules.ALL';
         $service = explode('.', $scope)[0] ?? 'ZohoCRM';
 
-        $query = http_build_query([
-            'client_id' => $credential->client_id ?? '',
-            'client_secret' => $credential->client_secret ?? '',
-            'grant_type' => 'client_credentials',
-            'scope' => $scope,
-            'soid' => implode('.', [
-                $service,
-                $credential->organization_id ?? '',
-            ]),
-        ]);
+        if (isset($refresh)) {
+            $query = http_build_query([
+                'client_id' => $credential['client_id'] ?? '',
+                'client_secret' => $credential['client_secret'] ?? '',
+                'grant_type' => 'refresh_token',
+                'refresh_token' => $token['refresh_token'],
+            ]);
+        } else {
+            $query = http_build_query([
+                'client_id' => $credential['client_id'] ?? '',
+                'client_secret' => $credential['client_secret'] ?? '',
+                'grant_type' => 'client_credentials',
+                'scope' => $scope,
+                'soid' => implode('.', [
+                    $service,
+                    $credential['organization_id'] ?? '',
+                ]),
+            ]);
+        }
 
         $response = http_bridge_post($url . '?' . $query);
 
@@ -163,10 +225,13 @@ class Zoho_Form_Bridge extends Form_Bridge
             return;
         }
 
+        $data = $response['data'];
+        $data['expires_at'] = $data['expires_in'] + time() - 10;
+
         set_transient(
             self::token_transient,
-            $response['body'],
-            $response['data']['expires_in'] - 30
+            json_encode($data),
+            $response['data']['expires_in'] - 10
         );
 
         return $response['data']['access_token'];
@@ -201,12 +266,15 @@ class Zoho_Form_Bridge extends Form_Bridge
             );
         }
 
-        $payload = wp_is_numeric_array($payload) ? $payload : [$payload];
-
         $method_fn = strtolower($this->method);
+        if ($method_fn === 'post' || $method_fn === 'put') {
+            $payload = wp_is_numeric_array($payload) ? $payload : [$payload];
+            $payload = ['data' => $payload];
+        }
+
         $response = $this->backend->$method_fn(
             $this->endpoint,
-            ['data' => $payload],
+            $payload,
             [
                 'Content-Type' => 'application/json',
                 'Accept' => 'application/json',
@@ -221,7 +289,8 @@ class Zoho_Form_Bridge extends Form_Bridge
                 true
             );
 
-            if ($data['data'][0]['code'] !== 'DUPLICATE_DATA') {
+            $code = $data['data'][0]['code'] ?? null;
+            if ($code !== 'DUPLICATE_DATA') {
                 return $response;
             }
 
@@ -255,7 +324,17 @@ class Zoho_Form_Bridge extends Form_Bridge
         foreach ($response['data']['layouts'] as $layout) {
             foreach ($layout['sections'] as $section) {
                 foreach ($section['fields'] as $field) {
-                    $fields[] = $field['api_name'];
+                    $type = $field['json_type'];
+                    if ($type === 'jsonobject') {
+                        $type = 'object';
+                    } elseif ($type === 'double') {
+                        $type = 'number';
+                    }
+
+                    $fields[] = [
+                        'name' => $field['api_name'],
+                        'schema' => ['type' => $type],
+                    ];
                 }
             }
         }

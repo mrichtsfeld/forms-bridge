@@ -239,6 +239,7 @@ abstract class Addon extends Singleton
             return;
         }
 
+        $bridge['name'] = trim($bridge['name']);
         if (in_array($bridge['name'], $uniques)) {
             return;
         } else {
@@ -359,6 +360,7 @@ abstract class Addon extends Singleton
             return;
         }
 
+        $credential['name'] = trim($credential['name']);
         if (in_array($credential['name'], $uniques)) {
             return;
         } else {
@@ -368,6 +370,8 @@ abstract class Addon extends Singleton
         foreach ($fields as $field) {
             if (empty($credential[$field])) {
                 $credential[$field] = '';
+            } else {
+                $credential[$field] = strval($credential[$field]);
             }
         }
 

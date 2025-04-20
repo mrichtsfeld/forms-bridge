@@ -88,11 +88,10 @@ class Finan_Coop_Form_Bridge_Template extends Rest_Form_Bridge_Template
      *
      * @param string $file Source file path of the template config.
      * @param array $config Template config data.
-     * @param string $api Bridge API name.
      */
-    public function __construct($file, $config, $api)
+    public function __construct($file, $config)
     {
-        parent::__construct($file, $config, $api);
+        parent::__construct($file, $config);
 
         add_filter(
             'forms_bridge_template_data',
@@ -117,6 +116,7 @@ class Finan_Coop_Form_Bridge_Template extends Rest_Form_Bridge_Template
                             $index,
                             1
                         );
+
                         $data['bridge']['custom_fields'] = array_values(
                             $data['bridge']['custom_fields']
                         );

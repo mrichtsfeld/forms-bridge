@@ -155,10 +155,6 @@ class Zoho_Addon extends Addon
                 continue;
             }
 
-            foreach ($credential as $key => $val) {
-                $credential[$key] = (string) $val;
-            }
-
             $validated[] = $credential;
         }
 
@@ -216,17 +212,13 @@ class Zoho_Addon extends Addon
      * Performs a request against the backend to check the connexion status.
      *
      * @param string $backend Target backend name.
-     * @params array $credential Current REST request.
+     * @params array $credential Credential data.
      *
      * @return array Ping result.
      */
-    protected function do_ping($backend, $credential = [])
+    protected function do_ping($backend, $credential)
     {
-        $credential = self::validate_credential($credential, [
-            'organization_id',
-            'client_id',
-            'client_secret',
-        ]);
+        [$credential] = self::validate_credentials([$credential]);
 
         if (empty($credential)) {
             return ['success' => false];
@@ -235,13 +227,16 @@ class Zoho_Addon extends Addon
         self::temp_register_credentials($credential);
 
         $bridge = new Zoho_Form_Bridge([
+            'backend' => $backend,
             'credential' => $credential['name'],
             'backend' => $backend,
             'endpoint' => '/crm/v7',
-            'scope' => 'ZohoCRM.settings.ALL',
+            'scope' => '',
+            'method' => 'GET',
         ]);
 
-        return ['success' => $bridge->check_credential()];
+        $success = preg_match('/www\.zohoapis\./', $bridge->backend->base_url);
+        return ['success' => $success && $bridge->check_credential()];
     }
 
     /**
@@ -249,26 +244,31 @@ class Zoho_Addon extends Addon
      *
      * @param string $backend Target backend name.
      * @param string $endpoint Target endpoint name.
-     * @params WP_REST_Request $request Current REST request.
+     * @params array $credential Credential data.
      *
      * @return array Fetched records.
      */
-    protected function do_fetch($backend, $endpoint, $request)
+    protected function do_fetch($backend, $endpoint, $credential)
     {
-        [$credential] = self::validate_credentials(
-            [$request['credential']],
-            [$backend]
-        );
+        [$credential] = self::validate_credentials([$credential]);
+
         if (empty($credential)) {
-            return ['success' => false];
+            return [];
         }
 
         self::temp_register_credentials($credential);
 
+        if ($endpoint === '/crm/v7/users') {
+            $scope = 'ZohoCRM.users.READ';
+        } else {
+            $scope = 'ZohoCRM.modules.ALL';
+        }
+
         $bridge = new Zoho_Form_Bridge([
+            'backend' => $backend,
             'credential' => $credential['name'],
             'endpoint' => $endpoint,
-            'scope' => 'ZohoCRM.modules.ALL',
+            'scope' => $scope,
             'method' => 'GET',
         ]);
 
@@ -286,29 +286,29 @@ class Zoho_Addon extends Addon
      *
      * @param string $backend Target backend name.
      * @param string $endpoint Target endpoint name.
-     * @params WP_REST_Request $request Current REST request.
+     * @params array $credential Credential data.
      *
      * @return array List of fields and content type of the endpoint.
      */
-    protected function get_schema($backend, $endpoint, $request)
+    protected function get_schema($backend, $endpoint, $credential)
     {
-        [$credential] = self::validate_credentials(
-            [$request['credential']],
-            [$backend]
-        );
+        [$credential] = self::validate_credentials([$credential]);
+
         if (empty($credential)) {
-            return ['success' => false];
+            return [];
         }
 
         self::temp_register_credentials($credential);
 
         $bridge = new Zoho_Form_Bridge([
+            'backend' => $backend,
             'credential' => $credential['name'],
             'endpoint' => $endpoint,
             'scope' => 'ZohoCRM.settings.layouts.READ',
+            'method' => 'GET',
         ]);
 
-        return $bridge->api_fields;
+        return $bridge->api_schema;
     }
 
     private static function temp_register_credentials($data)

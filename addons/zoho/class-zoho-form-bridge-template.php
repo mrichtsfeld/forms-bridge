@@ -68,7 +68,13 @@ class Zoho_Form_Bridge_Template extends Form_Bridge_Template
                         'forms-bridge'
                     ),
                     'type' => 'string',
+                    'value' => 'ZohoCRM.modules.ALL',
                     'required' => true,
+                ],
+                [
+                    'ref' => '#backend',
+                    'name' => 'name',
+                    'default' => 'Zoho API',
                 ],
                 [
                     'ref' => '#backend',
@@ -109,6 +115,7 @@ class Zoho_Form_Bridge_Template extends Form_Bridge_Template
                         ],
                     ],
                     'default' => 'https://www.zohoapis.com',
+                    'required' => true,
                 ],
             ],
             'bridge' => [
