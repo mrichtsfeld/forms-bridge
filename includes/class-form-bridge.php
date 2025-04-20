@@ -328,7 +328,7 @@ abstract class Form_Bridge
      */
     final public static function filter_request($request)
     {
-        $request = self::do_filter_request($request);
+        $request = static::do_filter_request($request);
         $headers = &$request['args']['headers'];
 
         if (count(static::$api_headers) > 0) {

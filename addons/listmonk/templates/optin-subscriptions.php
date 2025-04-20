@@ -80,7 +80,7 @@ return [
         ],
     ],
     'form' => [
-        'title' => __('Subscriptions', 'forms-bridge'),
+        'title' => __('Opt-in subscriptions', 'forms-bridge'),
         'fields' => [
             [
                 'name' => 'your-email',

@@ -48,7 +48,7 @@ class Listmonk_Form_Bridge_Template extends Rest_Form_Bridge_Template
                     [
                         'ref' => '#backend/headers[]',
                         'name' => 'token',
-                        'label' => __('API user token', 'forms-bridge'),
+                        'label' => __('API token', 'forms-bridge'),
                         'description' => __(
                             'Token of the API user. The token will be shown only once on user creation time, be sure to copy its value and store it in a save place',
                             'forms-bridge'

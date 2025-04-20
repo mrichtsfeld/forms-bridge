@@ -23,7 +23,7 @@ class Brevo_Form_Bridge extends Rest_Form_Bridge
      *
      * @var array<string>
      */
-    public const api_headers = ['accept', 'content-type', 'api-key'];
+    protected static $api_headers = ['accept', 'content-type', 'api-key'];
 
     /**
      * Gets bridge's default body encoding schema.

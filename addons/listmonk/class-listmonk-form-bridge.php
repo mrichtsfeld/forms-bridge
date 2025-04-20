@@ -21,12 +21,11 @@ class Listmonk_Form_Bridge extends Rest_Form_Bridge
     protected $api = 'listmonk';
 
     /**
-     * Handles a custom http origin token to be unseted from headers
-     * before submits.
+     * Handles the array of accepted HTTP header names of the bridge API.
      *
      * @var array<string>
      */
-    public const api_headers = ['Accept', 'Content-Type', 'Authorization'];
+    protected static $api_headers = ['Accept', 'Content-Type', 'Authorization'];
 
     /**
      * Gets bridge's default body encoding schema.
@@ -48,13 +47,6 @@ class Listmonk_Form_Bridge extends Rest_Form_Bridge
      */
     protected function do_submit($payload, $attachments = [])
     {
-        add_filter(
-            'http_request_args',
-            '\FORMS_BRIDGE\Listmonk_Form_Bridge::filter_headers',
-            10,
-            1
-        );
-
         $response = parent::do_submit($payload, $attachments);
 
         if (is_wp_error($response)) {

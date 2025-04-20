@@ -89,7 +89,7 @@ export default function ListmonkTemplateWizard({
     if (!backend || !wired) return;
 
     customFields.includes("lists") && fetchLists(backend);
-  }, [backend, customFields]);
+  }, [wired, backend, customFields]);
 
   useEffect(
     () =>
