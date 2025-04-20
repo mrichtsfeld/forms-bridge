@@ -100,7 +100,7 @@ export default function FormStep({ fields, data, setData }) {
 
   const filteredFields = useMemo(() => {
     if (form) return [];
-    return sortedFields;
+    return sortedFields.filter((field) => field.name !== "id");
   }, [form, sortedFields]);
 
   return (

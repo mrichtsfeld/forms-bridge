@@ -232,9 +232,9 @@ abstract class Form_Bridge
     }
 
     /**
-     * Gets bridge's endpoint fields schema.
+     * Bridge's endpoint fields schema getter.
      *
-     * @return array<array>
+     * @return array
      */
     protected function api_schema()
     {
@@ -242,9 +242,9 @@ abstract class Form_Bridge
     }
 
     /**
-     * Gets bridge's backend credential data.
+     * Bridge's credential data getter.
      *
-     * @return array|null
+     * @return null
      */
     protected function credential()
     {
@@ -252,7 +252,7 @@ abstract class Form_Bridge
     }
 
     /**
-     * Gets bridge's workflow instnace.
+     * Gets bridge's workflow instance.
      *
      * @return Workflow_Job|null;
      */

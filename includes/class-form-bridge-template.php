@@ -374,6 +374,12 @@ class Form_Bridge_Template
                 'fields' => [
                     [
                         'ref' => '#form',
+                        'name' => 'id',
+                        'label' => __('Form ID', 'forms-bridge'),
+                        'type' => 'string',
+                    ],
+                    [
+                        'ref' => '#form',
                         'name' => 'title',
                         'label' => __('Form title', 'forms-bridge'),
                         'type' => 'string',
