@@ -6,7 +6,7 @@ import NewBiginBridge from "./NewBridge";
 const { TextControl, SelectControl } = wp.components;
 const { __ } = wp.i18n;
 
-export default function ZohoBridge({ data, update, remove }) {
+export default function BiginBridge({ data, update, remove }) {
   const [{ credentials }] = useBiginApi();
   const credentialOptions = [{ label: "", value: "" }].concat(
     credentials.map(({ name }) => ({
@@ -20,7 +20,7 @@ export default function ZohoBridge({ data, update, remove }) {
       data={data}
       update={update}
       remove={remove}
-      schema={["name", "form_id", "credential", "scope", "endpoint"]}
+      schema={["name", "form_id", "backend", "credential", "scope", "endpoint"]}
       template={({ add, schema }) => (
         <NewBiginBridge add={(data) => add(data)} schema={schema} />
       )}

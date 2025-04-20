@@ -36,6 +36,13 @@ class Zoho_Form_Bridge extends Form_Bridge
     private const token_transient = 'forms-bridge-zoho-oauth-access-token';
 
     /**
+     * Handles the zoho oauth service name.
+     *
+     * @var string
+     */
+    protected static $zoho_oauth_service = 'ZohoCRM';
+
+    /**
      * Parent getter interceptor to short circtuit credentials access.
      *
      * @param string $name Attribute name.
@@ -65,9 +72,9 @@ class Zoho_Form_Bridge extends Form_Bridge
     }
 
     /**
-     * Bridge's API key private getter.
+     * Bridge's credential data getter.
      *
-     * @return Zoho_Credentials|null
+     * @return array|null
      */
     protected function credential()
     {
@@ -79,6 +86,14 @@ class Zoho_Form_Bridge extends Form_Bridge
         }
     }
 
+    /**
+     * Compare two scope strings and return true if the first one is compatible with the second one.
+     *
+     * @param string $scope Zoho OAuth scope string.
+     * @param string $required Zoho OAuth scope string.
+     *
+     * @return boolean
+     */
     private function check_oauth_scope($scope, $required)
     {
         $scopes = array_filter(array_map('trim', explode(',', $scope)));
@@ -142,6 +157,10 @@ class Zoho_Form_Bridge extends Form_Bridge
     /**
      * Performs an authentication request to the zoho oauth server using
      * the bridge credentials.
+     *
+     * @param array|null $token Token to be refreshed, optional.
+     *
+     * @return string|null Access token.
      */
     protected function get_access_token($token = null)
     {
@@ -194,8 +213,8 @@ class Zoho_Form_Bridge extends Form_Bridge
 
         $credential = $this->credential();
 
-        $scope = $this->scope ?: 'ZohoCRM.modules.ALL';
-        $service = explode('.', $scope)[0] ?? 'ZohoCRM';
+        $scope = $this->scope ?: static::$zoho_oauth_service . '.modules.ALL';
+        $service = explode('.', $scope)[0] ?? static::$zoho_oauth_service;
 
         if (isset($refresh)) {
             $query = http_build_query([
@@ -301,7 +320,14 @@ class Zoho_Form_Bridge extends Form_Bridge
         return $response;
     }
 
-    protected function api_schema()
+    /**
+     * Bridge's endpoint fields schema getter.
+     *
+     * @param string|null $endpoint Layout metadata endpoint.
+     *
+     * @return array
+     */
+    protected function api_schema($endpoint = '/crm/v7/settings/layouts')
     {
         if (!preg_match('/\/([A-Z].+$)/', $this->endpoint, $matches)) {
             return [];
@@ -311,8 +337,8 @@ class Zoho_Form_Bridge extends Form_Bridge
 
         $response = $this->patch([
             'name' => 'zoho-api-schema-introspection',
-            'endpoint' => '/crm/v7/settings/layouts',
-            'scope' => 'ZohoCRM.settings.layouts.READ',
+            'endpoint' => $endpoint,
+            'scope' => static::$zoho_oauth_service . '.settings.layouts.READ',
             'method' => 'GET',
         ])->submit(['module' => $module]);
 
@@ -327,6 +353,8 @@ class Zoho_Form_Bridge extends Form_Bridge
                     $type = $field['json_type'];
                     if ($type === 'jsonobject') {
                         $type = 'object';
+                    } elseif ($type === 'jsonarray') {
+                        $type = 'array';
                     } elseif ($type === 'double') {
                         $type = 'number';
                     }

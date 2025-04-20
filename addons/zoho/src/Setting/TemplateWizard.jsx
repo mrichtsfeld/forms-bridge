@@ -28,7 +28,6 @@ const STEPS = [
 ];
 
 function validateBackend(data) {
-  console.log(data);
   if (!data?.name) return false;
   if (!validateUrl(data.base_url)) return false;
   if (!/www\.zohoapis\./.test(data.base_url)) return false;
@@ -94,16 +93,14 @@ export default function ZohoTemplateWizard({
   }).current;
 
   const fetchUsers = useRef(
-    debounce(
-      (backend, credential) =>
-        fetch(
-          "/crm/v7/users",
-          (data) => setUsers(data.users),
-          backend,
-          credential
-        ),
-      1e3
-    )
+    debounce((backend, credential) => {
+      fetch(
+        "/crm/v7/users",
+        (data) => setUsers(data.users),
+        backend,
+        credential
+      );
+    }, 1e3)
   ).current;
 
   useEffect(() => {

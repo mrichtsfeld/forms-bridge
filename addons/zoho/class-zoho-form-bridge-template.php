@@ -121,7 +121,7 @@ class Zoho_Form_Bridge_Template extends Form_Bridge_Template
             'bridge' => [
                 'backend' => 'Zoho API',
                 'endpoint' => '',
-                'scope' => '',
+                'scope' => 'ZohoCRM.modules.ALL',
                 'credential' => '',
             ],
             'credential' => [
@@ -129,6 +129,14 @@ class Zoho_Form_Bridge_Template extends Form_Bridge_Template
                 'organization_id' => '',
                 'client_id' => '',
                 'client_secret' => '',
+            ],
+            'backend' => [
+                'headers' => [
+                    [
+                        'name' => 'Accept',
+                        'value' => 'application/json',
+                    ],
+                ],
             ],
         ];
     }

@@ -15,9 +15,9 @@ return [
         [
             'ref' => '#bridge/custom_fields[]',
             'name' => 'Owner.id',
-            'label' => __('Owner ID', 'forms-bridge'),
+            'label' => __('Owner', 'forms-bridge'),
             'description' => __(
-                'ID of the owner user of the account',
+                'Email of the owner user of the account',
                 'forms-bridge'
             ),
             'type' => 'string',

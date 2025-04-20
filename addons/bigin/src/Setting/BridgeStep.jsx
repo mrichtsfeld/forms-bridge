@@ -4,7 +4,7 @@ const { useMemo, useEffect } = wp.element;
 
 const API_FIELDS = ["Owner.id"];
 
-export default function ZohoBridgeStep({ fields, data, setData }) {
+export default function BiginBridgeStep({ fields, data, setData }) {
   const users = useMemo(() => data._users || [], [data._users]);
 
   const userOptions = useMemo(

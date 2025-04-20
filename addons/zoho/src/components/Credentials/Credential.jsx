@@ -18,7 +18,7 @@ export default function Credential({ data, update, remove }) {
   );
 
   useEffect(() => {
-    if (name && !nameConflict) update({ ...data, name });
+    if (!nameConflict) update({ ...data, name });
   }, [name, nameConflict]);
 
   return (

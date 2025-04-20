@@ -31,6 +31,13 @@ class Zoho_Addon extends Addon
     protected static $api = 'zoho';
 
     /**
+     * Handles the zoho oauth service name.
+     *
+     * @var string
+     */
+    protected static $zoho_oauth_service = 'ZohoCRM';
+
+    /**
      * Handles the addon's custom bridge class.
      *
      * @var string
@@ -224,13 +231,13 @@ class Zoho_Addon extends Addon
             return ['success' => false];
         }
 
-        self::temp_register_credentials($credential);
+        static::temp_register_credentials($credential);
 
-        $bridge = new Zoho_Form_Bridge([
+        $bridge = new static::$bridge_class([
             'backend' => $backend,
             'credential' => $credential['name'],
             'backend' => $backend,
-            'endpoint' => '/crm/v7',
+            'endpoint' => '',
             'scope' => '',
             'method' => 'GET',
         ]);
@@ -256,15 +263,15 @@ class Zoho_Addon extends Addon
             return [];
         }
 
-        self::temp_register_credentials($credential);
+        static::temp_register_credentials($credential);
 
-        if ($endpoint === '/crm/v7/users') {
-            $scope = 'ZohoCRM.users.READ';
+        if (preg_match('/\/users$/', $endpoint)) {
+            $scope = static::$zoho_oauth_service . '.users.READ';
         } else {
-            $scope = 'ZohoCRM.modules.ALL';
+            $scope = static::$zoho_oauth_service . '.modules.ALL';
         }
 
-        $bridge = new Zoho_Form_Bridge([
+        $bridge = new static::$bridge_class([
             'backend' => $backend,
             'credential' => $credential['name'],
             'endpoint' => $endpoint,
@@ -298,13 +305,13 @@ class Zoho_Addon extends Addon
             return [];
         }
 
-        self::temp_register_credentials($credential);
+        static::temp_register_credentials($credential);
 
-        $bridge = new Zoho_Form_Bridge([
+        $bridge = new static::$bridge_class([
             'backend' => $backend,
             'credential' => $credential['name'],
             'endpoint' => $endpoint,
-            'scope' => 'ZohoCRM.settings.layouts.READ',
+            'scope' => static::$zoho_oauth_service . '.settings.layouts.READ',
             'method' => 'GET',
         ]);
 
@@ -316,7 +323,7 @@ class Zoho_Addon extends Addon
         add_filter(
             'wpct_setting_data',
             static function ($setting, $setting_name) use ($data) {
-                if ($setting_name === 'forms-bridge_zoho') {
+                if ($setting_name === 'forms-bridge_' . static::$api) {
                     foreach ($setting['credentials'] as $candidate) {
                         if ($candidate['name'] === $data['name']) {
                             $credential = $candidate;
