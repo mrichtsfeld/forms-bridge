@@ -8,7 +8,6 @@ import useCurrentApi from "../../hooks/useCurrentApi";
 import BackendStep from "./Steps/BackendStep";
 import FormStep from "./Steps/FormStep";
 import BridgeStep from "./Steps/BridgeStep";
-import { debounce } from "../../lib/utils";
 
 const { Button } = wp.components;
 const { useMemo, useState, useEffect, useRef } = wp.element;
@@ -259,6 +258,7 @@ export default function TemplateWizard({
   const canGoForward = isStepDone && (group === "backend" ? wired : true);
 
   if (!config || !config.fields.length) return;
+  if (data[group] === undefined) return;
 
   return (
     <div style={{ minWidth: "575px", minHeight: "125px" }}>
