@@ -45,13 +45,6 @@ class Brevo_Form_Bridge extends Rest_Form_Bridge
      */
     protected function do_submit($payload, $attachments = [])
     {
-        add_filter(
-            'http_request_args',
-            '\FORMS_BRIDGE\Brevo_Form_Bridge::filter_headers',
-            10,
-            1
-        );
-
         $response = parent::do_submit($payload, $attachments);
 
         if (is_wp_error($response)) {

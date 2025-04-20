@@ -67,26 +67,6 @@ export default function TemplateWizard({
   const [step, setStep] = useState(0);
 
   const fields = useMemo(() => config?.fields || [], [config]);
-  const defaults = useMemo(() => {
-    return fields.reduce((defaults, field) => {
-      if (field.default) {
-        const group = refToGroup(field.ref);
-        defaults[group] = defaults[group] || {};
-        defaults[group][field.name] = field.default;
-      } else if (field.type === "options" && field.required) {
-        const group = refToGroup(field.ref);
-        defaults[group] = defaults[group] || {};
-        defaults[group][field.name] = field.options[0]?.value;
-      }
-
-      return defaults;
-    }, {});
-  }, [fields]);
-
-  useEffect(() => {
-    setData(defaults);
-    setStep(0);
-  }, [defaults]);
 
   const groups = useMemo(() => {
     return fields.reduce((groups, field) => {
@@ -98,6 +78,31 @@ export default function TemplateWizard({
       };
     }, {});
   }, [fields]);
+
+  const defaults = useMemo(() => {
+    const template = Object.fromEntries(
+      Object.keys(groups).map((group) => [group, {}])
+    );
+
+    return fields.reduce((defaults, field) => {
+      if (field.default) {
+        const group = refToGroup(field.ref);
+        defaults[group] = defaults[group];
+        defaults[group][field.name] = field.default;
+      } else if (field.type === "options" && field.required) {
+        const group = refToGroup(field.ref);
+        defaults[group] = defaults[group] || {};
+        defaults[group][field.name] = field.options[0]?.value;
+      }
+
+      return defaults;
+    }, template);
+  }, [fields, groups]);
+
+  useEffect(() => {
+    setData(defaults);
+    setStep(0);
+  }, [defaults]);
 
   const isValid = useMemo(() => {
     return Object.keys(groups).reduce((isValid, group) => {
