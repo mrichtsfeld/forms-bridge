@@ -52,7 +52,7 @@ return [
         ],
         [
             'ref' => '#bridge',
-            'name' => 'endpoint',
+            'name' => 'model',
             'value' => 'mailing.contact',
         ],
         [
@@ -64,7 +64,7 @@ return [
         ],
     ],
     'bridge' => [
-        'endpoint' => 'mailing.contact',
+        'model' => 'mailing.contact',
         'workflow' => ['odoo-mailing-contact'],
         'mutations' => [
             [

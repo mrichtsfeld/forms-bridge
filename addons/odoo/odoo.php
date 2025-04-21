@@ -75,9 +75,9 @@ class Odoo_Addon extends Addon
                         'additionalProperties' => false,
                         'properties' => [
                             'credential' => ['type' => 'string'],
-                            'endpoint' => ['type' => 'string'],
+                            'model' => ['type' => 'string'],
                         ],
-                        'required' => ['credential', 'endpoint'],
+                        'required' => ['credential', 'model'],
                     ],
                 ],
             ]),
@@ -172,12 +172,12 @@ class Odoo_Addon extends Addon
                 $bridge['credential'] = '';
             }
 
-            $bridge['endpoint'] = $bridge['endpoint'] ?? '';
+            $bridge['model'] = $bridge['model'] ?? '';
 
             $bridge['is_valid'] =
                 $bridge['is_valid'] &&
                 !empty($bridge['credential']) &&
-                !empty($bridge['endpoint']);
+                !empty($bridge['model']);
 
             $validated[] = $bridge;
         }
@@ -205,7 +205,7 @@ class Odoo_Addon extends Addon
 
         $bridge = new Odoo_Form_Bridge([
             'method' => 'search',
-            'endpoint' => 'res.users',
+            'model' => 'res.users',
             'credential' => $credential['name'],
             'backend' => $backend,
         ]);
@@ -215,7 +215,7 @@ class Odoo_Addon extends Addon
     }
 
     /**
-     * Performs a GET request against the backend endpoint and retrive the response data.
+     * Performs a GET request against the backend model and retrive the response data.
      *
      * @param string $backend Target backend name.
      * @param string $model Target model name.
@@ -235,7 +235,7 @@ class Odoo_Addon extends Addon
 
         $bridge = new Odoo_Form_Bridge([
             'method' => 'search_read',
-            'endpoint' => $model,
+            'model' => $model,
             'backend' => $backend,
             'credential' => $credential['name'],
         ]);
@@ -249,14 +249,14 @@ class Odoo_Addon extends Addon
     }
 
     /**
-     * Performs an introspection of the backend endpoint and returns API fields
+     * Performs an introspection of the backend model and returns API fields
      * and accepted content type.
      *
      * @param string $backend Target backend name.
      * @param string $model Target model name.
      * @params array $credential Credential data.
      *
-     * @return array List of fields and content type of the endpoint.
+     * @return array List of fields and content type of the model.
      */
     protected function get_schema($backend, $model, $credential)
     {
@@ -270,7 +270,7 @@ class Odoo_Addon extends Addon
 
         $bridge = new Odoo_Form_Bridge([
             'method' => 'get_fields',
-            'endpoint' => $model,
+            'model' => $model,
             'backend' => $backend,
             'credential' => $credential['name'],
         ]);

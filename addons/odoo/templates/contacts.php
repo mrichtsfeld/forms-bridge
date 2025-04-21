@@ -16,12 +16,12 @@ return [
         ],
         [
             'ref' => '#bridge',
-            'name' => 'endpoint',
+            'name' => 'model',
             'value' => 'res.partner',
         ],
     ],
     'bridge' => [
-        'endpoint' => 'res.partner',
+        'model' => 'res.partner',
         'custom_fields' => [
             [
                 'name' => 'is_company',

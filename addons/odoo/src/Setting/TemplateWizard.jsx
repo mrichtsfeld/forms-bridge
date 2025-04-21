@@ -87,11 +87,11 @@ export default function OdooTemplateWizard({
     }
   }, [data.backend, backends]);
 
-  const fetch = useRef((endpoint, then, credential, backend) => {
+  const fetch = useRef((model, then, credential, backend) => {
     apiFetch({
       path: `forms-bridge/v1/odoo/fetch`,
       method: "POST",
-      data: { backend, credential, endpoint },
+      data: { backend, credential, endpoint: model },
     })
       .then(then)
       .catch(() => then([]));
