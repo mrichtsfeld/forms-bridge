@@ -6,14 +6,12 @@ const { useState } = wp.element;
 const STEPS = [
   {
     name: "spreadsheet",
-    step: ({ fields, data, setData }) => (
-      <SpreadsheetStep fields={fields} data={data} setData={setData} />
-    ),
+    component: SpreadsheetStep,
     order: 0,
   },
   {
     name: "backend",
-    step: null,
+    component: null,
     order: 5,
   },
 ];

@@ -15,7 +15,7 @@ export default function Addon() {
   const [root, setRoot] = useState(null);
 
   const onShowApi = useRef((api) => {
-    if (api === "google-sheets") {
+    if (api === "gsheets") {
       setRoot(document.getElementById(api).querySelector(".root"));
     } else {
       setRoot(null);
@@ -32,14 +32,14 @@ export default function Addon() {
 
   useEffect(() => {
     if (!root) return;
-    const img = document.querySelector("#google-sheets .addon-logo");
+    const img = document.querySelector("#gsheets .addon-logo");
     if (!img) return;
     img.setAttribute("src", "data:image/png;base64," + logo);
     img.style.width = "21px";
   }, [root]);
 
   return (
-    <SettingsProvider handle={["google-sheets"]}>
+    <SettingsProvider handle={["gsheets"]}>
       <FormsProvider>
         <SpreadsheetsProvider>
           <TemplatesProvider>

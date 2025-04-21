@@ -270,7 +270,7 @@ abstract class Form_Bridge
      *
      * @return array|WP_Error Http request response.
      */
-    public function submit($payload, $attachments = [])
+    public function submit($payload = [], $attachments = [])
     {
         do_action(
             'forms_bridge_before_bridge_submit',

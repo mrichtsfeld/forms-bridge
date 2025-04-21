@@ -16,7 +16,11 @@ export default function DropdownSelect({
       placement="bottom-start"
     >
       <div
-        style={{ position: "relative", paddingTop: "2.6em", height: "300px" }}
+        style={{
+          position: "relative",
+          paddingTop: "2.6em",
+          maxHeight: "350px",
+        }}
       >
         <label
           for="bridge-tags-list"

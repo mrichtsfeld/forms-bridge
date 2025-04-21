@@ -33,8 +33,23 @@ class Google_Sheets_Addon extends Addon
      *
      * @var string
      */
-    protected static $api = 'google-sheets';
+    protected static $api = 'gsheets';
 
+    /**
+     * Google Sheets API static data. Works as a placeholder to fit into the common bridge schema.
+     *
+     * @var array
+     */
+    public static $static_backend = [
+        'name' => 'Google Sheets gRPC',
+        'base_url' => 'https://sheets.googleapis.com/v4/spreadsheets',
+        'headers' => [
+            [
+                'name' => 'Content-Type',
+                'value' => 'application/grpc+proto',
+            ],
+        ],
+    ];
     /**
      * Handles the addom's custom bridge class.
      *
@@ -56,20 +71,75 @@ class Google_Sheets_Addon extends Addon
     protected function construct(...$args)
     {
         parent::construct(...$args);
-
+        self::register_api();
         self::setting_hooks();
+    }
 
-        // Discard attachments for google sheets submissions
+    private static function register_api()
+    {
         add_filter(
-            'forms_bridge_attachments',
-            static function ($attachments, $bridge) {
-                if ($bridge->api === self::$api) {
-                    return [];
+            'option_http-bridge_general',
+            static function ($value) {
+                if (!is_array($value)) {
+                    return $value;
                 }
 
-                return $attachments;
+                $index = array_search(
+                    self::$static_backend['name'],
+                    array_column($value['backends'], 'name')
+                );
+
+                if ($index === false) {
+                    $value['backends'][] = self::$static_backend;
+                }
+
+                return $value;
             },
-            90,
+            5,
+            1
+        );
+
+        add_filter(
+            'wpct_setting_default',
+            static function ($data, $name) {
+                if ($name !== 'http-bridge_general') {
+                    return $data;
+                }
+
+                $index = array_search(
+                    self::$static_backend['name'],
+                    array_column($data['backends'], 'name')
+                );
+
+                if ($index === false) {
+                    $data['backends'][] = self::$static_backend;
+                }
+
+                return $data;
+            },
+            9,
+            2
+        );
+
+        add_filter(
+            'wpct_validate_setting',
+            static function ($data, $name) {
+                if ($name !== 'http-bridge_general') {
+                    return $data;
+                }
+
+                $index = array_search(
+                    self::$static_backend['name'],
+                    array_column($data['backends'], 'name')
+                );
+
+                if ($index !== false) {
+                    array_splice($data['backends'], $index, 1);
+                }
+
+                return $data;
+            },
+            5,
             2
         );
     }
@@ -142,8 +212,9 @@ class Google_Sheets_Addon extends Addon
                         'properties' => [
                             'spreadsheet' => ['type' => 'string'],
                             'tab' => ['type' => 'string'],
+                            'endpoint' => ['type' => 'string'],
                         ],
-                        'required' => ['spreadsheet', 'tab'],
+                        'required' => ['endpoint', 'spreadsheet', 'tab'],
                     ],
                 ],
             ]),
@@ -192,6 +263,8 @@ class Google_Sheets_Addon extends Addon
 
             $bridge['spreadsheet'] = $bridge['spreadsheet'] ?? '';
             $bridge['tab'] = $bridge['tab'] ?? '';
+            $bridge['endpoint'] =
+                $bridge['spreadsheet'] . '::' . $bridge['tab'];
 
             $bridge['is_valid'] =
                 $bridge['is_valid'] &&
@@ -222,13 +295,28 @@ class Google_Sheets_Addon extends Addon
      *
      * @param string $backend Target backend name.
      * @param string $endpoint Target endpoint name.
-     * @params WP_REST_Request $request Current REST request.
+     * @params null $credential Credential data, ignored.
      *
      * @return array Fetched records.
      */
-    protected function do_fetch($backend, $endpoint, $request)
+    protected function do_fetch($backend, $endpoint, $credential)
     {
-        return [];
+        [$spreadsheet, $tab] = explode('::', $endpoint);
+
+        $bridge = new Google_Sheets_Form_Bridge([
+            'name' => '__gs-' . time(),
+            'endpoint' => $endpoint,
+            'spreadsheet' => $spreadsheet,
+            'tab' => $tab,
+            'method' => 'read',
+        ]);
+
+        $response = $bridge->submit();
+        if (is_wp_error($response)) {
+            return [];
+        }
+
+        return $response['data'];
     }
 
     /**
@@ -236,22 +324,23 @@ class Google_Sheets_Addon extends Addon
      * and accepted content type.
      *
      * @param string $backend Target backend name.
-     * @param string $endpoint Target endpoint name.
-     * @params WP_REST_Request $request Current REST request.
+     * @param string $endpoint Concatenation of spreadsheet ID and tab name.
+     * @params null $credential Credential data, ignored.
      *
      * @return array List of fields and content type of the endpoint.
      */
-    protected function get_schema($backend, $endpoint, $request)
+    protected function get_schema($backend, $endpoint, $credential)
     {
-        $credentials = $request['credentials'];
+        [$spreadsheet, $tab] = explode('::', $endpoint);
 
         $bridge = new Google_Sheets_Form_Bridge([
             'name' => '__gs-' . time(),
-            'spreadsheet' => $credentials['spreadsheet'],
-            'tab' => $credentials['tab'],
+            'endpoint' => $endpoint,
+            'spreadsheet' => $spreadsheet,
+            'tab' => $tab,
         ]);
 
-        return $bridge->api_fields;
+        return $bridge->api_schema;
     }
 }
 

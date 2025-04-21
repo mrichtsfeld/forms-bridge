@@ -16,10 +16,6 @@ export default function ApiSchemaProvider({ children, bridge, credentials }) {
   const [schema, setSchema] = useState(null);
   const [invalid, invalidate] = useState(true);
 
-  if (error) {
-    setSchema(null);
-  }
-
   const lastBridge = useRef(bridge.name);
   useEffect(() => {
     setError(false);
@@ -48,7 +44,10 @@ export default function ApiSchemaProvider({ children, bridge, credentials }) {
         setSchema(schema);
         invalidate(false);
       })
-      .catch(() => setError(true))
+      .catch((err) => {
+        setSchema(null);
+        setError(true);
+      })
       .finally(() => setLoading(false));
   }).current;
 
@@ -63,9 +62,19 @@ export default function ApiSchemaProvider({ children, bridge, credentials }) {
   );
 
   const value = useMemo(() => {
+    if (error) return null;
     if (!loading && invalid) fetch(api, bridge?.endpoint, backend, credential);
     return schema;
-  }, [api, loading, invalid, schema, bridge.endpoint, backend, credential]);
+  }, [
+    api,
+    error,
+    loading,
+    invalid,
+    schema,
+    bridge?.endpoint,
+    backend,
+    credential,
+  ]);
 
   return (
     <ApiSchemaContext.Provider value={value}>

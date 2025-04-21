@@ -13,7 +13,7 @@ class Google_Sheets_Form_Bridge_Template extends Form_Bridge_Template
      *
      * @var string
      */
-    protected $api = 'google-sheets';
+    protected $api = 'gsheets';
 
     /**
      * Template default config getter.
@@ -38,8 +38,21 @@ class Google_Sheets_Form_Bridge_Template extends Form_Bridge_Template
                     'type' => 'string',
                     'required' => true,
                 ],
+                [
+                    'ref' => '#backend',
+                    'name' => 'name',
+                    'value' => Google_Sheets_Addon::$static_backend['name'],
+                ],
+                [
+                    'ref' => '#backend',
+                    'name' => 'base_url',
+                    'value' => Google_Sheets_Addon::$static_backend['base_url'],
+                ],
             ],
+            'backend' => Google_Sheets_Addon::$static_backend,
             'bridge' => [
+                'backend' => Google_Sheets_Addon::$static_backend['name'],
+                'endpoint' => '',
                 'spreadsheet' => '',
                 'tab' => '',
             ],
@@ -67,11 +80,15 @@ class Google_Sheets_Form_Bridge_Template extends Form_Bridge_Template
                 if ($template_name === $this->name) {
                     $data['bridge']['spreadsheet'] = $data['spreadsheet']['id'];
                     $data['bridge']['tab'] = $data['spreadsheet']['tab'];
+                    $data['bridge']['endpoint'] =
+                        $data['spreadsheet']['id'] .
+                        '::' .
+                        $data['spreadsheet']['tab'];
                 }
 
                 return $data;
             },
-            10,
+            9,
             2
         );
     }
@@ -85,16 +102,14 @@ class Google_Sheets_Form_Bridge_Template extends Form_Bridge_Template
      */
     protected static function extend_schema($schema)
     {
-        $schema['bridge']['properties'] = array_merge(
-            $schema['bridge']['properties'],
-            [
-                'spreadsheet' => ['type' => 'string'],
-                'tab' => ['type' => 'string'],
-            ]
-        );
-
+        $schema['bridge']['properties']['spreadsheet'] = ['type' => 'string'];
         $schema['bridge']['required'][] = 'spreadsheet';
+
+        $schema['bridge']['properties']['tab'] = ['type' => 'string'];
         $schema['bridge']['required'][] = 'tab';
+
+        $schema['bridge']['properties']['endpoint'] = ['type' => 'string'];
+        $schema['bridge']['required'][] = 'endpoint';
 
         $schema['spreadsheet'] = [
             'type' => 'object',

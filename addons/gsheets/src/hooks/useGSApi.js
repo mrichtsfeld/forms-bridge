@@ -4,7 +4,7 @@ import { useApis } from "../../../../src/providers/Settings";
 export default function useGSApi() {
   const [
     {
-      "google-sheets": api = {
+      gsheets: api = {
         authorized: false,
         bridges: [],
         templates: [],
@@ -14,7 +14,7 @@ export default function useGSApi() {
     patch,
   ] = useApis();
 
-  const setApi = (data) => patch({ "google-sheets": data });
+  const setApi = (data) => patch({ gsheets: data });
 
   return [api, setApi];
 }

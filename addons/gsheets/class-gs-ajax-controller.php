@@ -31,7 +31,7 @@ class Google_Sheets_Ajax_Controller extends Singleton
 
     private static function localize_script()
     {
-        wp_localize_script('forms-bridge-google-sheets', 'formsBridgeGSAjax', [
+        wp_localize_script('forms-bridge-gsheets', 'formsBridgeGSAjax', [
             'ajax_url' => admin_url('admin-ajax.php'),
             'nonce' => wp_create_nonce(self::nonce),
             'action' => self::action,

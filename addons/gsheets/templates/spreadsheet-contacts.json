@@ -1,16 +1,15 @@
 {
-  "title": "Google Sheet Contacts",
+  "title": "Contacts",
+  "description": "Simple contact form connected to a spreadsheet",
   "fields": [
     {
       "ref": "#form",
       "name": "title",
-      "label": "Title",
-      "type": "string",
-      "required": true,
       "default": "Contacts"
     }
   ],
   "form": {
+    "title": "Contacts",
     "fields": [
       {
         "name": "email",

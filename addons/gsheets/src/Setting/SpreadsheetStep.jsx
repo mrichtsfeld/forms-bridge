@@ -6,7 +6,7 @@ const { SelectControl } = wp.components;
 const { useMemo } = wp.element;
 const { __ } = wp.i18n;
 
-export default function DatabaseStep({ fields, data, setData }) {
+export default function SpreadsheetStep({ fields, data, setData }) {
   const spreadsheets = useSpreadsheets();
 
   const sheetOptions = [{ label: "", value: "" }].concat(
@@ -20,7 +20,7 @@ export default function DatabaseStep({ fields, data, setData }) {
 
   return (
     <TemplateStep
-      name={__("Database", "forms-bridge")}
+      name={__("Spreadsheet", "forms-bridge")}
       description={__(
         "Select the spreadsheet do you want to use as backend",
         "forms-bridge"

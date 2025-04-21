@@ -1,5 +1,5 @@
 {
-  "name": "forms-bridge-gs-addon",
+  "name": "forms-bridge-gsheets-addon",
   "version": "0.0.1",
   "scripts": {
     "start": "npm run dev",

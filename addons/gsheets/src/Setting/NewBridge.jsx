@@ -39,7 +39,7 @@ export default function NewGSBridge({ add, schema }) {
           </div>
           <div style={{ flex: 1, minWidth: "150px", maxWidth: "250px" }}>
             <TextControl
-              label={__("Tab Name", "forms-bridge")}
+              label={__("Tab name", "forms-bridge")}
               value={data.tab || ""}
               onChange={(tab) => update({ ...data, tab })}
               __nextHasNoMarginBottom
