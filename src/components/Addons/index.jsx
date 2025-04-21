@@ -7,6 +7,7 @@ import brevoLogo from "../../../addons/brevo/assets/logo.png";
 import dolibarrLogo from "../../../addons/dolibarr/assets/logo.png";
 import financoopLogo from "../../../addons/financoop/assets/logo.png";
 import googleSheetsLogo from "../../../addons/gsheets/assets/logo.png";
+import holdedLogo from "../../../addons/holded/assets/logo.png";
 import listmonkLogo from "../../../addons/listmonk/assets/logo.png";
 import mailchimpLogo from "../../../addons/mailchimp/assets/logo.png";
 import odooLogo from "../../../addons/odoo/assets/logo.png";
@@ -19,6 +20,7 @@ const LOGOS = {
   "dolibarr": dolibarrLogo,
   "financoop": financoopLogo,
   "gsheets": googleSheetsLogo,
+  "holded": holdedLogo,
   "listmonk": listmonkLogo,
   "mailchimp": mailchimpLogo,
   "odoo": odooLogo,

@@ -4,17 +4,17 @@ if (!defined('ABSPATH')) {
     exit();
 }
 
-function forms_bridge_odoo_vat_id($payload)
+function forms_bridge_holded_prefix_vatnumber($payload)
 {
     global $forms_bridge_iso2_countries;
 
     $prefixed = preg_match(
         '/^[A-Z]{2}/',
-        strtoupper($payload['vat']),
+        strtoupper($payload['vatnumber']),
         $matches
     );
 
-    $country_code = strtoupper($payload['country_code'] ?? '');
+    $country_code = strtoupper($payload['countryCode'] ?? '');
 
     if ($prefixed) {
         $vat_prefix = $matches[0];
@@ -31,7 +31,7 @@ function forms_bridge_odoo_vat_id($payload)
         ) {
             return new WP_Error(
                 'invalid_country_code',
-                __('The vat ID prefix is invalid', 'forms-bridge')
+                __('The vatnumber prefix is invalid', 'forms-bridge')
             );
         }
 
@@ -40,38 +40,38 @@ function forms_bridge_odoo_vat_id($payload)
     }
 
     if (!$prefixed) {
-        $payload['vat'] = $vat_prefix . $payload['vat'];
+        $payload['vatnumber'] = $vat_prefix . $payload['vatnumber'];
     }
 
     return $payload;
 }
 
 return [
-    'title' => __('Prefixed vat ID', 'forms-bridge'),
+    'title' => __('Vatnumber prefix', 'forms-bridge'),
     'description' => __(
         'Prefix the vat with country code, or the current locale, if it isn\'t prefixed',
         'forms-bridge'
     ),
-    'method' => 'forms_bridge_odoo_vat_id',
+    'method' => 'forms_bridge_holded_prefix_vatnumber',
     'input' => [
         [
-            'name' => 'vat',
+            'name' => 'vatnumber',
             'schema' => ['type' => 'string'],
             'required' => true,
         ],
         [
-            'name' => 'country_code',
+            'name' => 'countryCode',
             'schema' => ['type' => 'string'],
         ],
     ],
     'output' => [
         [
-            'name' => 'vat',
+            'name' => 'vatnumber',
             'schema' => ['type' => 'string'],
             'touch' => true,
         ],
         [
-            'name' => 'country_code',
+            'name' => 'countryCode',
             'schema' => ['type' => 'string'],
             'forward' => true,
         ],

@@ -60,8 +60,12 @@ export default function BackendStep({ fields, data, setData, wired }) {
     );
   }, [validBackends]);
 
-  const previousReuse = useRef(data.name || "");
-  const [reuse, setReuse] = useState(data.name || "");
+  const previousReuse = useRef(
+    backendOptions.find(({ value }) => value === data.name)?.value || ""
+  );
+  const [reuse, setReuse] = useState(() => {
+    return backendOptions.find(({ value }) => value === data.name)?.value || "";
+  });
 
   const [name, setName] = useState(data.name || "");
   const nameConflict = useMemo(
@@ -124,6 +128,7 @@ export default function BackendStep({ fields, data, setData, wired }) {
     status = "⏳";
   }
 
+  console.log(reuse, fields);
   return (
     <TemplateStep
       name={__("Backend", "forms-bridge")}

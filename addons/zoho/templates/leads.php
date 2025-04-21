@@ -16,20 +16,20 @@ add_filter(
             if ($index !== false) {
                 $field = &$data['bridge']['custom_fields'][$index];
 
-                $tags = array_filter(
-                    array_map('trim', explode(',', strval($field['value'])))
-                );
-                for ($i = 0; $i < count($tags); $i++) {
-                    $data['bridge']['custom_fields'][] = [
-                        'name' => "Tag[{$i}].name",
-                        'value' => $tags[$i],
-                    ];
+                if (!empty($field['value'])) {
+                    $tags = array_filter(
+                        array_map('trim', explode(',', strval($field['value'])))
+                    );
+
+                    for ($i = 0; $i < count($tags); $i++) {
+                        $data['bridge']['custom_fields'][] = [
+                            'name' => "Tag[{$i}].name",
+                            'value' => $tags[$i],
+                        ];
+                    }
                 }
 
                 array_splice($data['bridge']['custom_fields'], $index, 1);
-                $data['bridge']['custom_fields'] = array_values(
-                    $data['bridge']['custom_fields']
-                );
             }
         }
 
