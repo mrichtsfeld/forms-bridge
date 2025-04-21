@@ -135,6 +135,7 @@ class Form_Bridge_Template
                                 'label' => ['type' => 'string'],
                                 'value' => ['type' => 'string'],
                             ],
+                            'required' => ['value', 'label'],
                         ],
                         'uniqueItems' => true,
                     ],
@@ -278,6 +279,7 @@ class Form_Bridge_Template
                                         ],
                                         'label' => ['type' => 'string'],
                                     ],
+                                    'required' => ['value', 'label'],
                                 ],
                             ],
                             'value' => [

@@ -49,7 +49,12 @@ export default function BrevoTemplateWizard({
     if (data.backend.name && data.backend["api-key"]) {
       return {
         name: data.backend.name,
-        headers: [{ name: "api-key", value: data.backend["api-key"] }],
+        base_url: "https://api.brevo.com",
+        headers: [
+          { name: "content-type", value: "application/json" },
+          { name: "accept", value: "application/json" },
+          { name: "api-key", value: data.backend["api-key"] },
+        ],
       };
     }
   }, [data.backend, backends]);

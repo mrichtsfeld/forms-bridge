@@ -1,7 +1,6 @@
 import BridgeStep from "../../../../src/components/Templates/Steps/BridgeStep";
 
 const { useMemo, useEffect } = wp.element;
-const { __ } = wp.i18n;
 
 const API_FIELDS = [
   "listIds",
@@ -18,41 +17,33 @@ export default function BrevoBridgeStep({ fields, data, setData }) {
   const products = useMemo(() => data._products || [], [data._products]);
   const templates = useMemo(() => data._templates || [], [data._templates]);
 
-  const listOptions = useMemo(
-    () =>
-      lists.map(({ id, name }) => ({
-        value: id,
-        label: name,
-      })),
-    [lists]
-  );
+  const listOptions = useMemo(() => {
+    return lists.map(({ id, name }) => ({
+      value: id,
+      label: name,
+    }));
+  }, [lists]);
 
-  const productOptions = useMemo(
-    () =>
-      products.map(({ id, name }) => ({
-        value: id,
-        label: name,
-      })),
-    [products]
-  );
+  const productOptions = useMemo(() => {
+    return products.map(({ id, name }) => ({
+      value: id,
+      label: name,
+    }));
+  }, [products]);
 
-  const templateOptions = useMemo(
-    () =>
-      templates.map(({ id, name }) => ({
-        value: id,
-        label: name,
-      })),
-    [templates]
-  );
+  const templateOptions = useMemo(() => {
+    return templates.map(({ id, name }) => ({
+      value: id,
+      label: name,
+    }));
+  }, [templates]);
 
-  const pipelineOptions = useMemo(
-    () =>
-      pipelines.map(({ pipeline, pipeline_name }) => ({
-        value: pipeline,
-        label: pipeline_name,
-      })),
-    [pipelines]
-  );
+  const pipelineOptions = useMemo(() => {
+    return pipelines.map(({ pipeline, pipeline_name }) => ({
+      value: pipeline,
+      label: pipeline_name,
+    }));
+  }, [pipelines]);
 
   const standardFields = useMemo(
     () => fields.filter(({ name }) => !API_FIELDS.includes(name)),

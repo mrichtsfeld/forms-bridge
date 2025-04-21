@@ -63,7 +63,6 @@ export default function ApiSchemaProvider({ children, bridge, credentials }) {
   );
 
   const value = useMemo(() => {
-    console.log({ loading, invalid });
     if (!loading && invalid) fetch(api, bridge?.endpoint, backend, credential);
     return schema;
   }, [api, loading, invalid, schema, bridge.endpoint, backend, credential]);

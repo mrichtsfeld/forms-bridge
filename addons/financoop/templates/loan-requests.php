@@ -1,5 +1,8 @@
 <?php
 
+use FORMS_BRIDGE\Addon;
+use FORMS_BRIDGE\Form_Bridge_Template_Exception;
+
 if (!defined('ABSPATH')) {
     exit();
 }
@@ -7,25 +10,27 @@ if (!defined('ABSPATH')) {
 add_filter(
     'forms_bridge_template_data',
     function ($data, $template_name) {
-        if ($template_name !== 'financoop-loan-request') {
+        if ($template_name !== 'financoop-loan-requests') {
             return $data;
         }
 
-        $index = array_search(
-            'campaign_id',
-            array_column($data['bridge']['custom_fields'], 'name')
+        $endpoint = implode(
+            '/',
+            array_slice(explode('/', $data['bridge']['endpoint']), 0, 4)
+        );
+        $campaign = Addon::fetch(
+            'financoop',
+            $data['backend'],
+            $endpoint,
+            null
         );
 
-        $campaign_id = $data['bridge']['campaign_id'];
-        $backend_params = $data['backend'];
-
-        $campaign = \FORMS_BRIDGE\Finan_Coop_Addon::fetch_campaign(
-            $campaign_id,
-            $backend_params
-        );
-
-        if (is_wp_error($campaign)) {
-            return;
+        if (empty($campaign)) {
+            throw new Form_Bridge_Template_Exception(
+                'financoop_api_error',
+                __('Can\'t fetch campaign data', 'forms-bridge'),
+                ['status' => 500]
+            );
         }
 
         $loan_index = array_search(
@@ -35,12 +40,14 @@ add_filter(
 
         $loan_field = &$data['form']['fields'][$loan_index];
 
-        if (!empty(($min = $campaign['minimal_loan_amount']))) {
+        $min = $campaign['minimal_loan_amount'];
+        if (!empty($min)) {
             $loan_field['min'] = $min;
             $loan_field['default'] = $min;
         }
 
-        if (!empty(($max = $campaign['maximal_loan_amount']))) {
+        $max = $campaign['maximal_loan_amount'];
+        if (!empty($max)) {
             $loan_field['max'] = $max;
         }
 
@@ -76,22 +83,21 @@ return [
                     'cast' => 'integer',
                 ],
             ],
-            [],
-            [],
             [
                 [
-                    'from' => 'locale',
-                    'to' => 'lang',
-                    'cast' => 'string',
+                    'from' => 'country',
+                    'to' => 'country',
+                    'cast' => 'null',
                 ],
             ],
         ],
-        'workflow' => [
-            'forms-bridge-country-code',
-            'financoop-vat-id',
-            'forms-bridge-current-locale',
-            'financoop-campaign-id',
+        'custom_fields' => [
+            [
+                'name' => 'lang',
+                'value' => '$locale',
+            ],
         ],
+        'workflow' => ['forms-bridge-iso2-country-code', 'financoop-vat-id'],
     ],
     'form' => [
         'fields' => [

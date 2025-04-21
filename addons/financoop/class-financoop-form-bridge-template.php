@@ -31,7 +31,7 @@ class Finan_Coop_Form_Bridge_Template extends Rest_Form_Bridge_Template
                         'value' => 'POST',
                     ],
                     [
-                        'ref' => '#bridge/custom_fields',
+                        'ref' => '#bridge/custom_fields[]',
                         'name' => 'campaign_id',
                         'label' => __('Campaign ID', 'forms-bridge'),
                         'type' => 'number',
@@ -105,6 +105,7 @@ class Finan_Coop_Form_Bridge_Template extends Rest_Form_Bridge_Template
                     if ($index !== false) {
                         $campaign_id =
                             $data['bridge']['custom_fields'][$index]['value'];
+
                         $data['bridge']['endpoint'] = preg_replace(
                             '/\{campaign_id\}/',
                             $campaign_id,
