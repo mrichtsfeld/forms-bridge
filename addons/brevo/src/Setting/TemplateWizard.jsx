@@ -33,6 +33,13 @@ export default function BrevoTemplateWizard({
 
   const [data, setData] = useState({});
 
+  if (data.backend && data.backend.base_url !== "https://api.brevo.com") {
+    setData({
+      ...data,
+      backend: { ...data.backend, base_url: "https://api.brevo.com" },
+    });
+  }
+
   const [lists, setLists] = useState([]);
   const [products, setProducts] = useState([]);
   const [pipelines, setPipelines] = useState([]);
