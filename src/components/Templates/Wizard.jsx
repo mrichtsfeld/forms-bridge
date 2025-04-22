@@ -269,6 +269,7 @@ export default function TemplateWizard({
     <div style={{ minWidth: "575px", minHeight: "125px" }}>
       <hr style={{ margin: "1rem 0" }} />
       <StepComponent
+        integration={integration}
         fields={groups[group] || []}
         data={data[group] || {}}
         setData={patchData}

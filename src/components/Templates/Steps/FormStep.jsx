@@ -10,7 +10,11 @@ const { SelectControl } = wp.components;
 
 const fieldsOrder = ["title"];
 
-function validateForm(form, schema, fields) {
+function validateForm(form, schema, fields, integration) {
+  if (form._id.indexOf(integration) !== 0) {
+    return false;
+  }
+
   const isValid = fields
     .filter((field) => field.ref === "#form/fields[]")
     .reduce((isValid, { name, required }) => {
@@ -39,13 +43,14 @@ function validateForm(form, schema, fields) {
   }, isValid);
 }
 
-export default function FormStep({ fields, data, setData }) {
+export default function FormStep({ fields, data, setData, integration }) {
   const { form: schema } = useTemplateConfig();
   const forms = useForms();
 
   const validForms = useMemo(
-    () => forms.filter((form) => validateForm(form, schema, fields)),
-    [forms]
+    () =>
+      forms.filter((form) => validateForm(form, schema, fields, integration)),
+    [forms, integration]
   );
 
   const formOptions = useMemo(() => {
@@ -59,6 +64,10 @@ export default function FormStep({ fields, data, setData }) {
 
   const [formId, setFormId] = useState("");
   const previousFormId = useRef("");
+
+  useEffect(() => {
+    setFormId("");
+  }, [integration]);
 
   useEffect(() => {
     if (formId !== previousFormId.current) {
