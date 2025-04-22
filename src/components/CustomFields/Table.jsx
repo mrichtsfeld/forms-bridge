@@ -1,8 +1,9 @@
 import JsonFinger from "../../lib/JsonFinger";
 import { useApiFields } from "../../providers/ApiSchema";
+import DropdownSelect from "../DropdownSelect";
 
-const { BaseControl, TextControl, Button, Popover } = wp.components;
-const { useEffect, useState, useRef } = wp.element;
+const { BaseControl, TextControl, Button } = wp.components;
+const { useEffect, useState, useRef, useMemo } = wp.element;
 const { __ } = wp.i18n;
 
 const tagOptions = [
@@ -151,6 +152,7 @@ function useInputStyle(name = "") {
     fontSize: "13px",
     borderRadius: "2px",
     width: "100%",
+    display: "block",
   };
 
   if (name.length && !JsonFinger.validate(name, "set")) {
@@ -163,7 +165,15 @@ function useInputStyle(name = "") {
 export default function CustomFieldsTable({ customFields, setCustomFields }) {
   const apiFields = useApiFields();
 
+  const fieldOptions = useMemo(() => {
+    return apiFields.map((field) => ({
+      value: field.name,
+      label: `${field.name} | ${field.schema.type}`,
+    }));
+  }, [apiFields]);
+
   const tableWrapper = useRef();
+  const [fieldSelector, setFieldSelector] = useState(-1);
   const [tagSelector, setTagSelector] = useState(-1);
 
   const setCustomField = (attr, index, value) => {
@@ -220,11 +230,6 @@ export default function CustomFieldsTable({ customFields, setCustomFields }) {
   return (
     <>
       <div ref={tableWrapper} className="scrollbar-hide" style={{ flex: 1 }}>
-        <datalist id="api-fields-list">
-          {apiFields.map((field) => (
-            <option value={field}></option>
-          ))}
-        </datalist>
         <table
           style={{
             width: "calc(100% + 10px)",
@@ -255,17 +260,47 @@ export default function CustomFieldsTable({ customFields, setCustomFields }) {
               <tr key={index}>
                 <td style={{ width: 0 }}>{i + 1}.</td>
                 <td>
-                  <BaseControl __nextHasNoMarginBottom>
-                    <input
-                      type="text"
-                      list="api-fields-list"
-                      value={name}
-                      onChange={(ev) =>
-                        setCustomField("name", i, ev.target.value)
-                      }
-                      style={useInputStyle(name)}
-                    />
-                  </BaseControl>
+                  <div style={{ display: "flex" }}>
+                    <div style={{ flex: 1 }}>
+                      <BaseControl __nextHasNoMarginBottom>
+                        <input
+                          type="text"
+                          value={name}
+                          onChange={(ev) =>
+                            setCustomField("name", i, ev.target.value)
+                          }
+                          style={useInputStyle(name)}
+                        />
+                      </BaseControl>
+                    </div>
+                    {fieldOptions.length > 0 && (
+                      <Button
+                        style={{
+                          height: "40px",
+                          width: "40px",
+                          justifyContent: "center",
+                          marginLeft: "2px",
+                        }}
+                        size="compact"
+                        variant="secondary"
+                        onClick={() => setFieldSelector(i)}
+                        __next40pxDefaultSize
+                      >
+                        $
+                        {fieldSelector === i && (
+                          <DropdownSelect
+                            title={__("Fields", "forms-bridge")}
+                            tags={fieldOptions}
+                            onChange={(fieldName) => {
+                              setFieldSelector(-1);
+                              setCustomField("name", i, fieldName);
+                            }}
+                            onFocusOutside={() => setFieldSelector(-1)}
+                          />
+                        )}
+                      </Button>
+                    )}
+                  </div>
                 </td>
                 <td>
                   <div style={{ display: "flex" }}>
@@ -292,7 +327,8 @@ export default function CustomFieldsTable({ customFields, setCustomFields }) {
                     >
                       $
                       {tagSelector === i && (
-                        <TagSelector
+                        <DropdownSelect
+                          title={__("Tags", "forms-bridge")}
                           tags={tagOptions}
                           onChange={(tag) => {
                             setTagSelector(-1);
@@ -348,70 +384,5 @@ export default function CustomFieldsTable({ customFields, setCustomFields }) {
         </table>
       </div>
     </>
-  );
-}
-
-function TagSelector({ tags, onChange, onFocusOutside }) {
-  const [focus, setFocus] = useState(0);
-
-  return (
-    <Popover
-      onFocusOutside={onFocusOutside}
-      offset={5}
-      placement="bottom-start"
-    >
-      <div
-        style={{ position: "relative", paddingTop: "2.6em", height: "300px" }}
-      >
-        <label
-          for="bridge-tags-list"
-          style={{
-            position: "fixed",
-            top: "0px",
-            left: "0px",
-            width: "100%",
-            padding: "0.5em 0.75em",
-            borderBottom: "1px solid",
-            backgroundColor: "white",
-          }}
-        >
-          <strong>{__("Tags", "forms-bridge")}</strong>
-        </label>
-        <ul
-          id="bridge-tags-list"
-          style={{
-            width: "140px",
-            height: "100%",
-            overflowY: "auto",
-            margin: 0,
-          }}
-        >
-          {tags.map(({ label, value }, i) => (
-            <li
-              style={{ padding: "0.25em 0.75em", cursor: "pointer" }}
-              tabIndex="0"
-              role="button"
-              onKeyDown={(ev) => {
-                if (focus !== i) return;
-
-                if (ev.key === "Enter") {
-                  ev.stopPropagation();
-                  ev.preventDefault();
-                  onChange(value);
-                }
-              }}
-              onFocus={() => setFocus(i)}
-              onClick={(ev) => {
-                ev.preventDefault();
-                ev.stopPropagation();
-                onChange(value);
-              }}
-            >
-              {label}
-            </li>
-          ))}
-        </ul>
-      </div>
-    </Popover>
   );
 }

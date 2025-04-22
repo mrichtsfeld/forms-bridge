@@ -73,6 +73,7 @@ return [
         [
             'name' => 'country_code',
             'schema' => ['type' => 'string'],
+            'forward' => true,
         ],
     ],
 ];

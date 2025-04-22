@@ -3,6 +3,7 @@
 namespace FORMS_BRIDGE;
 
 use Exception;
+use HTTP_BRIDGE\Http_Backend;
 use ReflectionClass;
 use WPCT_ABSTRACT\Singleton;
 
@@ -15,6 +16,8 @@ if (!defined('ABSPATH')) {
  */
 abstract class Addon extends Singleton
 {
+    public static $addons = [];
+
     /**
      * Handles addon's registry option name.
      *
@@ -50,16 +53,43 @@ abstract class Addon extends Singleton
      */
     protected static $bridge_template_class = '\FORMS_BRIDGE\Form_Bridge_Template';
 
+    /**
+     * Addon's default config getter.
+     *
+     * @return array
+     */
     protected static function default_config()
     {
         return [
             'bridges' => [
                 'type' => 'array',
                 'items' => Form_Bridge::$schema,
+                'default' => [],
+            ],
+            'credentials' => [
+                'type' => 'array',
+                'items' => [
+                    'type' => 'object',
+                    'properties' => [
+                        'name' => [
+                            'type' => 'string',
+                            'minLength' => 1,
+                        ],
+                    ],
+                    'required' => ['name'],
+                ],
+                'default' => [],
             ],
         ];
     }
 
+    /**
+     * Merges addon's config with defaults and returns the result.
+     *
+     * @param array $config Addon config.
+     *
+     * @return array
+     */
     protected static function merge_setting_config($config)
     {
         return forms_bridge_merge_object($config, self::default_config());
@@ -132,10 +162,7 @@ abstract class Addon extends Singleton
 
             if ($enabled) {
                 require_once "{$addon_dir}/{$addon}.php";
-
-                if (is_dir("{$addon_dir}/mu")) {
-                    self::autoload_dir("{$addon}/mu", ['php']);
-                }
+                self::$addons[$addon]->mount();
             }
         }
 
@@ -213,10 +240,26 @@ abstract class Addon extends Singleton
             return;
         }
 
+        $bridge['name'] = trim($bridge['name']);
         if (in_array($bridge['name'], $uniques)) {
             return;
         } else {
             $uniques[] = $bridge['name'];
+        }
+
+        $backends =
+            \HTTP_BRIDGE\Settings_Store::setting('general')->backends ?: [];
+
+        $backend = null;
+        foreach ($backends as $candidate) {
+            if ($candidate['name'] === $bridge['backend']) {
+                $backend = $candidate;
+                break;
+            }
+        }
+
+        if (empty($backend)) {
+            $bridge['backend'] = '';
         }
 
         static $forms;
@@ -225,9 +268,10 @@ abstract class Addon extends Singleton
         }
 
         $form = null;
-        foreach ($forms as $_form) {
-            if ($_form['_id'] === $bridge['form_id']) {
-                $form = $_form;
+        foreach ($forms as $candidate) {
+            if ($candidate['_id'] === $bridge['form_id']) {
+                $form = $candidate;
+                break;
             }
         }
 
@@ -235,24 +279,25 @@ abstract class Addon extends Singleton
             $bridge['form_id'] = '';
         }
 
-        $custom_fields = array_filter(
-            (array) ($bridge['custom_fields'] ?? []),
-            static function ($custom_field) {
-                if (
-                    empty($custom_field['name']) ||
-                    (empty($custom_field['value']) &&
-                        $custom_field['value'] !== '0')
-                ) {
-                    return;
-                }
-
-                if (!JSON_Finger::validate($custom_field['name'])) {
-                    return;
-                }
-
-                return true;
+        $custom_fields = [];
+        foreach ($bridge['custom_fields'] ?? [] as $field) {
+            if (!JSON_Finger::validate($field['name'])) {
+                continue;
             }
-        );
+
+            if (
+                empty($field['value']) &&
+                $field['value'] !== '0' &&
+                $field['value'] !== 0
+            ) {
+                continue;
+            }
+
+            $custom_fields[] = [
+                'name' => strval($field['name']),
+                'value' => strval($field['value']),
+            ];
+        }
 
         $bridge['custom_fields'] = $custom_fields;
 
@@ -262,27 +307,25 @@ abstract class Addon extends Singleton
         );
 
         $mutations = [];
-        foreach ((array) ($bridge['mutations'] ?? []) as $mappers) {
-            $mappers = array_filter($mappers, static function ($mapper) {
-                if (
-                    empty($mapper['from']) ||
-                    empty($mapper['to']) ||
-                    empty($mapper['cast'])
-                ) {
-                    return;
+        foreach ($bridge['mutations'] ?? [] as $mappers) {
+            $valids = [];
+            foreach ($mappers as $mapper) {
+                if (!JSON_Finger::validate($mapper['from'])) {
+                    continue;
                 }
 
-                if (
-                    !JSON_Finger::validate($mapper['from']) ||
-                    !JSON_Finger::validate($mapper['to'])
-                ) {
-                    return;
+                if (!JSON_Finger::validate($mapper['to'])) {
+                    continue;
                 }
 
-                return true;
-            });
+                if (empty($mapper['cast'])) {
+                    continue;
+                }
 
-            $mutations[] = array_values($mappers);
+                $valids[] = $mapper;
+            }
+
+            $mutations[] = array_values($valids);
         }
 
         $bridge['mutations'] = array_slice(
@@ -295,8 +338,46 @@ abstract class Addon extends Singleton
             $bridge['mutations'][$i] = $bridge['mutations'][$i] ?? [];
         }
 
-        $bridge['is_valid'] = !empty($bridge['form_id']);
+        $bridge['is_valid'] =
+            !empty($bridge['form_id']) && !empty($bridge['backend']);
+
         return $bridge;
+    }
+
+    /**
+     * Common credential validation method.
+     *
+     * @param array $credential Credential data.
+     * @param array $fields Credential required fields.
+     * @param array $uniques Carry with already validated unique credential names.
+     *
+     * @return array Validated and sanitized credential data.
+     */
+    protected static function validate_credential(
+        $credential,
+        $fields,
+        &$uniques = []
+    ) {
+        if (empty($credential['name'])) {
+            return;
+        }
+
+        $credential['name'] = trim($credential['name']);
+        if (in_array($credential['name'], $uniques)) {
+            return;
+        } else {
+            $uniques[] = $credential['name'];
+        }
+
+        foreach ($fields as $field) {
+            if (empty($credential[$field])) {
+                $credential[$field] = '';
+            } else {
+                $credential[$field] = strval($credential[$field]);
+            }
+        }
+
+        return $credential;
     }
 
     /**
@@ -309,6 +390,11 @@ abstract class Addon extends Singleton
             throw new Exception('Invalid addon registration');
         }
 
+        self::$addons[static::$api] = $this;
+    }
+
+    public function mount()
+    {
         add_action(
             'init',
             static function () {
@@ -361,6 +447,118 @@ abstract class Addon extends Singleton
     }
 
     /**
+     * Proxy to the addons' do_ping private method.
+     *
+     * @params string $api Target API name.
+     * @params array $backend Backend data to be used on the request.
+     * @params array|null $credential Credential data.
+     *
+     * @return array Ping result.
+     */
+    final public static function ping($api, $backend, $credential)
+    {
+        self::temp_backend_registration($backend);
+        return self::$addons[$api]->do_ping($backend['name'], $credential);
+    }
+
+    /**
+     * Performs a request against the backend to check the connexion status.
+     *
+     * @param string $backend Target backend name.
+     * @params WP_REST_Request $request Current REST request.
+     *
+     * @return array Ping result.
+     */
+    abstract protected function do_ping($backend, $request);
+
+    /**
+     * Proxy to the addons' do_fetch private method.
+     *
+     * @param string $api Target API name.
+     * @param array $backend Backend data to be used on the request.
+     * @param string $endpoint Target endpoint name.
+     * @params array|null $credential Credential data.
+     *
+     * @return array Fetched records.
+     */
+    final public static function fetch($api, $backend, $endpoint, $credential)
+    {
+        self::temp_backend_registration($backend);
+        return self::$addons[$api]->do_fetch(
+            $backend['name'],
+            $endpoint,
+            $credential
+        );
+    }
+
+    /**
+     * Performs a GET request against the backend endpoint and retrive the response data.
+     *
+     * @param string $backend Target backend name.
+     * @param string $endpoint Target endpoint name.
+     * @params WP_REST_Request $request Current REST request.
+     *
+     * @return array Fetched records.
+     */
+    abstract protected function do_fetch($backend, $endpoint, $request);
+
+    /**
+     * Proxy to the addons' get_schema private method.
+     *
+     * @param string $api Target API name.
+     * @param array $backend Backend data to be used on the request.
+     * @param string $endpoint Target endpoint name.
+     * @params WP_REST_Request $request Current REST request.
+     *
+     * @return array List of fields and content type of the endpoint.
+     */
+    final public static function schema($api, $backend, $endpoint, $request)
+    {
+        self::temp_backend_registration($backend);
+        return self::$addons[$api]->get_schema(
+            $backend['name'],
+            $endpoint,
+            $request
+        );
+    }
+
+    /**
+     * Performs an introspection of the backend endpoint and returns API fields
+     * and accepted content type.
+     *
+     * @param string $backend Target backend name.
+     * @param string $endpoint Target endpoint name.
+     * @params WP_REST_Request $request Current REST request.
+     *
+     * @return array List of fields and content type of the endpoint.
+     */
+    abstract protected function get_schema($backend, $endpoint, $request);
+
+    /**
+     * Ephemeral backend registration as an interceptor to allow
+     * api fetch, ping and introspection of non registered backends.
+     *
+     * @param array $data Backend data.
+     */
+    private static function temp_backend_registration($data)
+    {
+        add_filter(
+            'http_bridge_backend',
+            static function ($backend, $name) use ($data) {
+                if ($backend instanceof Http_Backend) {
+                    return $backend;
+                }
+
+                if ($name === $data['name']) {
+                    return new Http_Backend($data);
+                }
+            },
+            2,
+            90
+        );
+    }
+
+    /**
      * Adds addons' bridges to the available bridges list.
      *
      * @param int|string|null $form_id Target form ID. This ID should include the integration prefix if there
@@ -401,7 +599,7 @@ abstract class Addon extends Singleton
 
         return array_map(
             static function ($bridge_data) {
-                return new static::$bridge_class($bridge_data, static::$api);
+                return new static::$bridge_class($bridge_data);
             },
             array_filter($bridges, static function ($bridge_data) use (
                 $form_id
@@ -453,6 +651,7 @@ abstract class Addon extends Singleton
                     [],
                     static::$api
                 );
+
                 $workflow_jobs = apply_filters(
                     'forms_bridgr_workflow_jobs',
                     [],
@@ -490,6 +689,7 @@ abstract class Addon extends Singleton
                     [],
                     static::$api
                 );
+
                 $workflow_jobs = apply_filters(
                     'forms_bridge_workflow_jobs',
                     [],
@@ -649,7 +849,6 @@ abstract class Addon extends Singleton
                 $loaded[] = [
                     'name' => $name,
                     'data' => $data,
-                    'api' => static::$api,
                 ];
             }
         }
@@ -672,8 +871,7 @@ abstract class Addon extends Singleton
         foreach ($templates as $template) {
             new static::$bridge_template_class(
                 $template['name'],
-                $template['data'],
-                static::$api
+                $template['data']
             );
         }
     }

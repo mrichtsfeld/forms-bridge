@@ -22,16 +22,22 @@ function TabTitle({ name, focus, setFocus, copy }) {
 const CSS = `.bridges-tabs-panel .components-tab-panel__tabs{overflow-x:auto;}
 .bridges-tabs-panel .components-tab-panel__tabs>button{flex-shrink:0;}`;
 
-export default function Bridges({ bridges, setBridges, Bridge }) {
+export default function Bridges({
+  bridges,
+  setBridges,
+  Bridge,
+  credentials = [],
+}) {
   const [currentTab, setCurrentTab] = useState(String(bridges.length ? 0 : -1));
   const [tabFocus, setTabFocus] = useState(null);
   const tabs = bridges
     .map(
       (
         {
-          backend,
-          form_id,
           name,
+          backend,
+          credential,
+          form_id,
           custom_fields,
           mutations,
           workflow = [],
@@ -44,6 +50,7 @@ export default function Bridges({ bridges, setBridges, Bridge }) {
         title: name,
         backend,
         form_id,
+        credential,
         custom_fields,
         mutations,
         workflow,
@@ -142,7 +149,7 @@ export default function Bridges({ bridges, setBridges, Bridge }) {
         {(bridge) => {
           bridge.name = bridge.name >= 0 ? bridges[+bridge.name].name : "add";
           return (
-            <ApiSchemaProvider bridge={bridge.name}>
+            <ApiSchemaProvider bridge={bridge} credentials={credentials}>
               <Bridge
                 data={bridge}
                 remove={removeBridge}

@@ -1,6 +1,8 @@
 import { useGeneral } from "../../../../src/providers/Settings";
 import TemplateWizard from "../../../../src/components/Templates/Wizard";
-import BridgeStep from "./BridgeStep";
+import ListmonkBridgeStep from "./BridgeStep";
+import { debounce, validateUrl } from "../../../../src/lib/utils";
+import { useTemplateConfig } from "../../../../src/providers/Templates";
 
 const apiFetch = wp.apiFetch;
 const { useState, useEffect, useMemo, useRef } = wp.element;
@@ -10,85 +12,84 @@ const LISTMONK_HEADERS = ["api_user", "token"];
 const STEPS = [
   {
     name: "bridge",
-    step: ({ fields, data, setData }) => (
-      <BridgeStep fields={fields} data={data} setData={setData} />
-    ),
+    component: ListmonkBridgeStep,
     order: 20,
   },
 ];
 
-function debounce(fn, ms = 500) {
-  let timeout;
+function validateBackend(data) {
+  if (!data?.name) return false;
 
-  return (...args) => {
-    clearTimeout(timeout);
-    timeout = setTimeout(() => fn(...args), ms);
-  };
+  return LISTMONK_HEADERS.reduce((isValid, field) => {
+    return isValid && data.headers.find(({ name }) => name === field)?.value;
+  }, validateUrl(data.base_url));
 }
 
-function validateBackendData(data) {
-  return LISTMONK_HEADERS.reduce(
-    (isValid, field) => {
-      return isValid && data.headers[field];
-    },
-    /https?\:\/\/[^\/]+\.\w\w+/.test(data.base_url)
-  );
-}
-export default function ListmonkTemplateWizard({ integration, onDone }) {
+export default function ListmonkTemplateWizard({
+  integration,
+  wired,
+  setWired,
+  onDone,
+}) {
   const [{ backends }] = useGeneral();
+
+  const config = useTemplateConfig();
+  const configFields = useMemo(() => config?.fields || [], [config]);
+  const customFields = useMemo(() => {
+    return configFields
+      .filter((field) => field.ref === "#bridge/custom_fields[]")
+      .map((field) => field.name);
+  }, [configFields]);
+
   const [data, setData] = useState({});
+
   const [lists, setLists] = useState([]);
 
-  const backendData = useMemo(() => {
+  const backend = useMemo(() => {
     if (!data.backend?.name) return;
-    const backend = backends.find(({ name }) => name === data.backend.name);
 
-    if (backend && validateBackendData(backend)) {
+    let backend = backends.find(({ name }) => name === data.backend.name);
+    if (backend && validateBackend(backend)) {
       return backend;
     }
 
-    const backendData = {
+    backend = {
       name: data.backend.name,
       base_url: data.backend.base_url,
-      headers: LISTMONK_HEADERS.reduce(
-        (headers, name) => ({
-          ...headers,
-          [name]: data.backend[name],
-        }),
-        {}
-      ),
+      headers: LISTMONK_HEADERS.map((header) => ({
+        name: header,
+        value: data.backend[header],
+      })),
     };
 
-    if (validateBackendData(backendData)) {
-      return backendData;
+    if (validateBackend(backend)) {
+      return backend;
     }
   }, [data.backend, backends]);
 
-  const fetchLists = useRef(
-    debounce((data) => {
-      const backend = {
-        name: data.name,
-        base_url: data.base_url,
-        headers: LISTMONK_HEADERS.map((header) => ({
-          name: header,
-          value: data.headers[header],
-        })),
-      };
+  const fetch = useRef((endpoint, then, backend) => {
+    apiFetch({
+      path: "forms-bridge/v1/listmonk/fetch",
+      method: "POST",
+      data: { backend, endpoint },
+    })
+      .then(then)
+      .catch(() => then([]));
+  }).current;
 
-      apiFetch({
-        path: "forms-bridge/v1/listmonk/lists",
-        method: "POST",
-        data: backend,
-      })
-        .then(setLists)
-        .catch(() => setLists([]));
-    }, 500)
+  const fetchLists = useRef(
+    debounce(
+      (backend) =>
+        fetch("/api/lists", (data) => setLists(data.data.results), backend),
+      1e3
+    )
   ).current;
 
   useEffect(() => {
-    if (!backendData) return;
-    fetchLists(backendData);
-  }, [backendData]);
+    if (!backend || !wired) return;
+
+    customFields.includes("lists") && fetchLists(backend);
+  }, [wired, backend, customFields]);
 
   useEffect(
     () =>
@@ -104,6 +105,8 @@ export default function ListmonkTemplateWizard({ integration, onDone }) {
       integration={integration}
       data={data}
       setData={setData}
+      wired={wired}
+      setWired={setWired}
       onDone={onDone}
       steps={STEPS}
     />

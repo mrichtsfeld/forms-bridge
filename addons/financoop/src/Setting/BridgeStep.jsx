@@ -1,76 +1,70 @@
-import TemplateStep from "../../../../src/components/Templates/Steps/Step";
-import Field from "../../../../src/components/Templates/Field";
+import BridgeStep from "../../../../src/components/Templates/Steps/BridgeStep";
+import { useTemplateConfig } from "../../../../src/providers/Templates";
 
-const { useMemo } = wp.element;
-const { __ } = wp.i18n;
+const { useMemo, useEffect } = wp.element;
 
-const fieldsOrder = ["name"];
+const API_FIELDS = ["campaign_id"];
 
-export default function BridgeStep({ fields, data, setData }) {
-  const campaigns = data.campaigns || [];
+export default function FinancoopBridgeStep({ fields, data, setData }) {
+  const config = useTemplateConfig();
 
-  const campaignOptions = useMemo(
-    () =>
-      campaigns.map(({ id, name }) => ({
+  const campaigns = useMemo(() => data._campaigns || [], [data._campaigns]);
+
+  const campaignOptions = useMemo(() => {
+    return campaigns
+      .filter((campaign) => {
+        return campaign.state === "open" || campaign.state === "draft";
+      })
+      .filter((campaign) => {
+        switch (config.name) {
+          case "financoop-subscription-requests":
+            return campaign.has_subscription_source;
+          case "financoop-loan-requests":
+            return campaign.has_loan_source;
+          case "financoop-donation-requests":
+            return campaign.has_donation_source;
+        }
+      })
+      .map(({ id, name }) => ({
         value: id,
         label: name,
-      })),
-    [campaigns]
-  );
+      }));
+  }, [campaigns]);
 
-  const sortedFields = useMemo(
-    () =>
-      fields.sort((a, b) => {
-        if (!fieldsOrder.includes(a.name)) {
-          return 1;
-        } else if (!fieldsOrder.includes(b.name)) {
-          return -1;
-        } else {
-          fieldsOrder.indexOf(a.name) - fieldsOrder.indexOf(b.name);
-        }
-      }),
+  const standardFields = useMemo(
+    () => fields.filter(({ name }) => !API_FIELDS.includes(name)),
     [fields]
   );
 
-  const campaignIdField = useMemo(
-    () => sortedFields.find(({ name }) => name === "campaign_id"),
-    [sortedFields]
-  );
+  const apiFields = useMemo(() => {
+    return fields
+      .filter(({ name }) => API_FIELDS.includes(name))
+      .map((field) => {
+        if (field.name === "campaign_id") {
+          return {
+            ...field,
+            type: "options",
+            options: campaignOptions,
+          };
+        }
+      });
+  }, [fields, campaignOptions]);
 
-  const filteredFields = useMemo(
-    () => sortedFields.filter(({ name }) => name !== "campaign_id"),
-    [sortedFields]
-  );
+  useEffect(() => {
+    const defaults = {};
+
+    if (campaignOptions.length > 0 && !data.campaign_id) {
+      defaults.campaign_id = campaignOptions[0].value;
+    }
+
+    setData(defaults);
+  }, [campaignOptions]);
 
   return (
-    <TemplateStep
-      name={__("Bridge", "forms-bridge")}
-      description={__("Configure the bridge", "forms-bridge")}
-    >
-      {filteredFields.map((field) => (
-        <Field
-          data={{
-            ...field,
-            value: data[field.name] || "",
-            onChange: (value) => setData({ [field.name]: value }),
-          }}
-        />
-      ))}
-      <Field
-        data={{
-          ...campaignIdField,
-          value: data.campaign_id || "",
-          type: "options",
-          options: campaignOptions,
-          onChange: (campaign_id) => setData({ campaign_id }),
-          description: !campaigns.length
-            ? __(
-                "There is no active campaign. This can happens due to a wrong backend connexion, or because you have no active campaigns on your FinanCoop module. Please, fix this issue before createing new bridges.",
-                "forms-bridge"
-              )
-            : null,
-        }}
-      />
-    </TemplateStep>
+    <BridgeStep
+      fields={standardFields.concat(apiFields)}
+      data={data}
+      setData={setData}
+    />
   );
 }

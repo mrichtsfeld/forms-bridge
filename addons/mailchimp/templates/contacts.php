@@ -72,43 +72,9 @@ return [
     'title' => __('Contacts', 'forms-bridge'),
     'fields' => [
         [
-            'ref' => '#backend',
-            'name' => 'name',
-            'label' => __(
-                'Label of the MailChimp API backend connection',
-                'forms-bridge'
-            ),
-        ],
-        [
             'ref' => '#bridge',
             'name' => 'endpoint',
-            'label' => __('Endpoint', 'forms-bridge'),
-            'type' => 'string',
             'value' => '/3.0/lists/{list_id}/members',
-        ],
-        [
-            'ref' => '#backend/headers[]',
-            'name' => 'api-key',
-            'label' => __('API key', 'forms-bridge'),
-            'description' => __(
-                'Get it from your <a href="https://us1.admin.mailchimp.com/account/api/" target="_blank">dashboard</a>',
-                'forms-bridge'
-            ),
-        ],
-        [
-            'ref' => '#backend/headers[]',
-            'name' => 'datacenter',
-            'label' => __('Datacenter', 'forms-bridge'),
-            'description' => __(
-                'First part of the URL of your mailchimp account or last part of your API key',
-                'forms-bridge'
-            ),
-        ],
-        [
-            'ref' => '#form',
-            'name' => 'title',
-            'label' => __('Form name', 'forms-bridge'),
-            'default' => __('Contacts', 'forms-bridge'),
         ],
         [
             'ref' => '#bridge/custom_fields[]',
@@ -157,6 +123,11 @@ return [
             ),
             'type' => 'string',
         ],
+        [
+            'ref' => '#form',
+            'name' => 'title',
+            'default' => __('Contacts', 'forms-bridge'),
+        ],
     ],
     'form' => [
         'title' => __('Contacts', 'forms-bridge'),
@@ -179,9 +150,7 @@ return [
             ],
         ],
     ],
-    'backend' => [
-        'base_url' => 'https://{dc}.api.mailchimp.com/3.0',
-    ],
+    'backend' => [],
     'bridge' => [
         'method' => 'POST',
         'endpoint' => '/3.0/lists/{list_id}/members',

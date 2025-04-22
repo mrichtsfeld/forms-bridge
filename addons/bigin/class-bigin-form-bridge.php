@@ -12,67 +12,28 @@ if (!defined('ABSPATH')) {
 class Bigin_Form_Bridge extends Zoho_Form_Bridge
 {
     /**
-     * Bridge's API key private getter.
+     * Handles bridge class API name.
      *
-     * @return Bigin_Credentials|null
+     * @var string
      */
-    protected function credential()
+    protected $api = 'bigin';
+
+    /**
+     * Handles the zoho oauth service name.
+     *
+     * @var string
+     */
+    protected static $zoho_oauth_service = 'ZohoBigin';
+
+    /**
+     * Bridge's endpoint fields schema getter.
+     *
+     * @param null $endpoint Layout metadata endpoint.
+     *
+     * @return array
+     */
+    protected function api_schema($endpoint = null)
     {
-        return apply_filters(
-            'forms_bridge_bigin_credential',
-            null,
-            $this->data['credential'] ?? null
-        );
-    }
-
-    protected function api_fields()
-    {
-        $original_scope = $this->scope;
-        $this->data['scope'] = 'ZohoBigin.settings.layouts.READ';
-        $access_token = $this->get_access_token();
-        $this->data['scope'] = $original_scope;
-
-        if (empty($access_token)) {
-            return [];
-        }
-
-        if (!preg_match('/\/([A-Z].+$)/', $this->endpoint, $matches)) {
-            return [];
-        }
-
-        $module = str_replace('/upsert', '', $matches[1]);
-
-        add_filter(
-            'http_request_args',
-            '\FORMS_BRIDGE\Zoho_Form_Bridge::cleanup_headers',
-            10,
-            1
-        );
-
-        $response = $this->backend->get(
-            '/bigin/v2/settings/layouts',
-            [
-                'module' => $module,
-            ],
-            [
-                'Accept' => 'application/json',
-                'Authorization' => 'Zoho-oauthtoken ' . $access_token,
-            ]
-        );
-
-        if (is_wp_error($response)) {
-            return [];
-        }
-
-        $fields = [];
-        foreach ($response['data']['layouts'] as $layout) {
-            foreach ($layout['sections'] as $section) {
-                foreach ($section['fields'] as $field) {
-                    $fields[] = $field['api_name'];
-                }
-            }
-        }
-
-        return $fields;
+        return parent::api_schema('/bigin/v2/settings/layouts');
     }
 }

@@ -12,15 +12,7 @@ return [
         [
             'ref' => '#bridge',
             'name' => 'endpoint',
-            'label' => __('Endpoint', 'forms-bridge'),
-            'type' => 'string',
-            'required' => true,
             'value' => '/api/index.php/contacts',
-        ],
-        [
-            'ref' => '#form',
-            'name' => 'title',
-            'default' => __('Company Prospects', 'forms-bridge'),
         ],
         [
             'ref' => '#bridge/custom_fields[]',
@@ -52,12 +44,17 @@ return [
             ],
             'default' => ' 0',
         ],
+        [
+            'ref' => '#form',
+            'name' => 'title',
+            'default' => __('Company Prospects', 'forms-bridge'),
+        ],
     ],
     'form' => [
-        'title' => __('Company Leads', 'forms-bridge'),
+        'title' => __('Company Prospects', 'forms-bridge'),
         'fields' => [
             [
-                'name' => 'name',
+                'name' => 'company_name',
                 'label' => __('Company name', 'forms-bridge'),
                 'type' => 'text',
                 'required' => true,
@@ -113,7 +110,7 @@ return [
                 'required' => true,
             ],
             [
-                'name' => 'email',
+                'name' => 'contact_email',
                 'label' => __('Email', 'forms-bridge'),
                 'type' => 'email',
                 'required' => true,
@@ -131,15 +128,8 @@ return [
             ],
         ],
     ],
-    'backend' => [
-        'headers' => [
-            'name' => 'Accept',
-            'value' => 'application/json',
-        ],
-    ],
     'bridge' => [
         'endpoint' => '/api/index.php/contacts',
-        'method' => 'POST',
         'custom_fields' => [
             [
                 'name' => 'status',
@@ -147,7 +137,7 @@ return [
             ],
             [
                 'name' => 'typent_id',
-                'value' => '2',
+                'value' => '4',
             ],
             [
                 'name' => 'client',
@@ -157,9 +147,9 @@ return [
         'mutations' => [
             [
                 [
-                    'from' => 'email',
-                    'to' => 'contact_email',
-                    'cast' => 'copy',
+                    'from' => 'company_name',
+                    'to' => 'name',
+                    'cast' => 'string',
                 ],
             ],
             [],
@@ -174,7 +164,7 @@ return [
         ],
         'workflow' => [
             'dolibarr-country-id',
-            'dolibarr-thirdparty-id',
+            'dolibarr-contact-socid',
             'dolibarr-skip-if-contact-exists',
         ],
     ],

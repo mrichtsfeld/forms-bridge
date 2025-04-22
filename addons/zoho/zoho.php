@@ -6,7 +6,6 @@ if (!defined('ABSPATH')) {
     exit();
 }
 
-require_once 'class-zoho-credential.php';
 require_once 'class-zoho-form-bridge.php';
 require_once 'class-zoho-form-bridge-template.php';
 
@@ -32,6 +31,13 @@ class Zoho_Addon extends Addon
     protected static $api = 'zoho';
 
     /**
+     * Handles the zoho oauth service name.
+     *
+     * @var string
+     */
+    protected static $zoho_oauth_service = 'ZohoCRM';
+
+    /**
      * Handles the addon's custom bridge class.
      *
      * @var string
@@ -44,68 +50,6 @@ class Zoho_Addon extends Addon
      * @var string
      */
     protected static $bridge_template_class = '\FORMS_BRIDGE\Zoho_Form_Bridge_Template';
-
-    /**
-     * Addon constructor. Inherits from the abstract addon and initializes
-     * custom hooks.
-     */
-    protected function construct(...$args)
-    {
-        parent::construct(...$args);
-        static::custom_hooks();
-    }
-
-    /**
-     * Addon custom hooks.
-     */
-    protected static function custom_hooks()
-    {
-        add_filter(
-            'forms_bridge_zoho_credentials',
-            static function ($credentials) {
-                if (!wp_is_numeric_array($credentials)) {
-                    $credentials = [];
-                }
-
-                return array_merge($credentials, self::credentials());
-            },
-            10,
-            1
-        );
-
-        add_filter(
-            'forms_bridge_zoho_credential',
-            static function ($credential, $name) {
-                if ($credential instanceof Zoho_Credential) {
-                    return $credential;
-                }
-
-                $credentials = self::credentials();
-                foreach ($credentials as $credential) {
-                    if ($credential->name === $name) {
-                        return $credential;
-                    }
-                }
-            },
-            10,
-            2
-        );
-    }
-
-    /**
-     * Addon credentials' instances getter.
-     *
-     * @return array List with available credentials instances.
-     */
-    protected static function credentials()
-    {
-        return array_map(
-            static function ($data) {
-                return new Zoho_Credential($data);
-            },
-            self::setting()->credentials ?: []
-        );
-    }
 
     /**
      * Registers the setting and its fields.
@@ -123,18 +67,26 @@ class Zoho_Addon extends Addon
                         'type' => 'object',
                         'additionalProperties' => false,
                         'properties' => [
-                            'name' => ['type' => 'string'],
-                            'organization_id' => ['type' => 'string'],
-                            'client_id' => ['type' => 'string'],
-                            'client_secret' => ['type' => 'string'],
-                            'backend' => ['type' => 'string'],
+                            'organization_id' => [
+                                'type' => 'string',
+                                'minLength' => 1,
+                                'default' => '',
+                            ],
+                            'client_id' => [
+                                'type' => 'string',
+                                'minLength' => 1,
+                                'default' => '',
+                            ],
+                            'client_secret' => [
+                                'type' => 'string',
+                                'minLength' => 1,
+                                'default' => '',
+                            ],
                         ],
                         'required' => [
-                            'name',
                             'organization_id',
                             'client_id',
                             'client_secret',
-                            'backend',
                         ],
                     ],
                 ],
@@ -144,9 +96,14 @@ class Zoho_Addon extends Addon
                         'type' => 'object',
                         'additionalProperties' => false,
                         'properties' => [
-                            'credential' => ['type' => 'string'],
-                            'endpoint' => ['type' => 'string'],
-                            'scope' => ['type' => 'string'],
+                            'endpoint' => [
+                                'type' => 'string',
+                                'minLength' => 1,
+                            ],
+                            'scope' => [
+                                'type' => 'string',
+                                'minLength' => 1,
+                            ],
                         ],
                         'required' => ['credential', 'endpoint', 'scope'],
                     ],
@@ -168,13 +125,7 @@ class Zoho_Addon extends Addon
      */
     protected static function validate_setting($data, $setting)
     {
-        $backends =
-            \HTTP_BRIDGE\Settings_Store::setting('general')->backends ?: [];
-
-        $data['credentials'] = self::validate_credentials(
-            $data['credentials'],
-            $backends
-        );
+        $data['credentials'] = self::validate_credentials($data['credentials']);
 
         $data['bridges'] = self::validate_bridges(
             $data['bridges'],
@@ -185,46 +136,32 @@ class Zoho_Addon extends Addon
     }
 
     /**
-     * Credentials setting field validation. Filters inconsistent keys
-     * based on the Http_Bridge's backends store state.
+     * Credentials setting field validation.
      *
      * @param array $credentials Collection of credentials data.
-     * @param array $backends
      *
      * @return array Validated credentials.
      */
-    private static function validate_credentials($credentials, $backends)
+    private static function validate_credentials($credentials)
     {
         if (!wp_is_numeric_array($credentials)) {
             return [];
         }
 
-        $backend_names = array_map(function ($backend) {
-            return $backend['name'];
-        }, $backends);
-
         $uniques = [];
         $validated = [];
         foreach ($credentials as $credential) {
-            if (empty($credential['name'])) {
+            $credential = self::validate_credential(
+                $credential,
+                ['organization_id', 'client_id', 'client_secret'],
+                $uniques
+            );
+
+            if (empty($credential)) {
                 continue;
             }
-
-            if (in_array($credential['name'], $uniques)) {
-                continue;
-            }
-
-            if (!in_array($credential['backend'] ?? null, $backend_names)) {
-                $credential['backend'] = '';
-            }
-
-            $credential['organization_id'] =
-                $credential['organization_id'] ?? '';
-            $credential['client_id'] = $credential['client_id'] ?? '';
-            $credential['client_secret'] = $credential['client_secret'] ?? '';
 
             $validated[] = $credential;
-            $uniques[] = $credential['name'];
         }
 
         return $validated;
@@ -269,12 +206,140 @@ class Zoho_Addon extends Addon
                 $bridge['is_valid'] &&
                 !empty($bridge['endpoint']) &&
                 !empty($bridge['scope']) &&
-                !empty($bridge['endpoint']);
+                !empty($bridge['credential']);
 
             $validated[] = $bridge;
         }
 
         return $validated;
+    }
+
+    /**
+     * Performs a request against the backend to check the connexion status.
+     *
+     * @param string $backend Target backend name.
+     * @params array $credential Credential data.
+     *
+     * @return array Ping result.
+     */
+    protected function do_ping($backend, $credential)
+    {
+        [$credential] = self::validate_credentials([$credential]);
+
+        if (empty($credential)) {
+            return ['success' => false];
+        }
+
+        static::temp_register_credentials($credential);
+
+        $bridge = new static::$bridge_class([
+            'backend' => $backend,
+            'credential' => $credential['name'],
+            'backend' => $backend,
+            'endpoint' => '',
+            'scope' => '',
+            'method' => 'GET',
+        ]);
+
+        $success = preg_match('/www\.zohoapis\./', $bridge->backend->base_url);
+        return ['success' => $success && $bridge->check_credential()];
+    }
+
+    /**
+     * Performs a GET request against the backend endpoint and retrive the response data.
+     *
+     * @param string $backend Target backend name.
+     * @param string $endpoint Target endpoint name.
+     * @params array $credential Credential data.
+     *
+     * @return array Fetched records.
+     */
+    protected function do_fetch($backend, $endpoint, $credential)
+    {
+        [$credential] = self::validate_credentials([$credential]);
+
+        if (empty($credential)) {
+            return [];
+        }
+
+        static::temp_register_credentials($credential);
+
+        if (preg_match('/\/users$/', $endpoint)) {
+            $scope = static::$zoho_oauth_service . '.users.READ';
+        } else {
+            $scope = static::$zoho_oauth_service . '.modules.ALL';
+        }
+
+        $bridge = new static::$bridge_class([
+            'backend' => $backend,
+            'credential' => $credential['name'],
+            'endpoint' => $endpoint,
+            'scope' => $scope,
+            'method' => 'GET',
+        ]);
+
+        $response = $bridge->submit([]);
+        if (is_wp_error($response)) {
+            return [];
+        }
+
+        return $response['data'];
+    }
+
+    /**
+     * Performs an introspection of the backend endpoint and returns API fields
+     * and accepted content type.
+     *
+     * @param string $backend Target backend name.
+     * @param string $endpoint Target endpoint name.
+     * @params array $credential Credential data.
+     *
+     * @return array List of fields and content type of the endpoint.
+     */
+    protected function get_schema($backend, $endpoint, $credential)
+    {
+        [$credential] = self::validate_credentials([$credential]);
+
+        if (empty($credential)) {
+            return [];
+        }
+
+        static::temp_register_credentials($credential);
+
+        $bridge = new static::$bridge_class([
+            'backend' => $backend,
+            'credential' => $credential['name'],
+            'endpoint' => $endpoint,
+            'scope' => static::$zoho_oauth_service . '.settings.layouts.READ',
+            'method' => 'GET',
+        ]);
+
+        return $bridge->api_schema;
+    }
+
+    private static function temp_register_credentials($data)
+    {
+        add_filter(
+            'wpct_setting_data',
+            static function ($setting, $setting_name) use ($data) {
+                if ($setting_name === 'forms-bridge_' . static::$api) {
+                    foreach ($setting['credentials'] as $candidate) {
+                        if ($candidate['name'] === $data['name']) {
+                            $credential = $candidate;
+                            break;
+                        }
+                    }
+
+                    if (!isset($credential)) {
+                        $setting['credentials'][] = $data;
+                    }
+                }
+
+                return $setting;
+            },
+            10,
+            2
+        );
     }
 }
 

@@ -58,14 +58,17 @@ class Rest_Addon extends Addon
                         'type' => 'object',
                         'additionalProperties' => false,
                         'properties' => [
-                            'backend' => ['type' => 'string'],
-                            'endpoint' => ['type' => 'string'],
+                            'endpoint' => [
+                                'type' => 'string',
+                                'minLength' => 1,
+                            ],
                             'method' => [
                                 'type' => 'string',
                                 'enum' => ['GET', 'POST', 'PUT', 'DELETE'],
+                                'default' => 'POST',
                             ],
                         ],
-                        'required' => ['backend', 'endpoint', 'method'],
+                        'required' => ['endpoint', 'method'],
                     ],
                 ],
             ]),
@@ -141,6 +144,48 @@ class Rest_Addon extends Addon
         }
 
         return $validated;
+    }
+
+    /**
+     * Performs a request against the backend to check the connexion status.
+     *
+     * @param string $backend Target backend name.
+     * @params WP_REST_Request $request Current REST request.
+     *
+     * @return array Ping result.
+     */
+    protected function do_ping($backend, $request)
+    {
+        return ['success' => true];
+    }
+
+    /**
+     * Performs a GET request against the backend endpoint and retrive the response data.
+     *
+     * @param string $backend Target backend name.
+     * @param string $endpoint Target endpoint name.
+     * @params WP_REST_Request $request Current REST request.
+     *
+     * @return array Fetched records.
+     */
+    protected function do_fetch($backend, $endpoint, $request)
+    {
+        return [];
+    }
+
+    /**
+     * Performs an introspection of the backend endpoint and returns API fields
+     * and accepted content type.
+     *
+     * @param string $backend Target backend name.
+     * @param string $endpoint Target endpoint name.
+     * @params WP_REST_Request $request Current REST request.
+     *
+     * @return array List of fields and content type of the endpoint.
+     */
+    protected function get_schema($backend, $endpoint, $request)
+    {
+        return [];
     }
 }
 

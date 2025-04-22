@@ -10,7 +10,7 @@
  * License URI:         http://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain:         forms-bridge
  * Domain Path:         /languages
- * Version:             3.2.0
+ * Version:             3.3.0
  * Requires PHP:        8.0
  * Requires at least:   6.7
  */
@@ -50,10 +50,6 @@ require_once 'includes/json-schema-utils.php';
 
 require_once 'integrations/abstract-integration.php';
 require_once 'addons/abstract-addon.php';
-
-require_once 'includes/data/country-phone-codes.php';
-require_once 'includes/data/iso2-countries.php';
-require_once 'includes/data/iso3-countries.php';
 
 /**
  * Forms Bridge plugin.
@@ -102,6 +98,9 @@ class Forms_Bridge extends Base_Plugin
             90,
             4
         );
+
+        // Defer data loading to init to avoid i18n api warnings
+        add_action('init', [self::class, 'load_data'], 0);
     }
 
     /**
@@ -126,6 +125,16 @@ class Forms_Bridge extends Base_Plugin
         if ($db_version !== self::version()) {
             self::do_migrations();
         }
+    }
+
+    /**
+     * Data loader.
+     */
+    public static function load_data()
+    {
+        require_once 'includes/data/country-phone-codes.php';
+        require_once 'includes/data/iso2-countries.php';
+        require_once 'includes/data/iso3-countries.php';
     }
 
     /**
@@ -175,6 +184,15 @@ class Forms_Bridge extends Base_Plugin
             },
             99,
             2
+        );
+
+        add_filter(
+            'http_bridge_request',
+            static function ($request) {
+                return apply_filters('forms_bridge_http_request', $request);
+            },
+            99,
+            1
         );
 
         add_filter(

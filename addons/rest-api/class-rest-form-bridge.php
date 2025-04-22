@@ -14,6 +14,13 @@ use WP_Error;
 class Rest_Form_Bridge extends Form_Bridge
 {
     /**
+     * Handles bridge class API name.
+     *
+     * @var string
+     */
+    protected $api = 'rest-api';
+
+    /**
      * Handles allowed HTTP method.
      *
      * @var array

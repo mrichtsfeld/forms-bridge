@@ -16,20 +16,19 @@ add_filter(
             if ($index !== false) {
                 $field = &$data['bridge']['custom_fields'][$index];
 
-                $tags = array_filter(
-                    array_map('trim', explode(',', strval($field['value'])))
-                );
-                for ($i = 0; $i < count($tags); $i++) {
-                    $data['bridge']['custom_fields'][] = [
-                        'name' => "Tag[{$i}].name",
-                        'value' => $tags[$i],
-                    ];
+                if (!empty($field['value'])) {
+                    $tags = array_filter(
+                        array_map('trim', explode(',', strval($field['value'])))
+                    );
+                    for ($i = 0; $i < count($tags); $i++) {
+                        $data['bridge']['custom_fields'][] = [
+                            'name' => "Tag[{$i}].name",
+                            'value' => $tags[$i],
+                        ];
+                    }
                 }
 
                 array_splice($data['bridge']['custom_fields'], $index, 1);
-                $data['bridge']['custom_fields'] = array_values(
-                    $data['bridge']['custom_fields']
-                );
             }
         }
 
@@ -47,66 +46,16 @@ return [
     ),
     'fields' => [
         [
-            'ref' => '#backend',
-            'name' => 'name',
-            'default' => 'Zoho API',
-        ],
-        [
-            'ref' => '#credential',
-            'name' => 'organization_id',
-            'label' => __('Organization ID', 'form-bridge'),
-            'description' => __(
-                'From your organization dashboard, expand the profile sidebar and click on the copy user ID icon to get your organization ID.',
-                'forms-bridge'
-            ),
-            'type' => 'string',
-            'required' => true,
-        ],
-        [
-            'ref' => '#credential',
-            'name' => 'client_id',
-            'description' => __(
-                'You have to create a Self-Client Application on the Zoho Developer Console and get the Client ID',
-                'forms-bridge'
-            ),
-        ],
-        [
-            'ref' => '#credential',
-            'name' => 'client_secret',
-            'label' => __('Client Secret', 'forms-bridge'),
-            'description' => __(
-                'You have to create a Self-Client Application on the Zoho Developer Console and get the Client Secret',
-                'forms-bridge'
-            ),
-            'type' => 'string',
-            'required' => true,
-        ],
-        [
             'ref' => '#bridge',
             'name' => 'endpoint',
-            'label' => __('Endpoint', 'forms-bridge'),
-            'type' => 'string',
             'value' => '/bigin/v2/Pipelines',
-        ],
-        [
-            'ref' => '#bridge',
-            'name' => 'scope',
-            'label' => __('Scope', 'forms-bridge'),
-            'type' => 'string',
-            'value' =>
-                'ZohoBigin.modules.contacts.CREATE,ZohoBigin.modules.accounts.CREATE,ZohoBigin.modules.pipelines.CREATE',
-        ],
-        [
-            'ref' => '#form',
-            'name' => 'title',
-            'default' => __('Deals', 'forms-bridge'),
         ],
         [
             'ref' => '#bridge/custom_fields[]',
             'name' => 'Owner.id',
-            'label' => __('Owner ID', 'forms-bridge'),
+            'label' => __('Owner', 'forms-bridge'),
             'descritpion' => __(
-                'ID of the owner user of the deal',
+                'Email of the owner user of the deal',
                 'forms-bridge'
             ),
             'type' => 'string',
@@ -175,6 +124,11 @@ return [
                 'forms-bridge'
             ),
             'type' => 'string',
+        ],
+        [
+            'ref' => '#form',
+            'name' => 'title',
+            'default' => __('Deals', 'forms-bridge'),
         ],
     ],
     'form' => [
@@ -246,19 +200,8 @@ return [
             ],
         ],
     ],
-    'backend' => [
-        'base_url' => 'https://www.zohoapis.com',
-        'headers' => [
-            [
-                'name' => 'Accept',
-                'value' => 'application/json',
-            ],
-        ],
-    ],
     'bridge' => [
         'endpoint' => '/bigin/v2/Pipelines',
-        'scope' =>
-            'ZohoBigin.modules.contacts.CREATE,ZohoBigin.modules.accounts.CREATE,ZohoBigin.modules.pipelines.CREATE',
         'workflow' => ['bigin-account-name', 'bigin-contact-name'],
         'mutations' => [
             [

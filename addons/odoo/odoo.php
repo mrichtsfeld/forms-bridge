@@ -2,15 +2,10 @@
 
 namespace FORMS_BRIDGE;
 
-use WP_REST_Server;
-use HTTP_BRIDGE\Http_Backend;
-use WP_Error;
-
 if (!defined('ABSPATH')) {
     exit();
 }
 
-require_once 'class-odoo-db.php';
 require_once 'class-odoo-form-bridge.php';
 require_once 'class-odoo-form-bridge-template.php';
 
@@ -50,122 +45,6 @@ class Odoo_Addon extends Addon
     protected static $bridge_template_class = '\FORMS_BRIDGE\Odoo_Form_Bridge_Template';
 
     /**
-     * Addon constructor. Inherits from the abstract addon and initialize interceptos
-     * and custom hooks.
-     */
-    protected function construct(...$args)
-    {
-        parent::construct(...$args);
-        self::custom_hooks();
-
-        add_action(
-            'rest_api_init',
-            static function () {
-                $namespace = REST_Settings_Controller::namespace();
-                $version = REST_Settings_Controller::version();
-
-                register_rest_route("{$namespace}/v{$version}", '/odoo/users', [
-                    'methods' => WP_REST_Server::CREATABLE,
-                    'callback' => static function ($request) {
-                        $params = $request->get_json_params();
-                        return self::fetch_users($params);
-                    },
-                    'permission_callback' => static function () {
-                        return REST_Settings_Controller::permission_callback();
-                    },
-                ]);
-
-                register_rest_route("{$namespace}/v{$version}", '/odoo/tags', [
-                    'methods' => WP_REST_Server::CREATABLE,
-                    'callback' => static function ($request) {
-                        $params = $request->get_json_params();
-                        return self::fetch_tags($params);
-                    },
-                    'permission_callback' => static function () {
-                        return REST_Settings_Controller::permission_callback();
-                    },
-                ]);
-
-                register_rest_route("{$namespace}/v{$version}", '/odoo/teams', [
-                    'methods' => WP_REST_Server::CREATABLE,
-                    'callback' => static function ($request) {
-                        $params = $request->get_json_params();
-                        return self::fetch_teams($params);
-                    },
-                    'permission_callback' => static function () {
-                        return REST_Settings_Controller::permission_callback();
-                    },
-                ]);
-
-                register_rest_route("{$namespace}/v{$version}", '/odoo/lists', [
-                    'methods' => WP_REST_Server::CREATABLE,
-                    'callback' => static function ($request) {
-                        $params = $request->get_json_params();
-                        return self::fetch_lists($params);
-                    },
-                    'permission_callback' => static function () {
-                        return REST_Settings_Controller::permission_callback();
-                    },
-                ]);
-            },
-            10,
-            0
-        );
-    }
-
-    /**
-     * Addon custom hooks.
-     */
-    private static function custom_hooks()
-    {
-        add_filter(
-            'forms_bridge_odoo_dbs',
-            static function ($dbs) {
-                if (!wp_is_numeric_array($dbs)) {
-                    $dbs = [];
-                }
-
-                return array_merge($dbs, self::databases());
-            },
-            10,
-            1
-        );
-
-        add_filter(
-            'forms_bridge_odoo_db',
-            static function ($db, $name) {
-                if ($db instanceof Odoo_DB) {
-                    return $db;
-                }
-
-                $dbs = self::databases();
-                foreach ($dbs as $db) {
-                    if ($db->name === $name) {
-                        return $db;
-                    }
-                }
-            },
-            10,
-            2
-        );
-    }
-
-    /**
-     * Addon databases instances getter.
-     *
-     * @return array List with available databases instances.
-     */
-    private static function databases()
-    {
-        return array_map(
-            static function ($data) {
-                return new Odoo_DB($data);
-            },
-            self::setting()->databases ?: []
-        );
-    }
-
-    /**
      * Registers the setting and its fields.
      *
      * @return array Addon's settings configuration.
@@ -175,18 +54,18 @@ class Odoo_Addon extends Addon
         return [
             self::$api,
             self::merge_setting_config([
-                'databases' => [
+                'credentials' => [
                     'type' => 'array',
                     'items' => [
                         'type' => 'object',
                         'additionalProperties' => false,
                         'properties' => [
                             'name' => ['type' => 'string'],
+                            'database' => ['type' => 'string'],
                             'user' => ['type' => 'string'],
                             'password' => ['type' => 'string'],
-                            'backend' => ['type' => 'string'],
                         ],
-                        'required' => ['name', 'user', 'password', 'backend'],
+                        'required' => ['name', 'database', 'user', 'password'],
                     ],
                 ],
                 'bridges' => [
@@ -195,15 +74,15 @@ class Odoo_Addon extends Addon
                         'type' => 'object',
                         'additionalProperties' => false,
                         'properties' => [
-                            'database' => ['type' => 'string'],
-                            'model' => ['type' => 'string'],
+                            'credential' => ['type' => 'string'],
+                            'endpoint' => ['type' => 'string'],
                         ],
-                        'required' => ['database', 'model'],
+                        'required' => ['credential', 'endpoint'],
                     ],
                 ],
             ]),
             [
-                'databases' => [],
+                'credentials' => [],
                 'bridges' => [],
             ],
         ];
@@ -219,60 +98,43 @@ class Odoo_Addon extends Addon
      */
     protected static function validate_setting($data, $setting)
     {
-        $backends =
-            \HTTP_BRIDGE\Settings_Store::setting('general')->backends ?: [];
-        $data['databases'] = self::validate_databases(
-            $data['databases'],
-            $backends
-        );
+        $data['credentials'] = self::validate_credentials($data['credentials']);
+
         $data['bridges'] = self::validate_bridges(
             $data['bridges'],
-            $data['databases']
+            $data['credentials']
         );
 
         return $data;
     }
 
     /**
-     * Database setting field validation. Filters inconsistent databases
-     * based on the Http_Bridge's backends store state.
+     * Credentials setting field validation.
      *
-     * @param array $databases Databases data.
-     * @param array $backends Backends data.
+     * @param array $credentials Collection of credentials data.
      *
-     * @return array Validated databases data.
+     * @return array Validated credentials.
      */
-    private static function validate_databases($databases, $backends)
+    private static function validate_credentials($credentials)
     {
-        if (!wp_is_numeric_array($databases)) {
+        if (!wp_is_numeric_array($credentials)) {
             return [];
         }
 
-        $backends = array_map(function ($backend) {
-            return $backend['name'];
-        }, $backends);
-
         $uniques = [];
         $validated = [];
-        foreach ($databases as $database) {
-            if (empty($database['name'])) {
+        foreach ($credentials as $credential) {
+            $credential = self::validate_credential(
+                $credential,
+                ['database', 'user', 'password'],
+                $uniques
+            );
+
+            if (empty($credential)) {
                 continue;
             }
 
-            if (in_array($database['name'], $uniques)) {
-                continue;
-            } else {
-                $uniques[] = $database['name'];
-            }
-
-            if (!in_array($database['backend'] ?? null, $backends)) {
-                $database['backend'] = '';
-            }
-
-            $database['user'] = $database['user'] ?? '';
-            $database['password'] = $database['password'] ?? '';
-
-            $validated[] = $database;
+            $validated[] = $credential;
         }
 
         return $validated;
@@ -283,19 +145,19 @@ class Odoo_Addon extends Addon
      * current store state.
      *
      * @param array $bridges Array with bridge configurations.
-     * @param array $databases Array with databases data.
+     * @param array $credentials Array with credentials data.
      *
      * @return array Validated bridge configurations.
      */
-    private static function validate_bridges($bridges, $databases)
+    private static function validate_bridges($bridges, $credentials)
     {
         if (!wp_is_numeric_array($bridges)) {
             return [];
         }
 
-        $db_names = array_map(function ($database) {
-            return $database['name'];
-        }, $databases);
+        $credentials = array_map(function ($credential) {
+            return $credential['name'];
+        }, $credentials);
 
         $uniques = [];
         $validated = [];
@@ -306,16 +168,17 @@ class Odoo_Addon extends Addon
                 continue;
             }
 
-            if (!in_array($bridge['database'], $db_names)) {
-                $bridge['database'] = '';
+            if (!in_array($bridge['credential'] ?? null, $credentials)) {
+                $bridge['credential'] = '';
             }
 
-            $bridge['model'] = $bridge['model'] ?? '';
+            /* context: endpoint is an alias for the db model */
+            $bridge['endpoint'] = $bridge['endpoint'] ?? '';
 
             $bridge['is_valid'] =
                 $bridge['is_valid'] &&
-                !empty($bridge['database']) &&
-                !empty($bridge['model']);
+                !empty($bridge['credential']) &&
+                !empty($bridge['endpoint']);
 
             $validated[] = $bridge;
         }
@@ -323,111 +186,122 @@ class Odoo_Addon extends Addon
         return $validated;
     }
 
-    private static function rpc_fetch($model, $params, $fields = [])
+    /**
+     * Performs a request against the backend to check the connexion status.
+     *
+     * @param string $backend Target backend name.
+     * @params array $credential Credential data.
+     *
+     * @return array Ping result.
+     */
+    protected function do_ping($backend, $credential)
     {
-        $database_params = $params['database'];
-        $backend_params = $params['backend'];
-        $database_params['backend'] = $backend_params['name'];
+        [$credential] = self::validate_credentials([$credential]);
 
-        if (!$database_params['backend']) {
-            return new WP_Error(
-                'bad_request',
-                __('Invalid database params', 'forms-bridge'),
-                ['backend' => $database_params, 'database' => $database_params]
-            );
+        if (empty($credential)) {
+            return ['success' => false];
         }
 
-        add_filter(
-            'forms_bridge_odoo_db',
-            static function ($database, $name) use ($database_params) {
-                if ($database instanceof Odoo_DB) {
-                    return $database;
-                }
+        static::temp_register_credentials($credential);
 
-                if ($name === $database_params['name']) {
-                    return new Odoo_DB($database_params);
-                }
-            },
-            20,
-            2
-        );
+        $bridge = new Odoo_Form_Bridge([
+            'method' => 'search',
+            'endpoint' => 'res.users',
+            'credential' => $credential['name'],
+            'backend' => $backend,
+        ]);
 
-        add_filter(
-            'http_bridge_backend',
-            static function ($backend, $name) use ($backend_params) {
-                if ($backend instanceof Http_Backend) {
-                    return $backend;
-                }
+        $response = $bridge->submit([]);
+        return ['success' => !is_wp_error($response)];
+    }
 
-                if ($name === $backend_params['name']) {
-                    return new Http_Backend($backend_params);
-                }
-            },
-            20,
-            2
-        );
+    /**
+     * Performs a GET request against the backend model and retrive the response data.
+     *
+     * @param string $backend Target backend name.
+     * @param string $model Target model name.
+     * @params array $credential Credential data.
+     *
+     * @return array Fetched records.
+     */
+    protected function do_fetch($backend, $model, $credential)
+    {
+        [$credential] = self::validate_credentials([$credential]);
 
-        $bridge = new Odoo_Form_Bridge(
-            [
-                'name' => "odoo-rpc-{$model}-fetch",
-                'database' => $database_params['name'],
-                'model' => $model,
-                'method' => 'search_read',
-            ],
-            'odoo'
-        );
+        if (empty($credential)) {
+            return [];
+        }
 
-        $response = $bridge->submit([], $fields);
+        static::temp_register_credentials($credential);
 
+        $bridge = new Odoo_Form_Bridge([
+            'method' => 'search_read',
+            'endpoint' => $model,
+            'backend' => $backend,
+            'credential' => $credential['name'],
+        ]);
+
+        $response = $bridge->submit([], ['id', 'name']);
         if (is_wp_error($response)) {
-            return $response;
+            return [];
         }
 
         return $response['data']['result'];
     }
 
-    private static function fetch_users($params)
+    /**
+     * Performs an introspection of the backend model and returns API fields
+     * and accepted content type.
+     *
+     * @param string $backend Target backend name.
+     * @param string $model Target model name.
+     * @params array $credential Credential data.
+     *
+     * @return array List of fields and content type of the model.
+     */
+    protected function get_schema($backend, $model, $credential)
     {
-        $users = self::rpc_fetch('res.users', $params, ['id', 'email']);
+        [$credential] = self::validate_credentials([$credential]);
 
-        if (is_wp_error($users)) {
+        if (empty($credential)) {
             return [];
         }
 
-        return $users;
+        static::temp_register_credentials($credential);
+
+        $bridge = new Odoo_Form_Bridge([
+            'method' => 'get_fields',
+            'endpoint' => $model,
+            'backend' => $backend,
+            'credential' => $credential['name'],
+        ]);
+
+        return $bridge->api_schema;
     }
 
-    private static function fetch_tags($params)
+    private static function temp_register_credentials($data)
     {
-        $tags = self::rpc_fetch('crm.tag', $params, ['id', 'name']);
+        add_filter(
+            'wpct_setting_data',
+            static function ($setting, $setting_name) use ($data) {
+                if ($setting_name === 'forms-bridge_' . static::$api) {
+                    foreach ($setting['credentials'] as $candidate) {
+                        if ($candidate['name'] === $data['name']) {
+                            $credential = $candidate;
+                            break;
+                        }
+                    }
 
-        if (is_wp_error($tags)) {
-            return [];
-        }
+                    if (!isset($credential)) {
+                        $setting['credentials'][] = $data;
+                    }
+                }
 
-        return $tags;
-    }
-
-    private static function fetch_teams($params)
-    {
-        $tags = self::rpc_fetch('crm.team', $params, ['id', 'name']);
-
-        if (is_wp_error($tags)) {
-            return [];
-        }
-
-        return $tags;
-    }
-
-    private static function fetch_lists($params)
-    {
-        $tags = self::rpc_fetch('mailing.list', $params, ['id', 'name']);
-
-        if (is_wp_error($tags)) {
-            return [];
-        }
-
-        return $tags;
+                return $setting;
+            },
+            10,
+            2
+        );
     }
 }
 

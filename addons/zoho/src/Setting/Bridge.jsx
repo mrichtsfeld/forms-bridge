@@ -20,7 +20,7 @@ export default function ZohoBridge({ data, update, remove }) {
       data={data}
       update={update}
       remove={remove}
-      schema={["name", "form_id", "credential", "scope", "endpoint"]}
+      schema={["name", "form_id", "backend", "credential", "scope", "endpoint"]}
       template={({ add, schema }) => (
         <NewZohoBridge add={(data) => add(data)} schema={schema} />
       )}

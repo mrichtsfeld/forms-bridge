@@ -9,74 +9,56 @@ if (!defined('ABSPATH')) {
 class Dolibarr_Form_Bridge_Template extends Rest_Form_Bridge_Template
 {
     /**
-     * Handles the template default values.
+     * Handles the template api name.
      *
-     * @var array
+     * @var string
      */
-    protected static $default = [
-        'fields' => [
-            [
-                'ref' => '#bridge',
-                'name' => 'endpoint',
-                'label' => 'Endpoint',
-                'type' => 'string',
-                'required' => true,
-            ],
-            [
-                'ref' => '#backend',
-                'name' => 'name',
-                'label' => 'Name',
-                'type' => 'string',
-                'required' => true,
-                'default' => 'Dolibarr',
-            ],
-            [
-                'ref' => '#backend',
-                'name' => 'base_url',
-                'label' => 'Base URL',
-                'type' => 'string',
-                'required' => true,
-            ],
-            [
-                'ref' => '#backend/headers[]',
-                'name' => 'DOLAPIKEY',
-                'label' => 'API key',
-                'type' => 'string',
-                'required' => true,
-            ],
-        ],
-        'bridge' => [
-            'backend' => '',
-            'form_id' => '',
-            'endpoint' => '',
-            'api_key' => '',
-        ],
-        'backend' => [
-            'name' => 'Dolibarr',
-            'headers' => [
-                [
-                    'name' => 'Content-Type',
-                    'value' => 'application/json',
-                ],
-                [
-                    'name' => 'Accept',
-                    'value' => 'application/json',
-                ],
-            ],
-        ],
-    ];
+    protected $api = 'dolibarr';
 
     /**
-     * Extends the common schema and adds custom properties.
-     *
-     * @param array $schema Common template data schema.
+     * Template default config getter.
      *
      * @return array
      */
-    protected function extend_schema($schema)
+    protected static function defaults()
     {
-        $schema = parent::extend_schema($schema);
-        $schema['bridge']['properties']['method']['enum'] = ['POST'];
-        return $schema;
+        return forms_bridge_merge_object(
+            [
+                'fields' => [
+                    [
+                        'ref' => '#backend',
+                        'name' => 'name',
+                        'default' => 'Dolibarr',
+                    ],
+                    [
+                        'ref' => '#backend/headers[]',
+                        'name' => 'DOLAPIKEY',
+                        'label' => __('API key', 'forms-bridge'),
+                        'type' => 'string',
+                        'required' => true,
+                    ],
+                    [
+                        'ref' => '#bridge',
+                        'name' => 'method',
+                        'value' => 'POST',
+                    ],
+                ],
+                'bridge' => [
+                    'endpoint' => '',
+                    'method' => 'POST',
+                ],
+                'backend' => [
+                    'name' => 'Dolibarr',
+                    'headers' => [
+                        [
+                            'name' => 'Accept',
+                            'value' => 'application/json',
+                        ],
+                    ],
+                ],
+            ],
+            parent::defaults(),
+            self::$schema
+        );
     }
 }

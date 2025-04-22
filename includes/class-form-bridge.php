@@ -14,19 +14,47 @@ abstract class Form_Bridge
     use Form_Bridge_Custom_Fields;
     use Form_Bridge_Mutations;
 
+    /**
+     * Bridge data common schema.
+     *
+     * @var array
+     */
     public static $schema = [
         'type' => 'object',
         'additionalProperties' => false,
         'properties' => [
-            'name' => ['type' => 'string'],
-            'form_id' => ['type' => 'string'],
+            'name' => [
+                'type' => 'string',
+                'minLength' => 1,
+            ],
+            'form_id' => [
+                'type' => 'string',
+                'minLength' => 1,
+                'default' => '',
+            ],
+            'backend' => [
+                'type' => 'string',
+                'minLength' => 1,
+                'default' => '',
+            ],
+            'credential' => [
+                'type' => 'string',
+                'minLength' => 1,
+                'default' => '',
+            ],
             'custom_fields' => [
                 'type' => 'array',
                 'items' => [
                     'type' => 'object',
                     'properties' => [
-                        'name' => ['type' => 'string'],
-                        'value' => ['type' => 'string'],
+                        'name' => [
+                            'type' => 'string',
+                            'minLength' => 1,
+                        ],
+                        'value' => [
+                            'type' => 'string',
+                            'minLength' => 1,
+                        ],
                     ],
                     'additionalProperties' => false,
                     'required' => ['name', 'value'],
@@ -40,8 +68,14 @@ abstract class Form_Bridge
                         'type' => 'object',
                         'additionalProperties' => false,
                         'properties' => [
-                            'from' => ['type' => 'string'],
-                            'to' => ['type' => 'string'],
+                            'from' => [
+                                'type' => 'string',
+                                'minLength' => 1,
+                            ],
+                            'to' => [
+                                'type' => 'string',
+                                'minLength' => 1,
+                            ],
                             'cast' => [
                                 'type' => 'string',
                                 'enum' => [
@@ -64,17 +98,20 @@ abstract class Form_Bridge
                     ],
                 ],
             ],
-            'template' => ['type' => 'string'],
             'workflow' => [
                 'type' => 'array',
-                'items' => ['type' => 'string'],
+                'items' => [
+                    'type' => 'string',
+                    'minLength' => 1,
+                ],
             ],
             'is_valid' => ['type' => 'boolean'],
         ],
         'required' => [
             'name',
             'form_id',
-            'constants',
+            'backend',
+            'custom_fields',
             'mutations',
             'workflow',
             'is_valid',
@@ -96,11 +133,17 @@ abstract class Form_Bridge
     protected $api;
 
     /**
+     * Handles the array of accepted HTTP header names of the bridge API.
+     *
+     * @var array<string>
+     */
+    protected static $api_headers = [];
+
+    /**
      * Stores the form bridge's data as a private attribute.
      */
-    public function __construct($data, $api)
+    public function __construct($data)
     {
-        $this->api = $api;
         $this->data = $data;
     }
 
@@ -124,8 +167,10 @@ abstract class Form_Bridge
                 return $this->backend();
             case 'content_type':
                 return $this->content_type();
-            case 'api_fields':
-                return $this->api_fields();
+            case 'credential':
+                return $this->credential();
+            case 'api_schema':
+                return $this->api_schema();
             case 'workflow':
                 return $this->workflow();
             default:
@@ -145,7 +190,7 @@ abstract class Form_Bridge
             return;
         }
 
-        return apply_filters('http_bridge_backend', null, $backend_name);
+        return apply_filters('forms_bridge_backend', null, $backend_name);
     }
 
     /**
@@ -186,13 +231,28 @@ abstract class Form_Bridge
         return $backend->content_type;
     }
 
-    protected function api_fields()
+    /**
+     * Bridge's endpoint fields schema getter.
+     *
+     * @return array
+     */
+    protected function api_schema()
     {
         return [];
     }
 
     /**
-     * Gets bridge's workflow instnace.
+     * Bridge's credential data getter.
+     *
+     * @return null
+     */
+    protected function credential()
+    {
+        return;
+    }
+
+    /**
+     * Gets bridge's workflow instance.
      *
      * @return Workflow_Job|null;
      */
@@ -210,7 +270,7 @@ abstract class Form_Bridge
      *
      * @return array|WP_Error Http request response.
      */
-    public function submit($payload, $attachments = [])
+    public function submit($payload = [], $attachments = [])
     {
         do_action(
             'forms_bridge_before_bridge_submit',
@@ -218,6 +278,14 @@ abstract class Form_Bridge
             $payload,
             $attachments
         );
+
+        add_filter(
+            'forms_bridge_http_request',
+            static::class . '::filter_request',
+            10,
+            1
+        );
+
         $response = $this->do_submit($payload, $attachments);
 
         if (is_wp_error($response)) {
@@ -250,6 +318,66 @@ abstract class Form_Bridge
      * @return array|WP_Error Http request response.
      */
     abstract protected function do_submit($payload, $attachments = []);
+
+    /**
+     * HTTP request args interceptor with automatic unsubscription.
+     *
+     * @param array $request HTTP request arguments.
+     *
+     * @return array
+     */
+    final public static function filter_request($request)
+    {
+        $request = static::do_filter_request($request);
+        $headers = &$request['args']['headers'];
+
+        if (count(static::$api_headers) > 0) {
+            $api_headers = [];
+            foreach ($headers as $header => $value) {
+                if (in_array($header, static::$api_headers)) {
+                    $api_headers[$header] = $value;
+                }
+            }
+
+            $headers = $api_headers;
+        }
+
+        $no_content = in_array(
+            $request['args']['method'],
+            ['GET', 'DELETE'],
+            true
+        );
+
+        if ($no_content) {
+            if (isset($headers['Content-Type'])) {
+                unset($headers['Content-Type']);
+            } elseif (isset($headers['content-type'])) {
+                unset($headers['content-type']);
+            }
+        }
+
+        remove_filter(
+            'forms_bridge_http_request',
+            '\FORMS_BRIDGE\Form_Bridge::filter_request',
+            10,
+            1
+        );
+
+        return $request;
+    }
+
+    /**
+     * Filters HTTP request args just before it is sent.
+     *
+     * @param array $request Request arguments.
+     *
+     * @return array
+     */
+    protected static function do_filter_request($request)
+    {
+        // To be overwriten by descendants
+        return $request;
+    }
 
     /**
      * Returns a clone of the bridge instance with its data patched by

@@ -12,12 +12,18 @@ if (!defined('ABSPATH')) {
 class Brevo_Form_Bridge extends Rest_Form_Bridge
 {
     /**
-     * Handles a custom http origin token to be unseted from headers
-     * before submits.
+     * Handles bridge class API name.
+     *
+     * @var string
+     */
+    protected $api = 'brevo';
+
+    /**
+     * Handles the array of accepted HTTP header names of the bridge API.
      *
      * @var array<string>
      */
-    public const api_headers = ['Accept', 'Content-Type', 'Api-Key'];
+    protected static $api_headers = ['accept', 'content-type', 'api-key'];
 
     /**
      * Gets bridge's default body encoding schema.
@@ -39,13 +45,6 @@ class Brevo_Form_Bridge extends Rest_Form_Bridge
      */
     protected function do_submit($payload, $attachments = [])
     {
-        add_filter(
-            'http_request_args',
-            '\FORMS_BRIDGE\Brevo_Form_Bridge::prepare_headers',
-            10,
-            1
-        );
-
         $response = parent::do_submit($payload, $attachments);
 
         if (is_wp_error($response)) {
@@ -89,7 +88,7 @@ class Brevo_Form_Bridge extends Rest_Form_Bridge
         return $response;
     }
 
-    protected function api_fields()
+    protected function api_schema()
     {
         if (strstr($this->endpoint, 'contacts')) {
             $response = $this->patch([
@@ -104,28 +103,93 @@ class Brevo_Form_Bridge extends Rest_Form_Bridge
 
             if ($this->endpoint === '/v3/contacts/doubleOptinConfirmation') {
                 $fields = [
-                    'email',
-                    'includeListIds',
-                    'excludeListIds',
-                    'templateId',
-                    'redirectionUrl',
-                    'attributes',
+                    [
+                        'name' => 'email',
+                        'schema' => ['type' => 'string'],
+                        'required' => true,
+                    ],
+                    [
+                        'name' => 'includeListIds',
+                        'schema' => [
+                            'type' => 'array',
+                            'items' => ['type' => 'integer'],
+                        ],
+                        'required' => true,
+                    ],
+                    [
+                        'name' => 'excludeListIds',
+                        'schema' => [
+                            'type' => 'array',
+                            'items' => ['type' => 'integer'],
+                        ],
+                    ],
+                    [
+                        'name' => 'templateId',
+                        'schema' => ['type' => 'integer'],
+                        'required' => true,
+                    ],
+                    [
+                        'name' => 'redirectionUrl',
+                        'schema' => ['type' => 'string'],
+                        'required' => true,
+                    ],
+                    [
+                        'name' => 'attributes',
+                        'schema' => [
+                            'type' => 'object',
+                            'properties' => [],
+                        ],
+                    ],
                 ];
             } else {
                 $fields = [
-                    'email',
-                    'ext_id',
-                    'emailBlacklisted',
-                    'smsBlacklisted',
-                    'listIds',
-                    'updateEnabled',
-                    'smtpBlacklistSender',
-                    'attributes',
+                    [
+                        'name' => 'email',
+                        'schema' => ['type' => 'string'],
+                        'required' => true,
+                    ],
+                    [
+                        'name' => 'ext_id',
+                        'schema' => ['type' => 'string'],
+                    ],
+                    [
+                        'name' => 'emailBlacklisted',
+                        'schema' => ['type' => 'boolean'],
+                    ],
+                    [
+                        'name' => 'smsBlacklisted',
+                        'schema' => ['type' => 'boolean'],
+                    ],
+                    [
+                        'name' => 'listIds',
+                        'schema' => [
+                            'type' => 'array',
+                            'items' => ['type' => 'integer'],
+                        ],
+                    ],
+                    [
+                        'name' => 'updateEnabled',
+                        'schema' => ['type' => 'boolean'],
+                    ],
+                    [
+                        'name' => 'smtpBlacklistSender',
+                        'schema' => ['type' => 'boolean'],
+                    ],
+                    [
+                        'name' => 'attributes',
+                        'schema' => [
+                            'type' => 'object',
+                            'properties' => [],
+                        ],
+                    ],
                 ];
             }
 
             foreach ($response['data']['attributes'] as $attribute) {
-                $fields[] = 'attributes.' . $attribute['name'];
+                $fields[] = [
+                    'name' => 'attributes.' . $attribute['name'],
+                    'schema' => ['type' => 'string'],
+                ];
             }
 
             return $fields;
@@ -133,7 +197,7 @@ class Brevo_Form_Bridge extends Rest_Form_Bridge
             preg_match('/\/([a-z]+)$/', $this->endpoint, $matches);
             $module = $matches[1];
             $response = $this->patch([
-                'endpoint' => "brevo-{$module}-attributes",
+                'name' => "brevo-{$module}-attributes",
                 'endpoint' => "/v3/crm/attributes/{$module}",
                 'method' => 'GET',
             ])->submit([]);
@@ -144,49 +208,111 @@ class Brevo_Form_Bridge extends Rest_Form_Bridge
 
             if ($module === 'companies') {
                 $fields = [
-                    'name',
-                    'countryCode',
-                    'linkedContactsIds',
-                    'linkedDealsIds',
-                    'attributes',
+                    [
+                        'name' => 'name',
+                        'schema' => ['type' => 'string'],
+                        'required' => true,
+                    ],
+                    [
+                        'name' => 'countryCode',
+                        'schema' => ['type' => 'integer'],
+                    ],
+                    [
+                        'name' => 'linkedContactsIds',
+                        'schema' => [
+                            'type' => 'array',
+                            'items' => ['type' => 'integer'],
+                        ],
+                    ],
+                    [
+                        'name' => 'linkedDealsIds',
+                        'schema' => [
+                            'type' => 'array',
+                            'items' => ['type' => 'integer'],
+                        ],
+                    ],
+                    [
+                        'name' => 'attributes',
+                        'schema' => [
+                            'type' => 'object',
+                            'properties' => [],
+                        ],
+                    ],
                 ];
             } elseif ($module === 'deals') {
                 $fields = [
-                    'name',
-                    'linkedDealsIds',
-                    'linkedCompaniesIds',
-                    'attributes',
+                    [
+                        'name' => 'name',
+                        'schema' => ['type' => 'string'],
+                        'required' => true,
+                    ],
+                    [
+                        'name' => 'linkedDealsIds',
+                        'schema' => [
+                            'type' => 'array',
+                            'items' => ['type' => 'integer'],
+                        ],
+                    ],
+                    [
+                        'name' => 'linkedCompaniesIds',
+                        'schema' => [
+                            'type' => 'array',
+                            'items' => ['type' => 'integer'],
+                        ],
+                    ],
+                    [
+                        'name' => 'attributes',
+                        'schema' => [
+                            'type' => 'object',
+                            'properties' => [],
+                        ],
+                    ],
                 ];
             }
 
             foreach ($response['data'] as $attribute) {
-                $fields[] = 'attributes.' . $attribute['internalName'];
+                switch ($attribute['attributeTypeName']) {
+                    case 'number':
+                        $type = 'number';
+                        break;
+                    case 'text':
+                        $type = 'string';
+                        break;
+                    case 'user':
+                        $type = 'email';
+                        break;
+                    case 'date':
+                        $type = 'date';
+                        break;
+                    default:
+                        $type = 'string';
+                }
+
+                $fields[] = [
+                    'name' => 'attributes.' . $attribute['internalName'],
+                    'schema' => ['type' => $type],
+                ];
             }
 
             return $fields;
         }
     }
 
-    public static function prepare_headers($args)
+    /**
+     * Filters HTTP request args just before it is sent.
+     *
+     * @param array $request Request arguments.
+     *
+     * @return array
+     */
+    public static function do_filter_request($request)
     {
-        if (isset($args['headers']['Api-Key'])) {
-            $api_headers = [];
-            foreach ($args['headers'] as $name => $value) {
-                if (in_array($name, self::api_headers)) {
-                    $api_headers[strtolower($name)] = $value;
-                }
-            }
-
-            $args['headers'] = $api_headers;
+        $headers = &$request['args']['headers'];
+        foreach ($headers as $name => $value) {
+            unset($headers[$name]);
+            $headers[strtolower($name)] = $value;
         }
 
-        remove_filter(
-            'http_request_args',
-            '\FORMS_BRIDGE\Brevo_Form_Bridge::prepare_headers',
-            10,
-            1
-        );
-
-        return $args;
+        return $request;
     }
 }

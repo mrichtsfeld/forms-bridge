@@ -1,66 +1,55 @@
 import { useGeneral } from "../../../../src/providers/Settings";
+import { useTemplateConfig } from "../../../../src/providers/Templates";
 import TemplateWizard from "../../../../src/components/Templates/Wizard";
 import BackendStep from "../../../../src/components/Templates/Steps/BackendStep";
-import useDatabaseNames from "../hooks/useDatabaseNames";
-import DatabaseStep from "./DatabaseStep";
+import CredentialStep from "./CredentialStep";
 import BridgeStep from "./BridgeStep";
-import { useTemplateConfig } from "../../../../src/providers/Templates";
+import { debounce, validateUrl } from "../../../../src/lib/utils";
 
 const apiFetch = wp.apiFetch;
 const { useState, useMemo, useEffect, useRef } = wp.element;
 
 const STEPS = [
   {
-    name: "database",
-    step: ({ fields, data, setData }) => (
-      <DatabaseStep fields={fields} data={data} setData={setData} />
-    ),
+    name: "credential",
+    component: CredentialStep,
     order: 0,
   },
   {
     name: "backend",
-    step: ({ fields, data, setData }) => (
-      <BackendStep fields={fields} data={data} setData={setData} />
-    ),
+    component: BackendStep,
     order: 5,
   },
   {
     name: "bridge",
-    step: ({ fields, data, setData }) => (
-      <BridgeStep fields={fields} data={data} setData={setData} />
-    ),
+    component: BridgeStep,
     order: 20,
   },
 ];
 
-function debounce(fn, ms = 500) {
-  let timeout;
+function validateBackend(data) {
+  if (!data?.name) return false;
 
-  return (...args) => {
-    clearTimeout(timeout);
-    timeout = setTimeout(() => fn(...args), ms);
-  };
+  return ["Content-Type", "Accept"].reduce((isValid, header) => {
+    return isValid && data.headers.find(({ name }) => name === header);
+  }, validateUrl(data.base_url));
 }
 
-function validateUrl(url) {
-  try {
-    url = new URL(url);
-  } catch (_) {
-    return false;
-  }
-
-  return url.protocol === "http:" || url.protocol === "https:";
-}
-
-export default function OdooTemplateWizard({ integration, onDone }) {
-  const config = useTemplateConfig();
-  const configFields = config?.fields || [];
-  const customFields = configFields
-    .filter((field) => field.ref === "#bridge/custom_fields[]")
-    .map((field) => field.name);
-
+export default function OdooTemplateWizard({
+  integration,
+  wired,
+  setWired,
+  onDone,
+}) {
   const [{ backends }] = useGeneral();
-  const databaseNames = useDatabaseNames();
+
+  const config = useTemplateConfig();
+  const configFields = useMemo(() => config?.fields || [], [config]);
+  const customFields = useMemo(() => {
+    return configFields
+      .filter((field) => field.ref === "#bridge/custom_fields[]")
+      .map((field) => field.name);
+  }, [configFields]);
 
   const [data, setData] = useState({});
 
@@ -70,182 +59,78 @@ export default function OdooTemplateWizard({ integration, onDone }) {
   const [teams, setTeams] = useState([]);
   const [lists, setLists] = useState([]);
 
-  const steps = useMemo(
-    () =>
-      STEPS.map(({ name, step, order }) => {
-        if (
-          name === "backend" &&
-          data.database?.name &&
-          databaseNames.has(data.database.name)
-        ) {
-          step = null;
-        }
+  const backend = useMemo(() => {
+    if (!data.backend?.name) return;
 
-        return { name, step, order };
-      }),
-    [databaseNames, data.database?.name]
-  );
+    let backend = backends.find(({ name }) => name === data.backend.name);
+    if (validateBackend(backend)) {
+      return backend;
+    }
 
-  useEffect(() => {
-    if (data.database?.name && databaseNames.has(data.database.name)) {
-      const backend = backends.find(
-        ({ name }) => name === data.database.backend
-      );
-
-      setData({
-        ...data,
-        backend: {
-          ...data.backend,
-          name: backend.name,
-          base_url: backend.base_url,
+    backend = {
+      name: data.backend.name,
+      base_url: data.backend.base_url,
+      headers: [
+        {
+          name: "Content-Type",
+          value: "application/json",
         },
-      });
+        {
+          name: "Accept",
+          value: "application/json",
+        },
+      ],
+    };
+
+    if (validateBackend(backend)) {
+      return backend;
     }
-  }, [data.database?.name]);
+  }, [data.backend, backends]);
 
-  const isValidBackend = useMemo(() => {
-    if (!data.backend?.base_url) return false;
-    const backend = backends.find(({ name }) => name === data.backend.name);
-
-    if (backend && validateUrl(backend.base_url)) {
-      return true;
-    }
-
-    return validateUrl(data.backend?.base_url);
-  }, [data.database, data.backend, backends]);
-
-  const isValidDatabase = useMemo(() => {
-    if (!data.database) return false;
-
-    return (
-      data.database.name &&
-      data.database.user &&
-      data.database.password &&
-      /^[\w\-\.]+@([\w-]+\.)+[\w-]{2,}$/.test(data.database.user)
-    );
-  }, [data.database]);
+  const fetch = useRef((model, then, credential, backend) => {
+    apiFetch({
+      path: `forms-bridge/v1/odoo/fetch`,
+      method: "POST",
+      data: { backend, credential, endpoint: model },
+    })
+      .then(then)
+      .catch(() => then([]));
+  }).current;
 
   const fetchUsers = useRef(
-    debounce((database, backend) => {
-      backend = {
-        ...backend,
-        headers: [
-          {
-            name: "Content-Type",
-            value: "application/json",
-          },
-        ],
-      };
-
-      apiFetch({
-        path: "forms-bridge/v1/odoo/users",
-        method: "POST",
-        data: { backend, database },
-      })
-        .then(setUsers)
-        .catch(() => setUsers([]));
-    }, 500)
+    debounce((...args) => fetch("res.users", setUsers, ...args), 1e3)
   ).current;
 
   const fetchProducts = useRef(
-    debounce((database, backend) => {
-      backend = {
-        ...backend,
-        headers: [
-          {
-            name: "Content-Type",
-            value: "application/json",
-          },
-        ],
-      };
-
-      apiFetch({
-        path: "forms-bridge/v1/odoo/products",
-        method: "POST",
-        data: { backend, database },
-      })
-        .then(setProducts)
-        .catch(() => setProducts([]));
-    })
+    debounce((...args) => fetch("product.template", setProducts, ...args), 1e3)
   ).current;
 
   const fetchTags = useRef(
-    debounce((database, backend) => {
-      backend = {
-        ...backend,
-        headers: [
-          {
-            name: "Content-Type",
-            value: "application/json",
-          },
-        ],
-      };
-
-      apiFetch({
-        path: "forms-bridge/v1/odoo/tags",
-        method: "POST",
-        data: { backend, database },
-      })
-        .then(setTags)
-        .catch(() => setTags([]));
-    })
+    debounce((...args) => fetch("crm.tag", setTags, ...args), 1e3)
   ).current;
 
   const fetchTeams = useRef(
-    debounce((database, backend) => {
-      backend = {
-        ...backend,
-        headers: [
-          {
-            name: "Content-Type",
-            value: "application/json",
-          },
-        ],
-      };
-
-      apiFetch({
-        path: "forms-bridge/v1/odoo/teams",
-        method: "POST",
-        data: { backend, database },
-      })
-        .then(setTeams)
-        .catch(() => setTeams([]));
-    })
+    debounce((...args) => fetch("crm.team", setTeams, ...args), 1e3)
   ).current;
 
   const fetchLists = useRef(
-    debounce((database, backend) => {
-      backend = {
-        ...backend,
-        headers: [
-          {
-            name: "Content-Type",
-            value: "application/json",
-          },
-        ],
-      };
-
-      apiFetch({
-        path: "forms-bridge/v1/odoo/lists",
-        method: "POST",
-        data: { backend, database },
-      })
-        .then(setLists)
-        .catch(() => setLists([]));
-    })
+    debounce((...args) => fetch("mailing.list", setLists, ...args), 1e3)
   ).current;
 
   useEffect(() => {
-    if (!isValidBackend || !isValidDatabase) return;
+    if (!backend || !wired) return;
 
-    customFields.includes("user_id") && fetchUsers(data.database, data.backend);
+    customFields.includes("user_id") && fetchUsers(data.credential, backend);
+
     customFields.includes("product_id") &&
-      fetchProducts(data.database, data.backend);
-    customFields.includes("tag_ids") && fetchTags(data.database, data.backend);
-    customFields.includes("team_id") && fetchTeams(data.database, data.backend);
-    customFields.includes("list_ids") &&
-      fetchLists(data.database, data.backend);
-  }, [data.database, isValidDatabase, data.backend, isValidBackend, config]);
+      fetchProducts(data.credential, backend);
+
+    customFields.includes("tag_ids") && fetchTags(data.credential, backend);
+
+    customFields.includes("team_id") && fetchTeams(data.credential, backend);
+
+    customFields.includes("list_ids") && fetchLists(data.credential, backend);
+  }, [wired, backend, customFields, data.credential]);
 
   useEffect(() => {
     setData({
@@ -264,10 +149,12 @@ export default function OdooTemplateWizard({ integration, onDone }) {
   return (
     <TemplateWizard
       integration={integration}
-      steps={steps}
       data={data}
       setData={setData}
+      wired={wired}
+      setWired={setWired}
       onDone={onDone}
+      steps={STEPS}
     />
   );
 }

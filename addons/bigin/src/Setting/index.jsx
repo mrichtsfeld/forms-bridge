@@ -24,6 +24,7 @@ export default function BiginSetting() {
       </p>
       <PanelRow>
         <Bridges
+          credentials={credentials}
           bridges={bridges}
           setBridges={(bridges) => update({ bridges })}
           Bridge={BiginBridge}

@@ -1,195 +1,147 @@
 import { useGeneral } from "../../../../src/providers/Settings";
 import TemplateWizard from "../../../../src/components/Templates/Wizard";
-import BridgeStep from "./BridgeStep";
+import BrevoBridgeStep from "./BridgeStep";
 import { useTemplateConfig } from "../../../../src/providers/Templates";
+import { debounce } from "../../../../src/lib/utils";
 
 const apiFetch = wp.apiFetch;
 const { useState, useEffect, useMemo, useRef } = wp.element;
 
-const BREVO_HEADERS = ["api-key"];
-
 const STEPS = [
   {
     name: "bridge",
-    step: ({ fields, data, setData }) => (
-      <BridgeStep fields={fields} data={data} setData={setData} />
-    ),
+    component: BrevoBridgeStep,
     order: 20,
   },
 ];
 
-function debounce(fn, ms = 500) {
-  let timeout;
-
-  return (...args) => {
-    clearTimeout(timeout);
-    timeout = setTimeout(() => fn(...args), ms);
-  };
-}
-
-function validateBackendData(data) {
-  return BREVO_HEADERS.reduce((isValid, field) => {
-    return isValid && data.headers[field];
-  }, true);
-}
-
-export default function BrevoTemplateWizard({ integration, onDone }) {
+export default function BrevoTemplateWizard({
+  integration,
+  wired,
+  setWired,
+  onDone,
+}) {
   const [{ backends }] = useGeneral();
 
   const config = useTemplateConfig();
-  const configFields = config?.fields || [];
-  const customFields = configFields
-    .filter((field) => field.ref === "#bridge/custom_fields[]")
-    .map((field) => field.name);
+  const configFields = useMemo(() => config?.fields || [], [config]);
+  const customFields = useMemo(() => {
+    return configFields
+      .filter((field) => field.ref === "#bridge/custom_fields[]")
+      .map((field) => field.name);
+  }, [configFields]);
 
   const [data, setData] = useState({});
+
+  if (data.backend && data.backend.base_url !== "https://api.brevo.com") {
+    setData({
+      ...data,
+      backend: { ...data.backend, base_url: "https://api.brevo.com" },
+    });
+  }
 
   const [lists, setLists] = useState([]);
   const [products, setProducts] = useState([]);
   const [pipelines, setPipelines] = useState([]);
   const [templates, setTemplates] = useState([]);
 
-  const backendData = useMemo(() => {
+  const backend = useMemo(() => {
     if (!data.backend?.name) return;
-    const backend = backends.find(({ name }) => name === data.backend.name);
 
-    if (backend && validateBackendData(backend)) {
+    let backend = backends.find(({ name }) => name === data.backend.name);
+    if (backend?.headers.find(({ name }) => name === "api-key")?.value) {
       return backend;
     }
 
-    const backendData = {
-      name: data.backend.name,
-      base_url: data.backend.base_url,
-      headers: BREVO_HEADERS.reduce(
-        (headers, name) => ({
-          ...headers,
-          [name]: data.backend[name],
-        }),
-        {}
-      ),
-    };
-
-    if (validateBackendData(backendData)) {
-      return backendData;
+    if (data.backend.name && data.backend["api-key"]) {
+      return {
+        name: data.backend.name,
+        base_url: "https://api.brevo.com",
+        headers: [
+          { name: "content-type", value: "application/json" },
+          { name: "accept", value: "application/json" },
+          { name: "api-key", value: data.backend["api-key"] },
+        ],
+      };
     }
   }, [data.backend, backends]);
 
+  const fetch = useRef((endpoint, then, backend) => {
+    apiFetch({
+      path: "forms-bridge/v1/brevo/fetch",
+      method: "POST",
+      data: { backend, endpoint },
+    })
+      .then(then)
+      .catch(() => then([]));
+  }).current;
+
   const fetchLists = useRef(
-    debounce((data) => {
-      const backend = {
-        name: data.name,
-        base_url: data.base_url,
-        headers: BREVO_HEADERS.map((header) => ({
-          name: header,
-          value: data.headers[header],
-        })),
-      };
-
-      apiFetch({
-        path: "forms-bridge/v1/brevo/lists",
-        method: "POST",
-        data: backend,
-      })
-        .then(setLists)
-        .catch(() => setLists([]));
-    }, 500)
-  ).current;
-
-  const fetchPipelines = useRef(
-    debounce((data) => {
-      const backend = {
-        name: data.name,
-        base_url: data.base_url,
-        headers: BREVO_HEADERS.map((header) => ({
-          name: header,
-          value: data.headers[header],
-        })),
-      };
-
-      apiFetch({
-        path: "forms-bridge/v1/brevo/pipelines",
-        method: "POST",
-        data: backend,
-      })
-        .then(setPipelines)
-        .catch(() => setPipelines([]));
-    }, 500)
+    debounce(
+      (backend) =>
+        fetch("/v3/contacts/lists", (data) => setLists(data.lists), backend),
+      1e3
+    )
   ).current;
 
   const fetchProducts = useRef(
-    debounce((data) => {
-      const backend = {
-        name: data.name,
-        base_url: data.base_url,
-        headers: BREVO_HEADERS.map((header) => ({
-          name: header,
-          value: data.headers[header],
-        })),
-      };
+    debounce((backend) => fetch("/v3/products", setProducts, backend), 1e3)
+  ).current;
 
-      apiFetch({
-        path: "forms-bridge/v1/brevo/products",
-        method: "POST",
-        data: backend,
-      })
-        .then(setProducts)
-        .catch(() => setProducts([]));
-    }, 500)
+  const fetchPipelines = useRef(
+    debounce(
+      (backend) => fetch("/v3/crm/pipeline/details/all", setPipelines, backend),
+      1e3
+    )
   ).current;
 
   const fetchTemplates = useRef(
-    debounce((data) => {
-      const backend = {
-        name: data.name,
-        base_url: data.base_url,
-        headers: BREVO_HEADERS.map((header) => ({
-          name: header,
-          value: data.headers[header],
-        })),
-      };
-
-      apiFetch({
-        path: "forms-bridge/v1/brevo/templates",
-        method: "POST",
-        data: backend,
-      })
-        .then(setTemplates)
-        .catch(() => setTemplates([]));
-    }, 500)
+    debounce(
+      (backend) =>
+        fetch(
+          "/v3/smtp/templates",
+          (data) => setTemplates(data.templates),
+          backend
+        ),
+      1e3
+    )
   ).current;
 
   useEffect(() => {
-    if (!backendData) return;
+    if (!backend || !wired) return;
 
     (customFields.includes("listIds") ||
       customFields.includes("includeListIds")) &&
-      fetchLists(backendData);
-    (customFields.includes("product") || customFields.includes("products")) &&
-      fetchProducts(backendData);
-    customFields.includes("pipeline") && fetchPipelines(backendData);
-    customFields.includes("templateId") && fetchTemplates(backendData);
-  }, [backendData, config]);
+      fetchLists(backend);
 
-  useEffect(
-    () =>
-      setData({
-        ...data,
-        bridge: {
-          ...(data.bridge || {}),
-          _lists: lists,
-          _products: products,
-          _pipelines: pipelines,
-          _templates: templates,
-        },
-      }),
-    [lists, products, pipelines]
-  );
+    (customFields.includes("product") || customFields.includes("products")) &&
+      fetchProducts(backend);
+
+    customFields.includes("pipeline") && fetchPipelines(backend);
+
+    customFields.includes("templateId") && fetchTemplates(backend);
+  }, [wired, backend, customFields]);
+
+  useEffect(() => {
+    setData({
+      ...data,
+      bridge: {
+        ...(data.bridge || {}),
+        _lists: lists,
+        _products: products,
+        _pipelines: pipelines,
+        _templates: templates,
+      },
+    });
+  }, [lists, products, pipelines, templates]);
 
   return (
     <TemplateWizard
       integration={integration}
       data={data}
       setData={setData}
+      wired={wired}
+      setWired={setWired}
       onDone={onDone}
       steps={STEPS}
     />
