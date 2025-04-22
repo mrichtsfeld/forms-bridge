@@ -47,10 +47,10 @@ vendor:
   stage: build
   image: composer:latest
   script:
-    - cd addons/google-sheets && composer install
+    - cd addons/gsheets && composer install
   artifacts:
     paths:
-      - addons/google-sheets/vendor
+      - addons/gsheets/vendor
 
 package:
   image: codeccoop/wp-cli:latest
