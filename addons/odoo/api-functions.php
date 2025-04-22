@@ -46,9 +46,8 @@ function forms_bridge_odoo_create_partner($payload, $bridge)
     $response = $bridge
         ->patch([
             'name' => 'odoo-search-partner',
-            'template' => null,
             'method' => 'search_read',
-            'model' => 'res.partner',
+            'endpoint' => 'res.partner',
         ])
         ->submit($query);
 
@@ -60,7 +59,7 @@ function forms_bridge_odoo_create_partner($payload, $bridge)
         ->patch([
             'name' => 'odoo-create-partner',
             'method' => 'create',
-            'model' => 'res.partner',
+            'endpoint' => 'res.partner',
         ])
         ->submit($partner);
 
@@ -72,7 +71,7 @@ function forms_bridge_odoo_create_partner($payload, $bridge)
         ->patch([
             'name' => 'odoo-get-partner-data',
             'method' => 'read',
-            'model' => 'res.partner',
+            'endpoint' => 'res.partner',
         ])
         ->submit([$response['data']['result']]);
 
@@ -127,7 +126,7 @@ function forms_bridge_odoo_create_company($payload, $bridge)
             'name' => 'odoo-search-company',
             'template' => null,
             'method' => 'search_read',
-            'model' => 'res.partner',
+            'endpoint' => 'res.partner',
         ])
         ->submit($query);
 
@@ -139,7 +138,7 @@ function forms_bridge_odoo_create_company($payload, $bridge)
         ->patch([
             'name' => 'odoo-create-company',
             'method' => 'create',
-            'model' => 'res.partner',
+            'endpoint' => 'res.partner',
         ])
         ->submit($company);
 
@@ -151,7 +150,7 @@ function forms_bridge_odoo_create_company($payload, $bridge)
         ->patch([
             'name' => 'odoo-get-company-data',
             'method' => 'read',
-            'model' => 'res.partner',
+            'endpoint' => 'res.partner',
         ])
         ->submit([$response['data']['result']]);
 

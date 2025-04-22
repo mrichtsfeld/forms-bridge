@@ -78,7 +78,7 @@ export default function Templates({ Wizard }) {
         }}
         __next40pxDefaultSize
       >
-        {__("Use tempalte", "forms-bridge")}
+        {__("Use a template", "forms-bridge")}
       </Button>
       {isOpen && (
         <Modal
