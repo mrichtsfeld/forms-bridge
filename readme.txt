@@ -40,3 +40,20 @@ Forms Bridge has core support for generic REST API bridges and addons for:
 == Docs ==
 
 Browse the plugin's documentation in our [official website](https://formsbridge.codeccoop.org/documentation/)
+
+== Links ==
+
+* [Forms Bridge plugin page](https://formsbridge.codeccoop.org/)
+* [Gitlab](https://git.coopdevs.org/codeccoop/wp/plugins/bridges/forms-bridge/)
+* [Còdec](https://www.codeccoop.org)
+* [Other plugins](https://profiles.wordpress.org/codeccoop/#content-plugins)
+
+== Changelog ==
+
+= 3.3.1 =
+* fix: odoo api function bridge patches
+* feat: plugin screenshots
+* feat: update readme and plugin official url
+
+= 3.3.0 =
+* feat: introspection api
