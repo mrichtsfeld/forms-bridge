@@ -1,24 +1,42 @@
 === Forms Bridge ===
 Contributors: codeccoop
-Tags: forms, contact forms, bridge, api, http
+Tags: forms, bridge, api, integration, rest
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Stable Tag: 3.3.1
 Tested up to: 6.8
 
-Bridge WP forms to any backend or service over HTTP requests.
+Bridge your WordPress forms without code, add custom fields, configure a workflow and make your data flow to your backend.
 
 == Integrations ==
 
-Forms Bridge has integrations for [GravityForms](https://www.gravityforms.com), [Contact Form 7](https://wordpress.org/plugins/contact-form-7/), [WP Forms](https://wpforms.com/),
-[Ninja Forms](https://wordpress.org/plugins/ninja-forms/) and [WooCommerce](https://wordpress.org/plugins/woocommerce).
+Integrations are well known plugins that add forms to WordPress. We do bridges, let them do the forms and then work together to make your business work with ease.
+
+Forms Bridge has integrations with:
+
+* [Contact Form 7](https://wordpress.org/plugins/contact-form-7/)
+* [GravityForms](https://www.gravityforms.com)
+* [WP Forms](https://wpforms.com/)
+* [Ninja Forms](https://wordpress.org/plugins/ninja-forms/)
+* [WooCommerce](https://wordpress.org/plugins/woocommerce)
 
 == Addons ==
 
-Forms Bridge has core support for generic REST API connexions and addons for [Odoo](https://www.odoo.com/), [Google Sheets](https://workspace.google.com/products/sheets/),
-[Dolibarr](https://wiki.dolibarr.org/index.php/Module_Web_Services_API_REST_(developer)), [Zoho CRM](https://www.zoho.com/developer/rest-api.html), [Zoho Bigin](https://www.bigin.com/developer/docs/apis/v2/?source=developer),
-[Listmonk](https://listmonk.app/docs/apis/apis/), [Holded](https://developers.holded.com/reference/api-key), [Brevo](https://developers.brevo.com/), and [MailChimp](https://mailchimp.com/developer/).
+Forms Bridge comes with free addons. Each addon adds to the plugin new bridges to work with specific APIs, new workflow jobs and bridge templates.
+
+Forms Bridge has core support for generic REST API bridges and addons for:
+
+* [Bigin](https://www.bigin.com/developer/docs/apis/v2/?source=developer)
+* [Brevo](https://developers.brevo.com/)
+* [Dolibarr](https://wiki.dolibarr.org/index.php/Module_Web_Services_API_REST_(developer))
+* [FinanCoop](https://somit.coop/financoop/)
+* [Google Sheets](https://workspace.google.com/products/sheets/)
+* [Holded](https://developers.holded.com/reference/api-key)
+* [Listmonk](https://listmonk.app/docs/apis/apis/)
+* [MailChimp](https://mailchimp.com/developer/)
+* [Odoo](https://www.odoo.com/)
+* [Zoho CRM](https://www.zoho.com/developer/rest-api.html)
 
 == Docs ==
 
-See the official plugin's documentation in our [gitlab repository](https://git.coopdevs.org/codeccoop/wp/plugins/forms-bridge/).
+Browse the plugin's documentation in our [official website](https://formsbridge.codeccoop.org/documentation/)

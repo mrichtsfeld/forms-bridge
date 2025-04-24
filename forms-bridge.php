@@ -2,7 +2,7 @@
 
 /*
  * Plugin Name:         Forms Bridge
- * Plugin URI:          https://git.coopdevs.org/codeccoop/wp/plugins/bridges/forms-bridge
+ * Plugin URI:          https://formsbridge.codeccoop.org
  * Description:         Plugin to bridge WP forms submissions to any backend or service
  * Author:              codeccoop
  * Author URI:          https://www.codeccoop.org
