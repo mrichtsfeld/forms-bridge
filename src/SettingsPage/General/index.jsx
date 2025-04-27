@@ -73,13 +73,16 @@ export default function GeneralSettings() {
         <ul>
           <li>
             🏠{" "}
-            <a href="https://forms-bridge.codeccoop.org" target="_blank">
+            <a href="https://formsbridge.codeccoop.org" target="_blank">
               {__("Website", "forms-bridge")}
             </a>
           </li>
           <li>
             📔{" "}
-            <a href="https://forms-bridge.codeccoop.org/docs/" target="_blank">
+            <a
+              href="https://formsbridge.codeccoop.org/documentation/"
+              target="_blank"
+            >
               {__("Documentation", "forms-bridge")}
             </a>
           </li>
@@ -90,6 +93,12 @@ export default function GeneralSettings() {
               target="_blank"
             >
               {__("Support", "forms-bridge")}
+            </a>
+          </li>
+          <li>
+            💵{" "}
+            <a href="https://buymeacoffee.com/codeccoop" target="_blank">
+              {__("Donate", "forms-bridge")}
             </a>
           </li>
         </ul>

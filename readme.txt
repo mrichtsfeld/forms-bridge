@@ -1,6 +1,7 @@
 === Forms Bridge ===
 Contributors: codeccoop
 Tags: forms, bridge, api, integration, rest
+Donate link: https://buymeacoffee.com/codeccoop
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Stable Tag: 3.3.1
@@ -47,6 +48,15 @@ Browse the plugin's documentation in our [official website](https://formsbridge.
 * [Gitlab](https://git.coopdevs.org/codeccoop/wp/plugins/bridges/forms-bridge/)
 * [Còdec](https://www.codeccoop.org)
 * [Other plugins](https://profiles.wordpress.org/codeccoop/#content-plugins)
+
+== Screenshots ==
+
+1. Settings page
+2. Backends
+3. Custom fields
+4. Workflows
+5. Template wizard
+6. Debug console
 
 == Changelog ==
 
