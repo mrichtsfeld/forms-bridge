@@ -104,12 +104,12 @@ export function applyMappers(payload, mappers = []) {
       continue;
     }
 
-    const isset = finger.isset(mapper.from);
-    if (!isset) {
-      continue;
+    let value;
+    if (!finger.isset(mapper.from)) {
+      value = { type: "null" };
+    } else {
+      value = finger.get(mapper.from);
     }
-
-    const value = finger.get(mapper.from);
 
     if (
       (mapper.cast !== "copy" && mapper.from !== mapper.to) ||

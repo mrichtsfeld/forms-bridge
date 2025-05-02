@@ -34,10 +34,10 @@ trait Form_Bridge_Mutations
 
             $isset = $finger->isset($mapper['from']);
             if (!$isset) {
-                continue;
+                $value = null;
+            } else {
+                $value = $finger->get($mapper['from']);
             }
-
-            $value = $finger->get($mapper['from']);
 
             if (
                 ($mapper['cast'] !== 'copy' &&
