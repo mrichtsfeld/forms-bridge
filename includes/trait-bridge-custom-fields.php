@@ -104,8 +104,12 @@ trait Form_Bridge_Custom_Fields
         ];
     }
 
-    final public function add_custom_fields($payload)
+    final public function add_custom_fields($payload = [])
     {
+        if (!is_array($payload)) {
+            return $payload;
+        }
+
         $finger = new JSON_Finger($payload);
 
         $custom_fields = $this->custom_fields ?: [];

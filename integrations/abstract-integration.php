@@ -270,7 +270,8 @@ abstract class Integration extends Singleton
             static function ($value, $raw = false) {
                 $integrations = self::integrations();
                 foreach ($integrations as $integration) {
-                    if ($submission = $integration->submission($raw)) {
+                    $submission = $integration->submission($raw);
+                    if ($submission !== null) {
                         return $submission;
                     }
                 }

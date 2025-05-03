@@ -17,6 +17,10 @@ trait Form_Bridge_Mutations
      */
     final public function apply_mutation($data, $mutation = null)
     {
+        if (!is_array($data)) {
+            return $data;
+        }
+
         $finger = new JSON_Finger($data);
 
         if ($mutation === null) {
