@@ -15,8 +15,6 @@ if (!defined('ABSPATH')) {
     exit();
 }
 
-require_once 'attachments.php';
-
 /**
  * GravityForms integration.
  */
@@ -644,31 +642,17 @@ class Integration extends BaseIntegration
      */
     protected function submission_uploads($submission, $form_data)
     {
-        $private_upload = forms_bridge_gf_private_upload($form_data['id']);
-
         return array_reduce(
             array_filter($form_data['fields'], function ($field) {
                 return $field['is_file'];
             }),
-            function ($carry, $field) use ($submission, $private_upload) {
+            function ($carry, $field) use ($submission) {
                 $paths = rgar($submission, (string) $field['id']);
                 if (empty($paths)) {
                     return $carry;
                 }
 
                 $paths = $field['is_multi'] ? json_decode($paths) : [$paths];
-                $paths = array_map(function ($path) use ($private_upload) {
-                    if ($private_upload) {
-                        $url = wp_parse_url($path);
-                        parse_str($url['query'], $query);
-                        $path = forms_bridge_gf_attachment_fullpath(
-                            $query['forms-bridge-attachment']
-                        );
-                    }
-
-                    return $path;
-                }, $paths);
-
                 $carry[$field['name']] = [
                     'path' => $field['is_multi'] ? $paths : $paths[0],
                     'is_multi' => $field['is_multi'],
@@ -785,7 +769,7 @@ class Integration extends BaseIntegration
             'id' => (int) $id,
             'isRequired' => (bool) $required,
             'size' => 'large',
-            'errorMessage' => __('please supply a valid value', 'forms-bridge'),
+            'errorMessage' => __('Please supply a valid value', 'forms-bridge'),
             'label' => $label,
             'formId' => 84,
             'inputType' => '',
