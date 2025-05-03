@@ -16,6 +16,11 @@ if (!defined('ABSPATH')) {
  */
 abstract class Addon extends Singleton
 {
+    /**
+     * Handles mounted addons instance references.
+     *
+     * @var array<string, Addon>
+     */
     public static $addons = [];
 
     /**

@@ -11,7 +11,7 @@ export default function useLogs({ debug }) {
   const fetch = () => {
     setLoading(true);
     return apiFetch({
-      path: "forms-bridge/v1/logs",
+      path: "forms-bridge/v1/logs?lines=1000",
     })
       .then((logs) => setLogs(logs))
       .catch(() => setError(true))

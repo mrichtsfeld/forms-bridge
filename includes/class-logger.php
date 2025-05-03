@@ -73,14 +73,9 @@ class Logger extends Singleton
             $char = fgetc($socket);
         }
 
+        $content = $char;
         $line = 0;
-        $content = '';
-
         while ($line < $lines) {
-            if ($char === false) {
-                break;
-            }
-
             while ($char !== "\n" && $char !== "\r") {
                 if ($char === false) {
                     break;
@@ -88,12 +83,21 @@ class Logger extends Singleton
 
                 fseek($socket, $cursor--, SEEK_END);
                 $char = fgetc($socket);
+
+                if ($char === "\t") {
+                    $char = '  ';
+                }
+
                 $content = $char . $content;
             }
 
             while ($char === "\n" || $char === "\r") {
                 fseek($socket, $cursor--, SEEK_END);
                 $char = fgetc($socket);
+            }
+
+            if ($char === false) {
+                break;
             }
 
             $content = $char . $content;
@@ -119,6 +123,17 @@ class Logger extends Singleton
 
         if (!in_array($level, ['DEBUG', 'ERROR', 'INFO'], true)) {
             $level = 'DEBUG';
+        }
+
+        if (is_object($data)) {
+            $data = (array) $data;
+        }
+
+        if (is_array($data)) {
+            $data = json_encode(
+                $data,
+                JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE
+            );
         }
 
         $msg = sprintf("[%s] %s\n", $level, print_r($data, true));
