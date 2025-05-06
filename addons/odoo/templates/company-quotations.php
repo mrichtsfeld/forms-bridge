@@ -7,12 +7,12 @@ if (!defined('ABSPATH')) {
 global $forms_bridge_iso2_countries;
 
 return [
-    'title' => __('Quotations', 'forms-bridge'),
+    'title' => __('Company Quotations', 'forms-bridge'),
     'fields' => [
         [
             'ref' => '#form',
             'name' => 'title',
-            'default' => __('Quotations', 'forms-bridge'),
+            'default' => __('Company Quotations', 'forms-bridge'),
         ],
         [
             'ref' => '#bridge',
@@ -50,11 +50,6 @@ return [
         'mutations' => [
             [
                 [
-                    'from' => 'your-name',
-                    'to' => 'name',
-                    'cast' => 'string',
-                ],
-                [
                     'from' => 'order_line[0][0]',
                     'to' => 'order_line[0][0]',
                     'cast' => 'integer',
@@ -82,11 +77,27 @@ return [
                     'cast' => 'null',
                 ],
             ],
+            [],
+            [
+                [
+                    'from' => 'company-name',
+                    'to' => 'name',
+                    'cast' => 'string',
+                ],
+            ],
+            [
+                [
+                    'from' => 'your-name',
+                    'to' => 'name',
+                    'cast' => 'string',
+                ],
+            ],
         ],
         'workflow' => [
             'forms-bridge-iso2-country-code',
             'odoo-vat-id',
             'odoo-country-id',
+            'odoo-contact-company',
             'odoo-contact',
         ],
     ],
@@ -101,26 +112,14 @@ return [
                 'min' => 1,
             ],
             [
-                'label' => __('Your name', 'forms-bridge'),
-                'name' => 'your-name',
+                'label' => __('Company', 'forms-bridge'),
+                'name' => 'company-name',
                 'type' => 'text',
                 'required' => true,
             ],
             [
                 'label' => __('Vat ID', 'forms-bridge'),
                 'name' => 'vat',
-                'type' => 'text',
-                'required' => true,
-            ],
-            [
-                'label' => __('Your email', 'forms-bridge'),
-                'name' => 'email',
-                'type' => 'email',
-                'required' => true,
-            ],
-            [
-                'label' => __('Your phone', 'forms-bridge'),
-                'name' => 'phone',
                 'type' => 'text',
                 'required' => true,
             ],
@@ -154,6 +153,23 @@ return [
                     ];
                 }, array_keys($forms_bridge_iso2_countries)),
                 'required' => true,
+            ],
+            [
+                'label' => __('Your name', 'forms-bridge'),
+                'name' => 'your-name',
+                'type' => 'text',
+                'required' => true,
+            ],
+            [
+                'label' => __('Your email', 'forms-bridge'),
+                'name' => 'email',
+                'type' => 'email',
+                'required' => true,
+            ],
+            [
+                'label' => __('Your phone', 'forms-bridge'),
+                'name' => 'phone',
+                'type' => 'text',
             ],
         ],
     ],
