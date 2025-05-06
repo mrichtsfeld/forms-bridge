@@ -4,7 +4,7 @@ Tags: forms, bridge, api, integration, rest
 Donate link: https://buymeacoffee.com/codeccoop
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
-Stable Tag: 3.3.5
+Stable Tag: 3.4.0
 Tested up to: 6.8
 
 Bridge your WordPress forms without code, add custom fields, configure a workflow and make your data flow to your backend.
