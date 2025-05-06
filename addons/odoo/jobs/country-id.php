@@ -9,7 +9,7 @@ function forms_bridge_odoo_country_id_from_code($payload, $bridge)
     global $forms_bridge_iso2_countries;
 
     if (!isset($forms_bridge_iso2_countries[$payload['country_code']])) {
-        return $payload;
+        return new WP_Error('Invalid ISO-2 country code', 'forms-bridge');
     }
 
     $response = $bridge
