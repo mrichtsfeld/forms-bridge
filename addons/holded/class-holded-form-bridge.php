@@ -82,6 +82,10 @@ class Holded_Form_Bridge extends Rest_Form_Bridge
         }
 
         $path = '/' . $resource;
+        if ($resource === 'documents') {
+            $path .= '/{docType}';
+        }
+
         if (!isset($paths[$path])) {
             return [];
         }
