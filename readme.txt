@@ -4,7 +4,7 @@ Tags: forms, crm, erp, rest api, integration
 Donate link: https://buymeacoffee.com/codeccoop
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
-Stable Tag: 3.4.1
+Stable Tag: 3.4.2
 Tested up to: 6.8
 
 Bridge your WordPress forms without code, add custom fields, set up a workflow and make your data flow to your backend.
@@ -81,6 +81,12 @@ Browse the plugin's documentation on [formsbridge.codeccoop.org](https://formsbr
 6. Debug console
 
 == Changelog ==
+
+= 3.4.2 =
+* fix: holded appointments template jobs
+* fix: typos from odoo workflow job descriptions
+* feat: add new chapters to the plugin's readme
+* feat: settings sanitization with defaults recovery
 
 = 3.4.1 =
 * feat: holded quotation templates
