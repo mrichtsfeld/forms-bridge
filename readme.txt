@@ -1,6 +1,6 @@
 === Forms Bridge ===
 Contributors: codeccoop
-Tags: forms, api, integration, crm, erp
+Tags: forms, crm, erp, rest api, integration
 Donate link: https://buymeacoffee.com/codeccoop
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -9,21 +9,27 @@ Tested up to: 6.8
 
 Bridge your WordPress forms without code, add custom fields, set up a workflow and make your data flow to your backend.
 
+With Forms Bridge you can use WordPress as what it is, a CMS, and integrate it with bridges to an infinite stack of possibilities.
+
+== Bridges ==
+
+Think of a bridge as a pipeline through which your form submissions data flows to your backend or service. In the middle, you can add custom fields to the form submissions or use workflow jobs to mutate the data before it is sent over the wire. It doesn't matter if you want to connect your forms to an ERP, a CRM or a mailing marketing platform. If it has an API it can be bridged!
+
 == Integrations ==
 
 Integrations are well known plugins that add forms to WordPress. We do bridges, let them do the forms and then work together to make your business work with ease.
 
-Forms Bridge has integrations with:
+Forms Bridge has integrations for:
 
 * [Contact Form 7](https://wordpress.org/plugins/contact-form-7/)
 * [GravityForms](https://www.gravityforms.com)
-* [WP Forms](https://wpforms.com/)
+* [WP Forms (PRO)](https://wpforms.com/)
 * [Ninja Forms](https://wordpress.org/plugins/ninja-forms/)
 * [WooCommerce](https://wordpress.org/plugins/woocommerce)
 
 == Addons ==
 
-Forms Bridge comes with free addons. Each addon adds to the plugin new bridges to work with specific APIs, new workflow jobs and bridge templates.
+Forms Bridge comes with free addons. Each addon adds to the plugin new bridges to work with specific APIs, new workflow jobs and new bridge templates.
 
 Forms Bridge has core support for generic REST API bridges and addons for:
 
@@ -37,6 +43,22 @@ Forms Bridge has core support for generic REST API bridges and addons for:
 * [Mailchimp](https://mailchimp.com/developer/)
 * [Odoo](https://www.odoo.com/)
 * [Zoho CRM](https://www.zoho.com/developer/rest-api.html)
+
+== Backends ==
+
+In Forms Bridge, a backend is a set of configurations that handles the information required to get your form submissions bridged over HTTP requests to remote systems.
+
+To register a new backend you only have to set 3 fields:
+
+1. A unique name for the new connection
+2. The URL of your backend
+3. An array of HTTP headers with connection metadata and credentials
+
+Once registered, you can reuse your backend connection on your form bridges.
+
+== Templates ==
+
+To streamline the bridge setup process, Forms Bridge comes packed with templates. Templates are blueprints of bridges you can use to setup your form integrations in a matter of minutes.
 
 == Docs ==
 
