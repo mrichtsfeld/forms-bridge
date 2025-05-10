@@ -223,7 +223,7 @@ return [
             'holded-appointment-dates',
             'forms-bridge-iso2-country-code',
             'holded-prefix-vatnumber',
-            'holded-bind-contact',
+            'holded-contact-id',
         ],
     ],
     'form' => [
