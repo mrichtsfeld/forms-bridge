@@ -218,6 +218,27 @@ class Forms_Bridge extends Base_Plugin
         add_action('admin_enqueue_scripts', static function ($admin_page) {
             self::admin_enqueue_scripts($admin_page);
         });
+
+        add_filter(
+            'plugin_action_links',
+            static function ($links, $file) {
+                if ($file !== 'forms-bridge/forms-bridge.php') {
+                    return $links;
+                }
+
+                $url = 'https://formsbridge.codeccoop.org/documentation/';
+                $label = __('Documentation', 'forms-bridge');
+                $link = sprintf(
+                    '<a href="%s" target="_blank">%s</a>',
+                    esc_url($url),
+                    esc_html($label)
+                );
+                array_push($links, $link);
+                return $links;
+            },
+            15,
+            2
+        );
     }
 
     /**
