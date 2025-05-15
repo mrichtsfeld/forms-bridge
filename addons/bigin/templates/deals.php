@@ -41,7 +41,7 @@ add_filter(
 return [
     'title' => __('Deals', 'forms-bridge'),
     'description' => __(
-        'Creates new deals on your Bigin pipelines',
+        'Quotation templates. The resulting bridge will convert form submissions into deals on the sales pipeline linked new contacts',
         'forms-bridge'
     ),
     'fields' => [
