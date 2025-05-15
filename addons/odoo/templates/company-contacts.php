@@ -8,6 +8,10 @@ global $forms_bridge_iso2_countries;
 
 return [
     'title' => __('Company Contacts', 'forms-bridge'),
+    'description' => __(
+        'Contact form for companies template. The resulting bridge will convert form submissions into new companies linked to contacts.',
+        'forms-bridge'
+    ),
     'fields' => [
         [
             'ref' => '#form',

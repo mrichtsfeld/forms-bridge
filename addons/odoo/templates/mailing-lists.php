@@ -44,6 +44,10 @@ add_filter(
 
 return [
     'title' => __('Mailing Lists', 'forms-bridge'),
+    'description' => __(
+        'Subscription form template. The resulting bridge will convert form submissions into subscriptions to mailing lists.',
+        'forms-bridge'
+    ),
     'fields' => [
         [
             'ref' => '#form',

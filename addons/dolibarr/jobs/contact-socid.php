@@ -17,7 +17,7 @@ function forms_bridge_dolibarr_contact_socid($payload, $bridge)
 }
 
 return [
-    'title' => __('Contact company', 'forms-bridge'),
+    'title' => __('Contact\'s company', 'forms-bridge'),
     'description' => __(
         'Creates a new company and bind the contact to it',
         'forms-bridge'

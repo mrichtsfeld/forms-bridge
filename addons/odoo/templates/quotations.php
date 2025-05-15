@@ -8,6 +8,10 @@ global $forms_bridge_iso2_countries;
 
 return [
     'title' => __('Quotations', 'forms-bridge'),
+    'description' => __(
+        'Product quotations form template. The resulting bridge will convert form submissions into quotations linked to new contacts.',
+        'forms-bridge'
+    ),
     'fields' => [
         [
             'ref' => '#form',

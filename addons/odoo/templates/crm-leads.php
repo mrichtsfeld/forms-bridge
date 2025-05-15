@@ -45,6 +45,10 @@ add_filter(
 
 return [
     'title' => __('CRM Leads', 'forms-bridge'),
+    'description' => __(
+        'Lead form template. The resulting bridge will convert form submissions into leads linked to new contacts.',
+        'forms-bridge'
+    ),
     'fields' => [
         [
             'ref' => '#form',
