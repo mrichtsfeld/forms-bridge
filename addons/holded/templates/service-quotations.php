@@ -43,6 +43,10 @@ add_filter(
 
 return [
     'title' => __('Service Quotations', 'forms-bridge'),
+    'description' => __(
+        'Service quotations form template. The resulting bridge will convert form submissions into quotations linked to new contacts.',
+        'forms-bridge'
+    ),
     'fields' => [
         [
             'ref' => '#form',

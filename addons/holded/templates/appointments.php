@@ -43,6 +43,10 @@ add_filter(
 
 return [
     'title' => __('Appointments', 'forms-bridge'),
+    'description' => __(
+        'Appointments form template. The resulting bridge will convert form submissions into events on the calendar linked to new contacts.',
+        'forms-bridge'
+    ),
     'fields' => [
         [
             'ref' => '#form',

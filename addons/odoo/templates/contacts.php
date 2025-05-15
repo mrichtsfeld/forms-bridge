@@ -9,7 +9,7 @@ global $forms_bridge_iso2_countries;
 return [
     'title' => __('Contacts', 'forms-bridge'),
     'description' => __(
-        'Contact form template. The resulting bridge will convert form submissions to contacts.',
+        'Contact form template. The resulting bridge will convert form submissions into contacts.',
         'forms-bridge'
     ),
     'fields' => [
