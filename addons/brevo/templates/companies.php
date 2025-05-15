@@ -8,7 +8,10 @@ global $forms_bridge_country_phone_codes;
 
 return [
     'title' => __('Companies', 'forms-bridge'),
-    'description' => __('Contact form for companies', 'forms-bridge'),
+    'description' => __(
+        'Contact form template. The resulting bridge will convert form submissions into companies linked to new contacts.',
+        'forms-bridge'
+    ),
     'fields' => [
         [
             'ref' => '#bridge',

@@ -70,7 +70,7 @@ add_filter(
 return [
     'title' => __('Subscription DOI', 'forms-bridge'),
     'description' => __(
-        'Subscription form with double opt-in confirmation',
+        'Subscription form template. The resulting bridge will convert form submissions into new list subscriptions with a double opt-in confirmation check.',
         'forms-bridge'
     ),
     'fields' => [

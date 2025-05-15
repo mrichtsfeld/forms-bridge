@@ -9,7 +9,7 @@ global $forms_bridge_country_phone_codes;
 return [
     'title' => __('Company deals', 'forms-bridge'),
     'description' => __(
-        'Creates a company and associates it with a deal',
+        'Quotation form templates. The resulting bridge will convert form submissions into deals on the sales pipeline linked new companies.',
         'forms-bridge'
     ),
     'fields' => [

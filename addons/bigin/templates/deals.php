@@ -41,7 +41,7 @@ add_filter(
 return [
     'title' => __('Deals', 'forms-bridge'),
     'description' => __(
-        'Quotation templates. The resulting bridge will convert form submissions into deals on the sales pipeline linked new contacts',
+        'Leads form templates. The resulting bridge will convert form submissions into deals on the sales pipeline linked new contacts.',
         'forms-bridge'
     ),
     'fields' => [

@@ -44,7 +44,10 @@ add_filter(
 
 return [
     'title' => __('Contacts', 'forms-bridge'),
-    'description' => __('Contact form', 'forms-bridge'),
+    'description' => __(
+        'Subscription form template. The resulting bridge will convert form submissions into new list subscriptions.',
+        'forms-bridge'
+    ),
     'fields' => [
         [
             'ref' => '#bridge',
