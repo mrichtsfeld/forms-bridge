@@ -20,8 +20,16 @@ function JsonFinger(data) {
   this.data = data;
 }
 
+JsonFinger.isConditional = function (pointer) {
+  return pointer.indexOf("?") === 0;
+};
+
 JsonFinger.parse = function (pointer) {
   pointer = "" + pointer;
+
+  if (JsonFinger.isConditional(pointer)) {
+    pointer = pointer.slice(1);
+  }
 
   if (cache.has(pointer)) {
     return cache.get(pointer).map((k) => k);
@@ -53,8 +61,6 @@ JsonFinger.parse = function (pointer) {
 
       if (key.length === 0) {
         key = Infinity;
-        // cache.set(pointer, []);
-        // return [];
       } else if (isNaN(key)) {
         if (!/^"[^"]+"$/.test(key)) {
           cache.set(pointer, []);
@@ -91,7 +97,7 @@ JsonFinger.parse = function (pointer) {
 JsonFinger.sanitizeKey = function (key) {
   if (key === Infinity) {
     key = "[]";
-  } else if (+key === key) {
+  } else if (+key == key) {
     key = `[${key}]`;
   } else {
     key = key.trim();
@@ -114,15 +120,15 @@ JsonFinger.validate = function (pointer = "") {
   return JsonFinger.parse(pointer).length > 0;
 };
 
-JsonFinger.pointer = function (keys) {
+JsonFinger.pointer = function (keys, isConditional = false) {
   if (!Array.isArray(keys)) {
     return "";
   }
 
-  return keys.reduce((pointer, key) => {
+  const pointer = keys.reduce((pointer, key) => {
     if (key === Infinity) {
       key = "[]";
-    } else if (+key === key) {
+    } else if (+key == key) {
       key = `[${key}]`;
     } else {
       key = JsonFinger.sanitizeKey(key);
@@ -134,17 +140,27 @@ JsonFinger.pointer = function (keys) {
 
     return pointer + key;
   }, "");
+
+  if (isConditional) {
+    return "?" + pointer;
+  }
+
+  return pointer;
 };
 
 JsonFinger.prototype.getData = function () {
   return this.data;
 };
 
-JsonFinger.prototype.get = function (pointer) {
+JsonFinger.prototype.get = function (pointer, expansion = []) {
   pointer = "" + pointer;
 
   if (isset(this.data, pointer)) {
     return this.data[pointer];
+  }
+
+  if (pointer.indexOf("[]") !== -1) {
+    return this.getExpanded(pointer, expansion);
   }
 
   let value = null;
@@ -153,10 +169,6 @@ JsonFinger.prototype.get = function (pointer) {
 
     value = this.data;
     for (let key of keys) {
-      if (key === Infinity) {
-        key = 0;
-      }
-
       if (!isset(value, key)) {
         return;
       }
@@ -164,16 +176,56 @@ JsonFinger.prototype.get = function (pointer) {
       value = value[key];
     }
   } catch {
-    return;
+    return null;
   }
 
+  expansion.push(value);
   return value;
+};
+
+JsonFinger.prototype.getExpanded = function (pointer, expansion = []) {
+  const expanded = /\[\]$/.test(pointer);
+
+  const parts = pointer.split("[]");
+  const before = parts[0];
+  let after = parts.slice(1).join("[]");
+
+  if (expanded && parts.length > 2) {
+    after += "[]";
+  }
+
+  const value = this.get(before);
+
+  if (!after.length || !Array.isArray(value)) {
+    return value;
+  }
+
+  const isFrozen = Object.isFrozen(value);
+  const items = value.map((d) => d);
+
+  const len = isFrozen ? 1 : items.length;
+  for (let i = 0; i < len; i++) {
+    pointer = `${before}[${i}]${after}`;
+    items[i] = this.get(pointer, expansion);
+  }
+
+  if (expanded) {
+    if (isFrozen) Object.freeze(expansion);
+    return expansion;
+  }
+
+  if (isFrozen) Object.freeze(items);
+  return items;
 };
 
 JsonFinger.prototype.set = function (pointer, value, unset = false) {
   if (isset(this.data, pointer)) {
     this.data[pointer] = value;
     return this.data;
+  }
+
+  if (pointer.indexOf("[]") !== -1) {
+    return this.setExpanded(pointer, value, unset);
   }
 
   let data = this.data;
@@ -190,14 +242,12 @@ JsonFinger.prototype.set = function (pointer, value, unset = false) {
       }
 
       let key = keys[i];
-      if (+key === key) {
+      if (+key == key) {
         if (!Array.isArray(partial)) {
           return data;
         }
 
-        if (key === Infinity) {
-          key = 0;
-        }
+        key = +key;
       }
 
       if (!isset(partial, key)) {
@@ -215,18 +265,9 @@ JsonFinger.prototype.set = function (pointer, value, unset = false) {
     }
 
     let key = keys[i];
-    let isInfinity = key === Infinity;
-    if (isInfinity) {
-      key = 0;
-    }
-
     if (unset) {
       if (Array.isArray(partial)) {
-        if (isInfinity) {
-          partial.splice(0, partial.length);
-        } else {
-          partial.splice(key, 1);
-        }
+        partial.splice(key, 1);
       } else if (partial && typeof partial === "object") {
         delete partial[key];
       }
@@ -255,14 +296,44 @@ JsonFinger.prototype.set = function (pointer, value, unset = false) {
   return data;
 };
 
+JsonFinger.prototype.setExpanded = function (pointer, values, unset) {
+  const parts = pointer.split("[]").filter((p) => p);
+  const before = parts[0];
+  const after = parts.slice(1).join("[]");
+
+  if (unset) {
+    values = this.get(before);
+  }
+
+  if (!Array.isArray(values)) {
+    return;
+  }
+
+  const isFrozen = Object.isFrozen(values);
+  for (let i = values.length - 1; i >= 0; i--) {
+    pointer = `${before}[${i}]${after}`;
+
+    if (unset) {
+      this.unset(pointer);
+    } else {
+      this.set(pointer, values[i]);
+    }
+  }
+
+  if (isFrozen) {
+    values = this.get(before);
+    this.set(before, Object.freeze(values));
+  }
+
+  return this.data;
+};
+
 JsonFinger.prototype.unset = function (pointer) {
   if (isset(this.data, pointer)) {
-    if (+pointer === pointer && Array.isArray(this.data)) {
-      if (pointer === Infinity) {
-        pointer = 0;
+    if (+pointer == pointer) {
+      if (Array.isArray(this.data)) {
+        this.data.splice(pointer, 1);
       }
-
-      this.data.splice(pointer, 1);
     } else {
       delete this.data[pointer];
     }
@@ -287,7 +358,22 @@ JsonFinger.prototype.isset = function (pointer) {
       key = keys.pop();
       const pointer = JsonFinger.pointer(keys);
       const parent = this.get(pointer);
-      return isset(parent, key);
+
+      if (pointer.indexOf("[]") === -1) {
+        return isset(parent, key);
+      }
+
+      if (!Array.isArray(parent)) {
+        return false;
+      }
+
+      for (let item of parent) {
+        if (isset(item, key)) {
+          return true;
+        }
+      }
+
+      return false;
   }
 };
 

@@ -121,7 +121,7 @@ class JSON_Finger
     {
         if ($key === INF) {
             $key = '[]';
-        } elseif (is_int($key)) {
+        } elseif (intval($key) == $key) {
             $key = "[{$key}]";
         } else {
             $key = trim($key);
@@ -173,7 +173,7 @@ class JSON_Finger
             static function ($pointer, $key) {
                 if ($key === INF) {
                     $key = '[]';
-                } elseif (is_int($key)) {
+                } elseif (intval($key) == $key) {
                     $key = "[{$key}]";
                 } else {
                     $key = self::sanitize_key($key);
@@ -297,7 +297,7 @@ class JSON_Finger
     {
         $expanded = preg_match('/\[\]$/', $pointer);
 
-        $parts = array_filter(explode('[]', $pointer));
+        $parts = explode('[]', $pointer);
         $before = $parts[0];
         $after = implode('[]', array_slice($parts, 1));
 

@@ -1,6 +1,6 @@
 import JsonFinger from "./../../lib/JsonFinger";
 import { useApiFields } from "../../providers/ApiSchema";
-import { getFromOptions } from "./lib";
+import { getFromOptions, schemaToOptions } from "./lib";
 import DropdownSelect from "../DropdownSelect";
 
 const { BaseControl, SelectControl, Button } = wp.components;
@@ -105,7 +105,7 @@ const INVALID_TO_STYLE = {
     "var(--wp-components-color-accent, var(--wp-admin-theme-color, #3858e9))",
 };
 
-function useInputStyle(pointer = "") {
+function useInputStyle(to = "", from = "") {
   const inputStyle = {
     height: "40px",
     paddingLeft: "12px",
@@ -116,7 +116,14 @@ function useInputStyle(pointer = "") {
     width: "100%",
   };
 
-  if (pointer.length && !JsonFinger.validate(pointer, "set")) {
+  if (to.length && !JsonFinger.validate(to)) {
+    return { ...inputStyle, ...INVALID_TO_STYLE };
+  }
+
+  const toExpansions = to.match(/\[\].+/g) || [];
+  const fromExpansions = from.match(/\[\].+/g) || [];
+
+  if (toExpansions.length > fromExpansions.length) {
     return { ...inputStyle, ...INVALID_TO_STYLE };
   }
 
@@ -127,6 +134,7 @@ export default function MutationLayers({ fields, mappers, setMappers }) {
   const apiFields = useApiFields();
 
   const fieldOptions = useMemo(() => {
+    // TODO: Use schemaToOptions to build a comprehensive list of api field options
     return apiFields.map((field) => ({
       value: field.name,
       label: `${field.name} | ${field.schema.type}`,
@@ -255,7 +263,7 @@ export default function MutationLayers({ fields, mappers, setMappers }) {
                           type="text"
                           value={to}
                           onChange={(ev) => setMapper("to", i, ev.target.value)}
-                          style={useInputStyle(to)}
+                          style={useInputStyle(to, from)}
                         />
                       </BaseControl>
                     </div>

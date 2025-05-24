@@ -155,7 +155,7 @@ function useInputStyle(name = "") {
     display: "block",
   };
 
-  if (name.length && !JsonFinger.validate(name, "set")) {
+  if (name.length && (!JsonFinger.validate(name) || /\[\]/.test(name))) {
     return { ...inputStyle, ...INVALID_TO_STYLE };
   }
 

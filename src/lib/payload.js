@@ -56,12 +56,12 @@ export function payloadToSchema(payload) {
 
 export function schemaToPayload(schema, pointer) {
   if (schema.type === "object") {
-    pointer = JsonFinger.parse(pointer);
+    const keys = JsonFinger.parse(pointer);
 
     const payload = Object.keys(schema.properties).reduce((payload, prop) => {
       payload[prop] = schemaToPayload(
         schema.properties[prop],
-        JsonFinger.pointer(pointer.concat(prop))
+        JsonFinger.pointer(keys.concat(prop))
       );
 
       return payload;
@@ -100,12 +100,14 @@ export function applyMappers(payload, mappers = []) {
     const isValid =
       JsonFinger.validate(mapper.from) && JsonFinger.validate(mapper.to);
 
-    if (!isValid) {
-      continue;
-    }
+    if (!isValid) continue;
 
     let value;
     if (!finger.isset(mapper.from)) {
+      if (JsonFinger.isConditional(mapper.from)) {
+        continue;
+      }
+
       value = { type: "null" };
     } else {
       value = finger.get(mapper.from);
@@ -119,7 +121,7 @@ export function applyMappers(payload, mappers = []) {
     }
 
     if (mapper.cast !== "null") {
-      finger.set(mapper.to, castValue(mapper.cast, value));
+      finger.set(mapper.to, castValue(mapper, value));
     }
   }
 
@@ -128,10 +130,11 @@ export function applyMappers(payload, mappers = []) {
 
 export function payloadToFields(payload) {
   return Object.entries(payload).map(([name, value]) => {
+    const schema = payloadToSchema(value);
     return {
       name,
       label: name,
-      schema: payloadToSchema(value),
+      schema,
     };
   });
 }
@@ -148,21 +151,35 @@ export function fieldsToPayload(fields) {
   return finger.data;
 }
 
-export function castValue(cast, from) {
-  switch (cast) {
+export function castValue(mapper, value) {
+  const mapCast = Array.isArray(value) && /\[\]$/.test(mapper.to);
+
+  const isFrozen = Object.isFrozen(value);
+
+  if (mapCast) {
+    value = value.map((item) => castValue(mapper, item));
+    if (isFrozen) Object.freeze(value);
+
+    return value;
+  }
+
+  switch (mapper.cast) {
     case "json":
     case "concat":
     case "csv":
-      return "string";
+      value = "string";
+      break;
     case "copy":
     case "inherit":
-      const isFrozen = Object.isFrozen(from);
-      value = JSON.parse(JSON.stringify(from));
+      value = JSON.parse(JSON.stringify(value));
       if (isFrozen) Object.freeze(value);
-      return value;
+      break;
     default:
-      return cast;
+      value = mapper.cast;
+      break;
   }
+
+  return value;
 }
 
 const TYPES_COMPATIBILITY = {
