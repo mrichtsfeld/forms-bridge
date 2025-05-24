@@ -321,6 +321,8 @@ class Integration extends BaseIntegration
                         'type' => 'array',
                         'items' => $items,
                         'additionalItems' => false,
+                        'minItems' => $tag->is_required() ? 1 : 0,
+                        'maxItems' => count($tag->values),
                     ];
                 }
 
@@ -339,6 +341,8 @@ class Integration extends BaseIntegration
                     'type' => 'array',
                     'items' => $items,
                     'additionalItems' => false,
+                    'minItems' => $tag->is_required() ? 1 : 0,
+                    'maxItems' => count($tag->values),
                 ];
             case 'file':
             case 'files':
