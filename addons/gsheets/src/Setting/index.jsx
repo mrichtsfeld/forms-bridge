@@ -9,7 +9,6 @@ const {
   PanelBody,
   PanelRow,
   FormFileUpload,
-  Button,
   __experimentalSpacer: Spacer,
 } = wp.components;
 const { useEffect } = wp.element;
@@ -53,7 +52,7 @@ export default function GoogleSheetsSetting() {
         <p
           dangerouslySetInnerHTML={{
             __html: __(
-              "You have to create a service account credentials to grant Forms Bridge access to your spreadsheets. Follow this <a href='https://github.com/juampynr/google-spreadsheet-reader?tab=readme-ov-file' target='_blank'>example</a> if you need help with the process.",
+              "You have to create a service account credentials to grant Forms Bridge access to your spreadsheets. Follow the <a href='https://formsbridge.codeccoop.org/documentation/google-sheets/' target='_blank'>documentation</a> if you need help with the process.",
               "forms-bridge"
             ),
           }}
