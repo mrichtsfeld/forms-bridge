@@ -5,11 +5,11 @@ import useBridgeNames from "../../hooks/useBridgeNames";
 import CustomFields from "../CustomFields";
 import Workflow from "../Workflow";
 import NewBridge from "./NewBridge";
+import RemoveButton from "../RemoveButton";
 
 const {
   TextControl,
   SelectControl,
-  Button,
   __experimentalSpacer: Spacer,
 } = wp.components;
 const { useState, useRef, useEffect, useMemo } = wp.element;
@@ -68,6 +68,12 @@ export default function Bridge({
   }, [name]);
 
   useEffect(() => setName(data.name), [data.name]);
+
+  const alertDelay = useRef();
+  function informDoubleClick() {
+    clearTimeout(alertDelay.current);
+    alertDelay.current = setTimeout(() => alert("Double click to remove"), 200);
+  }
 
   return (
     <div
@@ -158,15 +164,9 @@ export default function Bridge({
             });
           }}
         />
-        <Button
-          isDestructive
-          variant="primary"
-          onClick={() => remove(data)}
-          style={{ width: "150px", justifyContent: "center" }}
-          __next40pxDefaultSize
-        >
+        <RemoveButton onClick={() => remove(data)}>
           {__("Remove", "forms-bridge")}
-        </Button>
+        </RemoveButton>
       </div>
     </div>
   );

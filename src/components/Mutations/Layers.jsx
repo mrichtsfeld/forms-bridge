@@ -1,7 +1,8 @@
 import JsonFinger from "./../../lib/JsonFinger";
 import { useApiFields } from "../../providers/ApiSchema";
-import { getFromOptions, schemaToOptions } from "./lib";
+import { getFromOptions } from "./lib";
 import DropdownSelect from "../DropdownSelect";
+import RemoveButton from "../RemoveButton";
 
 const { BaseControl, SelectControl, Button } = wp.components;
 const { useEffect, useRef, useMemo, useState } = wp.element;
@@ -326,9 +327,8 @@ export default function MutationLayers({ fields, mappers, setMappers }) {
                     >
                       +
                     </Button>
-                    <Button
+                    <RemoveButton
                       size="compact"
-                      isDestructive
                       variant="secondary"
                       onClick={() => dropMapper(i)}
                       style={{
@@ -336,10 +336,9 @@ export default function MutationLayers({ fields, mappers, setMappers }) {
                         height: "40px",
                         justifyContent: "center",
                       }}
-                      __next40pxDefaultSize
                     >
                       -
-                    </Button>
+                    </RemoveButton>
                   </div>
                 </td>
               </tr>

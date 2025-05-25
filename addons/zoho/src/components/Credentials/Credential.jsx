@@ -1,4 +1,5 @@
 // source
+import RemoveButton from "../../../../../src/components/RemoveButton";
 import useCredentialNames from "../../hooks/useCredentialNames";
 import NewCredential from "./NewCredential";
 
@@ -85,15 +86,9 @@ export default function Credential({ data, update, remove }) {
           gap: "0.5rem",
         }}
       >
-        <Button
-          isDestructive
-          variant="primary"
-          onClick={() => remove(data)}
-          style={{ width: "150px", justifyContent: "center" }}
-          __next40pxDefaultSize
-        >
+        <RemoveButton onClick={() => remove(data)}>
           {__("Remove", "forms-bridge")}
-        </Button>
+        </RemoveButton>
       </div>
     </div>
   );

@@ -1,5 +1,6 @@
 // source
 import useBackendNames from "../../hooks/useBackendNames";
+import RemoveButton from "../RemoveButton";
 import BackendHeaders from "./Headers";
 
 const { TextControl, Button, __experimentalSpacer: Spacer } = wp.components;
@@ -142,19 +143,16 @@ export default function Backend({ update, remove, ...data }) {
           __nextHasNoMarginBottom
           __next40pxDefaultSize
         />
-        <Button
-          isDestructive
-          variant="primary"
+        <RemoveButton
           onClick={() => remove(data)}
           style={{
             width: "150px",
             marginTop: "auto",
             justifyContent: "center",
           }}
-          __next40pxDefaultSize
         >
           {__("Remove", "forms-bridge")}
-        </Button>
+        </RemoveButton>
       </div>
       <Spacer paddingY="calc(8px)" />
       <BackendHeaders headers={data.headers} setHeaders={setHeaders} />

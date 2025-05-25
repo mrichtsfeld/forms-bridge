@@ -1,6 +1,7 @@
 import JsonFinger from "../../lib/JsonFinger";
 import { useApiFields } from "../../providers/ApiSchema";
 import DropdownSelect from "../DropdownSelect";
+import RemoveButton from "../RemoveButton";
 
 const { BaseControl, TextControl, Button } = wp.components;
 const { useEffect, useState, useRef, useMemo } = wp.element;
@@ -362,9 +363,8 @@ export default function CustomFieldsTable({ customFields, setCustomFields }) {
                     >
                       +
                     </Button>
-                    <Button
+                    <RemoveButton
                       size="compact"
-                      isDestructive
                       variant="secondary"
                       onClick={() => dropCustomField(i)}
                       style={{
@@ -372,10 +372,9 @@ export default function CustomFieldsTable({ customFields, setCustomFields }) {
                         height: "40px",
                         justifyContent: "center",
                       }}
-                      __next40pxDefaultSize
                     >
                       -
-                    </Button>
+                    </RemoveButton>
                   </div>
                 </td>
               </tr>

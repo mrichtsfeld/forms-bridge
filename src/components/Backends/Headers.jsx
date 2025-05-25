@@ -1,3 +1,5 @@
+import RemoveButton from "../RemoveButton";
+
 const {
   TextControl,
   SelectControl,
@@ -176,16 +178,14 @@ export default function BackendHeaders({ headers, setHeaders }) {
                   />
                 </td>
                 <td>
-                  <Button
+                  <RemoveButton
                     disabled={name === "Content-Type"}
-                    isDestructive
                     variant="secondary"
                     onClick={() => dropHeader(i)}
                     style={{ width: "150px", justifyContent: "center" }}
-                    __next40pxDefaultSize
                   >
                     {__("Drop", "forms-bridge")}
-                  </Button>
+                  </RemoveButton>
                 </td>
               </tr>
             ))}

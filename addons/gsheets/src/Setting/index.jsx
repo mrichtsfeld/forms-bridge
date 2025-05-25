@@ -3,6 +3,7 @@ import Bridges from "../../../../src/components/Bridges";
 import GSBridge from "./Bridge";
 import useGSApi from "../hooks/useGSApi";
 import useAjaxGrant from "../hooks/useAjaxGrant";
+import RemoveButton from "../../../../src/components/RemoveButton";
 
 const {
   PanelBody,
@@ -59,15 +60,9 @@ export default function GoogleSheetsSetting() {
         />
         <div style={{ display: "flex", alignItems: "center", gap: "1em" }}>
           {authorized ? (
-            <Button
-              variant="primary"
-              isDestructive
-              onClick={revoke}
-              style={{ width: "150px", justifyContent: "center" }}
-              __next40pxDefaultSize
-            >
+            <RemoveButton onClick={revoke}>
               {__("Revoke credentials", "forms-bridge")}
-            </Button>
+            </RemoveButton>
           ) : (
             <FormFileUpload
               __next40pxDefaultSize
