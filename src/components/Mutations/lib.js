@@ -5,6 +5,8 @@ import {
 } from "../../lib/payload";
 
 export function schemaToOptions(schema, name = "") {
+  const isExpansible = name.match(/\[\](?=[^\[])/g)?.length >= 2;
+
   if (schema.type === "object") {
     const options = [
       {
@@ -12,6 +14,10 @@ export function schemaToOptions(schema, name = "") {
         label: name,
       },
     ];
+
+    if (isExpansible) {
+      options.push({ value: name + "[]", label: name + "[]" });
+    }
 
     return options.concat(
       Object.keys(schema.properties).reduce((options, prop) => {
@@ -28,28 +34,33 @@ export function schemaToOptions(schema, name = "") {
       ? schema.items
       : [schema.items];
 
-    return options.concat(
-      schemaItems.reduce((options, item, i) => {
-        if (schema.additionalItems) {
-          i = "";
-        }
+    return options
+      .concat(
+        schemaItems.reduce((options, item) => {
+          const pointer = `${name}[]`;
 
-        const pointer = `${name}[${i}]`;
+          return options.concat(
+            schemaToOptions(item, pointer).filter(
+              (opt) => isExpansible || opt.value !== pointer
+            )
+          );
+        }, [])
+      )
+      .concat(
+        schemaItems.reduce((options, item, i) => {
+          if (schema.additionalItems) return options;
+          const pointer = `${name}[${i}]`;
 
-        const isExpandable =
-          /\[\]$/.test(pointer) && pointer.match(/\[\]/g).length >= 3;
-
-        return options.concat(
-          schemaToOptions(item, pointer).filter((opt) =>
-            schema.additionalItems
-              ? isExpandable || opt.value !== pointer
-              : true
-          )
-        );
-      }, [])
-    );
+          return options.concat(schemaToOptions(item, pointer));
+        }, [])
+      );
   } else {
-    return [{ label: name, value: name }];
+    const options = [{ label: name, value: name }];
+    if (isExpansible) {
+      options.push({ label: name + "[]", value: name + "[]" });
+    }
+
+    return options;
   }
 }
 
