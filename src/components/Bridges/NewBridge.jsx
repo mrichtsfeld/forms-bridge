@@ -221,6 +221,7 @@ export default function NewBridge({
         >
           {__("Add", "forms-bridge")}
         </Button>
+        <Templates Wizard={Wizard} />
         <Button
           variant="tertiary"
           size="compact"
@@ -235,7 +236,6 @@ export default function NewBridge({
         >
           🡅
         </Button>
-        <Templates Wizard={Wizard} />
       </div>
     </div>
   );
