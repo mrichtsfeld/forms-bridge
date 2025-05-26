@@ -89,7 +89,7 @@ export default function BackendHeaders({ headers, setHeaders }) {
   const setContentType = (type) => {
     const index = headers.findIndex((header) => header.name === "Content-Type");
     if (index === -1) {
-      addHeader("Content-Type", type);
+      addHeader(0, "Content-Type", type);
     } else {
       setHeader("value", index, type);
     }
@@ -104,8 +104,12 @@ export default function BackendHeaders({ headers, setHeaders }) {
     setHeaders(newHeaders);
   };
 
-  const addHeader = (name = "Accept", value = "application/json") => {
-    const newHeaders = headers.concat([{ name, value }]);
+  const addHeader = (index, name = "Accept", value = "application/json") => {
+    const newHeaders = headers
+      .slice(0, index)
+      .concat([{ name, value }])
+      .concat(headers.slice(index, headers.length));
+
     setHeaders(newHeaders);
   };
 
@@ -116,7 +120,7 @@ export default function BackendHeaders({ headers, setHeaders }) {
 
   useEffect(() => {
     if (!(headers.length && headers.find((h) => h.name === "Content-Type")))
-      addHeader("Content-Type", "application/json");
+      addHeader(0, "Content-Type", "application/json");
   }, [headers]);
 
   const sortedHeaders = useMemo(
@@ -157,7 +161,7 @@ export default function BackendHeaders({ headers, setHeaders }) {
               <tr key={i}>
                 <td>
                   <TextControl
-                    disabled={name === "Content-Type"}
+                    disabled={name === "Content-Type" && i === 0}
                     placeholder={__("Header-Name", "forms-bridge")}
                     value={name}
                     onChange={(value) => setHeader("name", i, value)}
@@ -168,7 +172,9 @@ export default function BackendHeaders({ headers, setHeaders }) {
                 <td>
                   <TextControl
                     disabled={
-                      name === "Content-Type" && WELL_KNOWN_CONTENT_TYPES[value]
+                      name === "Content-Type" &&
+                      WELL_KNOWN_CONTENT_TYPES[value] &&
+                      i === 0
                     }
                     placeholder={__("Value", "forms-bridge")}
                     value={value}
@@ -178,28 +184,45 @@ export default function BackendHeaders({ headers, setHeaders }) {
                   />
                 </td>
                 <td>
-                  <RemoveButton
-                    disabled={name === "Content-Type"}
-                    variant="secondary"
-                    onClick={() => dropHeader(i)}
-                    style={{ width: "150px", justifyContent: "center" }}
+                  <div
+                    style={{
+                      display: "flex",
+                      marginLeft: "0.45em",
+                      gap: "0.45em",
+                    }}
                   >
-                    {__("Drop", "forms-bridge")}
-                  </RemoveButton>
+                    <Button
+                      size="compact"
+                      variant="secondary"
+                      disabled={!name || !value}
+                      onClick={() => addHeader(i + 1)}
+                      style={{
+                        width: "40px",
+                        height: "40px",
+                        justifyContent: "center",
+                      }}
+                      __next40pxDefaultSize
+                    >
+                      +
+                    </Button>
+                    <RemoveButton
+                      disabled={name === "Content-Type" && i === 0}
+                      variant="secondary"
+                      onClick={() => dropHeader(i)}
+                      style={{
+                        width: "40px",
+                        height: "40px",
+                        justifyContent: "center",
+                      }}
+                    >
+                      -
+                    </RemoveButton>
+                  </div>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
-        <Spacer paddingY="calc(3px)" />
-        <Button
-          variant="secondary"
-          onClick={() => addHeader()}
-          style={{ width: "150px", justifyContent: "center" }}
-          __next40pxDefaultSize
-        >
-          {__("Add", "forms-bridge")}
-        </Button>
       </div>
     </>
   );
