@@ -184,7 +184,7 @@ JsonFinger.prototype.get = function (pointer, expansion = []) {
 };
 
 JsonFinger.prototype.getExpanded = function (pointer, expansion = []) {
-  const expanded = /\[\]$/.test(pointer);
+  const flat = /\[\]$/.test(pointer);
 
   const parts = pointer.split("[]").filter((p) => p);
   const before = parts[0];
@@ -205,7 +205,7 @@ JsonFinger.prototype.getExpanded = function (pointer, expansion = []) {
     items[i] = this.get(pointer, expansion);
   }
 
-  if (expanded) {
+  if (flat) {
     if (isFrozen) Object.freeze(expansion);
     return expansion;
   }
@@ -361,6 +361,10 @@ JsonFinger.prototype.isset = function (pointer) {
 
       if (!Array.isArray(parent)) {
         return false;
+      }
+
+      if (key === Infinity) {
+        return true;
       }
 
       for (let item of parent) {

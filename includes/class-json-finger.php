@@ -295,7 +295,7 @@ class JSON_Finger
      */
     private function get_expanded($pointer, &$expansion = [])
     {
-        $expanded = preg_match('/\[\]$/', $pointer);
+        $flat = preg_match('/\[\]$/', $pointer);
 
         $parts = array_filter(explode('[]', $pointer));
         $before = $parts[0];
@@ -312,7 +312,7 @@ class JSON_Finger
             $items[$i] = $this->get($pointer, $expansion);
         }
 
-        if ($expanded) {
+        if ($flat) {
             return $expansion;
         }
 
@@ -437,7 +437,7 @@ class JSON_Finger
 
         $values = $this->get($before);
 
-        if (is_array($values)) {
+        if (wp_is_numeric_array($values)) {
             ksort($values);
             $this->set($before, $values);
         }
@@ -497,6 +497,10 @@ class JSON_Finger
 
                 if (!wp_is_numeric_array($parent)) {
                     return false;
+                }
+
+                if ($key === INF) {
+                    return true;
                 }
 
                 foreach ($parent as $item) {

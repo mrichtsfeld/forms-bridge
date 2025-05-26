@@ -200,10 +200,15 @@ function castExpandedValue(values, mapper) {
 
   if (isExpanded) {
     return values.map((value) => {
-      const itemMapper = { ...mapper };
-      itemMapper.from = itemMapper.from.slice(0, -2);
-      return castValue(value, itemMapper);
+      return castValue(value, { cast: mapper.cast, from: "", to: "" });
     });
+  }
+
+  const toExpansions = mapper.to.match(/\[\](?=[^\[])/g);
+  const fromExpansions = mapper.from.match(/\[\](?=[^\[])/g);
+
+  if (toExpansions.length > fromExpansions.length) {
+    return [];
   }
 
   const parts = mapper.from.split("[]").filter((p) => p);
@@ -212,9 +217,11 @@ function castExpandedValue(values, mapper) {
 
   for (let i = 0; i < values.length; i++) {
     const pointer = `${before}[${i}]${after}`;
-    const itemMapper = { ...mapper };
-    itemMapper.from = pointer;
-    values[i] = castValue(values[i], itemMapper);
+    values[i] = castValue(values[i], {
+      from: pointer,
+      to: "",
+      cast: mapper.cast,
+    });
   }
 
   return values;

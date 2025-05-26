@@ -52,6 +52,14 @@ const castOptions = [
     label: __("Join", "forms-bridge"),
   },
   {
+    value: "sum",
+    label: __("Sum", "forms-bridge"),
+  },
+  {
+    value: "count",
+    label: __("Count", "forms-bridge"),
+  },
+  {
     value: "structure",
     label: __("Structure mutations", "forms-bridge"),
     disabled: true,
@@ -121,10 +129,14 @@ function useInputStyle(to = "", from = "") {
     return { ...inputStyle, ...INVALID_TO_STYLE };
   }
 
-  const toExpansions = to.match(/\[\].+/g) || [];
-  const fromExpansions = from.match(/\[\].+/g) || [];
+  const isExpanded = /\[\]$/.test(from);
 
-  if (toExpansions.length > fromExpansions.length) {
+  const toExpansions = to.match(/\[\](?=[^\[])/g) || [];
+  const fromExpansions = from.match(/\[\](?=[^\[])/g) || [];
+
+  if (isExpanded && toExpansions > 1) {
+    return { ...inputStyle, ...INVALID_TO_STYLE };
+  } else if (toExpansions.length > fromExpansions.length) {
     return { ...inputStyle, ...INVALID_TO_STYLE };
   }
 
