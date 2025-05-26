@@ -607,6 +607,19 @@ class Forms_Bridge extends Base_Plugin
             return;
         }
 
+        $skip = apply_filters(
+            'forms_bridge_skip_error_notification',
+            false,
+            $error,
+            $bridge,
+            $payload,
+            $attachments
+        );
+
+        if ($skip) {
+            return;
+        }
+
         $form_data = $bridge->form;
         $error = print_r($error->get_error_data(), true);
         Logger::log($error, Logger::ERROR);
