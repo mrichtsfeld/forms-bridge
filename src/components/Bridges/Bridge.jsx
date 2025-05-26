@@ -5,6 +5,8 @@ import useBridgeNames from "../../hooks/useBridgeNames";
 import CustomFields from "../CustomFields";
 import Workflow from "../Workflow";
 import NewBridge from "./NewBridge";
+import RemoveButton from "../RemoveButton";
+import { downloadJson } from "../../lib/utils";
 
 const {
   TextControl,
@@ -68,6 +70,15 @@ export default function Bridge({
   }, [name]);
 
   useEffect(() => setName(data.name), [data.name]);
+
+  function exportConfig() {
+    const bridgeData = { ...data };
+    delete bridgeData.is_valid;
+    delete bridgeData.icon;
+    delete bridgeData.title;
+
+    downloadJson(data, data.name + " bridge config");
+  }
 
   return (
     <div
@@ -158,14 +169,38 @@ export default function Bridge({
             });
           }}
         />
-        <Button
-          isDestructive
-          variant="primary"
-          onClick={() => remove(data)}
-          style={{ width: "150px", justifyContent: "center" }}
-          __next40pxDefaultSize
-        >
+        <RemoveButton onClick={() => remove(data)}>
           {__("Remove", "forms-bridge")}
+        </RemoveButton>
+        <Button
+          size="compact"
+          variant="tertiary"
+          style={{
+            height: "40px",
+            width: "40px",
+            justifyContent: "center",
+            fontSize: "1.5em",
+          }}
+          onClick={exportConfig}
+          __next40pxDefaultSize
+          label={__("Download bridge config", "forms-bridge")}
+          showTooltip
+        >
+          <div>
+            ⬇
+            <div
+              aria-hidden
+              style={{
+                height: "3px",
+                borderBottom: "3px solid",
+                borderLeft: "3px solid",
+                borderRight: "3px solid",
+                width: "calc(100% + 4px)",
+                marginLeft: "-5px",
+                transform: "translateY(-3px)",
+              }}
+            ></div>
+          </div>
         </Button>
       </div>
     </div>

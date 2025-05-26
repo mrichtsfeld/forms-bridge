@@ -2,6 +2,8 @@
 
 namespace FORMS_BRIDGE;
 
+use TypeError;
+
 if (!defined('ABSPATH')) {
     exit();
 }
@@ -48,7 +50,23 @@ class Mailchimp_Form_Bridge extends Rest_Form_Bridge
         $response = parent::do_submit($payload, $attachments);
 
         if (is_wp_error($response)) {
-            // TODO: handle controled errors
+            $error_response = $response->get_error_data()['response'] ?? null;
+
+            $code = $error_response['response']['code'] ?? null;
+            if ($code !== 400) {
+                return $response;
+            }
+
+            try {
+                $body = json_decode($error_response['body'] ?? '', true);
+                $title = $body['title'] ?? null;
+            } catch (TypeError) {
+                return $response;
+            }
+
+            if ($title === 'Member Exists') {
+                return $error_response;
+            }
         }
 
         return $response;

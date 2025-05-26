@@ -380,6 +380,7 @@ class Forms_Bridge extends Base_Plugin
                 Logger::log('Submission payload with bridge custom fields');
                 Logger::log($payload);
 
+                $bridge->setup_conditional_mappers($form_data);
                 $payload = $bridge->apply_mutation($payload);
                 Logger::log('Submission payload after mutation');
                 Logger::log($payload);
@@ -604,6 +605,19 @@ class Forms_Bridge extends Base_Plugin
         $email = Settings_Store::setting('general')->notification_receiver;
 
         if (empty($email)) {
+            return;
+        }
+
+        $skip = apply_filters(
+            'forms_bridge_skip_error_notification',
+            false,
+            $error,
+            $bridge,
+            $payload,
+            $attachments
+        );
+
+        if ($skip) {
             return;
         }
 

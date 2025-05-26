@@ -3,6 +3,7 @@ import { useForms } from "../../providers/Forms";
 import { useGeneral } from "../../providers/Settings";
 import useBridgeNames from "../../hooks/useBridgeNames";
 import Templates from "../Templates";
+import { uploadJson } from "../../lib/utils";
 
 const {
   TextControl,
@@ -85,6 +86,66 @@ export default function NewBridge({
     [name, backend, formId, customFields, customFieldsSchema]
   );
 
+  function uploadConfig() {
+    uploadJson()
+      .then((data) => {
+        const isValid =
+          data.name &&
+          data.form_id &&
+          data.backend &&
+          customFieldsSchema.reduce(
+            (valid, field) =>
+              valid && Object.prototype.hasOwnProperty.call(data, field),
+            true
+          );
+
+        if (!isValid) {
+          wpfb.emit("error", __("Invalid bridge config", "forms-bridge"));
+          return;
+        }
+
+        let i = 1;
+        while (bridgeNames.has(data.name)) {
+          data.name = data.name.replace(/\([0-9]+\)/, "") + ` (${i})`;
+          i++;
+        }
+
+        data.custom_fields =
+          (Array.isArray(data.custom_fields) &&
+            data.custom_fields.filter(
+              (field) => field && field.name && field.value
+            )) ||
+          [];
+
+        data.mutations =
+          (Array.isArray(data.mutations) &&
+            data.mutations.filter(
+              (mappers) =>
+                (Array.isArray(mappers) &&
+                  mappers.filter(
+                    (mapper) =>
+                      mapper && mapper.from && mapper.to && mapper.cast
+                  )) ||
+                []
+            )) ||
+          [];
+
+        add(data);
+      })
+      .catch((err) => {
+        if (!err) return;
+
+        console.error(err);
+        wpfb.emit(
+          "error",
+          __(
+            "An error has ocurred while uploading the bridge config",
+            "forms-bridge"
+          )
+        );
+      });
+  }
+
   return (
     <div
       style={{
@@ -161,6 +222,36 @@ export default function NewBridge({
           {__("Add", "forms-bridge")}
         </Button>
         <Templates Wizard={Wizard} />
+        <Button
+          variant="tertiary"
+          size="compact"
+          style={{
+            width: "40px",
+            height: "40px",
+            justifyContent: "center",
+            fontSize: "1.5em",
+          }}
+          onClick={uploadConfig}
+          __next40pxDefaultSize
+          label={__("Upload bridge config", "forms-bridge")}
+          showTooltip
+        >
+          <div>
+            ⬆
+            <div
+              aria-hidden
+              style={{
+                height: "3px",
+                borderBottom: "3px solid",
+                borderLeft: "3px solid",
+                borderRight: "3px solid",
+                width: "calc(100% + 4px)",
+                marginLeft: "-5px",
+                transform: "translateY(-3px)",
+              }}
+            ></div>
+          </div>
+        </Button>
       </div>
     </div>
   );

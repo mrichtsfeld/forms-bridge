@@ -7,7 +7,7 @@ if (!defined('ABSPATH')) {
 return [
     'title' => __('Audience subscription', 'forms-bridge'),
     'description' => __('Subscribe a new user to an audience', 'forms-bridge'),
-    'method' => 'forms_bridge_audience_subscription',
+    'method' => 'forms_bridge_mailchimp_audience_subscription',
     'input' => [
         [
             'name' => 'list_id',

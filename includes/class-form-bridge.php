@@ -84,6 +84,8 @@ abstract class Form_Bridge
                                     'csv',
                                     'concat',
                                     'join',
+                                    'sum',
+                                    'count',
                                     'inherit',
                                     'copy',
                                     'null',

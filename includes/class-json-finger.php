@@ -21,18 +21,31 @@ class JSON_Finger
      */
     private $data;
 
+    /**
+     * Handles a register of parsed pointers as a memory cache to reduce pointer
+     * parsing operations.
+     *
+     * @var array
+     */
     private static $cache = [];
 
     /**
      * Parse a json finger pointer and returns it as an array of keys.
      *
      * @param string $pointer JSON finger pointer.
+     * @param boolean &$is_conditional Reference to handle if the parsed pointer is
+     * conditional.
      *
      * @return array Array with finger keys.
      */
-    public static function parse($pointer)
+    public static function parse($pointer, &$is_conditional = false)
     {
         $pointer = (string) $pointer;
+
+        $is_conditional = strpos($pointer, '?') === 0;
+        if ($is_conditional) {
+            $pointer = substr($pointer, 1);
+        }
 
         if (isset(self::$cache[$pointer])) {
             return self::$cache[$pointer];
@@ -64,8 +77,6 @@ class JSON_Finger
 
                 if (strlen($key) === 0) {
                     $key = INF;
-                    // self::$cache[$pointer] = [];
-                    // return [];
                 } elseif (intval($key) != $key) {
                     if (!preg_match('/^"[^"]+"$/', $key, $matches)) {
                         self::$cache[$pointer] = [];
@@ -110,7 +121,7 @@ class JSON_Finger
     {
         if ($key === INF) {
             $key = '[]';
-        } elseif (is_int($key)) {
+        } elseif (intval($key) == $key) {
             $key = "[{$key}]";
         } else {
             $key = trim($key);
@@ -151,18 +162,18 @@ class JSON_Finger
      *
      * @return string Finger pointer result.
      */
-    public static function pointer($keys)
+    public static function pointer($keys, $is_conditional = false)
     {
         if (!is_array($keys)) {
             return '';
         }
 
-        return array_reduce(
+        $pointer = array_reduce(
             $keys,
             static function ($pointer, $key) {
                 if ($key === INF) {
                     $key = '[]';
-                } elseif (is_int($key)) {
+                } elseif (intval($key) == $key) {
                     $key = "[{$key}]";
                 } else {
                     $key = self::sanitize_key($key);
@@ -176,6 +187,12 @@ class JSON_Finger
             },
             ''
         );
+
+        if ($is_conditional) {
+            $pointer = '?' . $pointer;
+        }
+
+        return $pointer;
     }
 
     /**
@@ -278,11 +295,13 @@ class JSON_Finger
      */
     private function get_expanded($pointer, &$expansion = [])
     {
-        $parts = explode('[]', $pointer);
+        $flat = preg_match('/\[\]$/', $pointer);
+
+        $parts = array_filter(explode('[]', $pointer));
         $before = $parts[0];
         $after = implode('[]', array_slice($parts, 1));
 
-        $items = $this->get($before, $expansion);
+        $items = $this->get($before);
 
         if (empty($after) || !wp_is_numeric_array($items)) {
             return $items;
@@ -291,6 +310,10 @@ class JSON_Finger
         for ($i = 0; $i < count($items); $i++) {
             $pointer = "{$before}[$i]{$after}";
             $items[$i] = $this->get($pointer, $expansion);
+        }
+
+        if ($flat) {
+            return $expansion;
         }
 
         return $items;
@@ -329,10 +352,12 @@ class JSON_Finger
                 }
 
                 $key = $keys[$i];
-                if (is_int($key)) {
+                if (intval($key) == $key) {
                     if (!wp_is_numeric_array($partial)) {
                         return $data;
                     }
+
+                    $key = intval($key);
                 }
 
                 if (!isset($partial[$key])) {
@@ -388,7 +413,7 @@ class JSON_Finger
      */
     private function set_expanded($pointer, $values, $unset)
     {
-        $parts = explode('[]', $pointer);
+        $parts = array_filter(explode('[]', $pointer));
         $before = $parts[0];
         $after = implode('[]', array_slice($parts, 1));
 
@@ -410,6 +435,13 @@ class JSON_Finger
             }
         }
 
+        $values = $this->get($before);
+
+        if (wp_is_numeric_array($values)) {
+            ksort($values);
+            $this->set($before, $values);
+        }
+
         return $this->data;
     }
 
@@ -421,7 +453,7 @@ class JSON_Finger
     public function unset($pointer)
     {
         if (isset($this->data[$pointer])) {
-            if (intval($pointer) === $pointer) {
+            if (intval($pointer) == $pointer) {
                 if (wp_is_numeric_array($this->data)) {
                     array_splice($this->data, $pointer, 1);
                 }
@@ -439,12 +471,14 @@ class JSON_Finger
      * Checks if the json finger is set on the data.
      *
      * @param string $pointer JSON finger pointer.
+     * @param boolean &$is_conditional Reference to handle if the pointer is
+     * conditional.
      *
      * @return boolean True if attribute is set.
      */
-    public function isset($pointer)
+    public function isset($pointer, &$is_conditional = false)
     {
-        $keys = self::parse($pointer);
+        $keys = self::parse($pointer, $is_conditional);
 
         switch (count($keys)) {
             case 0:
@@ -463,6 +497,10 @@ class JSON_Finger
 
                 if (!wp_is_numeric_array($parent)) {
                     return false;
+                }
+
+                if ($key === INF) {
+                    return true;
                 }
 
                 foreach ($parent as $item) {

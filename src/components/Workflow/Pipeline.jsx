@@ -1,5 +1,6 @@
 import { useWorkflowStepper } from "../../providers/Workflow";
 import { useApiWorkflowJobs } from "../../providers/WorkflowJobs";
+import RemoveButton from "../RemoveButton";
 
 const {
   __experimentalItemGroup: ItemGroup,
@@ -190,18 +191,19 @@ function PipelineStep({ name, title, index, options, append, update, remove }) {
             variant="secondary"
             disabled={!name}
             onClick={() => append(index - 1)}
+            style={{ width: "32px" }}
           >
             +
           </Button>
-          <Button
+          <RemoveButton
             size="compact"
             variant="secondary"
-            isDestructive
             disabled={!name || name === "form"}
             onClick={() => remove(index - 1)}
+            style={{ width: "32px" }}
           >
             -
-          </Button>
+          </RemoveButton>
         </div>
       )}
     </div>

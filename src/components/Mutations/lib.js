@@ -1,74 +1,73 @@
-import JsonFinger from "./../../lib/JsonFinger";
-import { fieldsToPayload, applyMappers } from "../../lib/payload";
+import {
+  payloadToSchema,
+  fieldsToPayload,
+  applyMappers,
+} from "../../lib/payload";
 
-export function payloadToOptions(payload, mappers, fields) {
-  return Object.keys(payload).reduce((options, key) => {
-    let sKey;
-    if (Array.isArray(payload)) {
-      sKey = +key;
-    } else {
-      sKey = JsonFinger.sanitizeKey(key);
+export function schemaToOptions(schema, name = "") {
+  const isExpansible = name.match(/\[\](?=[^\[])/g)?.length >= 2;
+
+  if (schema.type === "object") {
+    const options = [
+      {
+        value: name,
+        label: name,
+      },
+    ];
+
+    if (isExpansible) {
+      options.push({ value: name + "[]", label: name + "[]" });
     }
 
-    options.push({ value: sKey, label: sKey });
+    return options.concat(
+      Object.keys(schema.properties).reduce((options, prop) => {
+        const pointer = name ? `${name}.${prop}` : prop;
+        return options.concat(
+          schemaToOptions(schema.properties[prop], pointer)
+        );
+      }, [])
+    );
+  } else if (schema.type === "array") {
+    const options = [{ value: name, label: name }];
 
-    if (Array.isArray(payload[key])) {
-      payload[key].forEach((item, i) => {
-        if (Object.isFrozen(payload[key])) {
-          i = "";
-        }
+    const schemaItems = Array.isArray(schema.items)
+      ? schema.items
+      : [schema.items];
 
-        if (typeof item === "string") {
-          if (i !== "") {
-            options.push({
-              value: `${sKey}[${i}]`,
-              label: `${sKey}[${i}]`,
-            });
-          }
-        } else {
-          options = options.concat(
-            payloadToOptions(item, fields, mappers).map((opt) => {
-              let value = opt.value;
-              if (+value === value) {
-                value = `${sKey}[${i}][${value}]`;
-              } else {
-                if (value[0] === "[") {
-                  value = `${sKey}[${i}]${value}`;
-                } else {
-                  value = `${sKey}[${i}].${value}`;
-                }
-              }
+    return options
+      .concat(
+        schemaItems.reduce((options, item) => {
+          const pointer = `${name}[]`;
 
-              return { value, label: value };
-            })
+          return options.concat(
+            schemaToOptions(item, pointer).filter(
+              (opt) => isExpansible || opt.value !== pointer
+            )
           );
-        }
-      });
-    } else if (payload[key] && typeof payload[key] === "object") {
-      options = options.concat(
-        payloadToOptions(payload[key], fields, mappers).map((opt) => {
-          let value = opt.value;
-          if (+value === value) {
-            value = `${sKey}[${value}]`;
-          } else {
-            if (value[0] === "[") {
-              value = `${sKey}${value}`;
-            } else {
-              value = `${sKey}.${value}`;
-            }
-          }
+        }, [])
+      )
+      .concat(
+        schemaItems.reduce((options, item, i) => {
+          if (schema.additionalItems) return options;
+          const pointer = `${name}[${i}]`;
 
-          return { value, label: value };
-        })
+          return options.concat(schemaToOptions(item, pointer));
+        }, [])
       );
+  } else {
+    const options = [{ label: name, value: name }];
+    if (isExpansible) {
+      options.push({ label: name + "[]", value: name + "[]" });
     }
 
     return options;
-  }, []);
+  }
 }
 
 export function getFromOptions(fields, mappers) {
-  const payload = applyMappers(fieldsToPayload(fields), mappers);
-  const options = payloadToOptions(payload, mappers, fields);
-  return [{ label: "", value: "" }].concat(options);
+  const schema = payloadToSchema(
+    applyMappers(fieldsToPayload(fields), mappers)
+  );
+
+  return schemaToOptions(schema);
 }

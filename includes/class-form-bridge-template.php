@@ -193,6 +193,8 @@ class Form_Bridge_Template
                                         'csv',
                                         'concat',
                                         'join',
+                                        'sum',
+                                        'count',
                                         'inherit',
                                         'copy',
                                         'null',

@@ -56,12 +56,12 @@ export function payloadToSchema(payload) {
 
 export function schemaToPayload(schema, pointer) {
   if (schema.type === "object") {
-    pointer = JsonFinger.parse(pointer);
+    const keys = JsonFinger.parse(pointer);
 
     const payload = Object.keys(schema.properties).reduce((payload, prop) => {
       payload[prop] = schemaToPayload(
         schema.properties[prop],
-        JsonFinger.pointer(pointer.concat(prop))
+        JsonFinger.pointer(keys.concat(prop))
       );
 
       return payload;
@@ -100,12 +100,14 @@ export function applyMappers(payload, mappers = []) {
     const isValid =
       JsonFinger.validate(mapper.from) && JsonFinger.validate(mapper.to);
 
-    if (!isValid) {
-      continue;
-    }
+    if (!isValid) continue;
 
     let value;
     if (!finger.isset(mapper.from)) {
+      if (JsonFinger.isConditional(mapper.from)) {
+        continue;
+      }
+
       value = { type: "null" };
     } else {
       value = finger.get(mapper.from);
@@ -119,7 +121,7 @@ export function applyMappers(payload, mappers = []) {
     }
 
     if (mapper.cast !== "null") {
-      finger.set(mapper.to, castValue(mapper.cast, value));
+      finger.set(mapper.to, castValue(value, mapper));
     }
   }
 
@@ -128,10 +130,11 @@ export function applyMappers(payload, mappers = []) {
 
 export function payloadToFields(payload) {
   return Object.entries(payload).map(([name, value]) => {
+    const schema = payloadToSchema(value);
     return {
       name,
       label: name,
-      schema: payloadToSchema(value),
+      schema,
     };
   });
 }
@@ -148,21 +151,86 @@ export function fieldsToPayload(fields) {
   return finger.data;
 }
 
-export function castValue(cast, from) {
-  switch (cast) {
+export function castValue(value, mapper) {
+  const isFrozen = Object.isFrozen(value);
+
+  if (mapper.from.indexOf("[]") !== -1) {
+    return castExpandedValue(value, mapper);
+  }
+
+  if (/\[\]$/.test(mapper.to)) {
+    if (!Array.isArray(value)) {
+      if (isFrozen) {
+        return Object.freeze([]);
+      }
+
+      return [];
+    }
+
+    const itemMapper = { ...mapper };
+    itemMapper.to = itemMapper.to.slice(0, -2);
+    return value.map((item) => castValue(item, itemMapper));
+  }
+
+  switch (mapper.cast) {
     case "json":
     case "concat":
     case "csv":
-      return "string";
+      value = "string";
+      break;
+    case "count":
+      value = "integer";
+      break;
+    case "sum":
+      value = "number";
+      break;
     case "copy":
     case "inherit":
-      const isFrozen = Object.isFrozen(from);
-      value = JSON.parse(JSON.stringify(from));
+      value = JSON.parse(JSON.stringify(value));
       if (isFrozen) Object.freeze(value);
-      return value;
+      break;
     default:
-      return cast;
+      value = mapper.cast;
+      break;
   }
+
+  return value;
+}
+
+function castExpandedValue(values, mapper) {
+  if (!Array.isArray(values)) {
+    return [];
+  }
+
+  const isExpanded = /\[\]$/.test(mapper.from);
+
+  if (isExpanded) {
+    return values.map((value) => {
+      return castValue(value, { cast: mapper.cast, from: "", to: "" });
+    });
+  }
+
+  const toExpansions = mapper.to.match(/\[\](?=[^\[])/g);
+  const fromExpansions = mapper.from.match(/\[\](?=[^\[])/g);
+
+  if (toExpansions.length > fromExpansions.length) {
+    return [];
+  }
+
+  const parts = mapper.from.split("[]").filter((p) => p);
+  const before = parts[0];
+  const after = parts.slice(1).join("[]");
+
+  for (let i = 0; i < values.length; i++) {
+    const pointer = `${before}[${i}]${after}`;
+    values[i] = castValue(values[i], {
+      from: pointer,
+      to: "",
+      cast: mapper.cast,
+    });
+  }
+
+  return values;
 }
 
 const TYPES_COMPATIBILITY = {

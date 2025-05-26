@@ -1,5 +1,7 @@
 // source
 import useBackendNames from "../../hooks/useBackendNames";
+import { downloadJson, uploadJson } from "../../lib/utils";
+import RemoveButton from "../RemoveButton";
 import BackendHeaders from "./Headers";
 
 const { TextControl, Button, __experimentalSpacer: Spacer } = wp.components;
@@ -24,6 +26,45 @@ function NewBackend({ add }) {
     setBaseUrl("https://");
     setNameConflict(false);
   };
+
+  function uploadConfig() {
+    uploadJson()
+      .then((data) => {
+        const isValid = data.name && data.base_url;
+
+        if (!isValid) {
+          wpfb.emit("error", __("Invalid backend config", "forms-bridge"));
+          return;
+        }
+
+        let i = 1;
+        while (backendNames.has(data.name)) {
+          data.name = data.name.replace(/\([0-9]+\)/, "") + ` (${i})`;
+          i++;
+        }
+
+        data.headers =
+          (Array.isArray(data.headers) &&
+            data.headers.filter(
+              (header) => header && header.name && header.value
+            )) ||
+          [];
+
+        add(data);
+      })
+      .catch((err) => {
+        if (!err) return;
+
+        console.error(err);
+        wpfb.emit(
+          "error",
+          __(
+            "An error has ocurred while uploading the backend config",
+            "forms-bridge"
+          )
+        );
+      });
+  }
 
   const disabled = !(name && baseUrl && !nameConflict);
 
@@ -61,6 +102,15 @@ function NewBackend({ add }) {
           __nextHasNoMarginBottom
           __next40pxDefaultSize
         />
+      </div>
+      <Spacer paddingY="calc(8px)" />
+      <div
+        style={{
+          display: "flex",
+          gap: "1em",
+          flexWrap: "wrap",
+        }}
+      >
         <Button
           variant="primary"
           onClick={() => onClick()}
@@ -73,6 +123,36 @@ function NewBackend({ add }) {
           __next40pxDefaultSize
         >
           {__("Add", "forms-bridge")}
+        </Button>
+        <Button
+          variant="tertiary"
+          size="compact"
+          style={{
+            width: "40px",
+            height: "40px",
+            justifyContent: "center",
+            fontSize: "1.5em",
+          }}
+          onClick={uploadConfig}
+          __next40pxDefaultSize
+          label={__("Upload backend config", "forms-bridge")}
+          showTooltip
+        >
+          <div>
+            ⬆
+            <div
+              aria-hidden
+              style={{
+                height: "3px",
+                borderBottom: "3px solid",
+                borderLeft: "3px solid",
+                borderRight: "3px solid",
+                width: "calc(100% + 4px)",
+                marginLeft: "-5px",
+                transform: "translateY(-3px)",
+              }}
+            ></div>
+          </div>
         </Button>
       </div>
     </div>
@@ -100,13 +180,21 @@ export default function Backend({ update, remove, ...data }) {
   useEffect(() => {
     clearTimeout(timeout.current);
     if (!name || nameConflict) return;
-    timeout.current = setTimeout(
-      () => update({ ...data, name: name.trim() }),
-      500
-    );
+    timeout.current = setTimeout(() => {
+      if (backendNames.has(name.trim())) return;
+      update({ ...data, name: name.trim() });
+    }, 500);
   }, [name]);
 
   useEffect(() => setName(data.name), [data.name]);
+
+  function exportConfig() {
+    const backendData = { ...data };
+    delete backendData.icon;
+    delete backendData.title;
+
+    downloadJson(backendData, data.name + " backend config");
+  }
 
   return (
     <div
@@ -142,22 +230,58 @@ export default function Backend({ update, remove, ...data }) {
           __nextHasNoMarginBottom
           __next40pxDefaultSize
         />
-        <Button
-          isDestructive
-          variant="primary"
+      </div>
+      <Spacer paddingY="calc(8px)" />
+      <BackendHeaders headers={data.headers} setHeaders={setHeaders} />
+      <Spacer paddingY="calc(8px)" />
+      <div
+        style={{
+          display: "flex",
+          gap: "1em",
+          flexWrap: "wrap",
+        }}
+      >
+        <RemoveButton
           onClick={() => remove(data)}
           style={{
             width: "150px",
             marginTop: "auto",
             justifyContent: "center",
           }}
-          __next40pxDefaultSize
         >
           {__("Remove", "forms-bridge")}
+        </RemoveButton>
+        <Button
+          size="compact"
+          variant="tertiary"
+          style={{
+            height: "40px",
+            width: "40px",
+            justifyContent: "center",
+            fontSize: "1.5em",
+          }}
+          onClick={exportConfig}
+          __next40pxDefaultSize
+          label={__("Download bridge config", "forms-bridge")}
+          showTooltip
+        >
+          <div>
+            ⬇
+            <div
+              aria-hidden
+              style={{
+                height: "3px",
+                borderBottom: "3px solid",
+                borderLeft: "3px solid",
+                borderRight: "3px solid",
+                width: "calc(100% + 4px)",
+                marginLeft: "-5px",
+                transform: "translateY(-3px)",
+              }}
+            ></div>
+          </div>
         </Button>
       </div>
-      <Spacer paddingY="calc(8px)" />
-      <BackendHeaders headers={data.headers} setHeaders={setHeaders} />
     </div>
   );
 }
