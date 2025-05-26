@@ -164,10 +164,10 @@ export default function Backend({ update, remove, ...data }) {
   useEffect(() => {
     clearTimeout(timeout.current);
     if (!name || nameConflict) return;
-    timeout.current = setTimeout(
-      () => update({ ...data, name: name.trim() }),
-      500
-    );
+    timeout.current = setTimeout(() => {
+      if (backendNames.has(name.trim())) return;
+      update({ ...data, name: name.trim() });
+    }, 500);
   }, [name]);
 
   useEffect(() => setName(data.name), [data.name]);
