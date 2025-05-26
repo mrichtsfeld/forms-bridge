@@ -4,12 +4,10 @@ if (!defined('ABSPATH')) {
     exit();
 }
 
-global $forms_bridge_iso2_countries;
-
 add_filter(
     'forms_bridge_template_data',
     function ($data, $template_name) {
-        if ($template_name === 'holded-woo-product-quotations') {
+        if ($template_name === 'holded-woo-product-orders') {
             $index = array_search(
                 'tags',
                 array_column($data['bridge']['custom_fields'], 'name')
@@ -42,9 +40,9 @@ add_filter(
 );
 
 return [
-    'title' => __('Product Sale Order', 'forms-bridge'),
+    'title' => __('Product Orders', 'forms-bridge'),
     'description' => __(
-        'Product sale order form template. The resulting bridge will convert woocommerce orders into sale orders linked to new contacts.',
+        'Product sale order form template. The resulting bridge will convert woocommerce orders into product sale orders linked to new contacts.',
         'forms-bridge'
     ),
     'integrations' => ['woo'],
