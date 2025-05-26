@@ -32,3 +32,60 @@ export function sortByNamesOrder(items, order) {
 export function prependEmptyOption(options) {
   return [{ label: "", value: "" }].concat(options);
 }
+
+export function downloadJson(data, fileName = "forms-bridge-export") {
+  const json = JSON.stringify(data);
+  const blob = new Blob([json], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = fileName + ".json";
+
+  document.body.appendChild(anchor);
+  anchor.click();
+  document.body.removeChild(anchor);
+}
+
+export function uploadJson() {
+  return new Promise((res, rej) => {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "application/json";
+
+    input.addEventListener("cancel", function () {
+      document.body.removeChild(input);
+      rej();
+    });
+
+    input.addEventListener("change", function () {
+      if (input.files.length === 1) {
+        const reader = new FileReader();
+
+        reader.onerror = function (err) {
+          document.body.removeChild(input);
+          rej(err);
+        };
+
+        reader.onload = function () {
+          let data;
+          try {
+            data = JSON.parse(reader.result);
+            res(data);
+          } catch (err) {
+            rej(err);
+          } finally {
+            document.body.removeChild(input);
+          }
+        };
+
+        reader.readAsText(input.files[0]);
+      } else {
+        document.body.removeChild(input);
+      }
+    });
+
+    document.body.appendChild(input);
+    input.click();
+  });
+}

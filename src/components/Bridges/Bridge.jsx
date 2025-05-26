@@ -6,6 +6,7 @@ import CustomFields from "../CustomFields";
 import Workflow from "../Workflow";
 import NewBridge from "./NewBridge";
 import RemoveButton from "../RemoveButton";
+import { downloadJson } from "../../lib/utils";
 
 const {
   TextControl,
@@ -74,18 +75,9 @@ export default function Bridge({
     const bridgeData = { ...data };
     delete bridgeData.is_valid;
     delete bridgeData.icon;
+    delete bridgeData.title;
 
-    const json = JSON.stringify(bridgeData);
-    const blob = new Blob([json], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-
-    const anchor = document.createElement("a");
-    anchor.href = url;
-    anchor.download = data.name + ".json";
-
-    document.body.appendChild(anchor);
-    anchor.click();
-    document.body.removeChild(anchor);
+    downloadJson(data, data.name + " bridge config");
   }
 
   return (
@@ -182,12 +174,17 @@ export default function Bridge({
         </RemoveButton>
         <Button
           size="compact"
-          variant="secondary"
-          style={{ height: "40px", width: "40px", justifyContent: "center" }}
+          variant="tertiary"
+          style={{
+            height: "40px",
+            width: "40px",
+            justifyContent: "center",
+            fontSize: "1.5em",
+          }}
           onClick={exportConfig}
           __next40pxDefaultSize
         >
-          ⬇
+          🡇
         </Button>
       </div>
     </div>

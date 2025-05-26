@@ -3,6 +3,7 @@ import { useForms } from "../../providers/Forms";
 import { useGeneral } from "../../providers/Settings";
 import useBridgeNames from "../../hooks/useBridgeNames";
 import Templates from "../Templates";
+import { uploadJson } from "../../lib/utils";
 
 const {
   TextControl,
@@ -86,50 +87,63 @@ export default function NewBridge({
   );
 
   function uploadConfig() {
-    const input = document.createElement("input");
-    input.type = "file";
-    input.accept = "application/json";
+    uploadJson()
+      .then((data) => {
+        const isValid =
+          data.name &&
+          data.form_id &&
+          data.backend &&
+          customFieldsSchema.reduce(
+            (valid, field) =>
+              valid && Object.prototype.hasOwnProperty.call(data, field),
+            true
+          );
 
-    input.addEventListener("cancel", function () {
-      document.body.removeChild(input);
-    });
+        if (!isValid) {
+          wpfb.emit("error", __("Invalid bridge config", "forms-bridge"));
+          return;
+        }
 
-    input.addEventListener("change", function () {
-      if (input.files.length === 1) {
-        const reader = new FileReader();
+        let i = 1;
+        while (bridgeNames.has(data.name)) {
+          data.name = data.name.replace(/\([0-9]+\)/, "") + ` (${i})`;
+          i++;
+        }
 
-        reader.onerror = function () {
-          document.body.removeChild(input);
-        };
+        data.custom_fields =
+          (Array.isArray(data.custom_fields) &&
+            data.custom_fields.filter(
+              (field) => field && field.name && field.value
+            )) ||
+          [];
 
-        reader.onload = function () {
-          let data;
-          try {
-            data = JSON.parse(reader.result);
-          } catch (err) {
-            document.body.removeChild(input);
-          }
+        data.mutations =
+          (Array.isArray(data.mutations) &&
+            data.mutations.filter(
+              (mappers) =>
+                (Array.isArray(mappers) &&
+                  mappers.filter(
+                    (mapper) =>
+                      mapper && mapper.from && mapper.to && mapper.cast
+                  )) ||
+                []
+            )) ||
+          [];
 
-          if (!data.name) return;
+        add(data);
+      })
+      .catch((err) => {
+        if (!err) return;
 
-          let i = 1;
-          while (bridgeNames.has(data.name)) {
-            data.name += ` (${i})`;
-            i++;
-          }
-
-          add(data);
-          document.body.removeChild(input);
-        };
-
-        reader.readAsText(input.files[0]);
-      } else {
-        document.body.removeChild(input);
-      }
-    });
-
-    document.body.appendChild(input);
-    input.click();
+        console.error(err);
+        wpfb.emit(
+          "error",
+          __(
+            "An error has ocurred while uploading the bridge config",
+            "forms-bridge"
+          )
+        );
+      });
   }
 
   return (
@@ -208,13 +222,18 @@ export default function NewBridge({
           {__("Add", "forms-bridge")}
         </Button>
         <Button
-          variant="secondary"
+          variant="tertiary"
           size="compact"
-          style={{ width: "40px", height: "40px", justifyContent: "center" }}
+          style={{
+            width: "40px",
+            height: "40px",
+            justifyContent: "center",
+            fontSize: "1.5em",
+          }}
           onClick={uploadConfig}
           __next40pxDefaultSize
         >
-          ⬆
+          🡅
         </Button>
         <Templates Wizard={Wizard} />
       </div>
