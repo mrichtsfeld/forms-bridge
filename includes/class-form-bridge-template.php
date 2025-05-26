@@ -305,7 +305,6 @@ class Form_Bridge_Template
                         ],
                         'required' => ['name', 'type'],
                     ],
-                    'minItems' => 1,
                 ],
             ],
             'required' => ['title', 'fields'],
@@ -440,10 +439,18 @@ class Form_Bridge_Template
             $schema
         );
 
-        // add integrations to config
-        return array_merge($config, [
-            'integrations' => array_keys(Integration::integrations()),
-        ]);
+        if (!isset($config['integrations'])) {
+            $config = array_merge($config, [
+                'integrations' => array_filter(
+                    array_keys(Integration::integrations()),
+                    static function ($integration) {
+                        return $integration !== 'woo';
+                    }
+                ),
+            ]);
+        }
+
+        return $config;
     }
 
     /**
@@ -730,6 +737,10 @@ class Form_Bridge_Template
                 'template_creation_error',
                 __('There is a problem with the template data', 'forms-bridge')
             );
+        }
+
+        if ($integration === 'woo') {
+            $data['form']['id'] = 1;
         }
 
         $integration_instance = Integration::integrations()[$integration];

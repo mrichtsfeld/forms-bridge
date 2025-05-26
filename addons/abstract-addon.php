@@ -669,6 +669,7 @@ abstract class Addon extends Singleton
                         return [
                             'title' => $template->title,
                             'name' => $template->name,
+                            'integrations' => $template->config['integrations'],
                         ];
                     }, $templates),
                     'workflow_jobs' => array_map(function ($job) {
@@ -707,6 +708,7 @@ abstract class Addon extends Singleton
                         return [
                             'title' => $template->title,
                             'name' => $template->name,
+                            'integrations' => $template->config['integrations'],
                         ];
                     }, $templates),
                     'workflow_jobs' => array_map(function ($job) {

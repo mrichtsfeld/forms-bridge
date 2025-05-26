@@ -10,7 +10,6 @@ use WC_Customer;
 class Integration extends BaseIntegration
 {
     private static $order_id;
-    private static $order_status;
 
     private const order_data_schema = [
         'type' => 'object',
@@ -101,12 +100,16 @@ class Integration extends BaseIntegration
                     'type' => 'object',
                     'properties' => [
                         'id' => ['type' => 'integer'],
+                        'order_id' => ['type' => 'integer'],
                         'name' => ['type' => 'string'],
                         'product_id' => ['type' => 'integer'],
+                        'variation_id' => ['type' => 'integer'],
                         'quantity' => ['type' => 'integer'],
+                        'tax_class' => ['type' => 'string'],
                         'subtotal' => ['type' => 'number'],
                         'subtotal_tax' => ['type' => 'number'],
-                        'tax_class' => ['type' => 'string'],
+                        'total' => ['type' => 'number'],
+                        'total_tax' => ['type' => 'number'],
                         'taxes' => [
                             'type' => 'object',
                             'properties' => [
@@ -122,9 +125,6 @@ class Integration extends BaseIntegration
                                 ],
                             ],
                         ],
-                        'total' => ['type' => 'number'],
-                        'total_tax' => ['type' => 'number'],
-                        'variation_id' => ['type' => 'integer'],
                         'product' => [
                             'type' => 'object',
                             'properties' => [
@@ -159,9 +159,16 @@ class Integration extends BaseIntegration
                 'items' => [
                     'type' => 'object',
                     'properties' => [
-                        'compound' => ['type' => 'boolean'],
                         'id' => ['type' => 'integer'],
+                        'order_id' => ['type' => 'integer'],
                         'name' => ['type' => 'string'],
+                        'rate_code' => ['type' => 'string'],
+                        'rate_id' => ['type' => 'integer'],
+                        'label' => ['type' => 'string'],
+                        'compound' => ['type' => 'boolean'],
+                        'tax_total' => ['type' => 'number'],
+                        'shipping_tax_total' => ['type' => 'number'],
+                        'rate_percent' => ['type' => 'number'],
                         // 'meta_data' => [
                         //     'type' => 'array',
                         //     'items' => [
@@ -174,11 +181,6 @@ class Integration extends BaseIntegration
                         //     ],
                         //     'additionalItems' => true,
                         // ],
-                        'rate_code' => ['type' => 'string'],
-                        'rate_id' => ['type' => 'integer'],
-                        'rate_percent' => ['type' => 'number'],
-                        'shipping_tax_total' => ['type' => 'number'],
-                        'tax_total' => ['type' => 'number'],
                     ],
                 ],
                 'additionalItems' => true,
@@ -189,11 +191,13 @@ class Integration extends BaseIntegration
                     'type' => 'object',
                     'properties' => [
                         'id' => ['type' => 'integer'],
-                        'instance_id' => ['type' => 'integer'],
+                        'order_id' => ['type' => 'integer'],
+                        'name' => ['type' => 'string'],
                         'method_id' => ['type' => 'string'],
                         'method_title' => ['type' => 'string'],
-                        'name' => ['type' => 'string'],
-                        'order_id' => ['type' => 'integer'],
+                        'instance_id' => ['type' => 'integer'],
+                        'total' => ['type' => 'number'],
+                        'total_tax' => ['type' => 'number'],
                         'tax_status' => ['type' => 'string'],
                         'taxes' => [
                             'type' => 'object',
@@ -203,8 +207,6 @@ class Integration extends BaseIntegration
                             ],
                             'required' => ['total'],
                         ],
-                        'total' => ['type' => 'number'],
-                        'total_tax' => ['type' => 'number'],
                         // 'meta_data' => [
                         // 	'type' => 'array',
                         // 	'items' => [
@@ -251,8 +253,8 @@ class Integration extends BaseIntegration
                 ],
                 'additionalItems' => true,
             ],
-            'customer_note' => ['type' => 'string'],
         ],
+        'additionalProperties' => false,
     ];
 
     public function init()
@@ -270,8 +272,6 @@ class Integration extends BaseIntegration
 
                 if ($trigger_submission) {
                     self::$order_id = $order_id;
-                    self::$order_status = $new_status;
-
                     Forms_Bridge::do_submission();
                 }
             },
@@ -286,12 +286,12 @@ class Integration extends BaseIntegration
             return;
         }
 
-        return $this->get_form_by_id('checkout');
+        return $this->get_form_by_id(1);
     }
 
     public function get_form_by_id($form_id)
     {
-        if ($form_id !== 'checkout') {
+        if ($form_id !== 1) {
             return;
         }
 
@@ -302,7 +302,7 @@ class Integration extends BaseIntegration
             'forms_bridge_form_data',
             [
                 '_id' => 'woo:1',
-                'id' => '1',
+                'id' => 1,
                 'title' => __('Woo Checkout', 'forms-bridge'),
                 'bridges' => apply_filters('forms_bridge_bridges', [], 'woo:1'),
                 'fields' => $this->serialize_order_fields(),
@@ -314,12 +314,12 @@ class Integration extends BaseIntegration
 
     public function forms()
     {
-        return [$this->get_form_by_id('checkout')];
+        return [$this->get_form_by_id(1)];
     }
 
     public function create_form($data)
     {
-        return;
+        return 1;
     }
 
     public function remove_form($form_id)
@@ -360,7 +360,7 @@ class Integration extends BaseIntegration
             $fields[] = self::decorate_order_field($name, $field_schema);
         }
 
-        foreach ($checkout_fields['billing'] as $name => $data) {
+        foreach (array_keys($checkout_fields['billing']) as $name) {
             $name = str_replace('billing_', '', $name);
             if (isset(self::order_data_schema['billing'][$name])) {
                 continue;
@@ -374,7 +374,7 @@ class Integration extends BaseIntegration
             ];
         }
 
-        foreach ($checkout_fields['shipping'] as $name => $data) {
+        foreach (array_keys($checkout_fields['shipping']) as $name) {
             $name = str_replace('shipping_', '', $name);
             if (isset(self::order_data_schema['shipping'][$name])) {
                 continue;
@@ -391,7 +391,7 @@ class Integration extends BaseIntegration
         return $fields;
     }
 
-    private function decorate_order_field($name, $schema, $is_multi = false)
+    private function decorate_order_field($name, $schema)
     {
         switch ($schema['type']) {
             case 'string':
@@ -450,8 +450,6 @@ class Integration extends BaseIntegration
                 $data['shipping'][$unprefixed] = $checkout->get_value($name);
             }
         }
-
-        $data['customer_note'] = $checkout->get_value('customer_note');
 
         $line_items = [];
         foreach ($data['line_items'] as $line_item) {
