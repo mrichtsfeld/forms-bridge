@@ -82,7 +82,7 @@ return [
         [
             'ref' => '#bridge/custom_fields[]',
             'name' => 'includeListIds',
-            'label' => __('Lists', 'forms-bridge'),
+            'label' => __('Segments', 'forms-bridge'),
             'type' => 'string',
             'required' => true,
         ],
