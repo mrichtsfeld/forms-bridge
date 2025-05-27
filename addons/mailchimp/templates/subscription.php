@@ -7,7 +7,7 @@ if (!defined('ABSPATH')) {
 add_filter(
     'forms_bridge_template_data',
     function ($data, $template_name) {
-        if ($template_name === 'mailchimp-contacts') {
+        if ($template_name === 'mailchimp-subscription') {
             $index = array_search(
                 'datacenter',
                 array_column($data['backend']['headers'], 'name')
@@ -69,7 +69,7 @@ add_filter(
 );
 
 return [
-    'title' => __('Contacts', 'forms-bridge'),
+    'title' => __('Subscription', 'forms-bridge'),
     'description' => __(
         'Subscription form template. The resulting bridge will convert form submissions into new list subscriptions.',
         'forms-bridge'
@@ -130,11 +130,11 @@ return [
         [
             'ref' => '#form',
             'name' => 'title',
-            'default' => __('Contacts', 'forms-bridge'),
+            'default' => __('Subscription', 'forms-bridge'),
         ],
     ],
     'form' => [
-        'title' => __('Contacts', 'forms-bridge'),
+        'title' => __('Subscription', 'forms-bridge'),
         'fields' => [
             [
                 'name' => 'email_address',
