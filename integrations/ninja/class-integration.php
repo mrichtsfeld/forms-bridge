@@ -289,7 +289,8 @@ class Integration extends BaseIntegration
             : [];
 
         $is_conditional = false;
-        foreach ($form_settings['conditions'] as $condition) {
+        $conditions = $form_settings['conditions'] ?? [];
+        foreach ((array) $conditions as $condition) {
             $then = $condition['then'] ?? [];
             $else = $condition['else'] ?? [];
             foreach (array_merge($then, $else) as $effect) {
