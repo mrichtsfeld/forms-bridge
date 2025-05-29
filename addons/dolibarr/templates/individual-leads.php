@@ -5,16 +5,24 @@ if (!defined('ABSPATH')) {
 }
 
 return [
-    'title' => __('Prospects', 'forms-bridge'),
+    'title' => __('Leads', 'forms-bridge'),
     'description' => __(
-        'Lead form template. The resulting bridge will convert form submissions into prospect contacts.',
+        'Lead form template. The resulting bridge will convert form submissions into lead projects linked to new contacts.',
         'forms-bridge'
     ),
     'fields' => [
         [
             'ref' => '#bridge',
             'name' => 'endpoint',
-            'value' => '/api/index.php/thirdparties',
+            'value' => '/api/index.php/projects',
+        ],
+        [
+            'ref' => '#bridge/custom_fields[]',
+            'name' => 'userownerid',
+            'label' => __('Owner', 'forms-bridge'),
+            'description' => __('Owner user of the lead', 'forms-bridge'),
+            'type' => 'string',
+            'required' => true,
         ],
         [
             'ref' => '#bridge/custom_fields[]',
@@ -47,13 +55,45 @@ return [
             'default' => '0',
         ],
         [
+            'ref' => '#bridge/custom_fields[]',
+            'name' => 'opp_status',
+            'label' => __('Lead status', 'forms-bridge'),
+            'type' => 'options',
+            'options' => [
+                [
+                    'label' => __('Prospection', 'forms-bridge'),
+                    'value' => '1',
+                ],
+                [
+                    'label' => __('Qualification', 'forms-bridge'),
+                    'value' => '2',
+                ],
+                [
+                    'label' => __('Proposal', 'forms-bridge'),
+                    'value' => '3',
+                ],
+                [
+                    'label' => __('Negociation', 'forms-bridge'),
+                    'value' => '4',
+                ],
+            ],
+            'required' => true,
+            'default' => '1',
+        ],
+        [
+            'ref' => '#bridge/custom_fields[]',
+            'name' => 'opp_amount',
+            'label' => __('Lead amount', 'forms-bridge'),
+            'type' => 'number',
+        ],
+        [
             'ref' => '#form',
             'name' => 'title',
-            'default' => __('Prospects', 'forms-bridge'),
+            'default' => __('Leads', 'forms-bridge'),
         ],
     ],
     'form' => [
-        'title' => __('Prospects', 'forms-bridge'),
+        'title' => __('Leads', 'forms-bridge'),
         'fields' => [
             [
                 'name' => 'firstname',
@@ -86,7 +126,7 @@ return [
         ],
     ],
     'bridge' => [
-        'endpoint' => '/api/index.php/thirdparties',
+        'endpoint' => '/api/index.php/projects',
         'custom_fields' => [
             [
                 'name' => 'status',
@@ -99,6 +139,14 @@ return [
             [
                 'name' => 'client',
                 'value' => '2',
+            ],
+            [
+                'name' => 'usage_opportunity',
+                'value' => '1',
+            ],
+            [
+                'name' => 'date_start',
+                'value' => '$timestamp',
             ],
         ],
         'mutations' => [
@@ -118,11 +166,18 @@ return [
                     'to' => 'name',
                     'cast' => 'concat',
                 ],
+                [
+                    'from' => 'name',
+                    'to' => 'title',
+                    'cast' => 'copy',
+                ],
+                [
+                    'from' => 'userownerid',
+                    'to' => 'userid',
+                    'cast' => 'integer',
+                ],
             ],
         ],
-        'workflow' => [
-            'dolibarr-skip-if-thirdparty-exists',
-            'dolibarr-next-client-code',
-        ],
+        'workflow' => ['dolibarr-contact-socid', 'dolibarr-next-project-ref'],
     ],
 ];

@@ -7,16 +7,24 @@ if (!defined('ABSPATH')) {
 global $forms_bridge_dolibarr_countries;
 
 return [
-    'title' => __('Company Prospects', 'forms-bridge'),
+    'title' => __('Company Leads', 'forms-bridge'),
     'description' => __(
-        'Leads form template. The resulting bridge will convert form submissions into company prospects linked to new contacts.',
+        'Leads form template. The resulting bridge will convert form submissions into company lead projects linked to new contacts.',
         'forms-bridge'
     ),
     'fields' => [
         [
             'ref' => '#bridge',
             'name' => 'endpoint',
-            'value' => '/api/index.php/contacts',
+            'value' => '/api/index.php/projects',
+        ],
+        [
+            'ref' => '#bridge/custom_fields[]',
+            'name' => 'userownerid',
+            'label' => __('Owner', 'forms-bridge'),
+            'description' => __('Owner user of the lead', 'forms-bridge'),
+            'type' => 'string',
+            'required' => true,
         ],
         [
             'ref' => '#bridge/custom_fields[]',
@@ -74,13 +82,45 @@ return [
             'default' => ' 0',
         ],
         [
+            'ref' => '#bridge/custom_fields[]',
+            'name' => 'opp_status',
+            'label' => __('Lead status', 'forms-bridge'),
+            'type' => 'options',
+            'options' => [
+                [
+                    'label' => __('Prospection', 'forms-bridge'),
+                    'value' => '1',
+                ],
+                [
+                    'label' => __('Qualification', 'forms-bridge'),
+                    'value' => '2',
+                ],
+                [
+                    'label' => __('Proposal', 'forms-bridge'),
+                    'value' => '3',
+                ],
+                [
+                    'label' => __('Negociation', 'forms-bridge'),
+                    'value' => '4',
+                ],
+            ],
+            'required' => true,
+            'default' => '1',
+        ],
+        [
+            'ref' => '#bridge/custom_fields[]',
+            'name' => 'opp_amount',
+            'label' => __('Lead amount', 'forms-bridge'),
+            'type' => 'number',
+        ],
+        [
             'ref' => '#form',
             'name' => 'title',
-            'default' => __('Company Prospects', 'forms-bridge'),
+            'default' => __('Company Leads', 'forms-bridge'),
         ],
     ],
     'form' => [
-        'title' => __('Company Prospects', 'forms-bridge'),
+        'title' => __('Company Leads', 'forms-bridge'),
         'fields' => [
             [
                 'name' => 'company_name',
@@ -158,7 +198,7 @@ return [
         ],
     ],
     'bridge' => [
-        'endpoint' => '/api/index.php/contacts',
+        'endpoint' => '/api/index.php/projects',
         'custom_fields' => [
             [
                 'name' => 'status',
@@ -168,6 +208,14 @@ return [
                 'name' => 'client',
                 'value' => '2',
             ],
+            [
+                'name' => 'usage_opportunity',
+                'value' => '1',
+            ],
+            [
+                'name' => 'date_start',
+                'value' => '$timestamp',
+            ],
         ],
         'mutations' => [
             [
@@ -176,12 +224,39 @@ return [
                     'to' => 'name',
                     'cast' => 'string',
                 ],
+                [
+                    'from' => 'name',
+                    'to' => 'title',
+                    'cast' => 'copy',
+                ],
+                [
+                    'from' => 'userownerid',
+                    'to' => 'userid',
+                    'cast' => 'integer',
+                ],
+            ],
+            [],
+            [
+                [
+                    'from' => 'socid',
+                    'to' => 'lead_socid',
+                    'cast' => 'copy',
+                ],
+            ],
+            [],
+            [
+                [
+                    'from' => 'lead_socid',
+                    'to' => 'socid',
+                    'cast' => 'integer',
+                ],
             ],
         ],
         'workflow' => [
             'dolibarr-country-id',
             'dolibarr-contact-socid',
-            'dolibarr-skip-if-contact-exists',
+            'dolibarr-contact-id',
+            'dolibarr-next-project-ref',
         ],
     ],
 ];
