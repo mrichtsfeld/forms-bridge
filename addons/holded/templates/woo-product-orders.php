@@ -42,7 +42,7 @@ add_filter(
 return [
     'title' => __('Product Orders', 'forms-bridge'),
     'description' => __(
-        'Product sale order bridge template. The resulting bridge will convert woocommerce orders into product sale orders linked to new contacts. To work propertly, <b>the bridge needs that your WooCommerce product sku values matches with the holded ones</b>.',
+        'Product sale order bridge template. The resulting bridge will convert WooCommerce orders into product sale orders linked to new contacts. To work propertly, <b>the bridge needs that your WooCommerce product sku values matches with the holded ones</b>.',
         'forms-bridge'
     ),
     'integrations' => ['woo'],
@@ -131,11 +131,6 @@ return [
                 [
                     'from' => 'discount_tax',
                     'to' => 'discount_tax',
-                    'cast' => 'null',
-                ],
-                [
-                    'from' => 'shipping_total',
-                    'to' => 'shipping_total',
                     'cast' => 'null',
                 ],
                 [
@@ -384,14 +379,14 @@ return [
                     'cast' => 'null',
                 ],
                 [
-                    'from' => 'tags',
+                    'from' => '?tags',
                     'to' => 'order_tags',
                     'cast' => 'inherit',
                 ],
             ],
             [
                 [
-                    'from' => 'order_tags',
+                    'from' => '?order_tags',
                     'to' => 'tags',
                     'cast' => 'inherit',
                 ],
