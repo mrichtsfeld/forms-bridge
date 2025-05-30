@@ -5,9 +5,9 @@ if (!defined('ABSPATH')) {
 }
 
 return [
-    'title' => __('Product Orders', 'forms-bridge'),
+    'title' => __('Sale Orders', 'forms-bridge'),
     'description' => __(
-        'Product sale order bridge template. The resulting bridge will convert WooCommerce orders into product sale orders linked to new contacts. To work properly, <b>the bridge needs that you use your Odoo\'s product internal refrence as the WooCommerce product sku values</b>.',
+        'Sale order bridge template. The resulting bridge will convert WooCommerce orders into product sale orders linked to new contacts. To work properly, <b>the bridge needs that you use your Odoo\'s product internal refrence as the WooCommerce product sku values</b>.',
         'forms-bridge'
     ),
     'integrations' => ['woo'],
@@ -301,6 +301,11 @@ return [
                     'from' => 'line_items[].product.sku',
                     'to' => 'order_line[][2].sku',
                     'cast' => 'string',
+                ],
+                [
+                    'from' => 'line_items[].product.price',
+                    'to' => 'order_line[][2].price_unit',
+                    'cast' => 'number',
                 ],
                 [
                     'from' => 'line_items',
