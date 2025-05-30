@@ -80,6 +80,15 @@ Browse the plugin's documentation on [formsbridge.codeccoop.org](https://formsbr
 
 == Changelog ==
 
+= 3.5.0 =
+* fix: woocommerce payload schema
+* feat: woocommerce bridge templates support
+* feat: woocommerce templates for odoo, dolibarr, holded, bigin, brevo, mailchimp and zoho
+* feat: jon finger expansions
+* feat: conditional json finger pointers
+* feat: improvements on the workflows panel UI
+* feat: backend and bridges json exports
+
 = 3.4.3 =
 * feat: bridge template descriptions
 * feat: listmonk skip subscription job
