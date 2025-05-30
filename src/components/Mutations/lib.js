@@ -1,3 +1,4 @@
+import JsonFinger from "../../lib/JsonFinger";
 import {
   payloadToSchema,
   fieldsToPayload,
@@ -6,6 +7,10 @@ import {
 
 export function schemaToOptions(schema, name = "") {
   const isExpansible = name.match(/\[\](?=[^\[])/g)?.length >= 2;
+
+  if (name !== "") {
+    name = JsonFinger.pointer(JsonFinger.parse(name));
+  }
 
   if (schema.type === "object") {
     const options = [
