@@ -57,12 +57,9 @@ return [
         [
             'ref' => '#bridge/custom_fields[]',
             'name' => 'listIds',
-            'label' => __('Segment IDs', 'forms-bridge'),
+            'label' => __('Segments', 'forms-bridge'),
             'type' => 'string',
-            'description' => __(
-                'List IDs separated by commas. Leave it empty if you don\'t want to subscrive contact to any list',
-                'forms-bridge'
-            ),
+            'required' => true,
         ],
         [
             'ref' => '#form',

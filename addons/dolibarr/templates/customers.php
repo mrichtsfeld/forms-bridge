@@ -96,7 +96,7 @@ return [
                 'required' => true,
             ],
             [
-                'name' => 'note_public',
+                'name' => 'note_private',
                 'label' => __('Comments', 'forms-bridge'),
                 'type' => 'textarea',
             ],

@@ -119,6 +119,26 @@ return [
                 ],
             ],
         ],
+        [
+            'name' => 'shippingAddresses',
+            'schema' => [
+                'type' => 'array',
+                'items' => [
+                    'type' => 'object',
+                    'properties' => [
+                        'name' => ['type' => 'string'],
+                        'address' => ['type' => 'string'],
+                        'city' => ['type' => 'string'],
+                        'postalCode' => ['type' => 'string'],
+                        'province' => ['type' => 'string'],
+                        'country' => ['type' => 'string'],
+                        'note' => ['type' => 'string'],
+                        'privateNote' => ['type' => 'string'],
+                    ],
+                    'additionalProperties' => false,
+                ],
+            ],
+        ],
     ],
     'output' => [
         [

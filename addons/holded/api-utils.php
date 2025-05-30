@@ -78,6 +78,7 @@ function forms_bridge_holded_create_contact($payload, $bridge, $update = false)
         'note',
         'isperson',
         'contactPersons',
+        'shippingAddresses',
     ];
 
     foreach ($contact_fields as $field) {

@@ -24,22 +24,22 @@ export default function Templates({ Wizard }) {
   const [wired, setWired] = useState(null);
   const [done, setDone] = useState(false);
 
-  const templateOptions = [{ label: "", value: "" }].concat(
-    templates.map(({ name, title }) => ({
-      label: title,
-      value: name,
-    }))
-  );
-
   const integrations = useIntegrations();
   const [integration, setIntegration] = useState(integrations[0]?.name || "");
 
-  const integrationOptions = integrations
-    .filter(({ name }) => name !== "woo")
-    .map(({ name, label }) => ({
-      value: name,
-      label,
-    }));
+  const integrationOptions = integrations.map(({ name, label }) => ({
+    value: name,
+    label,
+  }));
+
+  const templateOptions = [{ label: "", value: "" }].concat(
+    templates
+      .filter(({ integrations }) => integrations.includes(integration))
+      .map(({ name, title }) => ({
+        label: title,
+        value: name,
+      }))
+  );
 
   const [isOpen, setIsOpen] = useState(false);
 
@@ -136,7 +136,10 @@ export default function Templates({ Wizard }) {
             </>
           )}
           {(templateConfig?.description && (
-            <p style={{ maxWidth: "575px" }}>{templateConfig.description}</p>
+            <p
+              style={{ maxWidth: "575px" }}
+              dangerouslySetInnerHTML={{ __html: templateConfig.description }}
+            ></p>
           )) ||
             null}
           <Wizard

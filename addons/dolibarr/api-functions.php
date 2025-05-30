@@ -118,7 +118,7 @@ function forms_bridge_dolibarr_get_next_code_client($payload, $bridge)
             'method' => 'GET',
         ])
         ->submit([
-            'sortfield' => 't.rowid',
+            'sortfield' => 't.code_client',
             'sortorder' => 'DESC',
             'limit' => 1,
         ]);
@@ -127,15 +127,47 @@ function forms_bridge_dolibarr_get_next_code_client($payload, $bridge)
         return $response;
     }
 
-    $previus_code_client = $response['data'][0]['code_client'];
+    $previous_code_client = $response['data'][0]['code_client'];
 
-    [$prefix, $number] = explode('-', $previus_code_client);
+    [$prefix, $number] = explode('-', $previous_code_client);
 
     $next = strval($number + 1);
     while (strlen($next) < strlen($number)) {
         $next = '0' . $next;
     }
 
+    $prefix = 'CU' . date('y');
+    return $prefix . '-' . $next;
+}
+
+function forms_bridge_dolibarr_get_next_project_ref($payload, $bridge)
+{
+    $response = $bridge
+        ->patch([
+            'name' => 'dolibar-get-next-project-ref',
+            'endpoint' => '/api/index.php/projects',
+            'method' => 'GET',
+        ])
+        ->submit([
+            'sortfield' => 't.ref',
+            'sortorder' => 'DESC',
+            'limit' => 1,
+        ]);
+
+    if (is_wp_error($response)) {
+        return $response;
+    }
+
+    $previous_project_ref = $response['data'][0]['ref'];
+
+    [$prefix, $number] = explode('-', $previous_project_ref);
+
+    $next = strval($number + 1);
+    while (strlen($next) < strlen($number)) {
+        $next = '0' . $next;
+    }
+
+    $prefix = 'PJ' . date('y') . date('m');
     return $prefix . '-' . $next;
 }
 

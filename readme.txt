@@ -1,6 +1,6 @@
 === Forms Bridge ===
 Contributors: codeccoop
-Tags: forms, crm, erp, rest api, integration
+Tags: odoo, dolibarr, holded, forms, woocommerce
 Donate link: https://buymeacoffee.com/codeccoop
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html

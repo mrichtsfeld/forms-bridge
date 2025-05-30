@@ -4,19 +4,17 @@ if (!defined('ABSPATH')) {
     exit();
 }
 
-global $forms_bridge_dolibarr_countries;
-
 return [
-    'title' => __('Company Quotations', 'forms-bridge'),
+    'title' => __('Proposals', 'forms-bridge'),
     'description' => __(
-        'Quotations form template. The resulting bridge will convert form submissions into quotations linked to new companies.',
+        'Quotations form template. The resulting bridge will convert form submissions into quotations linked to new contacts.',
         'forms-bridge'
     ),
     'fields' => [
         [
             'ref' => '#bridge',
             'name' => 'endpoint',
-            'value' => '/api/index.php/orders',
+            'value' => '/api/index.php/proposals',
         ],
         [
             'ref' => '#bridge/custom_fields[]',
@@ -46,7 +44,7 @@ return [
                     'value' => '-1',
                 ],
             ],
-            'default' => ' 0',
+            'default' => '0',
         ],
         [
             'ref' => '#bridge/custom_fields[]',
@@ -58,11 +56,11 @@ return [
         [
             'ref' => '#form',
             'name' => 'title',
-            'default' => __('Company Quotations', 'forms-bridge'),
+            'default' => __('Proposals', 'forms-bridge'),
         ],
     ],
     'form' => [
-        'title' => __('Company Quotations', 'forms-bridge'),
+        'title' => __('Proposals', 'forms-bridge'),
         'fields' => [
             [
                 'name' => 'quantity',
@@ -73,8 +71,14 @@ return [
                 'min' => 1,
             ],
             [
-                'name' => 'company_name',
-                'label' => __('Company name', 'forms-bridge'),
+                'name' => 'firstname',
+                'label' => __('First name', 'forms-bridge'),
+                'type' => 'text',
+                'required' => true,
+            ],
+            [
+                'name' => 'lastname',
+                'label' => __('Last name', 'forms-bridge'),
                 'type' => 'text',
                 'required' => true,
             ],
@@ -83,6 +87,17 @@ return [
                 'label' => __('Tax ID', 'forms-bridge'),
                 'type' => 'text',
                 'required' => true,
+            ],
+            [
+                'name' => 'email',
+                'label' => __('Email', 'forms-bridge'),
+                'type' => 'email',
+                'required' => true,
+            ],
+            [
+                'name' => 'phone',
+                'label' => __('Phone', 'forms-bridge'),
+                'type' => 'text',
             ],
             [
                 'name' => 'address',
@@ -116,28 +131,10 @@ return [
                 }, array_keys($forms_bridge_dolibarr_countries)),
                 'required' => true,
             ],
-            [
-                'name' => 'firstname',
-                'label' => __('First name', 'forms-bridge'),
-                'type' => 'text',
-                'required' => true,
-            ],
-            [
-                'name' => 'lastname',
-                'label' => __('Last name', 'forms-bridge'),
-                'type' => 'text',
-                'required' => true,
-            ],
-            [
-                'name' => 'email',
-                'label' => __('Email', 'forms-bridge'),
-                'type' => 'email',
-                'required' => true,
-            ],
         ],
     ],
     'bridge' => [
-        'endpoint' => '/api/index.php/orders',
+        'endpoint' => '/api/index.php/proposals',
         'custom_fields' => [
             [
                 'name' => 'status',
@@ -145,7 +142,7 @@ return [
             ],
             [
                 'name' => 'typent_id',
-                'value' => '4',
+                'value' => '8',
             ],
             [
                 'name' => 'client',
@@ -155,13 +152,27 @@ return [
                 'name' => 'date',
                 'value' => '$timestamp',
             ],
+            [
+                'name' => 'lines[0].product_type',
+                'value' => '1',
+            ],
         ],
         'mutations' => [
             [
                 [
-                    'from' => 'company_name',
-                    'to' => 'name',
+                    'from' => 'firstname',
+                    'to' => 'name[0]',
                     'cast' => 'string',
+                ],
+                [
+                    'from' => 'lastname',
+                    'to' => 'name[1]',
+                    'cast' => 'string',
+                ],
+                [
+                    'from' => 'name',
+                    'to' => 'name',
+                    'cast' => 'concat',
                 ],
                 [
                     'from' => 'quantity',
@@ -174,26 +185,7 @@ return [
                     'cast' => 'integer',
                 ],
             ],
-            [],
-            [
-                [
-                    'from' => 'socid',
-                    'to' => 'order_socid',
-                    'cast' => 'copy',
-                ],
-            ],
-            [
-                [
-                    'from' => 'order_socid',
-                    'to' => 'socid',
-                    'cast' => 'integer',
-                ],
-            ],
         ],
-        'workflow' => [
-            'dolibarr-country-id',
-            'dolibarr-contact-socid',
-            'dolibarr-contact-id',
-        ],
+        'workflow' => ['dolibarr-country-id', 'dolibarr-contact-socid'],
     ],
 ];

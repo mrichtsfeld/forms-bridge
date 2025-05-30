@@ -57,8 +57,9 @@ export default function TemplateWizard({
       return steps.concat({ order: i * 10, ...defaultStep });
     }, steps)
       .filter(({ component }) => component)
+      .filter((step) => (integration === "woo" ? step.name !== "form" : true))
       .sort((a, b) => a.order - b.order);
-  }, [steps]);
+  }, [steps, integration]);
 
   const config = useTemplateConfig(integration);
   const [template] = useTemplate();

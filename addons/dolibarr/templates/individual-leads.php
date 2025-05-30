@@ -5,16 +5,24 @@ if (!defined('ABSPATH')) {
 }
 
 return [
-    'title' => __('Quotations', 'forms-bridge'),
+    'title' => __('Leads', 'forms-bridge'),
     'description' => __(
-        'Product quotations form template. The resulting bridge will convert form submissions into quotations linked to new contacts.',
+        'Lead form template. The resulting bridge will convert form submissions into lead projects linked to new contacts.',
         'forms-bridge'
     ),
     'fields' => [
         [
             'ref' => '#bridge',
             'name' => 'endpoint',
-            'value' => '/api/index.php/orders',
+            'value' => '/api/index.php/projects',
+        ],
+        [
+            'ref' => '#bridge/custom_fields[]',
+            'name' => 'userownerid',
+            'label' => __('Owner', 'forms-bridge'),
+            'description' => __('Owner user of the lead', 'forms-bridge'),
+            'type' => 'string',
+            'required' => true,
         ],
         [
             'ref' => '#bridge/custom_fields[]',
@@ -48,28 +56,45 @@ return [
         ],
         [
             'ref' => '#bridge/custom_fields[]',
-            'name' => 'fk_product',
-            'label' => __('Product', 'forms-bridge'),
-            'type' => 'string',
+            'name' => 'opp_status',
+            'label' => __('Lead status', 'forms-bridge'),
+            'type' => 'options',
+            'options' => [
+                [
+                    'label' => __('Prospection', 'forms-bridge'),
+                    'value' => '1',
+                ],
+                [
+                    'label' => __('Qualification', 'forms-bridge'),
+                    'value' => '2',
+                ],
+                [
+                    'label' => __('Proposal', 'forms-bridge'),
+                    'value' => '3',
+                ],
+                [
+                    'label' => __('Negociation', 'forms-bridge'),
+                    'value' => '4',
+                ],
+            ],
             'required' => true,
+            'default' => '1',
+        ],
+        [
+            'ref' => '#bridge/custom_fields[]',
+            'name' => 'opp_amount',
+            'label' => __('Lead amount', 'forms-bridge'),
+            'type' => 'number',
         ],
         [
             'ref' => '#form',
             'name' => 'title',
-            'default' => __('Quotations', 'forms-bridge'),
+            'default' => __('Leads', 'forms-bridge'),
         ],
     ],
     'form' => [
-        'title' => __('Quotations', 'forms-bridge'),
+        'title' => __('Leads', 'forms-bridge'),
         'fields' => [
-            [
-                'name' => 'quantity',
-                'label' => __('Quantity', 'forms-bridge'),
-                'type' => 'number',
-                'required' => true,
-                'default' => 1,
-                'min' => 1,
-            ],
             [
                 'name' => 'firstname',
                 'label' => __('First name', 'forms-bridge'),
@@ -79,12 +104,6 @@ return [
             [
                 'name' => 'lastname',
                 'label' => __('Last name', 'forms-bridge'),
-                'type' => 'text',
-                'required' => true,
-            ],
-            [
-                'name' => 'tva_intra',
-                'label' => __('Tax ID', 'forms-bridge'),
                 'type' => 'text',
                 'required' => true,
             ],
@@ -100,41 +119,14 @@ return [
                 'type' => 'text',
             ],
             [
-                'name' => 'address',
-                'label' => __('Address', 'forms-bridge'),
-                'type' => 'text',
-                'required' => true,
-            ],
-            [
-                'name' => 'zip',
-                'label' => __('Postal code', 'forms-bridge'),
-                'type' => 'text',
-                'required' => true,
-            ],
-            [
-                'name' => 'town',
-                'label' => __('City', 'forms-bridge'),
-                'type' => 'text',
-                'required' => true,
-            ],
-            [
-                'name' => 'country_id',
-                'label' => __('Country', 'forms-bridge'),
-                'type' => 'options',
-                'options' => array_map(function ($country_id) {
-                    global $forms_bridge_dolibarr_countries;
-                    return [
-                        'value' => $country_id,
-                        'label' =>
-                            $forms_bridge_dolibarr_countries[$country_id],
-                    ];
-                }, array_keys($forms_bridge_dolibarr_countries)),
-                'required' => true,
+                'name' => 'note_private',
+                'label' => __('Comments', 'forms-bridge'),
+                'type' => 'textarea',
             ],
         ],
     ],
     'bridge' => [
-        'endpoint' => '/api/index.php/orders',
+        'endpoint' => '/api/index.php/projects',
         'custom_fields' => [
             [
                 'name' => 'status',
@@ -149,7 +141,11 @@ return [
                 'value' => '2',
             ],
             [
-                'name' => 'date',
+                'name' => 'usage_opportunity',
+                'value' => '1',
+            ],
+            [
+                'name' => 'date_start',
                 'value' => '$timestamp',
             ],
         ],
@@ -171,17 +167,17 @@ return [
                     'cast' => 'concat',
                 ],
                 [
-                    'from' => 'quantity',
-                    'to' => 'lines[0].qty',
-                    'cast' => 'integer',
+                    'from' => 'name',
+                    'to' => 'title',
+                    'cast' => 'copy',
                 ],
                 [
-                    'from' => 'fk_product',
-                    'to' => 'lines[0].fk_product',
+                    'from' => 'userownerid',
+                    'to' => 'userid',
                     'cast' => 'integer',
                 ],
             ],
         ],
-        'workflow' => ['dolibarr-country-id', 'dolibarr-contact-socid'],
+        'workflow' => ['dolibarr-contact-socid', 'dolibarr-next-project-ref'],
     ],
 ];
