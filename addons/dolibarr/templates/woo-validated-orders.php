@@ -5,9 +5,9 @@ if (!defined('ABSPATH')) {
 }
 
 return [
-    'title' => __('Sale Orders', 'forms-bridge'),
+    'title' => __('Validated Sale Orders', 'forms-bridge'),
     'description' => __(
-        'Product sale order bridge template. The resulting bridge will convert WooCommerce orders into sale orders linked to new contacts. To work propertly, <b>the bridge needs that your WooCommerce product sku values matches with the dolibarr\'s product refs.</b>.',
+        'Product sale order bridge template. The resulting bridge will convert WooCommerce orders into validated sale orders linked to new third parties. To work properly, <b>the bridge needs that your WooCommerce product sku values matches with the dolibarr\'s product refs.</b>.',
         'forms-bridge'
     ),
     'integrations' => ['woo'],
@@ -387,6 +387,7 @@ return [
             'dolibarr-contact-socid',
             'dolibarr-contact-id',
             'dolibarr-products-by-ref',
+            'dolibarr-validate-order',
         ],
     ],
 ];
