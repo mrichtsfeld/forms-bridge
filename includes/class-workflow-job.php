@@ -124,7 +124,7 @@ class Workflow_Job
                 'additionalProperties' => false,
             ],
         ],
-        'submission_callbacks' => [
+        'callbacks' => [
             'type' => 'object',
             'properties' => [
                 'before' => ['type' => 'string'],
@@ -353,8 +353,8 @@ class Workflow_Job
         }
 
         if (
-            isset($this->submission_callbacks['before']) &&
-            function_exists($this->submission_callbacks['before'])
+            isset($this->callbacks['before']) &&
+            function_exists($this->callbacks['before'])
         ) {
             add_action(
                 'forms_bridge_before_submission',
@@ -365,8 +365,8 @@ class Workflow_Job
         }
 
         if (
-            isset($this->submission_callbacks['after']) &&
-            function_exists($this->submission_callbacks['after'])
+            isset($this->callbacks['after']) &&
+            function_exists($this->callbacks['after'])
         ) {
             add_action(
                 'forms_bridge_after_submission',
@@ -395,7 +395,7 @@ class Workflow_Job
             3
         );
 
-        $callback = $this->submission_callbacks['before'];
+        $callback = $this->callbacks['before'];
         $callback($bridge, $payload, $attachments);
     }
 
@@ -420,7 +420,7 @@ class Workflow_Job
             4
         );
 
-        $callback = $this->submission_callbacks['after'];
+        $callback = $this->callbacks['after'];
         $callback($bridge, $response, $payload, $attachments);
     }
 
@@ -459,7 +459,7 @@ class Workflow_Job
 
         $data = array_merge(
             [
-                'submission_callbacks' => [],
+                'callbacks' => [],
                 'method' => '\FORMS_BRIDGE\forms_bridge_workflow_noop_method',
             ],
             $data
@@ -480,7 +480,7 @@ class Workflow_Job
             );
         }
 
-        foreach ($data['submission_callbacks'] as $callback) {
+        foreach ($data['callbacks'] as $callback) {
             if (!function_exists($callback)) {
                 return new WP_Error(
                     'method_is_not_function',
