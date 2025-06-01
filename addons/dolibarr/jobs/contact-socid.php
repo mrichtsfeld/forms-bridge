@@ -12,7 +12,7 @@ function forms_bridge_dolibarr_thirdparty_socid($payload, $bridge)
         return $thirdparty;
     }
 
-    $payload['socid'] = $thirdparty['id'];
+    $payload['socid'] = (int) $thirdparty['id'];
     return $payload;
 }
 

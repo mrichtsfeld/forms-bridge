@@ -23,8 +23,45 @@ function forms_bridge_dolibarr_country_id($payload)
             $payload['country_id'] =
                 $countries_by_label[$payload['country_id']];
         } else {
+            return forms_bridge_dolibarr_iso2_country_id(
+                $payload,
+                $countries_by_label
+            );
+        }
+    }
+
+    return $payload;
+}
+
+function forms_bridge_dolibarr_iso2_country_id($payload, $country_ids)
+{
+    global $forms_bridge_iso2_countries;
+
+    $countries_by_label = array_reduce(
+        array_keys($forms_bridge_iso2_countries),
+        function ($countries, $country_code) use ($country_ids) {
+            global $forms_bridge_iso2_countries;
+            $country = $forms_bridge_iso2_countries[$country_code];
+
+            if (isset($country_ids[$country])) {
+                $countries[$country_code] = $country_ids[$country];
+            }
+
+            return $countries;
+        },
+        []
+    );
+
+    if (!isset($forms_bridge_iso2_countries[$payload['country_id']])) {
+        if (isset($countries_by_label[$payload['country_id']])) {
+            $payload['country_id'] =
+                $countries_by_label[$payload['country_id']];
+        } else {
             return new WP_Error('Unkown country', 'forms-bridge');
         }
+    } else {
+        $payload['country_id'] =
+            $country_ids[$forms_bridge_iso2_countries[$payload['country_id']]];
     }
 
     return $payload;
@@ -33,7 +70,7 @@ function forms_bridge_dolibarr_country_id($payload)
 return [
     'title' => __('Country ID', 'forms-bridge'),
     'description' => __(
-        'Check if country id is valid or replace its value if a country name is passed',
+        'Check if country id is valid or replace its value if a country name or country iso2 code is passed',
         'forms-bridge'
     ),
     'method' => 'forms_bridge_dolibarr_country_id',

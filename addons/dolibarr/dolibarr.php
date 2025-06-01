@@ -63,7 +63,7 @@ class Dolibarr_Addon extends Rest_Addon
             'backend' => $backend,
         ]);
 
-        $response = $bridge->submit([]);
+        $response = $bridge->submit();
         if (is_wp_error($response)) {
             return ['success' => false];
         }

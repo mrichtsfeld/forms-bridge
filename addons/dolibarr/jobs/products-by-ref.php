@@ -36,7 +36,13 @@ return [
 
 function forms_bridge_dolibarr_search_products_by_ref($payload, $bridge)
 {
-    $refs = implode(',', array_map('trim', $payload['product_refs']));
+    $sqlfilters = [];
+    $refs = (array) $payload['product_refs'];
+    foreach ($refs as $ref) {
+        $ref = trim($ref);
+        $sqlfilters[] = "(t.ref:=:'{$ref}')";
+    }
+
     $response = $bridge
         ->patch([
             'name' => 'dolibarr-search-products-by-ref',
@@ -46,7 +52,7 @@ function forms_bridge_dolibarr_search_products_by_ref($payload, $bridge)
         ->submit([
             'sortfield' => 't.ref',
             'ids_only' => 'true',
-            'sqlfilters' => "(t.ref:in:{$refs})",
+            'sqlfilters' => implode(' or ', $sqlfilters),
         ]);
 
     if (is_wp_error($response)) {

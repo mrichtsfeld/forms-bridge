@@ -131,12 +131,26 @@ function forms_bridge_dolibarr_get_next_code_client($payload, $bridge)
 
     [$prefix, $number] = explode('-', $previous_code_client);
 
+    if (empty($number)) {
+        $number = $prefix;
+        $prefix = '';
+    }
+
     $next = strval($number + 1);
     while (strlen($next) < strlen($number)) {
         $next = '0' . $next;
     }
 
-    $prefix = 'CU' . date('y');
+    if (preg_match('/^CU[0-9]{4}$/', $prefix)) {
+        $prefix = 'CU' . date('y') . date('m');
+    } elseif (preg_match('/^CU[0-9]{2}$/', $prefix)) {
+        $prefix = 'CU' . date('y');
+    }
+
+    if (empty($prefix)) {
+        return $next;
+    }
+
     return $prefix . '-' . $next;
 }
 
