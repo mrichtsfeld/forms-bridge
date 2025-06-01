@@ -80,6 +80,13 @@ Browse the plugin's documentation on [formsbridge.codeccoop.org](https://formsbr
 
 == Changelog ==
 
+= 3.5.1 =
+* feat: improve dolibarr next code and product search api calls
+* feat: add is_bridged woocommerce order meta data
+* feat: new validate order job and template for the dolibarr addon
+* feat: new delivered order template for the odoo addon
+* feat: changes on the holded woocommerce template
+
 = 3.5.0 =
 * fix: woocommerce payload schema
 * feat: woocommerce bridge templates support
