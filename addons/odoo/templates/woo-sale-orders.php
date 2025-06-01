@@ -98,6 +98,11 @@ return [
                     'cast' => 'null',
                 ],
                 [
+                    'from' => 'cart_total',
+                    'to' => 'cart_total',
+                    'cast' => 'null',
+                ],
+                [
                     'from' => 'cart_tax',
                     'to' => 'cart_tax',
                     'cast' => 'null',
@@ -273,7 +278,7 @@ return [
                     'cast' => 'null',
                 ],
                 [
-                    'from' => 'line_items[].product.sku',
+                    'from' => 'line_items[].product.name',
                     'to' => 'order_line[][0]',
                     'cast' => 'copy',
                 ],
@@ -283,7 +288,7 @@ return [
                     'cast' => 'integer',
                 ],
                 [
-                    'from' => 'line_items[].product.sku',
+                    'from' => 'line_items[].product.name',
                     'to' => 'order_line[][1]',
                     'cast' => 'copy',
                 ],
@@ -299,7 +304,7 @@ return [
                 ],
                 [
                     'from' => 'line_items[].product.sku',
-                    'to' => 'order_line[][2].sku',
+                    'to' => 'order_line[][2].default_code',
                     'cast' => 'string',
                 ],
                 [
@@ -372,7 +377,7 @@ return [
             ],
             [
                 [
-                    'from' => 'order_line[][2].sku',
+                    'from' => 'order_line[][2].default_code',
                     'to' => 'internal_refs',
                     'cast' => 'inherit',
                 ],
@@ -385,7 +390,7 @@ return [
                 ],
                 [
                     'from' => 'product_ids',
-                    'to' => 'order_line[][2].product_id[]',
+                    'to' => 'order_line[][2].product_id',
                     'cast' => 'integer',
                 ],
             ],
