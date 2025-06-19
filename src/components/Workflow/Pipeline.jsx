@@ -168,12 +168,31 @@ function PipelineStep({ name, title, index, options, append, update, remove }) {
             style={{
               cursor: "pointer",
               textIndent: "12px",
-              margin: "10px 0",
+              padding: "10px 30px 10px 0",
               whiteSpace: "nowrap",
+              margin: 0,
+              border: index ? "1px solid #d1cfcf" : "none",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              position: "relative",
+              maxWidth: "241px",
             }}
             onClick={() => setStep(index)}
           >
-            {title || __("Add new step", "forms-bridge")}
+            {title}
+            <span
+              style={{
+                display: index ? "block" : "none",
+                position: "absolute",
+                top: "50%",
+                right: "8px",
+                width: "6px",
+                height: "6px",
+                borderBottom: "1px solid #d1cfcf",
+                borderRight: "1px solid #d1cfcf",
+                transform: "translate(-50%, -50%) rotate(45deg)",
+              }}
+            ></span>
           </p>
         )}
       </div>

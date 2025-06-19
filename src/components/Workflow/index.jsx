@@ -64,6 +64,7 @@ export default function Workflow({
               <div
                 style={{
                   flex: 1,
+                  maxWidth: "400px",
                   display: "flex",
                   flexDirection: "column",
                   height: "100%",
