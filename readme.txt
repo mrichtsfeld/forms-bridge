@@ -4,7 +4,7 @@ Tags: odoo, dolibarr, holded, forms, woocommerce
 Donate link: https://buymeacoffee.com/codeccoop
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
-Stable Tag: 3.5.2
+Stable Tag: 3.5.3
 Tested up to: 6.8
 
 Bridge your WordPress forms without code, add custom fields, set up a workflow and make your data flow to your backend.
@@ -79,6 +79,10 @@ Browse the plugin's documentation on [formsbridge.codeccoop.org](https://formsbr
 6. Debug console
 
 == Changelog ==
+
+= 3.5.3 =
+* feat: nename gsheet default backend
+* fix: bridge request filter callback removal
 
 = 3.5.2 =
 * feat: new google sheets woocomerce orders template
