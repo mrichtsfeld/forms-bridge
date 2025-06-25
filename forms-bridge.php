@@ -559,7 +559,12 @@ class Forms_Bridge extends Base_Plugin
             $attachments[$name . '_filename'] = $filename;
         }
 
-        $attachments = $bridge->apply_mutation($attachments);
+        $mutation = $bridge->mutations[0] ?? [];
+        foreach ($mutation as &$mapper) {
+            $mapper['from'] = '?' . $mapper['from'];
+        }
+
+        $attachments = $bridge->apply_mutation($attachments, $mutation);
 
         foreach ($attachments as $field => $value) {
             if (isset($uploads[$field])) {
@@ -575,13 +580,17 @@ class Forms_Bridge extends Base_Plugin
             if ($unique_field === $field) {
                 continue;
             }
+
             $value = $attachments[$field];
             unset($attachments[$field]);
 
-            $mutation = $bridge->apply_mutation([$unique_field => $value]);
+            $attachment = $bridge->apply_mutation(
+                [$unique_field => $value],
+                $mutation
+            );
 
-            if (!empty($mutation)) {
-                $attachments[$field] = $mutation[$unique_field];
+            if (!empty($attachment)) {
+                $attachments[$field] = $attachment[$unique_field];
             }
         }
 
