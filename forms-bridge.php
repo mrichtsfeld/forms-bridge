@@ -255,6 +255,7 @@ class Forms_Bridge extends Base_Plugin
         }
 
         $dependencies = apply_filters('forms_bridge_admin_script_deps', [
+            $slug,
             'react',
             'react-jsx-runtime',
             'wp-api-fetch',
@@ -580,7 +581,7 @@ class Forms_Bridge extends Base_Plugin
             if (strstr($field, '_filename')) {
                 $unique_field = preg_replace('/_\d+(?=_filename)/', '', $field);
             } else {
-                $unique_field = preg_replace('/_\d+$/', '', $field);
+                $unique_field = preg_replace('/(?<=_)\d+$/', '', $field);
             }
 
             if ($unique_field === $field) {

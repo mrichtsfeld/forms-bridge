@@ -2,9 +2,12 @@
 
 namespace FORMS_BRIDGE;
 
+use Error;
 use Exception;
+use ParseError;
 use HTTP_BRIDGE\Http_Backend;
 use ReflectionClass;
+use TypeError;
 use WPCT_ABSTRACT\Singleton;
 
 if (!defined('ABSPATH')) {
@@ -740,11 +743,14 @@ abstract class Addon extends Singleton
                 $reflector = new ReflectionClass(static::class);
                 $__FILE__ = $reflector->getFileName();
 
+                $slug = Forms_Bridge::slug();
                 $script_name = Forms_Bridge::slug() . '-' . static::$api;
                 wp_enqueue_script(
                     $script_name,
                     plugins_url('assets/addon.bundle.js', $__FILE__),
                     [
+                        $slug,
+                        $slug . '-admin',
                         'react',
                         'react-jsx-runtime',
                         'wp-api-fetch',
@@ -764,11 +770,11 @@ abstract class Addon extends Singleton
                     Forms_Bridge::path() . 'languages'
                 );
 
-                add_filter('forms_bridge_admin_script_deps', static function (
-                    $deps
-                ) use ($script_name) {
-                    return array_merge($deps, [$script_name]);
-                });
+                // add_filter('forms_bridge_admin_script_deps', static function (
+                //     $deps
+                // ) use ($script_name) {
+                //     return array_merge($deps, [$script_name]);
+                // });
             },
             9,
             1
@@ -796,29 +802,61 @@ abstract class Addon extends Singleton
         return static::validate_setting($data, $setting);
     }
 
+    private static function autoload_posts($post_type)
+    {
+        if (
+            !in_array($post_type, [
+                'forms-bridge-bridge-template',
+                'forms-bridge-workflow-job',
+            ])
+        ) {
+            return [];
+        }
+
+        $posts = get_posts([
+            'post_type' => $post_type,
+            'posts_per_page' => -1,
+        ]);
+
+        $items = [];
+        foreach ($posts as $post) {
+            try {
+                $data = eval($post->post_content);
+                if (!is_array($data)) {
+                    continue;
+                }
+
+                $items[] = [
+                    'name' => $post->post_name,
+                    'data' => $data,
+                ];
+            } catch (ParseError $e) {
+                Logger::log(
+                    "Invalid {$post->post_name} post content from DB",
+                    Logger::ERROR
+                );
+                Logger::log($e, Logger::ERROR);
+            } catch (Error $e) {
+                Logger::log(
+                    "Error on loading {$post->post_name} from DB",
+                    Logger::ERROR
+                );
+                Logger::log($e, Logger::ERROR);
+            }
+        }
+    }
+
     /**
      * Autoload config files from a given addon's directory. Used to load
      * template and workflow job config files.
      *
-     * @param string $dirname Name of the target directory.
+     * @param string $dir Path of the target directory.
      *
      * @return array Array with data from files.
      */
-    private static function autoload_dir(
-        $dirname,
-        $extensions = ['php', 'json']
-    ) {
-        $__FILE__ = (new ReflectionClass(static::class))->getFileName();
-        $dir = dirname($__FILE__) . '/' . $dirname;
-
-        if (!is_dir($dir)) {
-            $res = mkdir($dir, 0755, true);
-            if (!$res) {
-                return [];
-            }
-        }
-
-        if (!is_readable($dir)) {
+    private static function autoload_dir($dir, $extensions = ['php', 'json'])
+    {
+        if (!is_readable($dir) || !is_dir($dir)) {
             return [];
         }
 
@@ -833,10 +871,6 @@ abstract class Addon extends Singleton
 
         $loaded = [];
         foreach ($files as $file_path) {
-            if (!is_file($file_path) || !is_readable($file_path)) {
-                continue;
-            }
-
             $file = basename($file_path);
             $name = pathinfo($file)['filename'];
             $ext = pathinfo($file)['extension'] ?? null;
@@ -849,8 +883,12 @@ abstract class Addon extends Singleton
             if ($ext === 'php') {
                 $data = include_once $file_path;
             } elseif ($ext === 'json') {
-                $content = file_get_contents($file_path);
-                $data = json_decode($content, true);
+                try {
+                    $content = file_get_contents($file_path);
+                    $data = json_decode($content, true);
+                } catch (TypeError) {
+                    // pass
+                }
             }
 
             if (is_array($data)) {
@@ -869,7 +907,17 @@ abstract class Addon extends Singleton
      */
     private static function load_data()
     {
-        self::autoload_dir('data');
+        $__FILE__ = (new ReflectionClass(static::class))->getFileName();
+        $dir = dirname($__FILE__) . '/data';
+
+        if (!is_dir($dir)) {
+            $res = mkdir($dir, 0755, true);
+            if (!$res) {
+                return;
+            }
+        }
+
+        self::autoload_dir($dir);
     }
 
     /**
@@ -877,7 +925,43 @@ abstract class Addon extends Singleton
      */
     private static function load_templates()
     {
-        $templates = self::autoload_dir('templates');
+        $__FILE__ = (new ReflectionClass(static::class))->getFileName();
+        $dir = dirname($__FILE__) . '/templates';
+
+        if (!is_dir($dir)) {
+            $res = mkdir($dir, 0755, true);
+            if (!$res) {
+                return;
+            }
+        }
+
+        $directories = apply_filters(
+            'forms_bridge_template_directories',
+            [
+                $dir,
+                get_stylesheet_directory() .
+                '/forms-bridge/templates/' .
+                static::$api,
+            ],
+            static::$api
+        );
+
+        $templates = [];
+        foreach ($directories as $dir) {
+            foreach (self::autoload_dir($dir) as $template) {
+                $templates[$template['name']] = $template;
+            }
+        }
+
+        foreach (
+            self::autoload_posts('forms-bridge-bridge-template', static::$api)
+            as $template
+        ) {
+            $template[$template['name']] = $template;
+        }
+
+        $templates = array_values($templates);
+
         $templates = apply_filters(
             'forms_bridge_load_templates',
             $templates,
@@ -897,7 +981,40 @@ abstract class Addon extends Singleton
      */
     private static function load_workflow_jobs()
     {
-        $jobs = self::autoload_dir('jobs');
+        $__FILE__ = (new ReflectionClass(static::class))->getFileName();
+        $dir = dirname($__FILE__) . '/jobs';
+
+        if (!is_dir($dir)) {
+            $res = mkdir($dir, 0755, true);
+            if (!$res) {
+                return;
+            }
+        }
+
+        $directories = apply_filters(
+            'forms_bridge_job_directories',
+            [
+                $dir,
+                get_stylesheet_directory() .
+                '/forms-bridge/workflow-jobs/' .
+                static::$api,
+            ],
+            static::$api
+        );
+
+        $jobs = [];
+        foreach ($directories as $dir) {
+            foreach (self::autoload_dir($dir) as $job) {
+                $jobs[$job['name']] = $job;
+            }
+        }
+
+        foreach (self::autoload_posts('forms-bridge-workflow-job') as $job) {
+            $jobs[$job['name']] = $job;
+        }
+
+        $jobs = array_values($jobs);
+
         $jobs = apply_filters(
             'forms_bridge_load_workflow_jobs',
             $jobs,

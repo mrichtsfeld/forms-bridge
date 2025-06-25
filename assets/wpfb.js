@@ -23,6 +23,7 @@ window.wpfb = (() => {
   };
 
   const el = document.createElement("div");
+  el.id = "wpfb";
   el.style.visibility = "hidden";
   el.setAttribute("aria-hidden", "true");
 

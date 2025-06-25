@@ -1,5 +1,6 @@
 import WorkflowStageField from "./StageField";
 
+const { useState, useEffect, useRef } = wp.element;
 const { Tooltip } = wp.components;
 const { __ } = wp.i18n;
 
@@ -79,16 +80,16 @@ const ALERT = {
 };
 
 function InputField({ data }) {
-  const { name, schema, missing, mutated, optional } = data;
+  const { name, schema, required, missing, mutated, optional } = data;
   const style = missing ? ALERT : mutated ? WARN : optional ? BASE : CHECK;
 
   const feedback = missing
     ? __("Field is required", "forms-bridge")
     : mutated
       ? __("Field type mutation", "forms-bridge")
-      : optional
-        ? __("Field is optional or type not match", "forms-bridge")
-        : "";
+      : "";
+
+  const displayName = required ? name + "*" : name;
 
   return (
     <Tooltip text={feedback}>
@@ -108,7 +109,7 @@ function InputField({ data }) {
       >
         {style.icon}
         <WorkflowStageField
-          name={name}
+          name={displayName}
           schema={schema}
           showDiff={false}
           enter={false}
@@ -121,13 +122,81 @@ function InputField({ data }) {
   );
 }
 
-export default function WorkflowStageInterface({ fields }) {
+export default function WorkflowJobInterface({
+  fields,
+  collapsible = true,
+  inline = false,
+}) {
+  const wrapper = useRef();
+
+  const [overflow, setOverflow] = useState(false);
+  const [expanded, setExpanded] = useState(false);
+
+  useEffect(() => {
+    if (!wrapper.current) return;
+    setOverflow(wrapper.current.offsetHeight > 20);
+  }, [fields]);
+
+  console.log({ inline });
   return (
-    <div style={{ display: "flex", gap: "5px", flexWrap: "wrap" }}>
-      <strong>{__("Job interface", "forms-bridge")}:&nbsp;</strong>
-      {(fields.length &&
-        fields.map((field) => <InputField key={field.name} data={field} />)) ||
-        __("No input fields", "forms-bridge")}
+    <div
+      style={{
+        height: !collapsible || expanded ? "auto" : "20px",
+        overflow: "hidden",
+        paddingRight: "10px",
+        position: "relative",
+      }}
+    >
+      <div
+        ref={wrapper}
+        style={{
+          display: inline ? "block" : "flex",
+          gap: "5px",
+          flexWrap: "wrap",
+        }}
+      >
+        {(inline && (
+          <strong>{__("Job interface", "forms-bridge")}:&nbsp;</strong>
+        )) || (
+          <p style={{ margin: 0 }}>{__("Job interface", "forms-bridge")}</p>
+        )}
+        {(fields.length &&
+          fields.map((field) => (
+            <InputField key={field.name} data={field} />
+          ))) ||
+          __("No input fields", "forms-bridge")}
+      </div>
+      {(overflow && collapsible && (
+        <button
+          style={{
+            position: "absolute",
+            top: "10px",
+            right: "0px",
+            height: "20px",
+            width: "20px",
+            transform: "translateY(-50%)",
+            backgroundColor: "transparent",
+            border: "none",
+            cursor: "pointer",
+          }}
+          onClick={() => setExpanded(!expanded)}
+        >
+          <span
+            style={{
+              display: "block",
+              width: "6px",
+              height: "6px",
+              borderRight: "2px solid",
+              borderBottom: "2px solid",
+              transition: "transform 200ms ease",
+              transform: expanded
+                ? "translateY(1.5px) rotate(-135deg)"
+                : "translateY(-1.5px) rotate(45deg)",
+            }}
+          ></span>
+        </button>
+      )) ||
+        null}
     </div>
   );
 }

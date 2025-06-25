@@ -10,19 +10,20 @@ import {
   payloadToFields,
 } from "../../lib/payload";
 import WorkflowStageField from "./StageField";
-import WorkflowStageInterface from "./StageInterface";
+import WorkflowJobInterface from "./JobInterface";
 import JsonFinger from "../../lib/JsonFinger";
 
 const {
   __experimentalItemGroup: ItemGroup,
   __experimentalItem: Item,
   ToggleControl,
+  Button,
   __experimentalSpacer: Spacer,
 } = wp.components;
 const { useState, useMemo, useEffect } = wp.element;
 const { __ } = wp.i18n;
 
-export default function WorkflowStage({ setMappers }) {
+export default function WorkflowStage({ setEdit, setMappers }) {
   const [step, _, outputStep] = useWorkflowStepper();
   const workflowJob = useWorkflowJob();
   const [fields = [], diff] = useWorkflowStage();
@@ -136,12 +137,13 @@ export default function WorkflowStage({ setMappers }) {
   }, [mode, fields, mappers, showMutations, showDiff, outputDiff]);
 
   const jobInputs = useMemo(() => {
-    if (!workflowJob) return [];
+    if (!Array.isArray(workflowJob?.input)) return [];
 
     return workflowJob.input.map(({ name, schema, required }) => {
       return {
         name,
         schema,
+        required,
         missing: diff.missing.has(name),
         mutated: diff.mutated.has(name),
         optional:
@@ -217,9 +219,7 @@ export default function WorkflowStage({ setMappers }) {
             </div>
           )}
         </div>
-        {(step > 0 && step < outputStep && (
-          <WorkflowStageInterface fields={jobInputs} />
-        )) || <Spacer marginBottom="1.4em" />}
+        <WorkflowJobInterface fields={jobInputs} />
       </div>
       <div
         style={{
@@ -252,37 +252,29 @@ export default function WorkflowStage({ setMappers }) {
       <div
         style={{
           display: "flex",
-          justifyContent: "right",
-          gap: "1.5em",
+          justifyContent: "left",
+          gap: "0.5em",
           padding: "1rem 16px",
           borderTop: "1px solid",
         }}
       >
-        {step < outputStep && (
-          <>
-            <p
-              style={{
-                margin: 0,
-                color: validMappers.length
-                  ? "var(--wp-components-color-accent,var(--wp-admin-theme-color,#3858e9))"
-                  : "inherit",
-              }}
-            >
-              {__("Output mutations: %s", "forms-bridge").replace(
-                "%s",
-                validMappers.length
-              )}
-            </p>
-            <ToggleControl
-              disabled={skipped}
-              checked={mode === "mappers"}
-              onChange={switchMode}
-              label={__("Show", "forms-bridge")}
-              style={{ marginTop: "1px" }}
-              __nextHasNoMarginBottom
-            />
-          </>
-        )}
+        <Button
+          disabled={step === 0 || step === outputStep}
+          variant="primary"
+          onClick={() => setEdit(step)}
+        >
+          Edit
+        </Button>
+        <Button
+          disabled={step === outputStep}
+          variant={mode === "payload" ? "secondary" : "primary"}
+          onClick={switchMode}
+        >
+          {__("Mutations (%s)", "forms-bridge").replace(
+            "%s",
+            validMappers.length
+          )}
+        </Button>
       </div>
     </div>
   );

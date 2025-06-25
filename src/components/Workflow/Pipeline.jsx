@@ -11,7 +11,7 @@ const {
 const { useMemo } = wp.element;
 const { __ } = wp.i18n;
 
-export default function WorkflowPipeline({ workflow, setWorkflow }) {
+export default function WorkflowPipeline({ workflow, setWorkflow, setEdit }) {
   const [step, setStep] = useWorkflowStepper();
   const apiJobs = useApiWorkflowJobs();
 
@@ -86,8 +86,19 @@ export default function WorkflowPipeline({ workflow, setWorkflow }) {
   };
 
   return (
-    <div style={{ flex: 1, overflowY: "auto" }}>
-      <ItemGroup size="large" isSeparated>
+    <div
+      style={{
+        flex: 1,
+        overflowY: "auto",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
+      <ItemGroup
+        size="large"
+        isSeparated
+        style={{ maxHeight: "calc(100% - 68px)", overflowY: "auto" }}
+      >
         {steps.map((job, i) => (
           <Item key={job.name + i}>
             <PipelineStep
@@ -102,6 +113,16 @@ export default function WorkflowPipeline({ workflow, setWorkflow }) {
           </Item>
         ))}
       </ItemGroup>
+      <div
+        style={{
+          padding: "1rem 16px",
+          marginTop: "auto",
+        }}
+      >
+        <Button variant="primary" onClick={() => setEdit(-1)}>
+          {__("New job", "forms-bridge")}
+        </Button>
+      </div>
     </div>
   );
 }

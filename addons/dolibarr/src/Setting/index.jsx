@@ -1,9 +1,10 @@
 // source
 import Bridges from "../../../../src/components/Bridges";
+import WorkflowJobs from "../../../../src/components/WorkflowJobs";
 import DolibarrBridge from "./Bridge";
 import useDolibarrApi from "../hooks/useDolibarrApi";
 
-const { PanelRow } = wp.components;
+const { PanelRow, __experimentalSpacer: Spacer } = wp.components;
 const { __ } = wp.i18n;
 
 export default function DolibarrSetting() {
@@ -27,6 +28,8 @@ export default function DolibarrSetting() {
           Bridge={DolibarrBridge}
         />
       </PanelRow>
+      <Spacer paddingY="calc(8px)" />
+      <WorkflowJobs api="dolibarr" jobs={workflow_jobs} />
     </>
   );
 }
