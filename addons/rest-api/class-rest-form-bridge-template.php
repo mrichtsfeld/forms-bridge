@@ -22,47 +22,51 @@ class Rest_Form_Bridge_Template extends Form_Bridge_Template
      */
     protected static function defaults()
     {
-        return [
-            'fields' => [
-                [
-                    'ref' => '#bridge',
-                    'name' => 'endpoint',
-                    'label' => __('Endpoint', 'forms-bridge'),
-                    'type' => 'string',
-                    'required' => true,
-                ],
-                [
-                    'ref' => '#bridge',
-                    'name' => 'method',
-                    'label' => __('Method', 'forms-bridge'),
-                    'type' => 'options',
-                    'options' => [
-                        [
-                            'value' => 'GET',
-                            'label' => 'GET',
-                        ],
-                        [
-                            'value' => 'POST',
-                            'label' => 'POST',
-                        ],
-                        [
-                            'value' => 'PUT',
-                            'label' => 'PUT',
-                        ],
-                        [
-                            'value' => 'DELETE',
-                            'label' => 'DELETE',
-                        ],
+        return forms_bridge_merge_object(
+            [
+                'fields' => [
+                    [
+                        'ref' => '#bridge',
+                        'name' => 'endpoint',
+                        'label' => __('Endpoint', 'forms-bridge'),
+                        'type' => 'string',
+                        'required' => true,
                     ],
-                    'required' => true,
-                    'default' => 'POST',
+                    [
+                        'ref' => '#bridge',
+                        'name' => 'method',
+                        'label' => __('Method', 'forms-bridge'),
+                        'type' => 'options',
+                        'options' => [
+                            [
+                                'value' => 'GET',
+                                'label' => 'GET',
+                            ],
+                            [
+                                'value' => 'POST',
+                                'label' => 'POST',
+                            ],
+                            [
+                                'value' => 'PUT',
+                                'label' => 'PUT',
+                            ],
+                            [
+                                'value' => 'DELETE',
+                                'label' => 'DELETE',
+                            ],
+                        ],
+                        'required' => true,
+                        'default' => 'POST',
+                    ],
+                ],
+                'bridge' => [
+                    'endpoint' => '',
+                    'method' => 'POST',
                 ],
             ],
-            'bridge' => [
-                'endpoint' => '',
-                'method' => 'POST',
-            ],
-        ];
+            parent::defaults(),
+            self::schema()
+        );
     }
 
     /**
@@ -72,10 +76,12 @@ class Rest_Form_Bridge_Template extends Form_Bridge_Template
      *
      * @return array
      */
-    protected static function extend_schema($schema)
+    public static function schema()
     {
-        $schema['bridge']['properties'] = array_merge(
-            $schema['bridge']['properties'],
+        $schema = parent::schema();
+
+        $schema['properties']['bridge']['properties'] = array_merge(
+            $schema['properties']['bridge']['properties'],
             [
                 'backend' => ['type' => 'string'],
                 'endpoint' => ['type' => 'string'],
@@ -86,9 +92,9 @@ class Rest_Form_Bridge_Template extends Form_Bridge_Template
             ]
         );
 
-        $schema['bridge']['required'][] = 'backend';
-        $schema['bridge']['required'][] = 'endpoint';
-        $schema['bridge']['required'][] = 'method';
+        $schema['properties']['bridge']['required'][] = 'backend';
+        $schema['properties']['bridge']['required'][] = 'endpoint';
+        $schema['properties']['bridge']['required'][] = 'method';
 
         return $schema;
     }

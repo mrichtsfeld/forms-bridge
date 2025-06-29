@@ -43,7 +43,7 @@ export default function ApiSchemaProvider({ children, bridge, credentials }) {
     setLoading(true);
 
     apiFetch({
-      path: `forms-bridge/v1/${api}/schema`,
+      path: `forms-bridge/v1/${api}/backend/api/schema`,
       method: "POST",
       data: { backend, credential, endpoint },
     })

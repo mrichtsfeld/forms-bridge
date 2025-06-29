@@ -71,7 +71,7 @@ abstract class Addon extends Singleton
         return [
             'bridges' => [
                 'type' => 'array',
-                'items' => Form_Bridge::$schema,
+                'items' => Form_Bridge::schema(),
                 'default' => [],
             ],
             'credentials' => [
@@ -414,25 +414,36 @@ abstract class Addon extends Singleton
             0
         );
 
+        add_action(
+            'wpct_plugin_registered_settings',
+            static function ($settings, $group) {
+                if ($group === Forms_Bridge::slug()) {
+                    static::load_bridges();
+                }
+            },
+            10,
+            2
+        );
+
         static::handle_settings();
         static::admin_scripts();
 
-        add_filter(
-            'forms_bridge_bridges',
-            static function ($bridges, $form_id = null, $api = null) {
-                if ($api && $api !== static::$api) {
-                    return $bridges;
-                }
+        // add_filter(
+        //     'forms_bridge_bridges',
+        //     static function ($bridges, $form_id = null, $api = null) {
+        //         if ($api && $api !== static::$api) {
+        //             return $bridges;
+        //         }
 
-                if (!wp_is_numeric_array($bridges)) {
-                    $bridges = [];
-                }
+        //         if (!wp_is_numeric_array($bridges)) {
+        //             $bridges = [];
+        //         }
 
-                return array_merge($bridges, static::bridges($form_id));
-            },
-            10,
-            3
-        );
+        //         return array_merge($bridges, static::bridges($form_id));
+        //     },
+        //     10,
+        //     3
+        // );
     }
 
     /**
@@ -521,10 +532,14 @@ abstract class Addon extends Singleton
      *
      * @return array List of fields and content type of the endpoint.
      */
-    final public static function schema($api, $backend, $endpoint, $request)
-    {
+    final public static function endpoint_schema(
+        $api,
+        $backend,
+        $endpoint,
+        $request
+    ) {
         self::temp_backend_registration($backend);
-        return self::$addons[$api]->get_schema(
+        return self::$addons[$api]->get_endpoint_schema(
             $backend['name'],
             $endpoint,
             $request
@@ -541,7 +556,11 @@ abstract class Addon extends Singleton
      *
      * @return array List of fields and content type of the endpoint.
      */
-    abstract protected function get_schema($backend, $endpoint, $request);
+    abstract protected function get_endpoint_schema(
+        $backend,
+        $endpoint,
+        $request
+    );
 
     /**
      * Ephemeral backend registration as an interceptor to allow
@@ -567,57 +586,57 @@ abstract class Addon extends Singleton
         );
     }
 
-    /**
-     * Adds addons' bridges to the available bridges list.
-     *
-     * @param int|string|null $form_id Target form ID. This ID should include the integration prefix if there
-     * is more than one active integration.
-     *
-     * @return array List with available bridges.
-     */
-    private static function bridges($form_id)
-    {
-        $integrations = array_keys(Integration::integrations());
+    // /**
+    //  * Adds addons' bridges to the available bridges list.
+    //  *
+    //  * @param int|string|null $form_id Target form ID. This ID should include the integration prefix if there
+    //  * is more than one active integration.
+    //  *
+    //  * @return array List with available bridges.
+    //  */
+    // private static function bridges($form_id)
+    // {
+    //     $integrations = array_keys(Integration::integrations());
 
-        if ($form_id) {
-            if (preg_match('/^(\w+):(\d+)$/', $form_id, $matches)) {
-                [, $integration, $form_id] = $matches;
-                $form_id = (int) $form_id;
-            } elseif (count($integrations) > 1) {
-                _doing_it_wrong(
-                    'forms_bridge_bridges',
-                    __(
-                        '$form_id param should include the integration prefix if there is more than one integration active',
-                        'forms-bridge'
-                    ),
-                    '2.3.0'
-                );
+    //     if ($form_id) {
+    //         if (preg_match('/^(\w+):(\d+)$/', $form_id, $matches)) {
+    //             [, $integration, $form_id] = $matches;
+    //             $form_id = (int) $form_id;
+    //         } elseif (count($integrations) > 1) {
+    //             _doing_it_wrong(
+    //                 'forms_bridge_bridges',
+    //                 __(
+    //                     '$form_id param should include the integration prefix if there is more than one integration active',
+    //                     'forms-bridge'
+    //                 ),
+    //                 '2.3.0'
+    //             );
 
-                return [];
-            } else {
-                $integration = array_pop($integrations);
-                $form_id = (int) $form_id;
-            }
+    //             return [];
+    //         } else {
+    //             $integration = array_pop($integrations);
+    //             $form_id = (int) $form_id;
+    //         }
 
-            $form_id = "{$integration}:{$form_id}";
-        } else {
-            $form_id = null;
-        }
+    //         $form_id = "{$integration}:{$form_id}";
+    //     } else {
+    //         $form_id = null;
+    //     }
 
-        $bridges = static::setting()->bridges ?: [];
+    //     $bridges = static::setting()->bridges ?: [];
 
-        return array_map(
-            static function ($bridge_data) {
-                return new static::$bridge_class($bridge_data);
-            },
-            array_filter($bridges, static function ($bridge_data) use (
-                $form_id
-            ) {
-                return $form_id === null ||
-                    $bridge_data['form_id'] === $form_id;
-            })
-        );
-    }
+    //     return array_map(
+    //         static function ($bridge_data) {
+    //             return new static::$bridge_class($bridge_data);
+    //         },
+    //         array_filter($bridges, static function ($bridge_data) use (
+    //             $form_id
+    //         ) {
+    //             return $form_id === null ||
+    //                 $bridge_data['form_id'] === $form_id;
+    //         })
+    //     );
+    // }
 
     /**
      * Settings hooks interceptors to register on the plugin's settings store
@@ -655,11 +674,7 @@ abstract class Addon extends Singleton
                     return $default;
                 }
 
-                $templates = apply_filters(
-                    'forms_bridge_templates',
-                    [],
-                    static::$api
-                );
+                $templates = API::get_api_templates(static::$api);
 
                 $workflow_jobs = apply_filters(
                     'forms_bridgr_workflow_jobs',
@@ -802,50 +817,18 @@ abstract class Addon extends Singleton
         return static::validate_setting($data, $setting);
     }
 
-    private static function autoload_posts($post_type)
+    private static function autoload_posts($post_type, $api)
     {
-        if (
-            !in_array($post_type, [
-                'forms-bridge-bridge-template',
-                'forms-bridge-workflow-job',
-            ])
-        ) {
+        if (!in_array($post_type, ['fb-bridge-template', 'fb-workflow-job'])) {
             return [];
         }
 
-        $posts = get_posts([
+        return get_posts([
             'post_type' => $post_type,
             'posts_per_page' => -1,
+            'meta_key' => '_workflow-job-api',
+            'meta_value' => $api,
         ]);
-
-        $items = [];
-        foreach ($posts as $post) {
-            try {
-                $data = eval($post->post_content);
-                if (!is_array($data)) {
-                    continue;
-                }
-
-                $items[] = [
-                    'name' => $post->post_name,
-                    'data' => $data,
-                ];
-            } catch (ParseError $e) {
-                Logger::log(
-                    "Invalid {$post->post_name} post content from DB",
-                    Logger::ERROR
-                );
-                Logger::log($e, Logger::ERROR);
-            } catch (Error $e) {
-                Logger::log(
-                    "Error on loading {$post->post_name} from DB",
-                    Logger::ERROR
-                );
-                Logger::log($e, Logger::ERROR);
-            }
-        }
-
-        return $items;
     }
 
     /**
@@ -894,10 +877,8 @@ abstract class Addon extends Singleton
             }
 
             if (is_array($data)) {
-                $loaded[] = [
-                    'name' => $name,
-                    'data' => $data,
-                ];
+                $data['name'] = $name;
+                $loaded[] = $data;
             }
         }
 
@@ -920,6 +901,14 @@ abstract class Addon extends Singleton
         }
 
         self::autoload_dir($dir);
+    }
+
+    private static function load_bridges()
+    {
+        $bridges = static::setting()->bridges ?: [];
+        foreach ($bridges as $bridge) {
+            new static::$bridge_class($bridge, static::$api);
+        }
     }
 
     /**
@@ -956,10 +945,10 @@ abstract class Addon extends Singleton
         }
 
         foreach (
-            self::autoload_posts('forms-bridge-bridge-template', static::$api)
-            as $template
+            self::autoload_posts('fb-bridge-template', static::$api)
+            as $template_post
         ) {
-            $template[$template['name']] = $template;
+            $template[$template->post_name] = $template_post;
         }
 
         $templates = array_values($templates);
@@ -971,10 +960,16 @@ abstract class Addon extends Singleton
         );
 
         foreach ($templates as $template) {
-            new static::$bridge_template_class(
-                $template['name'],
-                $template['data']
-            );
+            if (
+                is_array($template) &&
+                isset($template['data'], $template['name'])
+            ) {
+                $template = array_merge($template['data'], [
+                    'name' => $template['name'],
+                ]);
+            }
+
+            new static::$bridge_template_class($template);
         }
     }
 
@@ -997,6 +992,7 @@ abstract class Addon extends Singleton
             'forms_bridge_job_directories',
             [
                 $dir,
+                Forms_Bridge::path() . 'includes/workflow-jobs',
                 get_stylesheet_directory() .
                 '/forms-bridge/workflow-jobs/' .
                 static::$api,
@@ -1011,8 +1007,11 @@ abstract class Addon extends Singleton
             }
         }
 
-        foreach (self::autoload_posts('forms-bridge-workflow-job') as $job) {
-            $jobs[$job['name']] = $job;
+        foreach (
+            self::autoload_posts('fb-workflow-job', static::$api)
+            as $job_post
+        ) {
+            $jobs[$job_post->post_name] = $job_post;
         }
 
         $jobs = array_values($jobs);
@@ -1024,7 +1023,11 @@ abstract class Addon extends Singleton
         );
 
         foreach ($jobs as $job) {
-            new Workflow_Job($job['name'], $job['data'], static::$api);
+            if (is_array($job) && isset($job['data'], $job['name'])) {
+                $job = array_merge($job['data'], ['name' => $job['name']]);
+            }
+
+            new Workflow_Job($job, static::$api);
         }
     }
 }

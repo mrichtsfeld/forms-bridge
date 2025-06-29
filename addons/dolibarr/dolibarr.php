@@ -108,7 +108,7 @@ class Dolibarr_Addon extends Rest_Addon
      *
      * @return array List of fields and content type of the endpoint.
      */
-    protected function get_schema($backend, $endpoint, $credential)
+    protected function get_endpint_schema($backend, $endpoint, $credential)
     {
         $bridge = new Dolibarr_Form_Bridge([
             'name' => '__dolibarr-' . time(),
@@ -117,7 +117,7 @@ class Dolibarr_Addon extends Rest_Addon
             'method' => 'GET',
         ]);
 
-        return $bridge->api_schema;
+        return $bridge->endpoint_schema;
     }
 }
 

@@ -35,7 +35,7 @@ class Google_Sheets_Form_Bridge extends Form_Bridge
      *
      * @return array
      */
-    protected function api_schema()
+    protected function endpoint_schema()
     {
         $response = $this->patch([
             'method' => 'schema',

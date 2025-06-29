@@ -327,7 +327,7 @@ class Zoho_Form_Bridge extends Form_Bridge
      *
      * @return array
      */
-    protected function api_schema($endpoint = '/crm/v7/settings/layouts')
+    protected function endpoint_schema($endpoint = '/crm/v7/settings/layouts')
     {
         if (!preg_match('/\/([A-Z].+$)/', $this->endpoint, $matches)) {
             return [];

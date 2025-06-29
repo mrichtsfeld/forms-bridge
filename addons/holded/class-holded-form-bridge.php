@@ -42,7 +42,7 @@ class Holded_Form_Bridge extends Rest_Form_Bridge
      *
      * @return array
      */
-    protected function api_schema()
+    protected function endpoint_schema()
     {
         $chunks = array_values(array_filter(explode('/', $this->endpoint)));
         if (empty($chunks)) {

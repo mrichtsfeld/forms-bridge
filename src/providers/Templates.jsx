@@ -1,9 +1,9 @@
 // source
+import useCurrentApi from "../hooks/useCurrentApi";
 import { useApis } from "./Settings";
 
 const apiFetch = wp.apiFetch;
-const { createContext, useContext, useEffect, useState, useMemo, useRef } =
-  wp.element;
+const { createContext, useContext, useEffect, useState, useMemo } = wp.element;
 const { __ } = wp.i18n;
 
 const TemplatesContext = createContext({
@@ -15,9 +15,8 @@ const TemplatesContext = createContext({
 });
 
 export default function TemplatesProvider({ children }) {
+  const api = useCurrentApi();
   const [apis] = useApis();
-
-  const [api, setApi] = useState(null);
   const [template, setTemplate] = useState(null);
   const [config, setConfig] = useState(null);
 
@@ -25,16 +24,6 @@ export default function TemplatesProvider({ children }) {
     if (!api) return [];
     return apis[api]?.templates || [];
   }, [api, apis]);
-
-  const onApi = useRef((api) => setApi(api)).current;
-
-  useEffect(() => {
-    wpfb.on("api", onApi);
-
-    return () => {
-      wpfb.off("api", onApi);
-    };
-  }, []);
 
   useEffect(() => {
     if (!template) {
@@ -45,8 +34,10 @@ export default function TemplatesProvider({ children }) {
   }, [template]);
 
   const fetchConfig = (template) => {
+    if (!api) return;
+
     return apiFetch({
-      path: "forms-bridge/v1/templates/" + template,
+      path: `forms-bridge/v1/${api}/templates/${template}`,
     })
       .then(setConfig)
       .catch(() => {
@@ -55,17 +46,16 @@ export default function TemplatesProvider({ children }) {
   };
 
   const submit = ({ fields, integration }) => {
-    if (!template) {
+    if (!template || !api) {
       return;
     }
 
     wpfb.emit("loading", true);
 
     return apiFetch({
-      path: "forms-bridge/v1/templates",
+      path: `forms-bridge/v1/${api}/templates/${template}/use`,
       method: "POST",
       data: {
-        name: template,
         integration,
         fields,
       },

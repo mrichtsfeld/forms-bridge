@@ -298,7 +298,7 @@ class Zoho_Addon extends Addon
      *
      * @return array List of fields and content type of the endpoint.
      */
-    protected function get_schema($backend, $endpoint, $credential)
+    protected function get_endpoint_schema($backend, $endpoint, $credential)
     {
         [$credential] = self::validate_credentials([$credential]);
 
@@ -316,7 +316,7 @@ class Zoho_Addon extends Addon
             'method' => 'GET',
         ]);
 
-        return $bridge->api_schema;
+        return $bridge->endpoint_schema;
     }
 
     private static function temp_register_credentials($data)

@@ -112,7 +112,7 @@ class Holded_Addon extends Rest_Addon
             'method' => 'POST',
         ]);
 
-        return $bridge->api_schema;
+        return $bridge->endpoint_schema;
     }
 }
 

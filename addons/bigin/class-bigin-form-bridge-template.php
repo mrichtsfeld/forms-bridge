@@ -37,7 +37,7 @@ class Bigin_Form_Bridge_Template extends Zoho_Form_Bridge_Template
                 ],
             ],
             parent::defaults(),
-            self::$schema
+            self::schema()
         );
     }
 }

@@ -101,7 +101,7 @@ class Listmonk_Addon extends Rest_Addon
      *
      * @return array List of fields and content type of the endpoint.
      */
-    protected function get_schema($backend, $endpoint, $credential)
+    protected function get_endpoint_schema($backend, $endpoint, $credential)
     {
         $bridge = new Listmonk_Form_Bridge([
             'name' => '__listmonk-' . time(),
@@ -110,7 +110,7 @@ class Listmonk_Addon extends Rest_Addon
             'backend' => $backend,
         ]);
 
-        return $bridge->api_schema;
+        return $bridge->endpoint_schema;
     }
 }
 

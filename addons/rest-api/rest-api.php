@@ -183,7 +183,7 @@ class Rest_Addon extends Addon
      *
      * @return array List of fields and content type of the endpoint.
      */
-    protected function get_schema($backend, $endpoint, $request)
+    protected function get_endpoint_schema($backend, $endpoint, $request)
     {
         return [];
     }

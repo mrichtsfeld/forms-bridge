@@ -128,7 +128,7 @@ class Mailchimp_Form_Bridge_Template extends Rest_Form_Bridge_Template
                 ],
             ],
             parent::defaults(),
-            self::$schema
+            self::schema()
         );
     }
 }

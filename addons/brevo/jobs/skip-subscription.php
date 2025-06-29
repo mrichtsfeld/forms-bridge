@@ -23,7 +23,9 @@ return [
 
 function forms_bridge_brevo_skip_subscription($payload)
 {
-    if ($payload['brevo'] === true) {
-        return $payload;
+    if ($payload['brevo'] != true) {
+        return;
     }
+
+    return $payload;
 }

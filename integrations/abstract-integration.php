@@ -88,6 +88,7 @@ abstract class Integration extends Singleton
         $state = (array) get_option(self::registry, []);
         $integrations_dir = dirname(__FILE__);
         $integrations = array_diff(scandir($integrations_dir), ['.', '..']);
+
         $registry = [];
         foreach ($integrations as $integration) {
             $integration_dir = "{$integrations_dir}/{$integration}";
@@ -162,11 +163,13 @@ abstract class Integration extends Singleton
     {
         $integrations_dir = dirname(__FILE__);
         $registry = self::registry();
+
         foreach ($registry as $integration => $enabled) {
             $has_dependencies = self::check_dependencies($integration);
             if ($enabled && $has_dependencies) {
                 $NS = strtoupper($integration);
                 require_once "{$integrations_dir}/{$integration}/class-integration.php";
+
                 self::$integrations[$integration] = (
                     '\FORMS_BRIDGE\\' .
                     $NS .
@@ -192,9 +195,11 @@ abstract class Integration extends Singleton
                 $integrations = self::integrations();
 
                 if ($integration) {
-                    return isset($integrations[$integration])
-                        ? $integrations[$integration]->forms()
-                        : [];
+                    if ($integration = $integrations[$integration] ?? null) {
+                        return $integration->forms();
+                    }
+
+                    return [];
                 }
 
                 $forms = [];
@@ -211,54 +216,37 @@ abstract class Integration extends Singleton
         // Gets form data by context or by ID
         add_filter(
             'forms_bridge_form',
-            static function ($value, $form_id = null, $integration = null) {
+            static function ($form, $form_id = null, $integration = null) {
                 $integrations = self::integrations();
-
-                if ($integration) {
-                    $integrations = isset($integrations[$integration])
-                        ? [$integration => $integrations[$integration]]
-                        : [];
-                }
 
                 if ($form_id) {
                     if (preg_match('/^(\w+):(\d+)$/', $form_id, $matches)) {
                         [, $integration, $form_id] = $matches;
                         $form_id = (int) $form_id;
-                    } elseif (empty($integration) && count($integration) > 1) {
-                        _doing_it_wrong(
-                            'forms_bridge_form',
-                            __(
-                                '$form_id param should include the integration prefix if there is more than one integration active',
-                                'forms-bridge'
-                            ),
-                            '2.3.0'
-                        );
-
-                        return;
                     } else {
-                        $form_id = (int) $form_id;
-                    }
-                }
-
-                if ($integration) {
-                    $integrations = isset($integrations[$integration])
-                        ? [$integration => $integrations[$integration]]
-                        : [];
-                }
-
-                foreach ($integrations as $integration) {
-                    if ($form_id) {
-                        $form = $integration->get_form_by_id($form_id);
-                    } else {
-                        $form = $integration->form();
-                    }
-
-                    if ($form) {
                         return $form;
                     }
                 }
 
-                return $value;
+                if ($integration) {
+                    if ($integration = $integrations[$integration] ?? null) {
+                        if ($form_id) {
+                            return $integration->get_form_by_id($form_id);
+                        } else {
+                            return $integration->form();
+                        }
+                    } else {
+                        return $form;
+                    }
+                }
+
+                foreach ($integrations as $integration) {
+                    if ($current_form = $integration->form()) {
+                        return $current_form;
+                    }
+                }
+
+                return $form;
             },
             5,
             3

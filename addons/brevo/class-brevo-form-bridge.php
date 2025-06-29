@@ -93,7 +93,7 @@ class Brevo_Form_Bridge extends Rest_Form_Bridge
      *
      * @return array
      */
-    protected function api_schema()
+    protected function endpoint_schema()
     {
         if (strstr($this->endpoint, 'contacts')) {
             $response = $this->patch([

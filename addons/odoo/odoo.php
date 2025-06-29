@@ -259,7 +259,7 @@ class Odoo_Addon extends Addon
      *
      * @return array List of fields and content type of the model.
      */
-    protected function get_schema($backend, $model, $credential)
+    protected function get_endpoint_schema($backend, $model, $credential)
     {
         [$credential] = self::validate_credentials([$credential]);
 
@@ -276,7 +276,7 @@ class Odoo_Addon extends Addon
             'credential' => $credential['name'],
         ]);
 
-        return $bridge->api_schema;
+        return $bridge->endpoint_schema;
     }
 
     private static function temp_register_credentials($data)

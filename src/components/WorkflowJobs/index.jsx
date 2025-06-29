@@ -42,7 +42,7 @@ export default function WorkflowJobs({ api, jobs }) {
 
   const fetchData = (jobName) => {
     apiFetch({
-      path: `forms-bridge/v1/${api}/workflow_jobs/${jobName}`,
+      path: `forms-bridge/v1/${api}/jobs/${jobName}`,
       method: "GET",
     })
       .then(setData)

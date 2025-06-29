@@ -234,7 +234,7 @@ class Odoo_Form_Bridge extends Form_Bridge
      *
      * @return array
      */
-    protected function api_schema()
+    protected function endpoint_schema()
     {
         $response = $this->patch([
             'name' => 'odoo-api-schema-introspection',

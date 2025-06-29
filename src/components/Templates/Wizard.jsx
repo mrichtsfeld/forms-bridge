@@ -212,7 +212,7 @@ export default function TemplateWizard({
     };
 
     apiFetch({
-      path: `forms-bridge/v1/${api}/ping`,
+      path: `forms-bridge/v1/${api}/backend/ping`,
       method: "POST",
       data: { backend, credential },
     })

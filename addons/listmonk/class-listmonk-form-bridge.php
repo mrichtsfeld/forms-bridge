@@ -88,7 +88,7 @@ class Listmonk_Form_Bridge extends Rest_Form_Bridge
         return $response;
     }
 
-    protected function api_schema()
+    protected function endpoint_schema()
     {
         if ($this->endpoint === '/api/subscribers') {
             return [

@@ -35,7 +35,7 @@ class Dolibarr_Form_Bridge extends Rest_Form_Bridge
         return 'application/json';
     }
 
-    protected function api_schema()
+    protected function endpoint_schema()
     {
         $backend = $this->backend();
 

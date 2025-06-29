@@ -101,7 +101,7 @@ class Finan_Coop_Form_Bridge extends Rest_Form_Bridge
      *
      * @return array
      */
-    protected function api_schema()
+    protected function endpoint_schema()
     {
         if (
             !preg_match(

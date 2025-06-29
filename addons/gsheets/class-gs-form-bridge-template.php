@@ -22,45 +22,50 @@ class Google_Sheets_Form_Bridge_Template extends Form_Bridge_Template
      */
     protected static function defaults()
     {
-        return [
-            'fields' => [
-                [
-                    'ref' => '#spreadsheet',
-                    'name' => 'id',
-                    'label' => 'Spreadsheet',
-                    'type' => 'string',
-                    'required' => true,
+        return forms_bridge_merge_object(
+            [
+                'fields' => [
+                    [
+                        'ref' => '#spreadsheet',
+                        'name' => 'id',
+                        'label' => 'Spreadsheet',
+                        'type' => 'string',
+                        'required' => true,
+                    ],
+                    [
+                        'ref' => '#spreadsheet',
+                        'name' => 'tab',
+                        'label' => 'Tab',
+                        'type' => 'string',
+                        'required' => true,
+                    ],
+                    [
+                        'ref' => '#backend',
+                        'name' => 'name',
+                        'value' => Google_Sheets_Addon::$static_backend['name'],
+                    ],
+                    [
+                        'ref' => '#backend',
+                        'name' => 'base_url',
+                        'value' =>
+                            Google_Sheets_Addon::$static_backend['base_url'],
+                    ],
                 ],
-                [
-                    'ref' => '#spreadsheet',
-                    'name' => 'tab',
-                    'label' => 'Tab',
-                    'type' => 'string',
-                    'required' => true,
+                'backend' => Google_Sheets_Addon::$static_backend,
+                'bridge' => [
+                    'backend' => Google_Sheets_Addon::$static_backend['name'],
+                    'endpoint' => '',
+                    'spreadsheet' => '',
+                    'tab' => '',
                 ],
-                [
-                    'ref' => '#backend',
-                    'name' => 'name',
-                    'value' => Google_Sheets_Addon::$static_backend['name'],
-                ],
-                [
-                    'ref' => '#backend',
-                    'name' => 'base_url',
-                    'value' => Google_Sheets_Addon::$static_backend['base_url'],
+                'spreadsheet' => [
+                    'id' => '',
+                    'tab' => '',
                 ],
             ],
-            'backend' => Google_Sheets_Addon::$static_backend,
-            'bridge' => [
-                'backend' => Google_Sheets_Addon::$static_backend['name'],
-                'endpoint' => '',
-                'spreadsheet' => '',
-                'tab' => '',
-            ],
-            'spreadsheet' => [
-                'id' => '',
-                'tab' => '',
-            ],
-        ];
+            parent::defaults(),
+            self::schema()
+        );
     }
 
     /**
@@ -96,22 +101,28 @@ class Google_Sheets_Form_Bridge_Template extends Form_Bridge_Template
     /**
      * Extends the common schema and adds custom properties.
      *
-     * @param array $schema Common template data schema.
-     *
      * @return array
      */
-    protected static function extend_schema($schema)
+    public static function schema()
     {
-        $schema['bridge']['properties']['spreadsheet'] = ['type' => 'string'];
-        $schema['bridge']['required'][] = 'spreadsheet';
+        $schema = parent::schema();
 
-        $schema['bridge']['properties']['tab'] = ['type' => 'string'];
-        $schema['bridge']['required'][] = 'tab';
+        $schema['properties']['bridge']['properties']['spreadsheet'] = [
+            'type' => 'string',
+        ];
+        $schema['properties']['bridge']['required'][] = 'spreadsheet';
 
-        $schema['bridge']['properties']['endpoint'] = ['type' => 'string'];
-        $schema['bridge']['required'][] = 'endpoint';
+        $schema['properties']['bridge']['properties']['tab'] = [
+            'type' => 'string',
+        ];
+        $schema['properties']['bridge']['required'][] = 'tab';
 
-        $schema['spreadsheet'] = [
+        $schema['properties']['bridge']['properties']['endpoint'] = [
+            'type' => 'string',
+        ];
+        $schema['properties']['bridge']['required'][] = 'endpoint';
+
+        $schema['properties']['spreadsheet'] = [
             'type' => 'object',
             'properties' => [
                 'id' => ['type' => 'string'],

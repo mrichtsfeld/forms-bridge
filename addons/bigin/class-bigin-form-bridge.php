@@ -32,8 +32,8 @@ class Bigin_Form_Bridge extends Zoho_Form_Bridge
      *
      * @return array
      */
-    protected function api_schema($endpoint = null)
+    protected function endpoint_schema($endpoint = null)
     {
-        return parent::api_schema('/bigin/v2/settings/layouts');
+        return parent::endpoint_schema('/bigin/v2/settings/layouts');
     }
 }

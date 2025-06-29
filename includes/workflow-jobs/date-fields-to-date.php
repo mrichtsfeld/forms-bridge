@@ -4,56 +4,36 @@ if (!defined('ABSPATH')) {
     exit();
 }
 
-add_filter(
-    'forms_bridge_workflow_jobs',
-    function ($jobs) {
-        if (!wp_is_numeric_array($jobs)) {
-            $jobs = [];
-        }
-
-        $job = new \FORMS_BRIDGE\Workflow_Job(
-            'date-fields-to-date',
-            [
-                'title' => __('Format date fields', 'forms-bridge'),
-                'description' => __(
-                    'Gets date, hour and minute fields and merge its values into a date with format Y-m-d H:M:S',
-                    'forms-bridge'
-                ),
-                'method' => 'forms_bridge_workflow_job_format_date_fields',
-                'input' => [
-                    [
-                        'name' => 'date',
-                        'required' => true,
-                        'schema' => ['type' => 'string'],
-                    ],
-                    [
-                        'name' => 'hour',
-                        'schema' => ['type' => 'string'],
-                    ],
-                    [
-                        'name' => 'minute',
-                        'schema' => ['type' => 'string'],
-                    ],
-                ],
-                'output' => [
-                    [
-                        'name' => 'datetime',
-                        'schema' => ['type' => 'string'],
-                    ],
-                ],
-            ],
-            'forms-bridge'
-        );
-
-        if (!is_wp_error($job->config)) {
-            $jobs[] = $job;
-        }
-
-        return $jobs;
-    },
-    20,
-    1
-);
+return [
+    'name' => 'date-fields-to-date',
+    'title' => __('Format date fields', 'forms-bridge'),
+    'description' => __(
+        'Gets date, hour and minute fields and merge its values into a date with format Y-m-d H:M:S',
+        'forms-bridge'
+    ),
+    'method' => 'forms_bridge_workflow_job_format_date_fields',
+    'input' => [
+        [
+            'name' => 'date',
+            'required' => true,
+            'schema' => ['type' => 'string'],
+        ],
+        [
+            'name' => 'hour',
+            'schema' => ['type' => 'string'],
+        ],
+        [
+            'name' => 'minute',
+            'schema' => ['type' => 'string'],
+        ],
+    ],
+    'output' => [
+        [
+            'name' => 'datetime',
+            'schema' => ['type' => 'string'],
+        ],
+    ],
+];
 
 function forms_bridge_workflow_job_format_date_fields($payload)
 {

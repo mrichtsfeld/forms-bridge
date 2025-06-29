@@ -23,7 +23,9 @@ return [
 
 function forms_bridge_mailchimp_skip_subscription($payload)
 {
-    if ($payload['mailchimp'] === true) {
-        return $payload;
+    if ($payload['mailchimp'] != true) {
+        return;
     }
+
+    return $payload;
 }

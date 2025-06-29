@@ -342,7 +342,7 @@ class Google_Sheets_Addon extends Addon
      *
      * @return array List of fields and content type of the endpoint.
      */
-    protected function get_schema($backend, $endpoint, $credential)
+    protected function get_endpoint_schema($backend, $endpoint, $credential)
     {
         [$spreadsheet, $tab] = explode('::', $endpoint);
 
@@ -353,7 +353,7 @@ class Google_Sheets_Addon extends Addon
             'tab' => $tab,
         ]);
 
-        return $bridge->api_schema;
+        return $bridge->endpoint_schema;
     }
 }
 

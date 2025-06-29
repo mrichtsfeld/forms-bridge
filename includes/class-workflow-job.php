@@ -2,7 +2,11 @@
 
 namespace FORMS_BRIDGE;
 
+use ParseError;
+use Error;
+use ReflectionFunction;
 use WP_Error;
+use WP_Post;
 
 if (!defined('ABSPATH')) {
     exit();
@@ -10,6 +14,10 @@ if (!defined('ABSPATH')) {
 
 /**
  * Noop function definition as a placeholder for workflow config defaults.
+ *
+ * @param array Workflow job payload.
+ *
+ * @return array
  */
 function forms_bridge_workflow_noop_method($payload)
 {
@@ -22,117 +30,11 @@ function forms_bridge_workflow_noop_method($payload)
 class Workflow_Job
 {
     /**
-     * Handles the workflow job config schema.
+     * Handles the workflow job post type name.
      *
-     * @var array
+     * @var string
      */
-    private static $schema = [
-        'title' => ['type' => 'string'],
-        'description' => ['type' => 'string'],
-        'method' => ['type' => 'string'],
-        'input' => [
-            'type' => 'array',
-            'items' => [
-                'type' => 'object',
-                'properties' => [
-                    'name' => ['type' => 'string'],
-                    'required' => ['type' => 'boolean'],
-                    'schema' => [
-                        'type' => 'object',
-                        'properties' => [
-                            'type' => [
-                                'type' => 'string',
-                                'enum' => [
-                                    'string',
-                                    'integer',
-                                    'number',
-                                    'array',
-                                    'object',
-                                    'boolean',
-                                    'null',
-                                ],
-                            ],
-                            'items' => [
-                                'type' => ['array', 'object'],
-                                'additionalProperties' => true,
-                                'additionalItems' => true,
-                            ],
-                            'properties' => [
-                                'type' => 'object',
-                                'additionalProperties' => true,
-                            ],
-                            'maxItems' => ['type' => 'integer'],
-                            'minItems' => ['type' => 'integer'],
-                            'additionalProperties' => ['type' => 'boolean'],
-                            'additionalItems' => ['type' => 'boolean'],
-                            'required' => [
-                                'type' => 'array',
-                                'items' => ['type' => 'string'],
-                                'additionalItems' => true,
-                            ],
-                        ],
-                        'required' => ['type'],
-                        'additionalProperties' => false,
-                    ],
-                ],
-                'required' => ['name', 'schema'],
-                'additionalProperties' => false,
-            ],
-        ],
-        'output' => [
-            'type' => 'array',
-            'items' => [
-                'type' => 'object',
-                'properties' => [
-                    'name' => ['type' => 'string'],
-                    'touch' => ['type' => 'boolean'],
-                    'forward' => ['type' => 'boolean'],
-                    'schema' => [
-                        'type' => 'object',
-                        'properties' => [
-                            'type' => [
-                                'type' => 'string',
-                                'enum' => [
-                                    'string',
-                                    'integer',
-                                    'number',
-                                    'array',
-                                    'object',
-                                    'boolean',
-                                    'null',
-                                ],
-                            ],
-                            'items' => [
-                                'type' => ['array', 'object'],
-                                'additionalProperties' => true,
-                                'additionalItems' => true,
-                            ],
-                            'properties' => [
-                                'type' => 'object',
-                                'additionalProperties' => true,
-                            ],
-                            'maxItems' => ['type' => 'integer'],
-                            'minItems' => ['type' => 'integer'],
-                            'additionalProperties' => ['type' => 'boolean'],
-                            'additionalItems' => ['type' => 'boolean'],
-                        ],
-                        'required' => ['type'],
-                        'additionalProperties' => false,
-                    ],
-                ],
-                'required' => ['name', 'schema'],
-                'additionalProperties' => false,
-            ],
-        ],
-        'callbacks' => [
-            'type' => 'object',
-            'properties' => [
-                'before' => ['type' => 'string'],
-                'after' => ['type' => 'string'],
-            ],
-            'additionalProperties' => false,
-        ],
-    ];
+    public const post_type = 'fb-workflow-job';
 
     /**
      * Handles the workflow job api space.
@@ -142,11 +44,12 @@ class Workflow_Job
     protected $api;
 
     /**
-     * Handles the workflow job name. This should be unique across all the api space.
+     * Handles the workflow job ID. This should be unique and is the result of the concatenation
+     * of the api slug and the job name.
      *
      * @var string
      */
-    private $name;
+    private $id;
 
     /**
      * Handles the workflow job config data. The data is validated before it's stored. If the validation
@@ -159,9 +62,183 @@ class Workflow_Job
     /**
      * Pointer to the next workflow job on the workflow chain.
      *
-     * @var Workflow_Job
+     * @var Workflow_Job|null
      */
     private $next = null;
+
+    /**
+     * Workflow job's config schema public getter.
+     *
+     * @return array
+     */
+    public static function schema()
+    {
+        return [
+            '$schema' => 'https://json-schema.org/draft/2020-12/schema',
+            'type' => 'object',
+            'properties' => [
+                'name' => [
+                    'description' => __(
+                        'Internal name of the job',
+                        'forms-bridge'
+                    ),
+                    'type' => 'string',
+                ],
+                'title' => [
+                    'description' => __(
+                        'Public title of the job',
+                        'forms-bridge'
+                    ),
+                    'type' => 'string',
+                ],
+                'description' => [
+                    'description' => __(
+                        'Short description of the job effects',
+                        'forms-birdge'
+                    ),
+                    'type' => 'string',
+                ],
+                'method' => [
+                    'description' => __(
+                        'Name of the function with the job subroutine',
+                        'forms-bridge'
+                    ),
+                    'type' => 'string',
+                ],
+                'input' => [
+                    'description' => __(
+                        'Input fields interface schema of the job',
+                        'forms-bridge'
+                    ),
+                    'type' => 'array',
+                    'items' => [
+                        'type' => 'object',
+                        'properties' => [
+                            'name' => ['type' => 'string'],
+                            'required' => ['type' => 'boolean'],
+                            'schema' => [
+                                'type' => 'object',
+                                'properties' => [
+                                    'type' => [
+                                        'type' => 'string',
+                                        'enum' => [
+                                            'string',
+                                            'integer',
+                                            'number',
+                                            'array',
+                                            'object',
+                                            'boolean',
+                                            'null',
+                                        ],
+                                    ],
+                                    'items' => [
+                                        'type' => ['array', 'object'],
+                                        'additionalProperties' => true,
+                                        'additionalItems' => true,
+                                    ],
+                                    'properties' => [
+                                        'type' => 'object',
+                                        'additionalProperties' => true,
+                                    ],
+                                    'maxItems' => ['type' => 'integer'],
+                                    'minItems' => ['type' => 'integer'],
+                                    'additionalProperties' => [
+                                        'type' => 'boolean',
+                                    ],
+                                    'additionalItems' => ['type' => 'boolean'],
+                                    'required' => [
+                                        'type' => 'array',
+                                        'items' => ['type' => 'string'],
+                                        'additionalItems' => true,
+                                    ],
+                                ],
+                                'required' => ['type'],
+                                'additionalProperties' => false,
+                            ],
+                        ],
+                        'required' => ['name', 'schema'],
+                        'additionalProperties' => false,
+                    ],
+                ],
+                'output' => [
+                    'description' => __(
+                        'Output fields interface schema of the job',
+                        'forms-bridge'
+                    ),
+                    'type' => 'array',
+                    'items' => [
+                        'type' => 'object',
+                        'properties' => [
+                            'name' => ['type' => 'string'],
+                            'touch' => ['type' => 'boolean'],
+                            'forward' => ['type' => 'boolean'],
+                            'schema' => [
+                                'type' => 'object',
+                                'properties' => [
+                                    'type' => [
+                                        'type' => 'string',
+                                        'enum' => [
+                                            'string',
+                                            'integer',
+                                            'number',
+                                            'array',
+                                            'object',
+                                            'boolean',
+                                            'null',
+                                        ],
+                                    ],
+                                    'items' => [
+                                        'type' => ['array', 'object'],
+                                        'additionalProperties' => true,
+                                        'additionalItems' => true,
+                                    ],
+                                    'properties' => [
+                                        'type' => 'object',
+                                        'additionalProperties' => true,
+                                    ],
+                                    'maxItems' => ['type' => 'integer'],
+                                    'minItems' => ['type' => 'integer'],
+                                    'additionalProperties' => [
+                                        'type' => 'boolean',
+                                    ],
+                                    'additionalItems' => ['type' => 'boolean'],
+                                ],
+                                'required' => ['type'],
+                                'additionalProperties' => false,
+                            ],
+                        ],
+                        'required' => ['name', 'schema'],
+                        'additionalProperties' => false,
+                    ],
+                ],
+                'snippet' => [
+                    'description' => __(
+                        'PHP code representation of the job subroutine',
+                        'forms-bridge'
+                    ),
+                    'type' => 'string',
+                ],
+                // 'callbacks' => [
+                //     'type' => 'object',
+                //     'properties' => [
+                //         'before' => ['type' => 'string'],
+                //         'after' => ['type' => 'string'],
+                //     ],
+                //     'additionalProperties' => false,
+                // ],
+            ],
+            'additionalProperties' => false,
+            'required' => [
+                'name',
+                'title',
+                'description',
+                'input',
+                'output',
+                'method',
+                'snippet',
+            ],
+        ];
+    }
 
     /**
      * Enqueue the job instance as the last element of the workflow chain.
@@ -191,7 +268,12 @@ class Workflow_Job
         }
 
         $name = array_shift($workflow);
-        $job = apply_filters('forms_bridge_workflow_job', null, $name);
+        $job = apply_filters(
+            'forms_bridge_workflow_job',
+            null,
+            $name,
+            $this->api
+        );
 
         if (empty($job)) {
             return;
@@ -206,6 +288,91 @@ class Workflow_Job
         return self::workflow_chain($workflow, $job);
     }
 
+    private static function reflect_method($method)
+    {
+        if (!function_exists($method)) {
+            return '';
+        }
+
+        $reflection = new ReflectionFunction($method);
+
+        $file = $reflection->getFileName();
+        $from_line = $reflection->getStartLine();
+        $to_line = $reflection->getEndLine();
+
+        $snippet = implode(
+            '',
+            array_slice(file($file), $from_line - 1, $to_line - $from_line + 1)
+        );
+
+        if ($_snippet = strstr($snippet, '{')) {
+            $snippet = substr($_snippet, 1);
+        }
+
+        $i = strlen($snippet);
+        while (true) {
+            $i--;
+
+            if ($snippet[$i] === '}' || $i <= 0) {
+                break;
+            }
+        }
+
+        $snippet = substr($snippet, 0, $i);
+
+        return trim($snippet);
+    }
+
+    private static function load_snippet($snippet, $id)
+    {
+        try {
+            $method_name = str_replace('-', '_', $id);
+
+            $method =
+                'if (!function_exists(\'' . $method_name . '\')) {' . "\n";
+            $method .=
+                'function ' . $method_name . '($payload, $bridge) {' . "\n";
+            $method .= $snippet . "\n";
+            $method .= 'return $payload;' . "\n";
+            $method .= "}\n}\n";
+
+            eval($method);
+            return $method_name;
+        } catch (ParseError $e) {
+            Logger::log(
+                "Syntax error on {$id} workflow job snippet",
+                Logger::ERROR
+            );
+            Logger::log($e, Logger::ERROR);
+        } catch (Error $e) {
+            Logger::log(
+                "Error while loading {$id} workflow job snippet",
+                Logger::ERROR
+            );
+            Logger::log($e, Logger::ERROR);
+        }
+    }
+
+    private static function config_from_post($post)
+    {
+        return [
+            'name' => $post->post_name,
+            'title' => $post->post_title,
+            'description' => $post->post_excerpt,
+            'input' => (array) get_post_meta(
+                $post->ID,
+                '_workflow-job-input',
+                true
+            ),
+            'output' => (array) get_post_meta(
+                $post->ID,
+                '_workflow-job-output',
+                true
+            ),
+            'snippet' => $post->post_content,
+        ];
+    }
+
     /**
      * Sets the job api and name attributes, validates the config data and enqueu themself to the workflow public
      * filter getters.
@@ -214,56 +381,54 @@ class Workflow_Job
      * @param array $config Job config.
      * @param string $api Api name.
      */
-    public function __construct($name, $config, $api)
+    public function __construct($config, $api)
     {
+        if ($config instanceof WP_Post) {
+            $config = self::config_from_post($config);
+        }
+
         $this->api = $api;
-        $this->name = $api . '-' . $name;
         $this->config = $this->validate_config($config);
 
-        add_filter(
-            'forms_bridge_workflow_jobs',
-            function ($jobs, $api = null) {
-                if ($api && $api !== $this->api) {
+        if (!is_wp_error($this->config)) {
+            $this->id = $api . '-' . $config['name'];
+
+            add_filter(
+                'forms_bridge_workflow_jobs',
+                function ($jobs, $api = null) {
+                    if ($api && $api !== $this->api) {
+                        return $jobs;
+                    }
+
+                    if (!wp_is_numeric_array($jobs)) {
+                        $jobs = [];
+                    }
+
+                    $jobs[] = $this;
                     return $jobs;
-                }
+                },
+                10,
+                2
+            );
 
-                if (!wp_is_numeric_array($jobs)) {
-                    $jobs = [];
-                }
+            add_filter(
+                'forms_bridge_workflow_job',
+                function ($job, $name, $api) {
+                    if ($job instanceof Workflow_Job) {
+                        return $job;
+                    }
 
-                if (is_wp_error($this->config)) {
-                    return $jobs;
-                }
+                    $id = $api . '-' . $name;
+                    if ($id !== $this->id) {
+                        return $job;
+                    }
 
-                $jobs[] = $this;
-                return $jobs;
-            },
-            10,
-            2
-        );
-
-        add_filter(
-            'forms_bridge_workflow_job',
-            function ($job, $name, $api = null) {
-                if ($job instanceof Workflow_Job) {
-                    return $job;
-                }
-
-                if ($api && $api !== $this->api) {
-                    return $job;
-                }
-
-                if (is_wp_error($this->config)) {
-                    return $job;
-                }
-
-                if ($name === $this->name) {
                     return $this;
-                }
-            },
-            10,
-            3
-        );
+                },
+                10,
+                3
+            );
+        }
     }
 
     /**
@@ -276,10 +441,10 @@ class Workflow_Job
     public function __get($name)
     {
         switch ($name) {
+            case 'id':
+                return $this->id;
             case 'api':
                 return $this->api;
-            case 'name':
-                return $this->name;
             case 'next':
                 return $this->next;
             case 'config':
@@ -325,12 +490,12 @@ class Workflow_Job
             return $payload;
         }
 
-        $payload = apply_filters(
-            'forms_bridge_workflow_job_payload',
-            $payload,
-            $this,
-            $bridge
-        );
+        // $payload = apply_filters(
+        //     'forms_bridge_workflow_job_payload',
+        //     $payload,
+        //     $this,
+        //     $bridge
+        // );
 
         $method = $this->method;
         $payload = $method($payload, $bridge, $this);
@@ -352,29 +517,29 @@ class Workflow_Job
             $payload = $next_job->run($payload, $bridge, $mutations);
         }
 
-        if (
-            isset($this->callbacks['before']) &&
-            function_exists($this->callbacks['before'])
-        ) {
-            add_action(
-                'forms_bridge_before_submission',
-                [$this, 'before_submission'],
-                10,
-                3
-            );
-        }
+        // if (
+        //     isset($this->callbacks['before']) &&
+        //     function_exists($this->callbacks['before'])
+        // ) {
+        //     add_action(
+        //         'forms_bridge_before_submission',
+        //         [$this, 'before_submission'],
+        //         10,
+        //         3
+        //     );
+        // }
 
-        if (
-            isset($this->callbacks['after']) &&
-            function_exists($this->callbacks['after'])
-        ) {
-            add_action(
-                'forms_bridge_after_submission',
-                [$this, 'after_submission'],
-                10,
-                4
-            );
-        }
+        // if (
+        //     isset($this->callbacks['after']) &&
+        //     function_exists($this->callbacks['after'])
+        // ) {
+        //     add_action(
+        //         'forms_bridge_after_submission',
+        //         [$this, 'after_submission'],
+        //         10,
+        //         4
+        //     );
+        // }
 
         return $payload;
     }
@@ -386,18 +551,18 @@ class Workflow_Job
      * @param array $payload Payload data to be submitted.
      * @param array $attahments Submission files to be submitteds.
      */
-    public function before_submission($bridge, $payload, $attachments = [])
-    {
-        remove_action(
-            'forms_bridge_before_submission',
-            [$this, 'before_submission'],
-            10,
-            3
-        );
+    // public function before_submission($bridge, $payload, $attachments = [])
+    // {
+    //     remove_action(
+    //         'forms_bridge_before_submission',
+    //         [$this, 'before_submission'],
+    //         10,
+    //         3
+    //     );
 
-        $callback = $this->callbacks['before'];
-        $callback($bridge, $payload, $attachments);
-    }
+    //     $callback = $this->callbacks['before'];
+    //     $callback($bridge, $payload, $attachments);
+    // }
 
     /**
      * After submission callback with auto desregistration.
@@ -407,22 +572,22 @@ class Workflow_Job
      * @param array $payload Submission payload.
      * @param array $attachments Submission attachments.
      */
-    public function after_submission(
-        $bridge,
-        $response,
-        $payload,
-        $attachments = []
-    ) {
-        remove_action(
-            'forms_bridge_after_submission',
-            [$this, 'after_submission'],
-            10,
-            4
-        );
+    // public function after_submission(
+    //     $bridge,
+    //     $response,
+    //     $payload,
+    //     $attachments = []
+    // ) {
+    //     remove_action(
+    //         'forms_bridge_after_submission',
+    //         [$this, 'after_submission'],
+    //         10,
+    //         4
+    //     );
 
-        $callback = $this->callbacks['after'];
-        $callback($bridge, $response, $payload, $attachments);
-    }
+    //     $callback = $this->callbacks['after'];
+    //     $callback($bridge, $response, $payload, $attachments);
+    // }
 
     /**
      * Workflow job data serializer to be used on REST API response.
@@ -432,12 +597,59 @@ class Workflow_Job
     public function to_json()
     {
         return [
+            'id' => $this->id,
+            'api' => $this->api,
             'name' => $this->name,
             'title' => $this->config['title'],
             'description' => $this->config['description'],
             'input' => $this->config['input'],
             'output' => $this->config['output'],
+            'snippet' => $this->config['snippet'],
         ];
+    }
+
+    public function is_valid()
+    {
+        return !is_wp_error($this->config);
+    }
+
+    public function save()
+    {
+        if (!$this->is_valid()) {
+            return $this->config;
+        }
+
+        $post_arr = [
+            'post_name' => $this->name,
+            'post_title' => $this->title,
+            'post_excerpt' => $this->description,
+            'post_content' => $this->snippet,
+        ];
+
+        $ids = get_posts([
+            'post_type' => self::post_type,
+            'name' => $this->name,
+            'meta_key' => '_workflow-job-api',
+            'meta_value' => $this->api,
+            'fields' => 'ids',
+            'update_post_meta_cache' => false,
+            'update_post_term_cache' => false,
+            'update_menu_item_cache' => false,
+        ]);
+
+        if (count($ids)) {
+            $post_arr['ID'] = $ids[0];
+        }
+
+        $post_id = wp_update_post($post_arr, true);
+
+        if (!is_wp_error($post_id)) {
+            update_post_meta($post_id, '_workflow-job-api', $this->api);
+            update_post_meta($post_id, '_workflow-job-input', $this->input);
+            update_post_meta($post_id, '_workflow-job-output', $this->output);
+        }
+
+        return $post_id;
     }
 
     /**
@@ -449,28 +661,24 @@ class Workflow_Job
      */
     private function validate_config($data)
     {
-        $schema = [
-            '$schema' => 'https://json-schema.org/draft/2020-12/schema',
-            'type' => 'object',
-            'additionalProperties' => false,
-            'properties' => static::$schema,
-            'required' => array_keys(static::$schema),
-        ];
+        $schema = self::schema();
 
-        $data = array_merge(
-            [
-                'callbacks' => [],
-                'method' => '\FORMS_BRIDGE\forms_bridge_workflow_noop_method',
-            ],
-            $data
-        );
-
-        $is_valid = rest_validate_value_from_schema($data, $schema);
-        if (is_wp_error($is_valid)) {
-            return $is_valid;
+        if (isset($data['snippet']) && is_string($data['snippet'])) {
+            $data['method'] = self::load_snippet($data['snippet'], $this->id);
+        } else {
+            if (isset($data['method']) && function_exists($data['method'])) {
+                $data['snippet'] = self::reflect_method($data['method']);
+            } else {
+                $data['method'] =
+                    '\FORMS_BRIDGE\forms_bridge_workflow_noop_method';
+                $data['snippet'] = '';
+            }
         }
 
-        $data = rest_sanitize_value_from_schema($data, $schema);
+        $data = forms_bridge_validate_with_schema($data, $schema);
+        if (is_wp_error($data)) {
+            return $data;
+        }
 
         if (!function_exists($data['method'])) {
             return new WP_Error(
@@ -480,15 +688,15 @@ class Workflow_Job
             );
         }
 
-        foreach ($data['callbacks'] as $callback) {
-            if (!function_exists($callback)) {
-                return new WP_Error(
-                    'method_is_not_function',
-                    __('Job callback is not a function', 'forms-bridge'),
-                    $data
-                );
-            }
-        }
+        // foreach ($data['callbacks'] as $callback) {
+        //     if (!function_exists($callback)) {
+        //         return new WP_Error(
+        //             'method_is_not_function',
+        //             __('Job callback is not a function', 'forms-bridge'),
+        //             $data
+        //         );
+        //     }
+        // }
 
         return $data;
     }
@@ -543,7 +751,7 @@ class Workflow_Job
 }
 
 // Autoload common workflow jobs
-$jobs_dir = dirname(__FILE__) . '/workflow-jobs';
-foreach (array_diff(scandir($jobs_dir), ['.', '..']) as $file) {
-    require_once $jobs_dir . '/' . $file;
-}
+// $jobs_dir = dirname(__FILE__) . '/workflow-jobs';
+// foreach (array_diff(scandir($jobs_dir), ['.', '..']) as $file) {
+//     require_once $jobs_dir . '/' . $file;
+// }

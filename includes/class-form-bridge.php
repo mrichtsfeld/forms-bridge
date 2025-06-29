@@ -19,103 +19,124 @@ abstract class Form_Bridge
      *
      * @var array
      */
-    public static $schema = [
-        'type' => 'object',
-        'additionalProperties' => false,
-        'properties' => [
-            'name' => [
-                'type' => 'string',
-                'minLength' => 1,
-            ],
-            'form_id' => [
-                'type' => 'string',
-                'default' => '',
-            ],
-            'backend' => [
-                'type' => 'string',
-                'default' => '',
-            ],
-            'credential' => [
-                'type' => 'string',
-                'default' => '',
-            ],
-            'custom_fields' => [
-                'type' => 'array',
-                'items' => [
-                    'type' => 'object',
-                    'properties' => [
-                        'name' => [
-                            'type' => 'string',
-                            'minLength' => 1,
-                        ],
-                        'value' => [
-                            'type' => 'string',
-                            'minLength' => 1,
-                        ],
-                    ],
-                    'additionalProperties' => false,
-                    'required' => ['name', 'value'],
-                ],
-            ],
-            'mutations' => [
-                'type' => 'array',
-                'items' => [
-                    'type' => 'array',
-                    'items' => [
-                        'type' => 'object',
-                        'additionalProperties' => false,
-                        'properties' => [
-                            'from' => [
-                                'type' => 'string',
-                                'minLength' => 1,
-                            ],
-                            'to' => [
-                                'type' => 'string',
-                                'minLength' => 1,
-                            ],
-                            'cast' => [
-                                'type' => 'string',
-                                'enum' => [
-                                    'boolean',
-                                    'string',
-                                    'integer',
-                                    'number',
-                                    'json',
-                                    'csv',
-                                    'concat',
-                                    'join',
-                                    'sum',
-                                    'count',
-                                    'inherit',
-                                    'copy',
-                                    'null',
-                                ],
-                            ],
-                        ],
-                        'additionalProperties' => false,
-                        'required' => ['from', 'to', 'cast'],
-                    ],
-                ],
-            ],
-            'workflow' => [
-                'type' => 'array',
-                'items' => [
+    public static function schema()
+    {
+        return [
+            '$schema' => 'https://json-schema.org/draft/2020-12/schema',
+            'type' => 'object',
+            'properties' => [
+                'name' => [
+                    'description' => '',
                     'type' => 'string',
                     'minLength' => 1,
                 ],
+                'form_id' => [
+                    'description' => '',
+                    'type' => 'string',
+                    'default' => '',
+                ],
+                'backend' => [
+                    'description' => '',
+                    'type' => 'string',
+                    'default' => '',
+                ],
+                'credential' => [
+                    'description' => '',
+                    'type' => 'string',
+                    'default' => '',
+                ],
+                'custom_fields' => [
+                    'description' => '',
+                    'type' => 'array',
+                    'items' => [
+                        'type' => 'object',
+                        'properties' => [
+                            'name' => [
+                                'type' => 'string',
+                                'minLength' => 1,
+                            ],
+                            'value' => [
+                                'type' => 'string',
+                                'minLength' => 1,
+                            ],
+                        ],
+                        'additionalProperties' => false,
+                        'required' => ['name', 'value'],
+                    ],
+                ],
+                'mutations' => [
+                    'description' => '',
+                    'type' => 'array',
+                    'items' => [
+                        'type' => 'array',
+                        'items' => [
+                            'type' => 'object',
+                            'additionalProperties' => false,
+                            'properties' => [
+                                'from' => [
+                                    'type' => 'string',
+                                    'minLength' => 1,
+                                ],
+                                'to' => [
+                                    'type' => 'string',
+                                    'minLength' => 1,
+                                ],
+                                'cast' => [
+                                    'type' => 'string',
+                                    'enum' => [
+                                        'boolean',
+                                        'string',
+                                        'integer',
+                                        'number',
+                                        'json',
+                                        'csv',
+                                        'concat',
+                                        'join',
+                                        'sum',
+                                        'count',
+                                        'inherit',
+                                        'copy',
+                                        'null',
+                                    ],
+                                ],
+                            ],
+                            'additionalProperties' => false,
+                            'required' => ['from', 'to', 'cast'],
+                        ],
+                    ],
+                ],
+                'workflow' => [
+                    'description' => '',
+                    'type' => 'array',
+                    'items' => [
+                        'type' => 'string',
+                        'minLength' => 1,
+                    ],
+                ],
+                'is_valid' => [
+                    'description' => '',
+                    'type' => 'boolean',
+                    'default' => true,
+                ],
+                'enabled' => [
+                    'description' => '',
+                    'type' => 'boolean',
+                    'default' => true,
+                ],
             ],
-            'is_valid' => ['type' => 'boolean'],
-        ],
-        'required' => [
-            'name',
-            'form_id',
-            'backend',
-            'custom_fields',
-            'mutations',
-            'workflow',
-            'is_valid',
-        ],
-    ];
+            'required' => [
+                'name',
+                'form_id',
+                'backend',
+                'custom_fields',
+                'mutations',
+                'workflow',
+                'is_valid',
+                'enabeld',
+            ],
+            'additionalProperties' => false,
+        ];
+    }
 
     /**
      * Handles the form bridge's settings data.
@@ -123,6 +144,8 @@ abstract class Form_Bridge
      * @var array
      */
     protected $data;
+
+    protected $id;
 
     /**
      * Handles form bridge's api slug.
@@ -143,7 +166,51 @@ abstract class Form_Bridge
      */
     public function __construct($data)
     {
-        $this->data = $data;
+        $this->data = forms_bridge_validate_with_schema($data, self::schema());
+
+        if (!is_wp_error($this->data)) {
+            $this->id = $this->api . '-' . $data['name'];
+
+            add_filter(
+                'forms_bridge_bridges',
+                function ($bridges, $form_id = null, $api = null) {
+                    if (!wp_is_numeric_array($bridges)) {
+                        $bridges = [];
+                    }
+
+                    if ($form_id && $form_id !== $this->form_id) {
+                        return $bridges;
+                    }
+
+                    if ($api && $api !== $this->api) {
+                        return $bridges;
+                    }
+
+                    $bridges[] = $this;
+                    return $bridges;
+                },
+                10,
+                3
+            );
+
+            add_filter(
+                'forms_bridge_bridge',
+                function ($bridge, $name, $api) {
+                    if ($bridge instanceof Form_Bridge) {
+                        return $bridge;
+                    }
+
+                    $id = $api . '-' . $name;
+                    if ($id !== $this->id) {
+                        return $bridge;
+                    }
+
+                    return $this;
+                },
+                10,
+                3
+            );
+        }
     }
 
     /**
@@ -156,6 +223,8 @@ abstract class Form_Bridge
     public function __get($name)
     {
         switch ($name) {
+            case 'id':
+                return $this->id;
             case 'api':
                 return $this->api;
             case 'form':
@@ -168,8 +237,8 @@ abstract class Form_Bridge
                 return $this->content_type();
             case 'credential':
                 return $this->credential();
-            case 'api_schema':
-                return $this->api_schema();
+            case 'endpoint_schema':
+                return $this->endpoint_schema();
             case 'workflow':
                 return $this->workflow();
             default:
@@ -189,7 +258,7 @@ abstract class Form_Bridge
             return;
         }
 
-        return apply_filters('forms_bridge_backend', null, $backend_name);
+        return API::get_backend($backend_name);
     }
 
     /**
@@ -200,7 +269,7 @@ abstract class Form_Bridge
     protected function form()
     {
         [$integration, $form_id] = explode(':', $this->form_id);
-        return apply_filters('forms_bridge_form', null, $form_id, $integration);
+        return API::get_form_by_id($form_id, $integration);
     }
 
     /**
@@ -235,7 +304,7 @@ abstract class Form_Bridge
      *
      * @return array
      */
-    protected function api_schema()
+    protected function endpoint_schema()
     {
         return [];
     }
@@ -245,10 +314,7 @@ abstract class Form_Bridge
      *
      * @return null
      */
-    protected function credential()
-    {
-        return;
-    }
+    protected function credential() {}
 
     /**
      * Gets bridge's workflow instance.
@@ -257,7 +323,10 @@ abstract class Form_Bridge
      */
     protected function workflow()
     {
-        return Workflow_Job::from_workflow($this->data['workflow'] ?? []);
+        return Workflow_Job::from_workflow(
+            $this->data['workflow'] ?? [],
+            $this->api
+        );
     }
 
     /**
@@ -271,41 +340,14 @@ abstract class Form_Bridge
      */
     public function submit($payload = [], $attachments = [])
     {
-        do_action(
-            'forms_bridge_before_bridge_submit',
-            $this,
-            $payload,
-            $attachments
-        );
-
         add_filter(
-            'forms_bridge_http_request',
+            'http_bridge_request',
             static::class . '::filter_request',
             10,
             1
         );
 
-        $response = $this->do_submit($payload, $attachments);
-
-        if (is_wp_error($response)) {
-            do_action(
-                'forms_bridge_bridge_submit_error',
-                $this,
-                $response,
-                $payload,
-                $attachments
-            );
-        } else {
-            do_action(
-                'forms_bridge_after_bridge_submit',
-                $this,
-                $response,
-                $payload,
-                $attachments
-            );
-        }
-
-        return $response;
+        return $this->do_submit($payload, $attachments);
     }
 
     /**
@@ -356,7 +398,7 @@ abstract class Form_Bridge
         }
 
         remove_filter(
-            'forms_bridge_http_request',
+            'http_bridge_request',
             static::class . '::filter_request',
             10,
             1
@@ -389,11 +431,6 @@ abstract class Form_Bridge
     public function patch($partial = [])
     {
         $data = array_merge($this->data, $partial);
-
-        if (empty($data['name']) || $data['name'] === $this->name) {
-            $data['name'] = 'bridge-' . time();
-        }
-
         return new static($data, $this->api);
     }
 }

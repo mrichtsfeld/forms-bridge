@@ -103,8 +103,11 @@ class Finan_Coop_Addon extends Rest_Addon
      *
      * @return array List of fields and content type of the endpoint.
      */
-    protected function get_schema($backend, $endpoint, $credential = null)
-    {
+    protected function get_endpoint_schema(
+        $backend,
+        $endpoint,
+        $credential = null
+    ) {
         $bridge = new Finan_Coop_Form_Bridge([
             'name' => '__financoop-' . time(),
             'endpoint' => $endpoint,
@@ -112,7 +115,7 @@ class Finan_Coop_Addon extends Rest_Addon
             'method' => 'GET',
         ]);
 
-        return $bridge->api_schema;
+        return $bridge->endpoint_schema;
     }
 }
 
