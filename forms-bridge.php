@@ -237,7 +237,7 @@ class Forms_Bridge extends Base_Plugin
 
     public static function current_bridge()
     {
-        self::$current_bridge;
+        return self::$current_bridge;
     }
 
     /**

@@ -69,9 +69,11 @@ class Zoho_Form_Bridge extends Form_Bridge
             'description' => __('HTTP method', 'forms-bridge'),
             'type' => 'string',
             'enum' => ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+            'minLength' => 3,
             'default' => 'POST',
         ];
 
+        $schema['required'][] = 'method';
         return $schema;
     }
 

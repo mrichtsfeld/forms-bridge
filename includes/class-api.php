@@ -33,7 +33,7 @@ class FBAPI
 
     public static function get_current_bridge()
     {
-        return Forms_Bridge::current_bridge();
+        return \FORMS_BRIDGE\Forms_Bridge::current_bridge();
     }
 
     public static function get_bridges()
