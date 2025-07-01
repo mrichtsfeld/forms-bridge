@@ -21,13 +21,6 @@ class Holded_Form_Bridge extends Rest_Form_Bridge
     protected $api = 'holded';
 
     /**
-     * Handles the array of accepted HTTP header names of the bridge API.
-     *
-     * @var array<string>
-     */
-    protected static $api_headers = ['accept', 'content-type', 'key'];
-
-    /**
      * Gets bridge's default body encoding schema.
      *
      * @return string|null
@@ -125,23 +118,5 @@ class Holded_Form_Bridge extends Rest_Form_Bridge
         }
 
         return $fields;
-    }
-
-    /**
-     * Filters HTTP request args just before it is sent.
-     *
-     * @param array $request Request arguments.
-     *
-     * @return array
-     */
-    public static function do_filter_request($request)
-    {
-        $headers = &$request['args']['headers'];
-        foreach ($headers as $name => $value) {
-            unset($headers[$name]);
-            $headers[strtolower($name)] = $value;
-        }
-
-        return $request;
     }
 }

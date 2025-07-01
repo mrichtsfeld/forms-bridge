@@ -36,7 +36,7 @@ class Listmonk_Form_Bridge_Template extends Rest_Form_Bridge_Template
                     ],
                     [
                         'ref' => '#backend/headers[]',
-                        'name' => 'api_user',
+                        'name' => 'user',
                         'label' => __('API user', 'forms-bridge'),
                         'description' => __(
                             'You have to generate an API user on your listmonk instance. See the <a href="https://listmonk.app/docs/roles-and-permissions/#api-users">documentation</a> for more information',
@@ -95,5 +95,87 @@ class Listmonk_Form_Bridge_Template extends Rest_Form_Bridge_Template
             parent::defaults(),
             self::schema()
         );
+    }
+
+    public function use($fields, $integration)
+    {
+        add_filter(
+            'forms_bridge_template_data',
+            function ($data, $template_id) {
+                if ($template_id === $this->id) {
+                    $index = array_search(
+                        'lists',
+                        array_column($data['bridge']['custom_fields'], 'name')
+                    );
+
+                    if ($index !== false) {
+                        $field = &$data['bridge']['custom_fields'][$index];
+                        if (is_array($field['value'])) {
+                            for ($i = 0; $i < count($field['value']); $i++) {
+                                $data['bridge']['custom_fields'][] = [
+                                    'name' => "lists[{$i}]",
+                                    'value' => (int) $field['value'][$i],
+                                ];
+
+                                $data['bridge']['mutations'][0][] = [
+                                    'from' => "lists[{$i}]",
+                                    'to' => "lists[{$i}]",
+                                    'cast' => 'integer',
+                                ];
+                            }
+
+                            array_splice(
+                                $data['bridge']['custom_fields'],
+                                $index,
+                                1
+                            );
+                            $data['bridge']['custom_fields'] = array_values(
+                                $data['bridge']['custom_fields']
+                            );
+                        }
+                    }
+
+                    $header_names = array_column(
+                        $data['backend']['headers'],
+                        'name'
+                    );
+                    $user_index = array_search('user', $header_names);
+                    $token_index = array_search('token', $header_names);
+
+                    if ($user_index !== false && $token_index !== false) {
+                        $user =
+                            $data['backend']['headers'][$user_index]['value'];
+                        $token =
+                            $data['backend']['headers'][$token_index]['value'];
+
+                        $headers = [];
+                        foreach ($data['backend']['headers'] as $header) {
+                            if (
+                                !in_array(
+                                    $header['name'],
+                                    ['user', 'token'],
+                                    true
+                                )
+                            ) {
+                                $headers[] = $header;
+                            }
+                        }
+
+                        $headers[] = [
+                            'name' => 'Authorization',
+                            'value' => "token {$user}:{$token}",
+                        ];
+
+                        $data['backend']['headers'] = $headers;
+                    }
+                }
+
+                return $data;
+            },
+            10,
+            2
+        );
+
+        return parent::use($fields, $integration);
     }
 }

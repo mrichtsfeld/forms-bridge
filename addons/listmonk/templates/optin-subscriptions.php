@@ -4,45 +4,6 @@ if (!defined('ABSPATH')) {
     exit();
 }
 
-add_filter(
-    'forms_bridge_template_data',
-    function ($data, $template_name) {
-        if ($template_name === 'listmonk-optin-subscriptions') {
-            $index = array_search(
-                'lists',
-                array_column($data['bridge']['custom_fields'], 'name')
-            );
-
-            if ($index !== false) {
-                $field = &$data['bridge']['custom_fields'][$index];
-                if (is_array($field['value'])) {
-                    for ($i = 0; $i < count($field['value']); $i++) {
-                        $data['bridge']['custom_fields'][] = [
-                            'name' => "lists[{$i}]",
-                            'value' => (int) $field['value'][$i],
-                        ];
-
-                        $data['bridge']['mutations'][0][] = [
-                            'from' => "lists[{$i}]",
-                            'to' => "lists[{$i}]",
-                            'cast' => 'integer',
-                        ];
-                    }
-
-                    array_splice($data['bridge']['custom_fields'], $index, 1);
-                    $data['bridge']['custom_fields'] = array_values(
-                        $data['bridge']['custom_fields']
-                    );
-                }
-            }
-        }
-
-        return $data;
-    },
-    10,
-    2
-);
-
 return [
     'title' => __('Opt-in Subscriptions', 'forms-bridge'),
     'description' => __(

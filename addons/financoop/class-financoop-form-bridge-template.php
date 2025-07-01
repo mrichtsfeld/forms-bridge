@@ -130,4 +130,86 @@ class Finan_Coop_Form_Bridge_Template extends Rest_Form_Bridge_Template
             2
         );
     }
+
+    public function use($fields, $integration)
+    {
+        add_filter(
+            'forms_bridge_template_data',
+            function ($data, $template_id) {
+                if ($template_id !== $this->id) {
+                    return $data;
+                }
+
+                $endpoint = implode(
+                    '/',
+                    array_slice(explode('/', $data['bridge']['endpoint']), 0, 4)
+                );
+
+                $campaign = Addon::fetch(
+                    'financoop',
+                    $data['backend'],
+                    $endpoint,
+                    null
+                );
+
+                if (empty($campaign)) {
+                    throw new Form_Bridge_Template_Exception(
+                        'financoop_api_error',
+                        __('Can\'t fetch campaign data', 'forms-bridge'),
+                        ['status' => 500]
+                    );
+                }
+
+                $field_names = array_column($data['form']['fields'], 'name');
+
+                $index = array_search('donation_amount', $field_names);
+                if ($index !== false) {
+                    $field = &$data['form']['fields'][$index];
+
+                    $min = $campaign['minimal_donation_amount'];
+                    if (!empty($min)) {
+                        $field['min'] = $min;
+                        $field['default'] = $min;
+                    }
+                }
+
+                $index = array_search('loan_amount', $field_names);
+                if ($index !== false) {
+                    $field = &$data['form']['fields'][$index];
+
+                    $min = $campaign['minimal_loan_amount'];
+                    if (!empty($min)) {
+                        $field['min'] = $min;
+                        $field['default'] = $min;
+                    }
+
+                    $max = $campaign['maximal_loan_amount'];
+                    if (!empty($max)) {
+                        $field['max'] = $max;
+                    }
+                }
+
+                $index = array_search('ordered_parts', $field_names);
+                if ($index !== false) {
+                    $field = &$data['form']['fields'][$index];
+
+                    $min = $campaign['minimal_subscription_amount'];
+                    if (!empty($min)) {
+                        $field['min'] = $min;
+                        $field['step'] = $min;
+                        $field['default'] = $min;
+                    }
+
+                    $max = $campaign['maximal_subscription_amount'];
+                    if (!empty($max)) {
+                        $field['max'] = $max;
+                    }
+                }
+
+                return $data;
+            },
+            10,
+            2
+        );
+    }
 }

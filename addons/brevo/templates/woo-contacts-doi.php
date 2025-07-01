@@ -4,69 +4,6 @@ if (!defined('ABSPATH')) {
     exit();
 }
 
-add_filter(
-    'forms_bridge_template_data',
-    function ($data, $template_name) {
-        if ($template_name === 'brevo-woo-contacts-doi') {
-            $index = array_search(
-                'includeListIds',
-                array_column($data['bridge']['custom_fields'], 'name')
-            );
-
-            if ($index !== false) {
-                $field = $data['bridge']['custom_fields'][$index];
-
-                for ($i = 0; $i < count($field['value']); $i++) {
-                    $data['bridge']['custom_fields'][] = [
-                        'name' => "includeListIds[{$i}]",
-                        'value' => $field['value'][$i],
-                    ];
-
-                    $data['bridge']['mutations'][0][] = [
-                        'from' => "includeListIds[{$i}]",
-                        'to' => "includeListIds[{$i}]",
-                        'cast' => 'integer',
-                    ];
-                }
-
-                array_splice($data['bridge']['custom_fields'], $index, 1);
-                $data['bridge']['custom_fields'] = array_values(
-                    $data['bridge']['custom_fields']
-                );
-            }
-
-            $index = array_search(
-                'redirectionUrl',
-                array_column($data['bridge']['custom_fields'], 'name')
-            );
-
-            if ($index !== false) {
-                $field = &$data['bridge']['custom_fields'][$index];
-
-                $field['value'] = (string) filter_var(
-                    (string) $field['value'],
-                    FILTER_SANITIZE_URL
-                );
-
-                $parsed = parse_url($field['value']);
-
-                if (!isset($parsed['host'])) {
-                    $site_url = get_site_url();
-
-                    $field['value'] =
-                        $site_url .
-                        '/' .
-                        preg_replace('/^\/+/', '', $field['value']);
-                }
-            }
-        }
-
-        return $data;
-    },
-    10,
-    2
-);
-
 return [
     'title' => __('Subscription DOI', 'forms-bridge'),
     'description' => __(

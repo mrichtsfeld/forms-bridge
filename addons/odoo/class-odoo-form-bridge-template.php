@@ -127,4 +127,66 @@ class Odoo_Form_Bridge_Template extends Form_Bridge_Template
 
         return $schema;
     }
+
+    public function use($fields, $integration)
+    {
+        add_filter(
+            'forms_bridge_template_data',
+            function ($data, $template_id) {
+                if ($template_id !== $this->id) {
+                    return $data;
+                }
+
+                $custom_field_names = array_column(
+                    $data['bridge']['custom_fields'],
+                    'name'
+                );
+
+                $index = array_search('tag_ids', $custom_field_names);
+                if ($index !== false) {
+                    $field = $data['bridge']['custom_fields'][$index];
+                    $tags = $field['value'] ?? [];
+
+                    for ($i = 0; $i < count($tags); $i++) {
+                        $data['bridge']['custom_fields'][] = [
+                            'name' => "tag_ids[{$i}]",
+                            'value' => $tags[$i],
+                        ];
+
+                        $data['bridge']['mutations'][0][] = [
+                            'from' => "tag_ids[{$i}]",
+                            'to' => "tag_ids[{$i}]",
+                            'cast' => 'integer',
+                        ];
+                    }
+
+                    array_splice($data['bridge']['custom_fields'], $index, 1);
+                }
+
+                $index = array_search('list_ids', $custom_field_names);
+                if ($index !== false) {
+                    $field = $data['bridge']['custom_fields'][$index];
+
+                    for ($i = 0; $i < count($field['value']); $i++) {
+                        $data['bridge']['custom_fields'][] = [
+                            'name' => "list_ids[{$i}]",
+                            'value' => $field['value'][$i],
+                        ];
+
+                        $data['bridge']['mutations'][0][] = [
+                            'from' => "list_ids[{$i}]",
+                            'to' => "list_ids[{$i}]",
+                            'cast' => 'integer',
+                        ];
+                    }
+
+                    array_splice($data['bridge']['custom_fields'], $index, 1);
+                }
+
+                return $data;
+            },
+            10,
+            2
+        );
+    }
 }

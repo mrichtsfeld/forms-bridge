@@ -61,4 +61,30 @@ class Dolibarr_Form_Bridge_Template extends Rest_Form_Bridge_Template
             self::schema()
         );
     }
+
+    public function use($fields, $integration)
+    {
+        add_filter(
+            'forms_bridge_template_data',
+            function ($data, $template_id) {
+                if ($template_id !== $this->id) {
+                    return $data;
+                }
+
+                $index = array_search(
+                    'no_email',
+                    array_column($data['bridge']['custom_fields'], 'name')
+                );
+
+                if ($index !== false) {
+                    $field = &$data['bridge']['custom_fields'][$index];
+                    $field['value'] = $field['value'] ? '0' : '1';
+                }
+
+                return $data;
+            },
+            10,
+            2
+        );
+    }
 }

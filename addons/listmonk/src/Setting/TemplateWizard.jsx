@@ -7,8 +7,6 @@ import { useTemplateConfig } from "../../../../src/providers/Templates";
 const apiFetch = wp.apiFetch;
 const { useState, useEffect, useMemo, useRef } = wp.element;
 
-const LISTMONK_HEADERS = ["api_user", "token"];
-
 const STEPS = [
   {
     name: "bridge",
@@ -20,9 +18,10 @@ const STEPS = [
 function validateBackend(data) {
   if (!data?.name) return false;
 
-  return LISTMONK_HEADERS.reduce((isValid, field) => {
-    return isValid && data.headers.find(({ name }) => name === field)?.value;
-  }, validateUrl(data.base_url));
+  const authorization =
+    data.headers.find((h) => h.name === "Authorization")?.value || "";
+
+  return validateUrl(data.base_url) && /^token .+\:.+$/.test(authorization);
 }
 
 export default function ListmonkTemplateWizard({
@@ -53,13 +52,22 @@ export default function ListmonkTemplateWizard({
       return backend;
     }
 
+    const user = data.backend.user;
+    const token = data.backend.token;
+    if (!user || !token) {
+      return;
+    }
+
+    const authorization = `token ${user}:${token}`;
+
     backend = {
       name: data.backend.name,
       base_url: data.backend.base_url,
-      headers: LISTMONK_HEADERS.map((header) => ({
-        name: header,
-        value: data.backend[header],
-      })),
+      headers: [
+        { name: "Content-Type", value: "application/json" },
+        { name: "Accept", value: "application/json" },
+        { name: "Authorization", value: authorization },
+      ],
     };
 
     if (validateBackend(backend)) {

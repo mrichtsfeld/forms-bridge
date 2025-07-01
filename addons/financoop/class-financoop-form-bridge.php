@@ -21,19 +21,6 @@ class Finan_Coop_Form_Bridge extends Rest_Form_Bridge
     protected $api = 'financoop';
 
     /**
-     * Handles the array of accepted HTTP header names of the bridge API.
-     *
-     * @var array<string>
-     */
-    protected static $api_headers = [
-        'Accept',
-        'Content-Type',
-        'X-Odoo-Db',
-        'X-Odoo-Username',
-        'X-Odoo-Api-Key',
-    ];
-
-    /**
      * Handles allowed HTTP method.
      *
      * @var array

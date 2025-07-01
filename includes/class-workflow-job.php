@@ -75,7 +75,8 @@ class Workflow_Job
     public static function schema()
     {
         return [
-            '$schema' => 'https://json-schema.org/draft/2020-12/schema',
+            '$schema' => 'http://json-schema.org/draft-04/schema#',
+            'title' => 'workflow-job',
             'type' => 'object',
             'properties' => [
                 'name' => [
@@ -84,6 +85,7 @@ class Workflow_Job
                         'forms-bridge'
                     ),
                     'type' => 'string',
+                    'minLength' => 1,
                 ],
                 'title' => [
                     'description' => __(
@@ -91,6 +93,7 @@ class Workflow_Job
                         'forms-bridge'
                     ),
                     'type' => 'string',
+                    'minLength' => 1,
                 ],
                 'description' => [
                     'description' => __(
@@ -98,6 +101,7 @@ class Workflow_Job
                         'forms-birdge'
                     ),
                     'type' => 'string',
+                    'default' => '',
                 ],
                 'method' => [
                     'description' => __(
@@ -105,6 +109,7 @@ class Workflow_Job
                         'forms-bridge'
                     ),
                     'type' => 'string',
+                    'minLength' => 1,
                 ],
                 'input' => [
                     'description' => __(
@@ -115,7 +120,10 @@ class Workflow_Job
                     'items' => [
                         'type' => 'object',
                         'properties' => [
-                            'name' => ['type' => 'string'],
+                            'name' => [
+                                'type' => 'string',
+                                'minLength' => 1,
+                            ],
                             'required' => ['type' => 'boolean'],
                             'schema' => [
                                 'type' => 'object',
@@ -155,11 +163,13 @@ class Workflow_Job
                                 ],
                                 'required' => ['type'],
                                 'additionalProperties' => false,
+                                'default' => ['type' => 'string'],
                             ],
                         ],
                         'required' => ['name', 'schema'],
                         'additionalProperties' => false,
                     ],
+                    'default' => [],
                 ],
                 'output' => [
                     'description' => __(
@@ -170,7 +180,10 @@ class Workflow_Job
                     'items' => [
                         'type' => 'object',
                         'properties' => [
-                            'name' => ['type' => 'string'],
+                            'name' => [
+                                'type' => 'string',
+                                'minLength' => 1,
+                            ],
                             'touch' => ['type' => 'boolean'],
                             'forward' => ['type' => 'boolean'],
                             'schema' => [
@@ -206,11 +219,13 @@ class Workflow_Job
                                 ],
                                 'required' => ['type'],
                                 'additionalProperties' => false,
+                                'default' => ['type' => 'string'],
                             ],
                         ],
                         'required' => ['name', 'schema'],
                         'additionalProperties' => false,
                     ],
+                    'default' => [],
                 ],
                 'snippet' => [
                     'description' => __(
@@ -654,9 +669,3 @@ class Workflow_Job
         return $payload;
     }
 }
-
-// Autoload common workflow jobs
-// $jobs_dir = dirname(__FILE__) . '/workflow-jobs';
-// foreach (array_diff(scandir($jobs_dir), ['.', '..']) as $file) {
-//     require_once $jobs_dir . '/' . $file;
-// }

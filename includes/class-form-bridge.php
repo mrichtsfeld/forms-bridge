@@ -25,7 +25,8 @@ abstract class Form_Bridge
     public static function schema()
     {
         return [
-            '$schema' => 'https://json-schema.org/draft/2020-12/schema',
+            '$schema' => 'http://json-schema.org/draft-04/schema#',
+            'title' => 'form-bridge-schema',
             'type' => 'object',
             'properties' => [
                 'name' => [
@@ -42,7 +43,7 @@ abstract class Form_Bridge
                         'forms-bridge'
                     ),
                     'type' => 'string',
-                    'default' => '',
+                    'pattern' => '^\w+:\d+$',
                 ],
                 'backend' => [
                     'description' => __('Backend name', 'forms-bridge'),
@@ -182,13 +183,6 @@ abstract class Form_Bridge
     protected $api;
 
     /**
-     * Handles the array of accepted HTTP header names of the bridge API.
-     *
-     * @var array<string>
-     */
-    protected static $api_headers = [];
-
-    /**
      * Stores the form bridge's data as a private attribute.
      */
     public function __construct($data)
@@ -268,8 +262,10 @@ abstract class Form_Bridge
                 return $this->endpoint_schema();
             case 'workflow':
                 return $this->workflow();
+            case 'is_valid':
+                return !is_wp_error($this->data) && $this->data['is_valid'];
             default:
-                if (!$this->is_valid()) {
+                if (!$this->is_valid) {
                     return;
                 }
 
@@ -277,10 +273,6 @@ abstract class Form_Bridge
         }
     }
 
-    public function is_valid()
-    {
-        return !is_wp_error($this->data) && $this->data['is_valid'];
-    }
     /**
      * Retrives the bridge's backend instance.
      *
@@ -288,7 +280,7 @@ abstract class Form_Bridge
      */
     protected function backend()
     {
-        if (!$this->is_valid()) {
+        if (!$this->is_valid) {
             return;
         }
 
@@ -308,7 +300,7 @@ abstract class Form_Bridge
     protected function form()
     {
         $form_id = $this->form_id;
-        if (empty($form_id)) {
+        if (!$form_id) {
             return;
         }
 
@@ -324,7 +316,7 @@ abstract class Form_Bridge
     protected function integration()
     {
         $form_id = $this->form_id;
-        if (empty($form_id)) {
+        if (!$form_id) {
             return;
         }
 
@@ -339,12 +331,12 @@ abstract class Form_Bridge
      */
     protected function content_type()
     {
-        if (!$this->is_valid()) {
+        if (!$this->is_valid) {
             return;
         }
 
         $backend = $this->data['backend'];
-        if (empty($backend)) {
+        if (!$backend) {
             return;
         }
 
@@ -375,7 +367,7 @@ abstract class Form_Bridge
      */
     protected function workflow()
     {
-        if (!$this->is_valid()) {
+        if (!$this->is_valid) {
             return [];
         }
 
@@ -396,19 +388,12 @@ abstract class Form_Bridge
      */
     public function submit($payload = [], $attachments = [])
     {
-        if (!$this->is_valid()) {
+        if (!$this->is_valid) {
             return new WP_Error(
                 'invalid_bridge',
                 'Bridge has invalid settings'
             );
         }
-
-        add_filter(
-            'http_bridge_request',
-            static::class . '::filter_request',
-            10,
-            1
-        );
 
         return $this->do_submit($payload, $attachments);
     }
@@ -424,66 +409,6 @@ abstract class Form_Bridge
     abstract protected function do_submit($payload, $attachments = []);
 
     /**
-     * HTTP request args interceptor with automatic unsubscription.
-     *
-     * @param array $request HTTP request arguments.
-     *
-     * @return array
-     */
-    final public static function filter_request($request)
-    {
-        $request = static::do_filter_request($request);
-        $headers = &$request['args']['headers'];
-
-        if (count(static::$api_headers) > 0) {
-            $api_headers = [];
-            foreach ($headers as $header => $value) {
-                if (in_array($header, static::$api_headers)) {
-                    $api_headers[$header] = $value;
-                }
-            }
-
-            $headers = $api_headers;
-        }
-
-        $no_content = in_array(
-            $request['args']['method'],
-            ['GET', 'DELETE'],
-            true
-        );
-
-        if ($no_content) {
-            if (isset($headers['Content-Type'])) {
-                unset($headers['Content-Type']);
-            } elseif (isset($headers['content-type'])) {
-                unset($headers['content-type']);
-            }
-        }
-
-        remove_filter(
-            'http_bridge_request',
-            static::class . '::filter_request',
-            10,
-            1
-        );
-
-        return $request;
-    }
-
-    /**
-     * Filters HTTP request args just before it is sent.
-     *
-     * @param array $request Request arguments.
-     *
-     * @return array
-     */
-    protected static function do_filter_request($request)
-    {
-        // To be overwriten by descendants
-        return $request;
-    }
-
-    /**
      * Returns a clone of the bridge instance with its data patched by
      * the partial array.
      *
@@ -493,7 +418,7 @@ abstract class Form_Bridge
      */
     public function patch($partial = [])
     {
-        if (!$this->is_valid()) {
+        if (!$this->is_valid) {
             return $this;
         }
 

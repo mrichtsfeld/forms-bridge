@@ -6,45 +6,6 @@ if (!defined('ABSPATH')) {
 
 global $forms_bridge_iso2_countries;
 
-add_filter(
-    'forms_bridge_template_data',
-    function ($data, $template_name) {
-        if ($template_name === 'odoo-crm-company-leads') {
-            $index = array_search(
-                'tag_ids',
-                array_column($data['bridge']['custom_fields'], 'name')
-            );
-
-            if ($index !== false) {
-                $field = $data['bridge']['custom_fields'][$index];
-                $tags = $field['value'] ?? [];
-
-                for ($i = 0; $i < count($tags); $i++) {
-                    $data['bridge']['custom_fields'][] = [
-                        'name' => "tag_ids[{$i}]",
-                        'value' => $tags[$i],
-                    ];
-
-                    $data['bridge']['mutations'][0][] = [
-                        'from' => "tag_ids[{$i}]",
-                        'to' => "tag_ids[{$i}]",
-                        'cast' => 'integer',
-                    ];
-                }
-
-                array_splice($data['bridge']['custom_fields'], $index, 1);
-                $data['bridge']['custom_fields'] = array_values(
-                    $data['bridge']['custom_fields']
-                );
-            }
-        }
-
-        return $data;
-    },
-    10,
-    2
-);
-
 return [
     'title' => __('CRM Company Leads', 'forms-bridge'),
     'description' => __(

@@ -26,6 +26,13 @@ class Bigin_Form_Bridge extends Zoho_Form_Bridge
     protected static $zoho_oauth_service = 'ZohoBigin';
 
     /**
+     * Handles the oauth access token transient name.
+     *
+     * @var string
+     */
+    protected const token_transient = 'forms-bridge-bigin-oauth-access-token';
+
+    /**
      * Bridge's endpoint fields schema getter.
      *
      * @param null $endpoint Layout metadata endpoint.

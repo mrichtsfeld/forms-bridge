@@ -29,13 +29,6 @@ class Odoo_Form_Bridge extends Form_Bridge
     private const endpoint = '/jsonrpc';
 
     /**
-     * Handles the array of accepted HTTP header names of the bridge API.
-     *
-     * @var array<string>
-     */
-    protected static $api_headers = ['Content-Type', 'Accept'];
-
-    /**
      * Handles active RPC session data.
      *
      * @var array Tuple with session and user ids.
@@ -214,7 +207,7 @@ class Odoo_Form_Bridge extends Form_Bridge
      */
     protected function credential()
     {
-        if (!$this->is_valid()) {
+        if (!$this->is_valid) {
             return;
         }
 

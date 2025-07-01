@@ -49,3 +49,49 @@ foreach ($setting_names as $setting_name) {
 
     update_option($option, $data);
 }
+
+$http = get_option('http-bridge_general', []);
+
+if (isset($http['backends'])) {
+    foreach ($http['backends'] as &$backend) {
+        $header_names = array_column($backend['headers'], 'name');
+        $user_index = array_search('api_user', $header_names);
+        $token_index = array_search('token', $header_names);
+
+        if ($user_index !== false && $token_index !== false) {
+            $user = $backend['headers'][$user_index]['value'];
+            $token = $backend['headers'][$user_index]['value'];
+
+            $headers = [];
+            foreach ($backend['headers'] as $header) {
+                if (!in_array($header['name'], ['api_user', 'token'], true)) {
+                    $headers[] = $header;
+                }
+            }
+
+            $headers[] = [
+                'name' => 'Authorization',
+                'value' => "token {$user}:{$token}",
+            ];
+
+            $backend['headers'] = $headers;
+        } elseif (strstr($backend['base_url'], 'api.mailchimp.com')) {
+            $index = array_search(
+                'api-key',
+                array_column($backend['headers'], 'name')
+            );
+
+            if ($index !== false) {
+                $key = $backend['headers'][$index]['value'];
+                $backend['headers'][] = [
+                    'name' => 'Authorization',
+                    'value' => 'Basic ' . base64_encode("forms-bridge:{$key}"),
+                ];
+
+                array_splice($backend['headers'], $index, 1);
+            }
+        }
+    }
+
+    update_option('http-bridge_general', $http);
+}

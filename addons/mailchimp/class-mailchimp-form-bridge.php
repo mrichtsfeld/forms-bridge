@@ -21,13 +21,6 @@ class Mailchimp_Form_Bridge extends Rest_Form_Bridge
     protected $api = 'mailchimp';
 
     /**
-     * Handles the array of accepted HTTP header names of the bridge API.
-     *
-     * @var array<string>
-     */
-    protected static $api_headers = ['Accept', 'Content-Type', 'Authorization'];
-
-    /**
      * Gets bridge's default body encoding schema.
      *
      * @return string|null
@@ -220,7 +213,7 @@ class Mailchimp_Form_Bridge extends Rest_Form_Bridge
                 'name' => 'mailchimp-get-merge-fields',
                 'endpoint' => $fields_endpoint,
                 'method' => 'GET',
-            ])->submit([]);
+            ])->submit();
 
             if (is_wp_error($response)) {
                 return [];
@@ -237,28 +230,5 @@ class Mailchimp_Form_Bridge extends Rest_Form_Bridge
         }
 
         return [];
-    }
-
-    /**
-     * Filters HTTP request args just before it is sent.
-     *
-     * @param array $request Request arguments.
-     *
-     * @return array
-     */
-    public static function do_filter_request($request)
-    {
-        $headers = &$request['args']['headers'];
-
-        if (empty($headers['Api-Key'])) {
-            return $request;
-        }
-
-        $basic_auth =
-            'Basic ' . base64_encode('forms-bridge:' . $headers['Api-Key']);
-
-        $headers['Authorization'] = $basic_auth;
-
-        return $request;
     }
 }

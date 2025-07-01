@@ -187,4 +187,47 @@ class Zoho_Form_Bridge_Template extends Form_Bridge_Template
 
         return $schema;
     }
+
+    public function use($fields, $integration)
+    {
+        add_filter(
+            'forms_bridge_template_data',
+            function ($data, $template_id) {
+                if ($template_id !== $this->id) {
+                    return $data;
+                }
+
+                $index = array_search(
+                    'Tag',
+                    array_column($data['bridge']['custom_fields'], 'name')
+                );
+
+                if ($index !== false) {
+                    $field = &$data['bridge']['custom_fields'][$index];
+
+                    if (!empty($field['value'])) {
+                        $tags = array_filter(
+                            array_map(
+                                'trim',
+                                explode(',', strval($field['value']))
+                            )
+                        );
+
+                        for ($i = 0; $i < count($tags); $i++) {
+                            $data['bridge']['custom_fields'][] = [
+                                'name' => "Tag[{$i}].name",
+                                'value' => $tags[$i],
+                            ];
+                        }
+                    }
+
+                    array_splice($data['bridge']['custom_fields'], $index, 1);
+                }
+
+                return $data;
+            },
+            10,
+            2
+        );
+    }
 }

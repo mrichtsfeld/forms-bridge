@@ -55,7 +55,7 @@ class Google_Sheets_Form_Bridge extends Form_Bridge
      */
     protected function backend()
     {
-        if (!$this->is_valid()) {
+        if (!$this->is_valid) {
             return;
         }
 

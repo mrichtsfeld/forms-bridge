@@ -131,4 +131,86 @@ class Mailchimp_Form_Bridge_Template extends Rest_Form_Bridge_Template
             self::schema()
         );
     }
+
+    public function use($fields, $integration)
+    {
+        add_filter(
+            'forms_bridge_template_data',
+            function ($data, $template_id) {
+                if ($template_id !== $this->id) {
+                    return $data;
+                }
+
+                $header_names = array_column(
+                    $data['backend']['header'],
+                    'name'
+                );
+                $custom_field_names = array_column(
+                    $data['bridge']['custom_fields'],
+                    'name'
+                );
+
+                $index = array_search('datacenter', $header_names);
+                if ($index !== false) {
+                    $dc = $data['backend']['headers'][$index]['value'];
+                    $data['backend']['base_url'] = preg_replace(
+                        '/\{dc\}/',
+                        $dc,
+                        $data['backend']['base_url']
+                    );
+
+                    array_splice($data['backend']['headers'], $index, 1);
+                }
+
+                $index = array_search('api-key', $header_names);
+                if ($index !== false) {
+                    $key = $data['backend']['headers'][$index];
+
+                    $data['backend']['headers'][] = [
+                        'name' => 'Authorization',
+                        'value' =>
+                            'Basic ' . base64_encode("forms-bridge:{$key}"),
+                    ];
+
+                    array_splice($data['backend']['headers'], $index, 1);
+                }
+
+                $index = array_search('list_id', $custom_field_names);
+                if ($index !== false) {
+                    $list_id =
+                        $data['bridge']['custom_fields'][$index]['value'];
+                    $data['bridge']['endpoint'] = preg_replace(
+                        '/\{list_id\}/',
+                        $list_id,
+                        $data['bridge']['endpoint']
+                    );
+
+                    array_splice($data['bridge']['custom_fields'], $index, 1);
+                }
+
+                $index = array_search('tags', $custom_field_names);
+                if ($index !== false) {
+                    $field = &$data['bridge']['custom_fields'][$index];
+
+                    $tags = array_filter(
+                        array_map('trim', explode(',', strval($field['value'])))
+                    );
+                    for ($i = 0; $i < count($tags); $i++) {
+                        $data['bridge']['custom_fields'][] = [
+                            'name' => "tags[{$i}]",
+                            'value' => $tags[$i],
+                        ];
+                    }
+
+                    array_splice($data['bridge']['custom_fields'], $index, 1);
+                }
+
+                return $data;
+            },
+            10,
+            2
+        );
+
+        return parent::use($fields, $integration);
+    }
 }

@@ -22,18 +22,11 @@ class Zoho_Form_Bridge extends Form_Bridge
     protected $api = 'zoho';
 
     /**
-     * Handles the array of accepted HTTP header names of the bridge API.
-     *
-     * @var array<string>
-     */
-    protected static $api_headers = ['Authorization', 'Content-Type', 'Accept'];
-
-    /**
      * Handles the oauth access token transient name.
      *
      * @var string
      */
-    private const token_transient = 'forms-bridge-zoho-oauth-access-token';
+    protected const token_transient = 'forms-bridge-zoho-oauth-access-token';
 
     /**
      * Handles the zoho oauth service name.
@@ -49,7 +42,6 @@ class Zoho_Form_Bridge extends Form_Bridge
         $schema['properties']['endpoint'] = [
             'description' => __('HTTP API endpoint', 'forms-bridge'),
             'type' => 'string',
-            'minLength' => 1,
         ];
 
         $schema['required'][] = 'endpoint';
@@ -60,7 +52,6 @@ class Zoho_Form_Bridge extends Form_Bridge
                 'forms-bridge'
             ),
             'type' => 'string',
-            'minLength' => 1,
         ];
 
         $schema['required'][] = 'scope';
@@ -94,7 +85,7 @@ class Zoho_Form_Bridge extends Form_Bridge
      */
     protected function credential()
     {
-        if (!$this->is_valid()) {
+        if (!$this->is_valid) {
             return;
         }
 
@@ -187,7 +178,7 @@ class Zoho_Form_Bridge extends Form_Bridge
     protected function get_access_token($token = null)
     {
         if (!$token) {
-            $transient = get_transient(self::token_transient);
+            $transient = get_transient(static::token_transient);
 
             if ($transient) {
                 try {
@@ -270,7 +261,7 @@ class Zoho_Form_Bridge extends Form_Bridge
         $data['expires_at'] = $data['expires_in'] + time() - 10;
 
         set_transient(
-            self::token_transient,
+            static::token_transient,
             json_encode($data),
             $response['data']['expires_in'] - 10
         );

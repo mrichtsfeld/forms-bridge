@@ -4,44 +4,6 @@ if (!defined('ABSPATH')) {
     exit();
 }
 
-add_filter(
-    'forms_bridge_template_data',
-    function ($data, $template_name) {
-        if ($template_name === 'odoo-mailing-lists') {
-            $index = array_search(
-                'list_ids',
-                array_column($data['bridge']['custom_fields'], 'name')
-            );
-
-            if ($index !== false) {
-                $field = $data['bridge']['custom_fields'][$index];
-
-                for ($i = 0; $i < count($field['value']); $i++) {
-                    $data['bridge']['custom_fields'][] = [
-                        'name' => "list_ids[{$i}]",
-                        'value' => $field['value'][$i],
-                    ];
-
-                    $data['bridge']['mutations'][0][] = [
-                        'from' => "list_ids[{$i}]",
-                        'to' => "list_ids[{$i}]",
-                        'cast' => 'integer',
-                    ];
-                }
-
-                array_splice($data['bridge']['custom_fields'], $index, 1);
-                $data['bridge']['custom_fields'] = array_values(
-                    $data['bridge']['custom_fields']
-                );
-            }
-        }
-
-        return $data;
-    },
-    10,
-    2
-);
-
 return [
     'title' => __('Mailing Lists', 'forms-bridge'),
     'description' => __(

@@ -21,13 +21,6 @@ class Listmonk_Form_Bridge extends Rest_Form_Bridge
     protected $api = 'listmonk';
 
     /**
-     * Handles the array of accepted HTTP header names of the bridge API.
-     *
-     * @var array<string>
-     */
-    protected static $api_headers = ['Accept', 'Content-Type', 'Authorization'];
-
-    /**
      * Gets bridge's default body encoding schema.
      *
      * @return string|null
@@ -127,28 +120,5 @@ class Listmonk_Form_Bridge extends Rest_Form_Bridge
         }
 
         return [];
-    }
-
-    /**
-     * Filter and decoration of default http headers.
-     *
-     * @param array $request HTTP request args.
-     *
-     * @return array
-     */
-    public static function do_filter_request($request)
-    {
-        $headers = &$request['args']['headers'];
-
-        $user = $headers['Api-User'] ?? null;
-        $token = $headers['Token'] ?? null;
-
-        if (empty($user) || empty($token)) {
-            return $request;
-        }
-
-        $headers['Authorization'] = "token {$user}:{$token}";
-
-        return $request;
     }
 }

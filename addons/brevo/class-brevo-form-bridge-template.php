@@ -67,4 +67,89 @@ class Brevo_Form_Bridge_Template extends Rest_Form_Bridge_Template
             self::schema()
         );
     }
+
+    public function use($fields, $integration)
+    {
+        add_filter(
+            'forms_bridge_template_data',
+            function ($data, $template_id) {
+                if ($template_id !== $this->id) {
+                    return $data;
+                }
+
+                $custom_field_names = array_column(
+                    $data['bridge']['custom_fields'],
+                    'name'
+                );
+
+                $index = array_search('listIds', $custom_field_names);
+
+                if ($index !== false) {
+                    $field = $data['bridge']['custom_fields'][$index];
+
+                    for ($i = 0; $i < count($field['value']); $i++) {
+                        $data['bridge']['custom_fields'][] = [
+                            'name' => "listIds[{$i}]",
+                            'value' => $field['value'][$i],
+                        ];
+
+                        $data['bridge']['mutations'][0][] = [
+                            'from' => "listIds[{$i}]",
+                            'to' => "listIds[{$i}]",
+                            'cast' => 'integer',
+                        ];
+                    }
+
+                    array_splice($data['bridge']['custom_fields'], $index, 1);
+                }
+
+                $index = array_search('includeListIds', $custom_field_names);
+
+                if ($index !== false) {
+                    $field = $data['bridge']['custom_fields'][$index];
+
+                    for ($i = 0; $i < count($field['value']); $i++) {
+                        $data['bridge']['custom_fields'][] = [
+                            'name' => "includeListIds[{$i}]",
+                            'value' => $field['value'][$i],
+                        ];
+
+                        $data['bridge']['mutations'][0][] = [
+                            'from' => "includeListIds[{$i}]",
+                            'to' => "includeListIds[{$i}]",
+                            'cast' => 'integer',
+                        ];
+                    }
+
+                    array_splice($data['bridge']['custom_fields'], $index, 1);
+                }
+
+                $index = array_search('redirectionUrl', $custom_field_names);
+
+                if ($index !== false) {
+                    $field = &$data['bridge']['custom_fields'][$index];
+
+                    $field['value'] = (string) filter_var(
+                        (string) $field['value'],
+                        FILTER_SANITIZE_URL
+                    );
+
+                    $parsed = parse_url($field['value']);
+
+                    if (!isset($parsed['host'])) {
+                        $site_url = get_site_url();
+
+                        $field['value'] =
+                            $site_url .
+                            '/' .
+                            preg_replace('/^\/+/', '', $field['value']);
+                    }
+                }
+
+                return $data;
+            },
+            10,
+            2
+        );
+    }
 }

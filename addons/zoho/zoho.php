@@ -2,6 +2,8 @@
 
 namespace FORMS_BRIDGE;
 
+use HTTP_BRIDGE\Http_Backend;
+
 if (!defined('ABSPATH')) {
     exit();
 }
@@ -216,15 +218,17 @@ class Zoho_Addon extends Addon
 
         $bridge = new static::$bridge_class([
             'name' => '__zoho-' . time(),
-            'backend' => $backend,
             'credential' => $credential['name'],
             'backend' => $backend,
-            'endpoint' => '',
+            'endpoint' => '/',
             'scope' => '',
             'method' => 'GET',
         ]);
 
-        $success = preg_match('/www\.zohoapis\./', $bridge->backend->base_url);
+        $backend = $bridge->backend;
+        $success =
+            $backend instanceof Http_Backend &&
+            strstr($backend->base_url, 'www.zohoapis.') !== false;
         return ['success' => $success && $bridge->check_credential()];
     }
 
