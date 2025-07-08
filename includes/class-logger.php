@@ -202,47 +202,22 @@ class Logger extends Singleton
      */
     protected function construct(...$args)
     {
-        add_action('rest_api_init', static function () {
-            self::register_log_route();
-        });
-
-        add_filter(
-            'wpct_plugin_setting_default',
-            static function ($default, $name) {
-                if ($name !== Forms_Bridge::slug() . '_general') {
-                    return $default;
-                }
-
-                return array_merge($default, ['debug' => self::is_active()]);
+        add_action(
+            'rest_api_init',
+            static function () {
+                self::register_log_route();
             },
-            5,
-            2
+            10,
+            0
         );
 
-        add_action('plugins_loaded', static function () {
-            $plugin_slug = Forms_Bridge::slug();
-            add_filter("option_{$plugin_slug}_general", static function (
-                $value
-            ) {
-                if (!is_array($value)) {
-                    return $value;
-                }
-
-                $value['debug'] = self::is_active();
-                return $value;
+        Settings_Store::ready(function ($store) {
+            $store::use_getter('general', static function ($data) {
+                $data['debug'] = self::is_active();
+                return $data;
             });
-        });
 
-        add_filter(
-            'wpct_plugin_validate_setting',
-            static function ($data, $setting) {
-                if (
-                    $setting->full_name() !==
-                    Forms_Bridge::slug() . '_general'
-                ) {
-                    return $data;
-                }
-
+            $store::use_setter('general', static function ($data) {
                 if (isset($data['debug']) && $data['debug'] === true) {
                     self::activate();
                 } else {
@@ -251,10 +226,8 @@ class Logger extends Singleton
 
                 unset($data['debug']);
                 return $data;
-            },
-            9,
-            2
-        );
+            });
+        });
     }
 
     /**

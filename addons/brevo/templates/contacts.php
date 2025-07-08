@@ -19,6 +19,7 @@ return [
         [
             'ref' => '#bridge/custom_fields[]',
             'name' => 'listIds',
+            'endpoint' => '/v3/contacts/lists',
             'label' => __('Segments', 'forms-bridge'),
             'type' => 'string',
             'required' => true,

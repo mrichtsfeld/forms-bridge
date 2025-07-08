@@ -44,8 +44,8 @@ function validateForm(form, schema, fields, integration) {
 }
 
 export default function FormStep({ fields, data, setData, integration }) {
-  const { form: schema } = useTemplateConfig();
-  const forms = useForms();
+  const [{ form: schema }] = useTemplateConfig();
+  const [forms] = useForms();
 
   const validForms = useMemo(
     () =>

@@ -186,11 +186,23 @@ JsonFinger.prototype.get = function (pointer, expansion = []) {
 JsonFinger.prototype.getExpanded = function (pointer, expansion = []) {
   const flat = /\[\]$/.test(pointer);
 
-  const parts = pointer.split("[]").filter((p) => p);
+  const parts = pointer.split("[]");
   const before = parts[0];
-  let after = parts.slice(1).join("[]");
+  let after = parts
+    .slice(1)
+    .filter((p) => p)
+    .join("[]");
 
-  const value = this.get(before);
+  let value;
+  if (!before) {
+    if (!Array.isArray(this.data)) {
+      return [];
+    }
+
+    value = this.data;
+  } else {
+    value = this.get(before);
+  }
 
   if (!after.length || !Array.isArray(value)) {
     return value;

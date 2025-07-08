@@ -20,38 +20,42 @@ abstract class Integration extends Singleton
      */
     private const registry = 'forms_bridge_integrations';
 
+    public const title = 'Abstract Integration';
+
+    public const name = 'abstract-integration';
+
     /**
      * Handles available integrations state.
      *
-     * @var array $integrations.
+     * @var array<string, Integration|null> $integrations.
      */
-    private static $integrations = [
-        'gf' => null,
-        'wpforms' => null,
-        'wpcf7' => null,
-        'ninja' => null,
-        'woo' => null,
-        // 'formidable' => null,
-        // 'forminator' => null,
-    ];
+    private static $integrations = [];
+    // 'gf' => null,
+    // 'wpforms' => null,
+    // 'wpcf7' => null,
+    // 'ninja' => null,
+    // 'woo' => null,
+    // 'formidable' => null,
+    // 'forminator' => null,
+    // ];
 
     private static function check_dependencies($integration)
     {
         switch ($integration) {
             case 'wpcf7':
-                $plugin = 'contact-form-7/wp-contact-form-7.php';
+                $deps = ['contact-form-7/wp-contact-form-7.php'];
                 break;
             case 'gf':
-                $plugin = 'gravityforms/gravityforms.php';
+                $deps = ['gravityforms/gravityforms.php'];
                 break;
             case 'wpforms':
-                $plugin = ['wpforms-lite/wpforms.php', 'wpforms/wpforms.php'];
+                $deps = ['wpforms-lite/wpforms.php', 'wpforms/wpforms.php'];
                 break;
             case 'ninja':
-                $plugin = 'ninja-forms/ninja-forms.php';
+                $deps = ['ninja-forms/ninja-forms.php'];
                 break;
             case 'woo':
-                $plugin = 'woocommerce/woocommerce.php';
+                $deps = ['woocommerce/woocommerce.php'];
                 break;
             // case 'formidable':
             //     $plugin = 'formidable/formidable.php';
@@ -60,16 +64,13 @@ abstract class Integration extends Singleton
             //     $plugin = 'forminator/forminator.php';
             //     break;
             default:
-                $plugin = null;
-        }
-
-        if (!is_array($plugin)) {
-            $plugin = [$plugin];
+                return false;
         }
 
         $is_active = false;
-        foreach ($plugin as $p) {
-            $is_active = Forms_Bridge::is_plugin_active($p);
+        foreach ($deps as $dep) {
+            $is_active = Forms_Bridge::is_plugin_active($dep);
+
             if ($is_active) {
                 break;
             }
@@ -83,10 +84,10 @@ abstract class Integration extends Singleton
      *
      * @return array Integration registry state.
      */
-    public static function registry()
+    private static function registry()
     {
-        $state = (array) get_option(self::registry, []);
-        $integrations_dir = dirname(__FILE__);
+        $state = get_option(self::registry, []) ?: [];
+        $integrations_dir = FORMS_BRIDGE_INTEGRATIONS_DIR;
         $integrations = array_diff(scandir($integrations_dir), ['.', '..']);
 
         $registry = [];
@@ -97,11 +98,12 @@ abstract class Integration extends Singleton
             }
 
             $index = "{$integration_dir}/class-integration.php";
-            $has_dependencies = self::check_dependencies($integration);
-            if (is_file($index) && $has_dependencies) {
-                $registry[$integration] = isset($state[$integration])
-                    ? (bool) $state[$integration]
-                    : false;
+            $has_deps = self::check_dependencies($integration);
+
+            if (is_file($index) && is_readable($index) && $has_deps) {
+                $registry[$integration] = boolval(
+                    $state[$integration] ?? false
+                );
             }
         }
 
@@ -120,20 +122,16 @@ abstract class Integration extends Singleton
      *
      * @param array $integrations New integrations' registry state.
      */
-    public static function update_registry($integrations = [])
+    private static function update_registry($integrations = [])
     {
         $registry = self::registry();
-        foreach ($integrations as $integration => $enabled) {
-            if (
-                !(
-                    isset($registry[$integration]) &&
-                    self::check_dependencies($integration)
-                )
-            ) {
+        foreach ($integrations as $name => $enabled) {
+            $has_deps = self::check_dependencies($name);
+            if (!($has_deps && isset($registry[$name]))) {
                 continue;
             }
 
-            $registry[$integration] = (bool) $enabled;
+            $registry[$name] = (bool) $enabled;
         }
 
         update_option(self::registry, $registry);
@@ -144,81 +142,132 @@ abstract class Integration extends Singleton
      *
      * @return array List with integration instances.
      */
-    public static function integrations()
+    final public static function integrations()
     {
-        $actives = [];
-        foreach (self::$integrations as $integration => $instance) {
-            if ($instance) {
-                $actives[$integration] = $instance;
+        $integrations = [];
+        foreach (self::$integrations as $instance) {
+            if ($instance->enabled) {
+                $integrations[] = $instance;
             }
         }
 
-        return $actives;
+        return $integrations;
+    }
+
+    final public static function integration($name)
+    {
+        return self::$integrations[$name] ?? null;
     }
 
     /**
      * Public integrations loader.
      */
-    public static function load()
+    public static function load_integrations()
     {
         $integrations_dir = dirname(__FILE__);
         $registry = self::registry();
 
         foreach ($registry as $integration => $enabled) {
             $has_dependencies = self::check_dependencies($integration);
-            if ($enabled && $has_dependencies) {
-                $NS = strtoupper($integration);
+
+            if ($has_dependencies) {
                 require_once "{$integrations_dir}/{$integration}/class-integration.php";
 
-                self::$integrations[$integration] = (
-                    '\FORMS_BRIDGE\\' .
-                    $NS .
-                    '\Integration'
-                )::get_instance();
+                if ($enabled) {
+                    self::$integrations[$integration]->load();
+                }
             }
         }
 
-        self::custom_hooks();
-        self::handle_setting();
+        Settings_Store::ready(function ($store) {
+            $store::use_getter('general', function ($data) {
+                $registry = self::registry();
+                $integrations = [];
+                foreach (self::$integrations as $name => $integration) {
+                    $integrations[$name] = [
+                        'name' => $name,
+                        'title' => $integration::title,
+                        'enabled' => $registry[$name] ?? false,
+                    ];
+                }
+
+                ksort($integrations);
+                $integrations = array_values($integrations);
+
+                $integrations = apply_filters(
+                    'forms_bridge_integrations',
+                    $integrations
+                );
+                return array_merge($data, ['integrations' => $integrations]);
+            });
+
+            $store::use_setter(
+                'general',
+                function ($data) {
+                    if (
+                        !isset($data['integrations']) ||
+                        !is_array($data['integrations'])
+                    ) {
+                        return $data;
+                    }
+
+                    $registry = [];
+                    foreach ($data['integrations'] as $integration) {
+                        $registry[$integration['name']] =
+                            (bool) $integration['enabled'];
+                    }
+
+                    self::update_registry($registry);
+
+                    unset($data['integrations']);
+                    return $data;
+                },
+                9
+            );
+        });
     }
 
-    private static function custom_hooks()
+    public static function setup(...$args)
     {
+        return static::get_instance(...$args);
+    }
+
+    public $enabled = false;
+
+    protected function construct(...$args)
+    {
+        self::$integrations[static::name] = $this;
+    }
+
+    public function load()
+    {
+        add_action('init', function () {
+            $this->init();
+        });
+
         // Gets available forms' data.
         add_filter(
             'forms_bridge_forms',
-            static function ($forms, $integration = null) {
+            function ($forms, $integration = null) {
                 if (!wp_is_numeric_array($forms)) {
                     $forms = [];
                 }
 
-                $integrations = self::integrations();
-
-                if ($integration) {
-                    if ($integration = $integrations[$integration] ?? null) {
-                        return $integration->forms();
-                    }
-
-                    return [];
+                if ($integration && $integration !== self::name) {
+                    return $forms;
                 }
 
-                $forms = [];
-                foreach ($integrations as $integration) {
-                    $forms = array_merge($forms, $integration->forms());
-                }
-
+                $forms = array_merge($forms, $this->forms());
                 return $forms;
             },
-            5,
+            9,
             2
         );
 
         // Gets form data by context or by ID
         add_filter(
             'forms_bridge_form',
-            static function ($form, $form_id = null, $integration = null) {
-                $integrations = self::integrations();
-
+            function ($form, $form_id = null, $integration = null) {
                 if ($form_id) {
                     if (preg_match('/^(\w+):(\d+)$/', $form_id, $matches)) {
                         [, $integration, $form_id] = $matches;
@@ -228,132 +277,56 @@ abstract class Integration extends Singleton
                     }
                 }
 
-                if ($integration) {
-                    if ($integration = $integrations[$integration] ?? null) {
-                        if ($form_id) {
-                            return $integration->get_form_by_id($form_id);
-                        } else {
-                            return $integration->form();
-                        }
-                    } else {
-                        return $form;
-                    }
+                if ($integration && $integration !== self::name) {
+                    return $form;
                 }
 
-                foreach ($integrations as $integration) {
-                    if ($current_form = $integration->form()) {
-                        return $current_form;
-                    }
+                if ($form_id) {
+                    return $this->get_form_by_id($form_id);
                 }
 
-                return $form;
+                return $this->form();
             },
-            5,
+            9,
             3
         );
 
         // Gets current submission data
         add_filter(
             'forms_bridge_submission',
-            static function ($value, $raw = false) {
-                $integrations = self::integrations();
-                foreach ($integrations as $integration) {
-                    $submission = $integration->submission($raw);
-                    if ($submission !== null) {
-                        return $submission;
-                    }
-                }
-
-                return $value;
+            function ($submission, $raw = false) {
+                return $this->submission($raw) ?: $submission;
             },
-            5,
+            9,
             2
         );
 
         add_filter(
             'forms_bridge_submission_id',
-            static function ($value) {
-                $integrations = self::integrations();
-                foreach ($integrations as $integration) {
-                    if ($submission_id = $integration->submission_id()) {
-                        return $submission_id;
-                    }
-                }
-
-                return $value;
+            function ($submission_id) {
+                return $this->submission_id() ?: $submission_id;
             },
-            10,
+            9,
             1
         );
 
         // Gets curent submission uploads
         add_filter(
             'forms_bridge_uploads',
-            static function ($value) {
-                $integrations = self::integrations();
-                foreach ($integrations as $integration) {
-                    if ($uploads = $integration->uploads()) {
-                        return $uploads;
-                    }
-                }
-
-                return $value;
-            },
-            5,
-            1
-        );
-    }
-
-    private static function handle_setting()
-    {
-        $general_setting = Forms_Bridge::slug() . '_general';
-
-        add_filter(
-            'wpct_plugin_setting_default',
-            static function ($default, $name) use ($general_setting) {
-                if ($name !== $general_setting) {
-                    return $default;
-                }
-
-                return array_merge($default, [
-                    'integrations' => self::registry(),
-                ]);
-            },
-            9,
-            2
-        );
-
-        add_filter(
-            "option_{$general_setting}",
-            static function ($value) {
-                if (!is_array($value)) {
-                    return $value;
-                }
-
-                return array_merge($value, [
-                    'integrations' => self::registry(),
-                ]);
+            function ($uploads) {
+                return $this->uploads() ?: $uploads;
             },
             9,
             1
         );
 
-        add_filter(
-            'wpct_plugin_validate_setting',
-            function ($data, $setting) use ($general_setting) {
-                if ($setting->full_name() !== $general_setting) {
-                    return $data;
-                }
-
-                self::update_registry((array) $data['integrations']);
-                unset($data['integrations']);
-
-                return $data;
-            },
-            9,
-            2
-        );
+        $this->enabled = true;
     }
+
+    /**
+     * Integration initializer to be fired on wp init.
+     */
+    abstract protected function init();
 
     /**
      * Retrives the current form.
@@ -411,19 +384,4 @@ abstract class Integration extends Singleton
      * @return array Collection of uploaded files.
      */
     abstract public function uploads();
-
-    /**
-     * Integration initializer to be fired on wp init.
-     */
-    abstract protected function init();
-
-    /**
-     * Binds integration initializer to wp init hook.
-     */
-    protected function construct(...$args)
-    {
-        add_action('init', function () {
-            $this->init();
-        });
-    }
 }

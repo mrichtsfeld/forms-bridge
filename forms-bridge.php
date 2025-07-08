@@ -45,22 +45,21 @@ require_once 'includes/trait-bridge-mutations.php';
 
 // Classes
 require_once 'includes/class-api.php';
-require_once 'includes/class-form-bridge-template.php';
-require_once 'includes/class-form-bridge.php';
 require_once 'includes/class-json-finger.php';
-require_once 'includes/class-logger.php';
-require_once 'includes/class-menu.php';
-require_once 'includes/class-notification-error.php';
 require_once 'includes/class-rest-settings-controller.php';
 require_once 'includes/class-settings-store.php';
-require_once 'includes/class-workflow-job.php';
+require_once 'includes/class-logger.php';
+require_once 'includes/class-menu.php';
+require_once 'includes/class-form-bridge.php';
+require_once 'includes/class-form-bridge-template.php';
+require_once 'includes/class-job.php';
 
 // Abstracts
 require_once 'integrations/abstract-integration.php';
 require_once 'addons/abstract-addon.php';
 
 // Post types
-require_once 'post_types/workflow-job.php';
+require_once 'post_types/job.php';
 require_once 'post_types/bridge-template.php';
 
 /**
@@ -80,14 +79,14 @@ class Forms_Bridge extends Base_Plugin
      *
      * @var string
      */
-    protected static $store_class = '\FORMS_BRIDGE\Settings_Store';
+    protected const store_class = '\FORMS_BRIDGE\Settings_Store';
 
     /**
      * Handle plugin menu class name.
      *
      * @var string
      */
-    protected static $menu_class = '\FORMS_BRIDGE\Menu';
+    protected const menu_class = '\FORMS_BRIDGE\Menu';
 
     /**
      * Handles the current bridge instance. Available only during form submissions.
@@ -103,10 +102,36 @@ class Forms_Bridge extends Base_Plugin
     {
         parent::construct(...$args);
 
-        Addon::load();
-        Integration::load();
+        Addon::load_addons();
+        Integration::load_integrations();
 
-        self::wp_hooks();
+        add_action('admin_enqueue_scripts', static function ($admin_page) {
+            if ('settings_page_forms-bridge' === $admin_page) {
+                self::admin_enqueue_scripts();
+            }
+        });
+
+        add_filter(
+            'plugin_action_links',
+            static function ($links, $file) {
+                if ($file !== 'forms-bridge/forms-bridge.php') {
+                    return $links;
+                }
+
+                $url = 'https://formsbridge.codeccoop.org/documentation/';
+                $label = __('Documentation', 'forms-bridge');
+                $link = sprintf(
+                    '<a href="%s" target="_blank">%s</a>',
+                    esc_url($url),
+                    esc_html($label)
+                );
+                array_push($links, $link);
+
+                return $links;
+            },
+            15,
+            2
+        );
 
         add_action(
             'forms_bridge_on_failure',
@@ -117,8 +142,7 @@ class Forms_Bridge extends Base_Plugin
             4
         );
 
-        // Defer data loading to init to avoid i18n api warnings
-        add_action('init', [self::class, 'load_data'], 0);
+        add_action('init', [self::class, 'load_data'], 0, 0);
     }
 
     /**
@@ -150,69 +174,35 @@ class Forms_Bridge extends Base_Plugin
      */
     public static function load_data()
     {
-        require_once 'includes/data/country-phone-codes.php';
-        require_once 'includes/data/iso2-countries.php';
-        require_once 'includes/data/iso3-countries.php';
-    }
-
-    /**
-     * Binds plugin to wp hooks.
-     */
-    private static function wp_hooks()
-    {
-        // Enqueue plugin admin client scripts
-        add_action('admin_enqueue_scripts', static function ($admin_page) {
-            self::admin_enqueue_scripts($admin_page);
-        });
-
-        add_filter(
-            'plugin_action_links',
-            static function ($links, $file) {
-                if ($file !== 'forms-bridge/forms-bridge.php') {
-                    return $links;
-                }
-
-                $url = 'https://formsbridge.codeccoop.org/documentation/';
-                $label = __('Documentation', 'forms-bridge');
-                $link = sprintf(
-                    '<a href="%s" target="_blank">%s</a>',
-                    esc_url($url),
-                    esc_html($label)
-                );
-                array_push($links, $link);
-                return $links;
-            },
-            15,
-            2
-        );
+        $data_dir = self::path() . 'data';
+        foreach (array_diff(scandir($data_dir), ['.', '..']) as $file) {
+            $filepath = "{$data_dir}/{$file}";
+            if (is_file($filepath) && is_readable($filepath)) {
+                require_once $filepath;
+            }
+        }
     }
 
     /**
      * Enqueue admin client scripts
-     *
-     * @param string $admin_page Current admin page.
      */
-    private static function admin_enqueue_scripts($admin_page)
+    private static function admin_enqueue_scripts()
     {
-        $slug = self::slug();
         $version = self::version();
-        if ('settings_page_' . $slug !== $admin_page) {
-            return;
-        }
+
+        // wp_enqueue_script(
+        //     'forms-bridge',
+        //     plugins_url('assets/wpfb.js', __FILE__),
+        //     [],
+        //     $version,
+        //     ['in_footer' => false]
+        // );
 
         wp_enqueue_script(
-            $slug,
-            plugins_url('assets/wpfb.js', __FILE__),
-            [],
-            $version,
-            ['in_footer' => false]
-        );
-
-        wp_enqueue_script(
-            $slug . '-admin',
+            'forms-bridge',
             plugins_url('assets/plugin.bundle.js', __FILE__),
             [
-                $slug,
+                // 'forms-bridge',
                 'react',
                 'react-jsx-runtime',
                 'wp-api-fetch',
@@ -227,12 +217,26 @@ class Forms_Bridge extends Base_Plugin
         );
 
         wp_set_script_translations(
-            $slug . '-admin',
-            $slug,
-            plugin_dir_path(__FILE__) . 'languages'
+            'forms-bridge',
+            'forms-bridge',
+            self::path() . 'languages'
         );
 
         wp_enqueue_style('wp-components');
+
+        wp_enqueue_style(
+            'highlight-js',
+            'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/github.min.css',
+            [],
+            '11.11.1'
+        );
+
+        wp_enqueue_script(
+            'highlight-js',
+            'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/highlight.min.js',
+            [],
+            '11.11.1'
+        );
     }
 
     public static function current_bridge()
@@ -279,7 +283,7 @@ class Forms_Bridge extends Base_Plugin
         }
 
         foreach ($bridges as $bridge) {
-            if (!$bridge->is_valid()) {
+            if (!$bridge->is_valid) {
                 Logger::log(
                     'Skip submission for invalid bridge ' . $bridge->name
                 );
@@ -343,8 +347,8 @@ class Forms_Bridge extends Base_Plugin
                     Logger::log($payload);
                 }
 
-                if ($workflow = $bridge->workflow) {
-                    $payload = $workflow->run($payload, $bridge);
+                if ($job = $bridge->workflow) {
+                    $payload = $job->run($payload, $bridge);
 
                     if (empty($payload)) {
                         Logger::log('Skip empty payload after bridge workflow');
@@ -411,9 +415,12 @@ class Forms_Bridge extends Base_Plugin
                         $attachments
                     );
                 }
-            } catch (Notification_Exception $e) {
-                throw $e;
             } catch (Error | Exception $e) {
+                $message = $e->getMessage();
+                if ($message === 'notification_error') {
+                    throw $e;
+                }
+
                 $error = new WP_Error(
                     'internal_server_error',
                     $e->getMessage(),
@@ -607,7 +614,7 @@ class Forms_Bridge extends Base_Plugin
 
         $success = wp_mail($to, $subject, $body, $headers, $attachments);
         if (!$success) {
-            throw new Notification_Exception($body);
+            throw new Exception('notification_error');
         }
     }
 

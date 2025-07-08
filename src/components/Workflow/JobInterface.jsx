@@ -87,7 +87,9 @@ function InputField({ data }) {
     ? __("Field is required", "forms-bridge")
     : mutated
       ? __("Field type mutation", "forms-bridge")
-      : "";
+      : optional
+        ? __("Field is optional", "forms-bridge")
+        : "";
 
   const displayName = required ? name + "*" : name;
 
@@ -137,7 +139,6 @@ export default function WorkflowJobInterface({
     setOverflow(wrapper.current.offsetHeight > 20);
   }, [fields]);
 
-  console.log({ inline });
   return (
     <div
       style={{
@@ -154,17 +155,20 @@ export default function WorkflowJobInterface({
           gap: "5px",
           flexWrap: "wrap",
         }}
+        onClick={() => setExpanded(!expanded)}
       >
         {(inline && (
           <strong>{__("Job interface", "forms-bridge")}:&nbsp;</strong>
         )) || (
-          <p style={{ margin: 0 }}>{__("Job interface", "forms-bridge")}</p>
+          <p style={{ margin: 0 }}>
+            {__("Job interface", "forms-bridge")}:&nbsp;
+          </p>
         )}
         {(fields.length &&
           fields.map((field) => (
             <InputField key={field.name} data={field} />
           ))) ||
-          __("No input fields", "forms-bridge")}
+          null}
       </div>
       {(overflow && collapsible && (
         <button

@@ -7,9 +7,8 @@ if (!defined('ABSPATH')) {
 }
 
 require_once 'class-odoo-form-bridge.php';
-require_once 'class-odoo-form-bridge-template.php';
-
-require_once 'api-functions.php';
+require_once 'hooks.php';
+require_once 'api.php';
 
 /**
  * Odoo Addon class.
@@ -17,42 +16,36 @@ require_once 'api-functions.php';
 class Odoo_Addon extends Addon
 {
     /**
-     * Handles the addon name.
+     * Handles the addon's title.
      *
      * @var string
      */
-    protected static $name = 'Odoo';
+    public const title = 'Odoo';
 
     /**
-     * Handles the addon's API name.
+     * Handles the addon's name.
      *
      * @var string
      */
-    protected static $api = 'odoo';
+    public const name = 'odoo';
 
     /**
      * Handles the addom's custom bridge class.
      *
      * @var string
      */
-    protected static $bridge_class = '\FORMS_BRIDGE\Odoo_Form_Bridge';
-
-    /**
-     * Handles the addon's custom bridge template class.
-     *
-     * @var string
-     */
-    protected static $bridge_template_class = '\FORMS_BRIDGE\Odoo_Form_Bridge_Template';
+    public const bridge_class = '\FORMS_BRIDGE\Odoo_Form_Bridge';
 
     /**
      * Registers the setting and its fields.
      *
      * @return array Addon's settings configuration.
      */
-    protected static function setting_config()
+    protected static function config()
     {
         return [
-            self::$api,
+            self::name,
+            self::schema(),
             self::merge_setting_config([
                 'credentials' => [
                     'type' => 'array',
@@ -80,15 +73,14 @@ class Odoo_Addon extends Addon
      * Apply settings' data validations before db updates.
      *
      * @param array $data Setting data.
-     * @param Setting $setting Setting instance.
      *
      * @return array Validated setting data.
      */
-    protected static function validate_setting($data, $setting)
+    protected static function sanitize_setting($data)
     {
-        $data['credentials'] = self::validate_credentials($data['credentials']);
+        $data['credentials'] = self::sanitize_credentials($data['credentials']);
 
-        $data['bridges'] = self::validate_bridges(
+        $data['bridges'] = self::sanitize_bridges(
             $data['bridges'],
             $data['credentials']
         );
@@ -103,16 +95,16 @@ class Odoo_Addon extends Addon
      *
      * @return array Validated credentials.
      */
-    private static function validate_credentials($credentials)
+    private static function sanitize_credentials($credentials)
     {
         if (!wp_is_numeric_array($credentials)) {
             return [];
         }
 
         $uniques = [];
-        $validated = [];
+        $sanitized = [];
         foreach ($credentials as $credential) {
-            $credential = self::validate_credential(
+            $credential = self::sanitize_credential(
                 $credential,
                 ['database', 'user', 'password'],
                 $uniques
@@ -122,10 +114,10 @@ class Odoo_Addon extends Addon
                 continue;
             }
 
-            $validated[] = $credential;
+            $sanitized[] = $credential;
         }
 
-        return $validated;
+        return $sanitized;
     }
 
     /**
@@ -137,7 +129,7 @@ class Odoo_Addon extends Addon
      *
      * @return array Validated bridge configurations.
      */
-    private static function validate_bridges($bridges, $credentials)
+    private static function sanitize_bridges($bridges, $credentials)
     {
         if (!wp_is_numeric_array($bridges)) {
             return [];
@@ -148,9 +140,9 @@ class Odoo_Addon extends Addon
         }, $credentials);
 
         $uniques = [];
-        $validated = [];
+        $sanitized = [];
         foreach ($bridges as $bridge) {
-            $bridge = self::validate_bridge($bridge, $uniques);
+            $bridge = self::sanitize_bridge($bridge, $uniques);
 
             if (!$bridge) {
                 continue;
@@ -168,10 +160,10 @@ class Odoo_Addon extends Addon
                 !empty($bridge['credential']) &&
                 !empty($bridge['endpoint']);
 
-            $validated[] = $bridge;
+            $sanitized[] = $bridge;
         }
 
-        return $validated;
+        return $sanitized;
     }
 
     /**
@@ -184,7 +176,7 @@ class Odoo_Addon extends Addon
      */
     protected function do_ping($backend, $credential)
     {
-        [$credential] = self::validate_credentials([$credential]);
+        [$credential] = self::sanitize_credentials([$credential]);
 
         if (empty($credential)) {
             return ['success' => false];
@@ -215,7 +207,7 @@ class Odoo_Addon extends Addon
      */
     protected function do_fetch($backend, $model, $credential)
     {
-        [$credential] = self::validate_credentials([$credential]);
+        [$credential] = self::sanitize_credentials([$credential]);
 
         if (empty($credential)) {
             return [];
@@ -251,7 +243,7 @@ class Odoo_Addon extends Addon
      */
     protected function get_endpoint_schema($backend, $model, $credential)
     {
-        [$credential] = self::validate_credentials([$credential]);
+        [$credential] = self::sanitize_credentials([$credential]);
 
         if (empty($credential)) {
             return [];
@@ -275,7 +267,7 @@ class Odoo_Addon extends Addon
         add_filter(
             'wpct_plugin_setting_data',
             static function ($setting, $setting_name) use ($data) {
-                if ($setting_name === 'forms-bridge_' . static::$api) {
+                if ($setting_name === 'forms-bridge_' . self::name) {
                     foreach ($setting['credentials'] as $candidate) {
                         if ($candidate['name'] === $data['name']) {
                             $credential = $candidate;

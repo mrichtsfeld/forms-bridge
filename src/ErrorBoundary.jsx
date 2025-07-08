@@ -1,7 +1,9 @@
-class ErrorBoundary extends React.Component {
+const { Component } = wp.element;
+
+class ErrorBoundary extends Component {
   constructor(props) {
     super(props);
-    this.state = { hasError: false };
+    this.state = { hasError: false, err: null };
   }
 
   static getDerivedStateFromError() {

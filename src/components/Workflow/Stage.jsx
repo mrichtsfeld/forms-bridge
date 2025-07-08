@@ -12,6 +12,7 @@ import {
 import WorkflowStageField from "./StageField";
 import WorkflowJobInterface from "./JobInterface";
 import JsonFinger from "../../lib/JsonFinger";
+import JobSnippet from "../Jobs/Snippet";
 
 const {
   __experimentalItemGroup: ItemGroup,
@@ -37,7 +38,7 @@ export default function WorkflowStage({ setEdit, setMappers }) {
   }, [diff]);
 
   useEffect(() => {
-    if (mode === "mappers") {
+    if (mode !== "payload") {
       setMode("payload");
     }
 
@@ -56,9 +57,9 @@ export default function WorkflowStage({ setEdit, setMappers }) {
     [mappers]
   );
 
-  const switchMode = () => {
-    if (mode === "payload") {
-      setMode("mappers");
+  const switchMode = (target) => {
+    if (mode !== target) {
+      setMode(target);
     } else {
       setMode("payload");
     }
@@ -230,6 +231,10 @@ export default function WorkflowStage({ setEdit, setMappers }) {
           padding: "5px",
         }}
       >
+        {(mode === "snippet" && workflowJob?.snippet && (
+          <JobSnippet {...workflowJob} />
+        )) ||
+          null}
         {(mode === "mappers" && (
           <MutationLayers
             title={__("Stage mapper", "forms-bridge")}
@@ -237,7 +242,9 @@ export default function WorkflowStage({ setEdit, setMappers }) {
             mappers={mappers.map((mapper, index) => ({ ...mapper, index }))}
             setMappers={handleSetMappers}
           />
-        )) || (
+        )) ||
+          null}
+        {(mode === "payload" && (
           <div style={{ overflowY: "auto" }}>
             <ItemGroup size="large" isSeparated>
               {outputFields.map((field, i) => (
@@ -247,33 +254,42 @@ export default function WorkflowStage({ setEdit, setMappers }) {
               ))}
             </ItemGroup>
           </div>
-        )}
+        )) ||
+          null}
       </div>
       <div
         style={{
           display: "flex",
-          justifyContent: "left",
-          gap: "0.5em",
-          padding: "1rem 16px",
+          justifyContent: "space-between",
+          padding: "1rem 0 1rem 6px",
           borderTop: "1px solid",
         }}
       >
+        <div style={{ display: "flex", gap: "0.5em" }}>
+          <Button
+            disabled={step === 0 || step === outputStep}
+            variant={mode === "snippet" ? "primary" : "secondary"}
+            onClick={() => switchMode("snippet")}
+          >
+            {__("Snippet", "forms-bridge")}
+          </Button>
+          <Button
+            disabled={step === outputStep}
+            variant={mode === "mappers" ? "primary" : "secondary"}
+            onClick={() => switchMode("mappers")}
+          >
+            {__("Mutations (%s)", "forms-bridge").replace(
+              "%s",
+              validMappers.length
+            )}
+          </Button>
+        </div>
         <Button
-          disabled={step === 0 || step === outputStep}
           variant="primary"
-          onClick={() => setEdit(step)}
+          disabled={step === 0 || step === outputStep}
+          onClick={() => setEdit(true)}
         >
-          Edit
-        </Button>
-        <Button
-          disabled={step === outputStep}
-          variant={mode === "payload" ? "secondary" : "primary"}
-          onClick={switchMode}
-        >
-          {__("Mutations (%s)", "forms-bridge").replace(
-            "%s",
-            validMappers.length
-          )}
+          {__("Edit", "forms-bridge")}
         </Button>
       </div>
     </div>

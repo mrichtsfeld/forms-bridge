@@ -31,7 +31,6 @@ return [
             'ref' => '#bridge/custom_fields[]',
             'name' => 'Deal_Name',
             'label' => __('Deal name', 'forms-bridge'),
-            'description' => __('Name of the pipeline deals', 'forms-bridge'),
             'type' => 'string',
             'required' => true,
         ],

@@ -9,9 +9,8 @@ if (!defined('ABSPATH')) {
 require_once FORMS_BRIDGE_ADDONS_DIR . '/rest-api/rest-api.php';
 
 require_once 'class-holded-form-bridge.php';
-require_once 'class-holded-form-bridge-template.php';
-
-require_once 'api-utils.php';
+require_once 'hooks.php';
+require_once 'api.php';
 
 /**
  * REST API Addon class.
@@ -19,32 +18,25 @@ require_once 'api-utils.php';
 class Holded_Addon extends Rest_Addon
 {
     /**
-     * Handles the addon name.
+     * Handles the addon's title.
      *
      * @var string
      */
-    protected static $name = 'Holded';
+    public const title = 'Holded';
 
     /**
-     * Handles the addon's API name.
+     * Handles the addon's name.
      *
      * @var string
      */
-    protected static $api = 'holded';
+    public const name = 'holded';
 
     /**
      * Handles the addom's custom bridge class.
      *
      * @var string
      */
-    protected static $bridge_class = '\FORMS_BRIDGE\Holded_Form_Bridge';
-
-    /**
-     * Handles the addon's custom form bridge template class.
-     *
-     * @var string
-     */
-    protected static $bridge_template_class = '\FORMS_BRIDGE\Holded_Form_Bridge_Template';
+    public const bridge_class = '\FORMS_BRIDGE\Holded_Form_Bridge';
 
     /**
      * Performs a request against the backend to check the connexion status.

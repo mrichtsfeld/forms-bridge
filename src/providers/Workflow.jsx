@@ -1,3 +1,5 @@
+import { useError } from "../providers/Error";
+import useTab from "../hooks/useTab";
 import {
   fieldsToPayload,
   schemaToPayload,
@@ -6,14 +8,15 @@ import {
   checkType,
   payloadToSchema,
 } from "../lib/payload";
-import { useGeneral } from "./Settings";
-import { useWorkflowJobs } from "./WorkflowJobs";
+import useBackends from "../hooks/useBackends";
 
-const { createContext, useContext, useState, useMemo } = wp.element;
+const apiFetch = wp.apiFetch;
+const { createContext, useContext, useState, useEffect, useMemo, useCallback } =
+  wp.element;
 const { __ } = wp.i18n;
 
 const WorkflowContext = createContext({
-  workflowJobs: [],
+  jobs: [],
   isLoading: false,
   step: 0,
   setStep: () => {},
@@ -102,11 +105,72 @@ export default function WorkflowProvider({
   mutations,
   workflow,
 }) {
+  const [, setError] = useError();
+
+  const [addon] = useTab();
+  const [isLoading, setIsLoading] = useState(false);
   const [step, setStep] = useState(0);
+  const [jobs, setJobs] = useState([]);
 
-  const [jobs, isLoading] = useWorkflowJobs(workflow);
+  useEffect(() => {
+    if (!workflow.length || !addon) {
+      setJobs([]);
+      return;
+    }
 
-  const [{ backends }] = useGeneral();
+    const newJobNames = workflow
+      .filter((jobName) => {
+        return jobs.find((job) => job.name === jobName) === undefined;
+      })
+      .reduce((jobNames, jobName) => {
+        if (!jobNames.includes(jobName)) {
+          jobNames.push(jobName);
+        }
+
+        return jobNames;
+      }, []);
+
+    console.log(newJobNames);
+    if (newJobNames.length) {
+      fetchJobs(newJobNames).then((newJobs) => {
+        newJobs = jobs
+          .filter((job) => {
+            workflow.indexOf(job.name) !== -1;
+          })
+          .concat(newJobs)
+          .sort((a, b) => {
+            return workflow.indexOf(a.name) - workflow.indexOf(b.name);
+          });
+
+        setJobs(newJobs);
+      });
+    } else {
+      const newJobs = workflow.map((jobName) => {
+        return jobs.find((job) => job.name === jobName);
+      });
+      setJobs(newJobs);
+    }
+  }, [addon, workflow]);
+
+  const fetchJobs = useCallback(
+    (workflow) => {
+      setIsLoading(true);
+
+      return apiFetch({
+        path: `forms-bridge/v1/${addon}/jobs/workflow`,
+        method: "POST",
+        data: { jobs: workflow },
+      })
+        .catch(() => {
+          setError(__("Loading workflow job error", "forms-bridge"));
+          return [];
+        })
+        .finally(() => setIsLoading(false));
+    },
+    [addon]
+  );
+
+  const [backends] = useBackends();
   const includeFiles = useMemo(() => {
     const headers =
       backends.find(({ name }) => name === backend)?.headers || [];
@@ -202,7 +266,7 @@ export default function WorkflowProvider({
 
   return (
     <WorkflowContext.Provider
-      value={{ workflowJobs, isLoading, step, setStep, stage }}
+      value={{ jobs, workflow: workflowJobs, isLoading, step, setStep, stage }}
     >
       {children}
     </WorkflowContext.Provider>
@@ -215,12 +279,20 @@ export function useWorkflowStage() {
 }
 
 export function useWorkflowStepper() {
-  const { step, setStep, workflowJobs = [] } = useContext(WorkflowContext);
-  return [step, setStep, workflowJobs.length - 1];
+  const { step, setStep, workflow = [] } = useContext(WorkflowContext);
+  return [step, setStep, workflow.length - 1];
+}
+
+export function useWorkflowJobs() {
+  const { jobs, isLoading } = useContext(WorkflowContext);
+
+  if (isLoading) return [];
+  return jobs;
 }
 
 export function useWorkflowJob() {
-  const { step, workflowJobs, isLoading } = useContext(WorkflowContext);
+  const { step, workflow, isLoading } = useContext(WorkflowContext);
+
   if (isLoading) return;
-  return workflowJobs[step];
+  return workflow[step];
 }

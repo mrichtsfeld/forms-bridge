@@ -1,5 +1,7 @@
 <?php
 
+use FORMS_BRIDGE\Addon;
+
 if (!defined('ABSPATH')) {
     exit();
 }
@@ -23,8 +25,11 @@ foreach ($setting_names as $setting_name) {
 
     $data = get_option($option, []);
 
+    $addon = Addon::addon($setting_name);
+    $data['title'] = $addon::title;
+
     if (!isset($data['bridges'])) {
-        continue;
+        $data['bridges'] = [];
     }
 
     foreach ($data['bridges'] as &$bridge_data) {
@@ -45,6 +50,12 @@ foreach ($setting_names as $setting_name) {
             $bridge_data['workflow'][$i] = $job_name;
             $i++;
         }
+
+        $bridge_class = $addon::bridge_class;
+        $bridge_data = wpct_plugin_sanitize_with_schema(
+            $bridge_data,
+            $bridge_class::schema()
+        );
     }
 
     update_option($option, $data);

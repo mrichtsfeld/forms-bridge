@@ -1,10 +1,10 @@
 // source
-import { useGeneral } from "../providers/Settings";
+import useBackends from "./useBackends";
 
 const { useMemo } = wp.element;
 
 export default function useBackendNames() {
-  const [{ backends }] = useGeneral();
+  const [backends] = useBackends();
 
   return useMemo(() => {
     return new Set(backends.map(({ name }) => name));

@@ -1,10 +1,10 @@
 // source
-import { useIntegrations } from "../../providers/Settings";
-import {
-  useTemplate,
-  useTemplateConfig,
-  useTemplates,
-} from "../../providers/Templates";
+import { useError } from "../../providers/Error";
+import { useTemplate, useTemplateConfig } from "../../providers/Templates";
+import { useTemplates } from "../../hooks/useAddon";
+import { useIntegrations } from "../../hooks/useGeneral";
+import Wizard from "./Wizard";
+import { prependEmptyOption } from "../../lib/utils";
 
 const {
   Modal,
@@ -12,55 +12,63 @@ const {
   SelectControl,
   __experimentalSpacer: Spacer,
 } = wp.components;
-const { useState, useEffect, useRef } = wp.element;
+const { useState, useEffect, useMemo } = wp.element;
 const { __ } = wp.i18n;
 
-export default function Templates({ Wizard }) {
-  const templates = useTemplates();
+export default function Templates() {
+  const [templates] = useTemplates();
   const [, setTemplate] = useTemplate();
-  const templateConfig = useTemplateConfig();
+  const [templateConfig] = useTemplateConfig();
 
   const [templateData, setTemplateData] = useState({});
   const [wired, setWired] = useState(null);
   const [done, setDone] = useState(false);
+  const [error] = useError();
 
-  const integrations = useIntegrations();
-  const [integration, setIntegration] = useState(integrations[0]?.name || "");
-
-  const integrationOptions = integrations.map(({ name, label }) => ({
-    value: name,
-    label,
-  }));
-
-  const templateOptions = [{ label: "", value: "" }].concat(
-    templates
-      .filter(({ integrations }) => integrations.includes(integration))
+  const [integrations] = useIntegrations();
+  const integrationOptions = useMemo(() => {
+    return integrations
       .map(({ name, title }) => ({
-        label: title,
         value: name,
+        label: title,
       }))
+      .sort((a, b) => {
+        return a.label > b.label ? 1 : -1;
+      });
+  }, [integrations]);
+
+  const [integration, setIntegration] = useState(
+    integrationOptions[0]?.value || ""
   );
 
-  const [isOpen, setIsOpen] = useState(false);
-
-  const onError = useRef(() => setIsOpen(false)).current;
-
   useEffect(() => {
-    wpfb.on("error", onError);
-    return () => {
-      wpfb.off("error", onError);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!integration && integrations.length) {
-      setIntegration(integrations[0].name);
+    if (!integration && integrationOptions.length) {
+      setIntegration(integrationOptions[0].value);
     }
-  }, [integrations]);
+  }, [integration, integrationOptions]);
+
+  const templateOptions = useMemo(() => {
+    return prependEmptyOption(
+      templates
+        .filter(({ integrations }) => integrations.includes(integration))
+        .map(({ name, title }) => ({
+          label: title,
+          value: name,
+        }))
+    ).sort((a, b) => {
+      return a.label > b.label ? 1 : -1;
+    });
+  }, [templates, integration]);
+
+  const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
     if (done) setTemplate(null);
   }, [done]);
+
+  useEffect(() => {
+    if (error) setIsOpen(false);
+  }, [error]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -74,6 +82,7 @@ export default function Templates({ Wizard }) {
   return (
     <>
       <Button
+        disabled={!!error}
         variant="secondary"
         onClick={() => setIsOpen(true)}
         style={{
@@ -113,7 +122,7 @@ export default function Templates({ Wizard }) {
             </>
           )) || (
             <>
-              {integrations.length > 1 && (
+              {integrationOptions.length > 1 && (
                 <>
                   <SelectControl
                     label={__("Target integration", "forms-bridge")}

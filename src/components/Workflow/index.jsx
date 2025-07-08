@@ -1,11 +1,12 @@
 // source
+import { useForms } from "../../providers/Forms";
 import WorkflowProvider from "../../providers/Workflow";
-import WorkflowEditor from "./Editor";
+import JobEditor from "../JobEditor";
 import WorkflowPipeline from "./Pipeline";
 import WorkflowStage from "./Stage";
 
 const { Button, Modal } = wp.components;
-const { useState } = wp.element;
+const { useState, useMemo } = wp.element;
 const { __ } = wp.i18n;
 
 export default function Workflow({
@@ -13,19 +14,25 @@ export default function Workflow({
   setWorkflow,
   mutations = [],
   setMutationMappers,
-  form,
+  formId,
   backend,
   customFields,
 }) {
   const [open, setOpen] = useState(false);
   const [edit, setEdit] = useState(null);
 
+  const [forms] = useForms();
+  const form = useMemo(
+    () => forms.find((form) => form._id === formId),
+    [forms, formId]
+  );
+
   return (
     <>
       <Button
         disabled={!form}
         variant={
-          (form && workflow.length) || mutations[0].length
+          (form && workflow.length) || mutations[0]?.length
             ? "primary"
             : "secondary"
         }
@@ -47,32 +54,30 @@ export default function Workflow({
             workflow={workflow}
             customFields={customFields}
           >
-            {(edit && (
-              <WorkflowEditor index={edit} close={() => setEdit(null)} />
-            )) || (
-              <>
-                <p
-                  style={{
-                    marginTop: "-3rem",
-                    position: "absolute",
-                    zIndex: 1,
-                  }}
-                >
-                  {__(
-                    "Process the form submission before it is sent to the backend over the bridge",
-                    "forms-bridge"
-                  )}
-                </p>
-                <div
-                  style={{
-                    marginTop: "2rem",
-                    width: "1280px",
-                    maxWidth: "80vw",
-                    height: "500px",
-                    maxHeight: "80vh",
-                    display: "flex",
-                  }}
-                >
+            <p
+              style={{
+                marginTop: "-3rem",
+                position: "absolute",
+                zIndex: 1,
+              }}
+            >
+              {__(
+                "Process the form submission before it is sent to the backend over the bridge",
+                "forms-bridge"
+              )}
+            </p>
+            <div
+              style={{
+                marginTop: "2rem",
+                width: "1280px",
+                maxWidth: "80vw",
+                height: "500px",
+                maxHeight: "80vh",
+                display: "flex",
+              }}
+            >
+              {(edit && <JobEditor close={() => setEdit(false)} />) || (
+                <>
                   <div
                     style={{
                       flex: 1,
@@ -86,7 +91,6 @@ export default function Workflow({
                     }}
                   >
                     <WorkflowPipeline
-                      setEdit={setEdit}
                       workflow={workflow}
                       setWorkflow={setWorkflow}
                     />
@@ -106,9 +110,9 @@ export default function Workflow({
                       }
                     />
                   </div>
-                </div>
-              </>
-            )}
+                </>
+              )}
+            </div>
           </WorkflowProvider>
         </Modal>
       )}

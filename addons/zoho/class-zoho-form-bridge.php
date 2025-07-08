@@ -19,7 +19,7 @@ class Zoho_Form_Bridge extends Form_Bridge
      *
      * @var string
      */
-    protected $api = 'zoho';
+    public const addon = 'zoho';
 
     /**
      * Handles the oauth access token transient name.
@@ -33,25 +33,36 @@ class Zoho_Form_Bridge extends Form_Bridge
      *
      * @var string
      */
-    protected static $zoho_oauth_service = 'ZohoCRM';
+    protected const zoho_oauth_service = 'ZohoCRM';
 
     public static function schema()
     {
         $schema = parent::schema();
 
+        $schema['properties']['credential'] = [
+            'name' => __('Credential', 'forms-bridge'),
+            'description' => __('OAuth credential', 'forms-bridge'),
+            'type' => 'string',
+        ];
+
+        // $schema['required'][] = 'credential';
+
         $schema['properties']['endpoint'] = [
+            'name' => __('Endpoint', 'forms-bridge'),
             'description' => __('HTTP API endpoint', 'forms-bridge'),
             'type' => 'string',
         ];
 
-        $schema['required'][] = 'endpoint';
+        // $schema['required'][] = 'endpoint';
 
         $schema['properties']['scope'] = [
+            'name' => __('OAuth scope', 'forms-bridge'),
             'description' => __(
                 'API scopes list separated by commas',
                 'forms-bridge'
             ),
             'type' => 'string',
+            'default' => 'ZohoCRM.modules.ALL',
         ];
 
         $schema['required'][] = 'scope';
@@ -60,7 +71,6 @@ class Zoho_Form_Bridge extends Form_Bridge
             'description' => __('HTTP method', 'forms-bridge'),
             'type' => 'string',
             'enum' => ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-            'minLength' => 3,
             'default' => 'POST',
         ];
 
@@ -226,8 +236,8 @@ class Zoho_Form_Bridge extends Form_Bridge
 
         $credential = $this->credential();
 
-        $scope = $this->scope ?: static::$zoho_oauth_service . '.modules.ALL';
-        $service = explode('.', $scope)[0] ?? static::$zoho_oauth_service;
+        $scope = $this->scope ?: static::zoho_oauth_service . '.modules.ALL';
+        $service = explode('.', $scope)[0] ?? static::zoho_oauth_service;
 
         if (isset($refresh)) {
             $query = http_build_query([
@@ -351,7 +361,7 @@ class Zoho_Form_Bridge extends Form_Bridge
         $response = $this->patch([
             'name' => 'zoho-api-schema-introspection',
             'endpoint' => $endpoint,
-            'scope' => static::$zoho_oauth_service . '.settings.layouts.READ',
+            'scope' => static::zoho_oauth_service . '.settings.layouts.READ',
             'method' => 'GET',
         ])->submit(['module' => $module]);
 

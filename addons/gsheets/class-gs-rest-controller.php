@@ -4,7 +4,7 @@ namespace FORMS_BRIDGE;
 
 use WP_Error;
 use WP_REST_Server;
-use WPCT_ABSTRACT\Singleton;
+use WPCT_PLUGIN\Singleton;
 
 if (!defined('ABSPATH')) {
     exit();

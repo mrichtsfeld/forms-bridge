@@ -16,6 +16,10 @@ if (!defined('ABSPATH')) {
  */
 class Integration extends BaseIntegration
 {
+    public const name = 'ninja';
+
+    public const title = 'Ninja Forms';
+
     /**
      * Handles the current submission data.
      *
@@ -1062,3 +1066,5 @@ class Integration extends BaseIntegration
         ];
     }
 }
+
+Integration::setup();

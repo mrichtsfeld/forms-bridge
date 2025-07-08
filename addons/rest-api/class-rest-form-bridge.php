@@ -25,7 +25,7 @@ class Rest_Form_Bridge extends Form_Bridge
      *
      * @var array
      */
-    public const allowed_methods = ['GET', 'POST', 'PUT', 'DELETE'];
+    public const allowed_methods = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
 
     /**
      * Performs an http request to backend's REST API.
@@ -63,17 +63,21 @@ class Rest_Form_Bridge extends Form_Bridge
     public static function schema()
     {
         $schema = parent::schema();
+
         $schema['properties']['method'] = [
+            'name' => __('Method', 'forms-bridge'),
             'description' => __('HTTP method', 'forms-bridge'),
             'type' => 'string',
-            'enum' => self::allowed_methods,
+            'enum' => static::allowed_methods,
         ];
 
         $schema['required'][] = 'method';
 
         $schema['properties']['endpoint'] = [
+            'name' => __('Endpoint', 'forms-bridge'),
             'description' => __('HTTP API endpoint', 'forms-bridge'),
             'type' => 'string',
+            'default' => '',
         ];
 
         $schema['required'][] = 'endpoint';

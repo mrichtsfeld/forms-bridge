@@ -1,29 +1,31 @@
 // source
-import useCurrentApi from "../hooks/useCurrentApi";
-import { useApis } from "./Settings";
+import { useLoading } from "../providers/Loading";
+import { useError } from "../providers/Error";
+import useTab from "../hooks/useTab";
+import useFlushStore from "../hooks/useFlushStore";
 
 const apiFetch = wp.apiFetch;
-const { createContext, useContext, useEffect, useState, useMemo } = wp.element;
+const { createContext, useContext, useEffect, useState, useCallback } =
+  wp.element;
 const { __ } = wp.i18n;
 
 const TemplatesContext = createContext({
   template: null,
   setTemplate: () => {},
-  templates: [],
   config: null,
   submit: () => {},
+  reset: () => {},
 });
 
 export default function TemplatesProvider({ children }) {
-  const api = useCurrentApi();
-  const [apis] = useApis();
+  const [, setLoading] = useLoading();
+  const [, setError] = useError();
+
+  const [addon] = useTab();
   const [template, setTemplate] = useState(null);
   const [config, setConfig] = useState(null);
 
-  const templates = useMemo(() => {
-    if (!api) return [];
-    return apis[api]?.templates || [];
-  }, [api, apis]);
+  const flushStore = useFlushStore();
 
   useEffect(() => {
     if (!template) {
@@ -33,48 +35,69 @@ export default function TemplatesProvider({ children }) {
     }
   }, [template]);
 
-  const fetchConfig = (template) => {
-    if (!api) return;
+  const fetchConfig = useCallback(
+    (template) => {
+      return apiFetch({
+        path: `forms-bridge/v1/${addon}/templates/${template}`,
+      })
+        .then(setConfig)
+        .catch(() =>
+          setError("error", __("Template config load error", "forms-bridge"))
+        );
+    },
+    [addon]
+  );
 
-    return apiFetch({
-      path: `forms-bridge/v1/${api}/templates/${template}`,
-    })
-      .then(setConfig)
-      .catch(() => {
-        wpfb.emit("error", __("Loading config error", "forms-bridge"));
-      });
-  };
+  const submit = useCallback(
+    ({ fields, integration }) => {
+      if (!template) {
+        return Promise.reject();
+      }
 
-  const submit = ({ fields, integration }) => {
-    if (!template || !api) {
-      return;
+      setLoading(true);
+
+      return apiFetch({
+        path: `forms-bridge/v1/${addon}/templates/${template}/use`,
+        method: "POST",
+        data: {
+          integration,
+          fields,
+        },
+      })
+        .then(() => flushStore())
+        .catch(() => setError(__("Template submit error", "forms-bridge")))
+        .finally(() => setLoading(false));
+    },
+    [addon, template]
+  );
+
+  const reset = useCallback(() => {
+    if (!template) {
+      return Promise.reject();
     }
 
-    wpfb.emit("loading", true);
+    setLoading(true);
 
     return apiFetch({
-      path: `forms-bridge/v1/${api}/templates/${template}/use`,
-      method: "POST",
-      data: {
-        integration,
-        fields,
-      },
+      path: `forms-bridge/v1/${addon}/templates/${template}`,
+      method: "DELETE",
     })
-      .then(() => wpfb.emit("flushStore"))
-      .catch(() => {
-        wpfb.emit("error", __("Template submit error", "forms-bridge"));
+      .then((config) => {
+        if (!config) setConfig(null);
+        else setConfig(config);
       })
-      .finally(() => wpfb.emit("loading", false));
-  };
+      .catch(() => setError(__("Template reset error", "forms-bridge")))
+      .finally(() => setLoading(false));
+  }, [addon, template]);
 
   return (
     <TemplatesContext.Provider
       value={{
         template,
         setTemplate,
-        templates,
         config,
         submit,
+        reset,
       }}
     >
       {children}
@@ -87,17 +110,7 @@ export function useTemplate() {
   return [template, setTemplate];
 }
 
-export function useTemplates() {
-  const { templates } = useContext(TemplatesContext);
-  return templates || [];
-}
-
 export function useTemplateConfig() {
-  const { config } = useContext(TemplatesContext);
-  return config;
-}
-
-export function useSubmitTemplate() {
-  const { submit } = useContext(TemplatesContext);
-  return (data) => submit(data);
+  const { config, submit, reset } = useContext(TemplatesContext);
+  return [config, submit, reset];
 }

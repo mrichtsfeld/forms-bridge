@@ -2,6 +2,7 @@ import { useTemplateConfig } from "../../../providers/Templates";
 import TemplateStep from "./Step";
 import Field from "../Field";
 import { prependEmptyOption, sortByNamesOrder } from "../../../lib/utils";
+import { useCredentials } from "../../../hooks/useAddon";
 
 const { useMemo, useState, useEffect, useRef } = wp.element;
 const { SelectControl } = wp.components;
@@ -21,7 +22,9 @@ function validateCredential(credential, schema, fields) {
   }, isValid);
 }
 
-export default function CredentialStep({ credentials, fields, data, setData }) {
+export default function CredentialStep({ fields, data, setData }) {
+  const [credentials] = useCredentials();
+
   const names = useMemo(
     () => new Set(credentials.map(({ name }) => name)),
     [credentials]

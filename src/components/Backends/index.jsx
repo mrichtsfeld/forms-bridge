@@ -1,8 +1,11 @@
 // source
+import useBackendNames from "../../hooks/useBackendNames";
+import Backend from "../Backend";
+import NewBackend from "../Backend/NewBackend";
 import CopyIcon from "../CopyIcon";
 
 const { TabPanel, __experimentalSpacer: Spacer } = wp.components;
-const { useState, useEffect, useRef } = wp.element;
+const { useState } = wp.element;
 const { __ } = wp.i18n;
 
 function TabTitle({ name, focus, setFocus, copy }) {
@@ -18,17 +21,15 @@ function TabTitle({ name, focus, setFocus, copy }) {
   );
 }
 
-export default function Backends({ backends, setBackends, Backend }) {
-  const [currentTab, setCurrentTab] = useState(
-    String(backends.length ? 0 : -1)
-  );
+export default function Backends({ backends, setBackends }) {
+  const backendNames = useBackendNames();
+
   const [tabFocus, setTabFocus] = useState(null);
   const tabs = backends
-    .map(({ name, base_url, headers }, i) => ({
-      name: String(i),
+    .map(({ name }, index) => ({
+      index,
+      name: String(index),
       title: name,
-      base_url,
-      headers,
       icon: (
         <TabTitle
           name={name}
@@ -40,23 +41,11 @@ export default function Backends({ backends, setBackends, Backend }) {
     }))
     .concat([
       {
-        name: "-1",
+        index: -1,
+        name: "new",
         title: __("Add Backend", "forms-bridge"),
       },
     ]);
-
-  const backendsCount = useRef(backends.length);
-  useEffect(() => {
-    if (backends.length > backendsCount.current) {
-      setCurrentTab(String(backends.length - 1));
-    } else if (backends.length < backendsCount.current) {
-      setCurrentTab(String(currentTab - 1));
-    }
-
-    return () => {
-      backendsCount.current = backends.length;
-    };
-  }, [backends]);
 
   const updateBackend = (index, data) => {
     if (index === -1) index = backends.length;
@@ -65,11 +54,6 @@ export default function Backends({ backends, setBackends, Backend }) {
       .slice(0, index)
       .concat([data])
       .concat(backends.slice(index + 1, backends.length));
-
-    newBackends.forEach((backend) => {
-      delete backend.title;
-      delete backend.icon;
-    });
 
     setBackends(newBackends);
   };
@@ -89,11 +73,8 @@ export default function Backends({ backends, setBackends, Backend }) {
     const backend = backends[i];
     const copy = { ...backend };
 
-    let isUnique = false;
-    while (!isUnique) {
+    while (backendNames.has(copy.name)) {
       copy.name += "-copy";
-      isUnique =
-        backends.find((backend) => backend.name === copy.name) === undefined;
     }
 
     setBackends(backends.concat(copy));
@@ -108,24 +89,21 @@ export default function Backends({ backends, setBackends, Backend }) {
         )}
       </p>
       <Spacer paddingBottom="5px" />
-      <TabPanel
-        tabs={tabs}
-        onSelect={setCurrentTab}
-        initialTabName={currentTab}
-      >
-        {(backend) => {
-          backend.name =
-            backend.name >= 0 ? backends[+backend.name].name : "add";
+      <TabPanel tabs={tabs}>
+        {(tab) => {
+          const backend = backends[tab.index];
+
+          if (!backend) {
+            return (
+              <NewBackend add={(data) => updateBackend(tab.index, data)} />
+            );
+          }
+
           return (
             <Backend
-              {...backend}
+              data={backend}
               remove={removeBackend}
-              update={(newBackend) =>
-                updateBackend(
-                  backends.findIndex(({ name }) => name === backend.name),
-                  newBackend
-                )
-              }
+              update={(newBackend) => updateBackend(tab.index, newBackend)}
             />
           );
         }}

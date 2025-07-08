@@ -1,6 +1,6 @@
 import { useWorkflowStepper } from "../../providers/Workflow";
-import { useApiWorkflowJobs } from "../../providers/WorkflowJobs";
-import RemoveButton from "../RemoveButton";
+import { useJobs } from "../../hooks/useAddon";
+import { prependEmptyOption } from "../../lib/utils";
 
 const {
   __experimentalItemGroup: ItemGroup,
@@ -13,25 +13,27 @@ const { __ } = wp.i18n;
 
 export default function WorkflowPipeline({ workflow, setWorkflow, setEdit }) {
   const [step, setStep] = useWorkflowStepper();
-  const apiJobs = useApiWorkflowJobs();
+  const [jobs] = useJobs();
 
   const jobOptions = useMemo(
     () =>
-      [{ label: "", value: "" }].concat(
-        apiJobs.map((job) => ({
-          value: job.name,
-          label: job.title,
-        }))
+      prependEmptyOption(
+        jobs
+          .map((job) => ({
+            value: job.name,
+            label: job.title,
+          }))
+          .sort((a, b) => (a.label > b.label ? 1 : -1))
       ),
-    [apiJobs]
+    [jobs]
   );
 
   const workflowJobs = useMemo(() => {
     return workflow.map((name) => ({
       name,
-      title: apiJobs.find((job) => job.name === name)?.title || name,
+      title: jobs.find((job) => job.name === name)?.title || name,
     }));
-  }, [workflow, apiJobs]);
+  }, [workflow, jobs]);
 
   const steps = useMemo(
     () =>
@@ -68,7 +70,7 @@ export default function WorkflowPipeline({ workflow, setWorkflow, setEdit }) {
   const appendJob = (index) => {
     const newWorkflow = workflow
       .slice(0, index + 1)
-      .concat([apiJobs[0].name])
+      .concat([jobs[0].name])
       .concat(workflow.slice(index + 1, workflow.length));
 
     setWorkflow(newWorkflow);
@@ -232,18 +234,21 @@ function PipelineStep({ name, title, index, options, append, update, remove }) {
             disabled={!name}
             onClick={() => append(index - 1)}
             style={{ width: "32px" }}
+            __next40pxDefaultSize
           >
             +
           </Button>
-          <RemoveButton
+          <Button
             size="compact"
             variant="secondary"
             disabled={!name || name === "form"}
             onClick={() => remove(index - 1)}
             style={{ width: "32px" }}
+            isDestructive
+            __next40pxDefaultSize
           >
             -
-          </RemoveButton>
+          </Button>
         </div>
       )}
     </div>

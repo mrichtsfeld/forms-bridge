@@ -17,6 +17,10 @@ if (!defined('ABSPATH')) {
  */
 class Integration extends BaseIntegration
 {
+    public const name = 'wpforms';
+
+    public const title = 'WP Forms';
+
     /**
      * Handles the current submission data.
      *
@@ -1003,3 +1007,5 @@ class Integration extends BaseIntegration
         );
     }
 }
+
+Integration::setup();

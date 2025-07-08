@@ -1,22 +1,19 @@
 // source
-import { useStoreSubmit } from "../../providers/Store";
-import { useGeneral, useApis } from "../../providers/Settings";
+import { useError } from "../../providers/Error";
+import { useSettings } from "../../providers/Settings";
 
 const { useState, useEffect } = wp.element;
-const { __experimentalSpacer: Spacer, Button, Modal, Notice } = wp.components;
+const { __experimentalSpacer: Spacer, Button, Modal } = wp.components;
 const { __ } = wp.i18n;
 
 export default function Exporter() {
-  const [general] = useGeneral();
-  const [apis] = useApis();
-  const submit = useStoreSubmit();
+  const [, setError] = useError();
+  const [settings, , submitSettings] = useSettings();
 
   const [showModal, setShowModal] = useState(false);
   const [userConsent, setUserConsent] = useState(false);
-  const [error, setError] = useState(false);
 
   const downloadConfig = () => {
-    const settings = wpfb.bus("submit", {});
     const blob = new Blob([JSON.stringify(settings)], {
       type: "application/json",
     });
@@ -49,44 +46,23 @@ export default function Exporter() {
 
       const reader = new FileReader();
       reader.onload = () => {
-        let config;
         try {
-          config = JSON.parse(reader.result);
+          const settings = JSON.parse(reader.result);
+          console.log(settings);
+          submitSettings(settings).catch(() =>
+            setError(
+              __("It has been an error with config import", "forms-bridge")
+            )
+          );
         } catch {
           setError(__("JSON syntax error", "forms-bridge"));
           return;
         }
-
-        const newState = {
-          general: { ...general, ...(config.general || {}) },
-          apis: {
-            ...apis,
-            ...Object.fromEntries(
-              Object.entries(config)
-                .filter(
-                  ([key]) =>
-                    key !== "general" && Object.keys(apis).indexOf(key) !== -1
-                )
-                .map(([key, data]) => [key, { ...apis[key], ...data }])
-            ),
-          },
-        };
-
-        wpfb.emit("patch", newState);
-        setTimeout(() =>
-          submit()
-            .then(() => setError(false))
-            .catch(() =>
-              setError(
-                __("It has been an error with config import", "forms-bridge")
-              )
-            )
-        );
       };
 
       reader.onerror = () =>
         setError(
-          __("Somthing went wrong with the file upload", "forms-bridge")
+          __("Something went wrong with the file upload", "forms-bridge")
         );
 
       reader.readAsText(file);
@@ -104,12 +80,6 @@ export default function Exporter() {
 
   return (
     <>
-      <Spacer paddyngY="calc(3px)" />
-      {error && (
-        <Notice status="error" isDismissable={false} politeness="assertive">
-          {error}
-        </Notice>
-      )}
       <p>
         {__(
           "Export or import your configuration as a JSON to migrate your bridges to, or from, any other WordPress instance",

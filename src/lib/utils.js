@@ -30,6 +30,7 @@ export function sortByNamesOrder(items, order) {
 }
 
 export function prependEmptyOption(options) {
+  if (options[0]?.value === "") return options;
   return [{ label: "", value: "" }].concat(options);
 }
 

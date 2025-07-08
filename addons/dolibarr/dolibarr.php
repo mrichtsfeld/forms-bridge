@@ -9,9 +9,8 @@ if (!defined('ABSPATH')) {
 require_once FORMS_BRIDGE_ADDONS_DIR . '/rest-api/rest-api.php';
 
 require_once 'class-dolibarr-form-bridge.php';
-require_once 'class-dolibarr-form-bridge-template.php';
-
-require_once 'api-functions.php';
+require_once 'hooks.php';
+require_once 'api.php';
 
 /**
  * Dolibarr Addon class.
@@ -19,41 +18,26 @@ require_once 'api-functions.php';
 class Dolibarr_Addon extends Rest_Addon
 {
     /**
-     * Handles the addon name.
+     * Handles the addon's title.
      *
      * @var string
      */
-    protected static $name = 'Dolibarr';
+    public const title = 'Dolibarr';
 
     /**
-     * Handles the addon's API name.
+     * Handles the addon's name.
      *
      * @var string
      */
-    protected static $api = 'dolibarr';
+    public const name = 'dolibarr';
 
     /**
      * Handles the addom's custom bridge class.
      *
      * @var string
      */
-    protected static $bridge_class = '\FORMS_BRIDGE\Dolibarr_Form_Bridge';
+    public const bridge_class = '\FORMS_BRIDGE\Dolibarr_Form_Bridge';
 
-    /**
-     * Handles the addon's custom form bridge template class.
-     *
-     * @var string
-     */
-    protected static $bridge_template_class = '\FORMS_BRIDGE\Dolibarr_Form_Bridge_Template';
-
-    /**
-     * Performs a request against the backend to check the connexion status.
-     *
-     * @param string $backend Target backend name.
-     * @param null $credential Credential data.
-     *
-     * @return array Ping result.
-     */
     protected function do_ping($backend, $credential)
     {
         $bridge = new Dolibarr_Form_Bridge([
@@ -69,7 +53,7 @@ class Dolibarr_Addon extends Rest_Addon
         }
 
         $code = $response['data']['success']['code'] ?? null;
-        return ['success' => $code === 200];
+        return $code === 200;
     }
 
     /**
@@ -79,7 +63,7 @@ class Dolibarr_Addon extends Rest_Addon
      * @param string $endpoint Target endpoint name.
      * @param null $credential Credential data.
      *
-     * @return array Fetched records.
+     * @return array|WP_Error
      */
     protected function do_fetch($backend, $endpoint, $credential)
     {
@@ -90,12 +74,7 @@ class Dolibarr_Addon extends Rest_Addon
             'method' => 'GET',
         ]);
 
-        $response = $bridge->submit();
-        if (is_wp_error($response)) {
-            return [];
-        }
-
-        return $response['data'];
+        return $bridge->submit();
     }
 
     /**

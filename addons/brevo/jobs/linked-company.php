@@ -58,7 +58,6 @@ function forms_bridge_brevo_linked_company($payload, $bridge)
         return $company;
     }
 
-    $payload['linkedCompaniesIds'] = $payload['linkedCompaniesIds'] ?? [];
     $payload['linkedCompaniesIds'][] = $company['id'];
 
     return $payload;

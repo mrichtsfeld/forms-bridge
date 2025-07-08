@@ -1,167 +1,155 @@
-import useDiff from "../hooks/useDiff";
+import diff from "../lib/diff";
+import { useError } from "./Error";
+import { useLoading } from "./Loading";
 
-const { createContext, useContext, useState, useEffect, useRef, useMemo } =
-  wp.element;
+const {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useRef,
+  useMemo,
+  useCallback,
+} = wp.element;
+const apiFetch = wp.apiFetch;
 const { __ } = wp.i18n;
 
-const defaults = {
-  general: {
-    notification_receiver: "",
-    backends: [],
-    addons: {},
-    integrations: {},
+const DEFAULTS = Object.freeze({
+  state: {
+    general: {
+      notification_receiver: "",
+      backends: [],
+      addons: [],
+      integrations: [],
+      debug: false,
+    },
   },
-  apis: {},
-};
+  patch: () => {},
+  submit: () => Promise.resolve(),
+});
 
-const SettingsContext = createContext([defaults, () => {}]);
+const SettingsContext = createContext(DEFAULTS);
 
-export default function SettingsProvider({ children, handle = ["general"] }) {
+export default function SettingsProvider({ children }) {
+  const [, setLoading] = useLoading();
+  const [, setError] = useError();
+
   const initialState = useRef(null);
-  const currentState = useRef(defaults);
-  const [state, setState] = useState(defaults);
-  const [reload, setReload] = useState(false);
-  const [flush, setFlush] = useState(false);
-  currentState.current = state;
+  const [state, setState] = useState(null);
 
-  const onPatch = useRef((state) => setState(state)).current;
+  const fetch = useRef(() => {
+    setLoading(true);
 
-  const onFetch = useRef((settings) => {
-    const newState = {
-      general: { ...defaults.general, ...settings.general },
-      apis: Object.fromEntries(
-        Object.entries(settings)
-          .filter(([key]) => key !== "general")
-          .map(([key, data]) => [
-            key,
-            { ...(defaults.apis[key] || {}), ...data },
-          ])
-      ),
-    };
-
-    setState(newState);
-    const previousState = initialState.current;
-    initialState.current = { ...newState };
-    if (previousState === null) return;
-
-    const reload = Object.keys(newState.general.addons).reduce(
-      (changed, addon) =>
-        changed ||
-        newState.general.addons[addon] !== previousState.general.addons[addon],
-      false
-    );
-
-    setReload(reload);
-
-    const flush =
-      !reload &&
-      Object.keys(newState.general.integrations).reduce(
-        (changed, integration) =>
-          changed ||
-          newState.general.integrations[integration] !==
-            previousState.general.integrations[integration],
-        false
-      );
-
-    setFlush(flush);
+    initialState.current = null;
+    return apiFetch({
+      path: "forms-bridge/v1/settings",
+    })
+      .then(setState)
+      .catch(() => setError(__("Settings loading error", "forms-bridge")))
+      .finally(() => setLoading(false));
   }).current;
 
-  const onSubmit = useRef((bus) => {
-    const state = currentState.current;
-    if (handle.indexOf("general") !== -1) {
-      bus.data.general = state.general;
-    }
-    Object.entries(state.apis).forEach(([name, value]) => {
-      if (handle.indexOf(name) !== -1) {
-        bus.data[name] = value;
+  const beforeUnload = useCallback(
+    (ev) => {
+      if (diff(state, initialState.current)) {
+        ev.preventDefault();
+        ev.returnValue = true;
       }
-    });
-  }).current;
-
-  const beforeUnload = useRef((ev) => {
-    const state = currentState.current;
-    if (useDiff(state, initialState.current) && !window.__wpfbReloading) {
-      ev.preventDefault();
-      ev.returnValue = true;
-    }
-  }).current;
+    },
+    [state]
+  );
 
   useEffect(() => {
-    wpfb.on("patch", onPatch);
-    wpfb.on("fetch", onFetch);
-    wpfb.join("submit", onSubmit);
     window.addEventListener("beforeunload", beforeUnload);
+    fetch();
 
-    () => {
-      wpfb.off("patch", onPatch);
-      wpfb.off("fetch", onFetch);
-      wpfb.leave("submit", onSubmit);
+    return () => {
       window.removeEventListener("beforeunload", beforeUnload);
     };
   }, []);
 
   useEffect(() => {
-    if (reload) {
-      window.__wpfbReloading = true;
-      window.location.reload();
+    if (initialState.current) {
+      let flush = diff(
+        initialState.current.general.integrations,
+        state.general.integrations
+      );
+
+      flush =
+        flush ||
+        diff(initialState.current.general.addons, state.general.addons);
+
+      flush =
+        flush || initialState.current.general.debug !== state.general.debug;
+
+      if (flush) submit(state);
     }
 
     return () => {
-      if (reload) {
-        window.__wpfbReloading = false;
-      }
+      initialState.current = state;
     };
-  }, [reload]);
+  }, [state]);
 
-  useEffect(() => {
-    if (flush && !window.__wpfbFlushing) {
-      window.__wpfbFlushing = true;
-      wpfb.emit("flushStore");
-      setFlush(false);
-    }
+  const patch = useCallback(
+    (partial) => setState({ ...state, ...partial }),
+    [state]
+  );
 
-    return () => {
-      if (flush) {
-        window.__wpfbFlushing = false;
-      }
-    };
-  }, [flush]);
+  const submit = useRef((state) => {
+    setLoading(true);
 
-  const patchState = (partial) => wpfb.emit("patch", { ...state, ...partial });
+    apiFetch({
+      path: "forms-bridge/v1/settings",
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      data: state,
+    })
+      .catch(() => {
+        setError(__("Settings submission error", "forms-bridge"));
+        return { success: false };
+      })
+      .then((result) => {
+        if (result.success) return fetch();
+      })
+      .finally(() => setLoading(false));
+  }).current;
+
+  const settings = state || DEFAULTS.state;
 
   return (
-    <SettingsContext.Provider value={[state, patchState]}>
+    <SettingsContext.Provider value={{ state: settings, patch, submit }}>
       {children}
     </SettingsContext.Provider>
   );
 }
 
+export function useSettings() {
+  const { state, submit } = useContext(SettingsContext);
+  return [state, (state) => submit(state)];
+}
+
 export function useGeneral() {
-  const [{ general }, patch] = useContext(SettingsContext);
+  const {
+    state: { general },
+    patch,
+  } = useContext(SettingsContext);
   return [general, (general) => patch({ general })];
 }
 
-export function useApis() {
-  const [{ apis }, patch] = useContext(SettingsContext);
-  return [apis, (api) => patch({ apis: { ...apis, ...api } })];
-}
+export function useAddons() {
+  const { state, patch } = useContext(SettingsContext);
 
-export function useBridges(api) {
-  const [apis] = useApis();
+  const addons = useMemo(() => {
+    return Object.keys(state).reduce((addons, addon) => {
+      if (addon !== "general") {
+        addons[addon] = state[addon];
+      }
 
-  return useMemo(() => {
-    if (api) return apis[api]?.bridges || [];
+      return addons;
+    }, {});
+  }, [state]);
 
-    return Object.keys(apis).reduce((bridges, api) => {
-      return bridges.concat(apis[api].bridges);
-    }, []);
-  }, [apis, api]);
-}
-
-export function useIntegrations() {
-  const [{ general }] = useContext(SettingsContext);
-
-  return Object.keys(general.integrations)
-    .filter((key) => general.integrations[key])
-    .map((key) => ({ label: __(key, "forms-bridge"), name: key }));
+  return [addons, patch];
 }

@@ -20,6 +20,10 @@ if (!defined('ABSPATH')) {
  */
 class Integration extends BaseIntegration
 {
+    public const name = 'gf';
+
+    public const title = 'Gravity Forms';
+
     /**
      * Binds after submission hook to the do_submission routine.
      */
@@ -1072,3 +1076,5 @@ add_filter(
     10,
     5
 );
+
+Integration::setup();

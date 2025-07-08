@@ -9,9 +9,8 @@ if (!defined('ABSPATH')) {
 require_once FORMS_BRIDGE_ADDONS_DIR . '/zoho/zoho.php';
 
 require_once 'class-bigin-form-bridge.php';
-require_once 'class-bigin-form-bridge-template.php';
-
-require_once 'api-functions.php';
+require_once 'hooks.php';
+require_once 'api.php';
 
 /**
  * Bigin Addon class.
@@ -19,39 +18,32 @@ require_once 'api-functions.php';
 class Bigin_Addon extends Zoho_Addon
 {
     /**
-     * Handles the addon name.
+     * Handles the addon's title.
      *
      * @var string
      */
-    protected static $name = 'Bigin';
+    public const title = 'Bigin';
 
     /**
-     * Handles the addon's API name.
+     * Handles the addon's name.
      *
      * @var string
      */
-    protected static $api = 'bigin';
+    public const name = 'bigin';
 
     /**
      * Handles the zoho oauth service name.
      *
      * @var string
      */
-    protected static $zoho_oauth_service = 'ZohoBigin';
+    protected const zoho_oauth_service = 'ZohoBigin';
 
     /**
      * Handles the addon's custom bridge class.
      *
      * @var string
      */
-    protected static $bridge_class = '\FORMS_BRIDGE\Bigin_Form_Bridge';
-
-    /**
-     * Handles the addon's custom form bridge template class.
-     *
-     * @var string
-     */
-    protected static $bridge_template_class = '\FORMS_BRIDGE\Bigin_Form_Bridge_Template';
+    public const bridge_class = '\FORMS_BRIDGE\Bigin_Form_Bridge';
 }
 
 Bigin_Addon::setup();

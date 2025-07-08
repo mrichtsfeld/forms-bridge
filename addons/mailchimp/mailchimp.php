@@ -9,7 +9,7 @@ if (!defined('ABSPATH')) {
 require_once FORMS_BRIDGE_ADDONS_DIR . '/rest-api/rest-api.php';
 
 require_once 'class-mailchimp-form-bridge.php';
-require_once 'class-mailchimp-form-bridge-template.php';
+require_once 'hooks.php';
 
 /**
  * Mapchimp Addon class.
@@ -17,32 +17,25 @@ require_once 'class-mailchimp-form-bridge-template.php';
 class Mailchimp_Addon extends Rest_Addon
 {
     /**
-     * Handles the addon name.
+     * Handles the addon's title.
      *
      * @var string
      */
-    protected static $name = 'Mailchimp';
+    public const title = 'Mailchimp';
 
     /**
-     * Handles the addon's API name.
+     * Handles the addon's name.
      *
      * @var string
      */
-    protected static $api = 'mailchimp';
+    public const name = 'mailchimp';
 
     /**
      * Handles the addom's custom bridge class.
      *
      * @var string
      */
-    protected static $bridge_class = '\FORMS_BRIDGE\Mailchimp_Form_Bridge';
-
-    /**
-     * Handles the addon's custom form bridge template class.
-     *
-     * @var string
-     */
-    protected static $bridge_template_class = '\FORMS_BRIDGE\Mailchimp_Form_Bridge_Template';
+    public const bridge_class = '\FORMS_BRIDGE\Mailchimp_Form_Bridge';
 
     /**
      * Performs a request against the backend to check the connexion status.
@@ -83,7 +76,7 @@ class Mailchimp_Addon extends Rest_Addon
             'backend' => $backend,
         ]);
 
-        $response = $bridge->submit([]);
+        $response = $bridge->submit();
         if (is_wp_error($response)) {
             return [];
         }

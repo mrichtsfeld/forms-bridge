@@ -27,86 +27,53 @@ class Settings_Store extends Base_Settings_Store
     {
         parent::construct(...$args);
 
-        $slug = Forms_Bridge::slug();
+        self::enqueue(static function ($settings) {
+            $admin_email = get_option('admin_email');
 
-        // Patch http bridge default settings to plugin settings
-        add_filter(
-            'wpct_plugin_setting_default',
-            static function ($default, $name) use ($slug) {
-                if ($name !== $slug . '_general') {
-                    return $default;
-                }
+            $settings[] = [
+                'name' => 'general',
+                'properties' => [
+                    'notification_receiver' => [
+                        'type' => 'string',
+                        'format' => 'email',
+                        'default' => $admin_email,
+                    ],
+                ],
+                'required' => ['notification_receiver'],
+                'default' => [
+                    'notification_receiver' => $admin_email,
+                ],
+            ];
 
-                $backends = \HTTP_BRIDGE\Settings_Store::setting('general')
-                    ->backends;
+            return $settings;
+        });
 
-                return array_merge($default, ['backends' => $backends]);
-            },
-            10,
-            2
-        );
+        self::ready(static function ($store) {
+            $store::use_getter('general', static function ($data) {
+                $backends =
+                    \HTTP_BRIDGE\Settings_Store::setting('general')->backends ?:
+                    [];
+                $data['backends'] = $backends;
+                return $data;
+            });
 
-        // Patch http bridge settings to plugin settings
-        add_filter(
-            "option_{$slug}_general",
-            static function ($value) {
-                if (!is_array($value)) {
-                    return $value;
-                }
-
-                $backends = \HTTP_BRIDGE\Settings_Store::setting('general')
-                    ->backends;
-
-                return array_merge($value, ['backends' => $backends]);
-            },
-            10,
-            1
-        );
-    }
-
-    /**
-     * Plugin's setting configuration.
-     */
-    public static function config()
-    {
-        return [
-            [
+            $store::use_setter(
                 'general',
-                [
-                    'notification_receiver' => ['type' => 'string'],
-                ],
-                [
-                    'notification_receiver' => get_option('admin_email'),
-                ],
-            ],
-        ];
-    }
+                static function ($data) {
+                    if (
+                        isset($data['backends']) &&
+                        is_array($data['backends'])
+                    ) {
+                        \HTTP_BRIDGE\Settings_Store::setting(
+                            'general'
+                        )->backends = $data['backends'] ?? [];
+                        unset($data['backends']);
+                    }
 
-    /**
-     * Validates setting data before database inserts.
-     *
-     * @param array $data Setting data.
-     * @param Setting $setting Setting instance.
-     *
-     * @return array Validated setting data.
-     */
-    protected static function validate_setting($data, $setting)
-    {
-        if ($setting->name() !== 'general') {
-            return $data;
-        }
-
-        $data['notification_receiver'] =
-            filter_var($data['notification_receiver'], FILTER_VALIDATE_EMAIL) ?:
-            get_option('admin_email');
-
-        $http = \HTTP_BRIDGE\Settings_Store::setting('general');
-        $http->backends = \HTTP_BRIDGE\Settings_Store::validate_backends(
-            $data['backends'] ?? []
-        );
-
-        unset($data['backends']);
-
-        return $data;
+                    return $data;
+                },
+                9
+            );
+        });
     }
 }

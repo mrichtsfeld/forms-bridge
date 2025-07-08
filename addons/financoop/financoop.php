@@ -9,8 +9,7 @@ if (!defined('ABSPATH')) {
 require_once FORMS_BRIDGE_ADDONS_DIR . '/rest-api/rest-api.php';
 
 require_once 'class-financoop-form-bridge.php';
-require_once 'class-financoop-form-bridge-template.php';
-
+require_once 'hooks.php';
 require_once 'shortcodes.php';
 
 /**
@@ -19,32 +18,25 @@ require_once 'shortcodes.php';
 class Finan_Coop_Addon extends Rest_Addon
 {
     /**
-     * Handles the addon name.
+     * Handles the addon's title.
      *
      * @var string
      */
-    protected static $name = 'FinanCoop';
+    public const title = 'FinanCoop';
 
     /**
-     * Handles the addon's API name.
+     * Handles the addon's name.
      *
      * @var string
      */
-    protected static $api = 'financoop';
+    public const name = 'financoop';
 
     /**
      * Handles the addom's custom bridge class.
      *
      * @var string
      */
-    protected static $bridge_class = '\FORMS_BRIDGE\Finan_Coop_Form_Bridge';
-
-    /**
-     * Handles the addon's custom form bridge template class.
-     *
-     * @var string
-     */
-    protected static $bridge_template_class = '\FORMS_BRIDGE\Finan_Coop_Form_Bridge_Template';
+    public const bridge_class = '\FORMS_BRIDGE\Finan_Coop_Form_Bridge';
 
     /**
      * Performs a request against the backend to check the connexion status.
@@ -63,7 +55,7 @@ class Finan_Coop_Addon extends Rest_Addon
             'backend' => $backend,
         ]);
 
-        $response = $bridge->submit([]);
+        $response = $bridge->submit();
         return ['success' => !is_wp_error($response)];
     }
 
@@ -85,7 +77,7 @@ class Finan_Coop_Addon extends Rest_Addon
             'method' => 'GET',
         ]);
 
-        $response = $bridge->submit([]);
+        $response = $bridge->submit();
         if (is_wp_error($response)) {
             return [];
         }

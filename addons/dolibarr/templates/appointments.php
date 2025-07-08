@@ -23,6 +23,13 @@ return [
             'description' => __('Host user of the event', 'forms-bridge'),
             'type' => 'string',
             'required' => true,
+            'options' => [
+                'endpoint' => '/api/index.php/users',
+                'finger' => [
+                    'value' => '[].id',
+                    'label' => '[].email',
+                ],
+            ],
         ],
         [
             'ref' => '#bridge/custom_fields[]',

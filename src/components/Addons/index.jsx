@@ -1,47 +1,32 @@
 // source
-import { useGeneral } from "../../providers/Settings";
+import { useAddons } from "../../hooks/useGeneral";
 
-// logos
-import biginLogo from "../../../addons/bigin/assets/logo.png";
-import brevoLogo from "../../../addons/brevo/assets/logo.png";
-import dolibarrLogo from "../../../addons/dolibarr/assets/logo.png";
-import financoopLogo from "../../../addons/financoop/assets/logo.png";
-import googleSheetsLogo from "../../../addons/gsheets/assets/logo.png";
-import holdedLogo from "../../../addons/holded/assets/logo.png";
-import listmonkLogo from "../../../addons/listmonk/assets/logo.png";
-import mailchimpLogo from "../../../addons/mailchimp/assets/logo.png";
-import odooLogo from "../../../addons/odoo/assets/logo.png";
-import restLogo from "../../../addons/rest-api/assets/logo.png";
-import zohoLogo from "../../../addons/zoho/assets/logo.png";
-
-const LOGOS = {
-  "bigin": biginLogo,
-  "brevo": brevoLogo,
-  "dolibarr": dolibarrLogo,
-  "financoop": financoopLogo,
-  "gsheets": googleSheetsLogo,
-  "holded": holdedLogo,
-  "listmonk": listmonkLogo,
-  "mailchimp": mailchimpLogo,
-  "odoo": odooLogo,
-  "rest-api": restLogo,
-  "zoho": zohoLogo,
-};
-
+const { useMemo, useCallback } = wp.element;
 const { PanelBody, __experimentalSpacer: Spacer } = wp.components;
 const { __ } = wp.i18n;
 
 export default function Addons() {
-  const [general, patch] = useGeneral();
+  const [addons, setAddons] = useAddons();
 
-  const toggle = (addon) =>
-    patch({
-      ...general,
-      addons: {
-        ...general.addons,
-        [addon]: !general.addons[addon],
-      },
-    });
+  const toggleEnabled = useCallback(
+    (target) => {
+      const newAddons = addons.map(({ name, enabled }) => {
+        if (name === target) {
+          enabled = !enabled;
+        }
+
+        return { name, enabled };
+      });
+
+      setAddons(newAddons);
+    },
+    [addons]
+  );
+
+  const sortedAddons = useMemo(
+    () => addons.sort((a, b) => (a.name > b.name ? 1 : -1)),
+    [addons]
+  );
 
   return (
     <PanelBody title={__("Addons", "forms-bridge")} initialOpen={false}>
@@ -53,7 +38,7 @@ export default function Addons() {
       </p>
       <Spacer paddingBottom="5px" />
       <div style={{ display: "flex", flexWrap: "wrap", gap: "20px" }}>
-        {Object.keys(general.addons).map((addon) => (
+        {sortedAddons.map(({ name, title, enabled, logo }) => (
           <button
             tabIndex={0}
             style={{
@@ -66,17 +51,17 @@ export default function Addons() {
               alignItems: "center",
               cursor: "pointer",
               padding: "20px",
-              color: general.addons[addon]
+              color: enabled
                 ? "var(--wp-components-color-accent,var(--wp-admin-theme-color,#3858e9))"
                 : "inherit",
-              border: general.addons[addon] ? "2px solid" : "none",
+              border: enabled ? "2px solid" : "none",
             }}
-            onClick={() => toggle(addon)}
+            onClick={() => toggleEnabled(name)}
           >
             <div style={{ flex: 1, display: "flex", alignItems: "center" }}>
               <img
-                alt={addon}
-                src={"data:image/png;base64," + LOGOS[addon]}
+                alt={name}
+                src={logo}
                 width="100px"
                 height="50px"
                 style={{
@@ -87,9 +72,7 @@ export default function Addons() {
                 }}
               />
             </div>
-            <h4 style={{ margin: 0, fontSize: "1rem" }}>
-              {__(addon, "forms-bridge")}
-            </h4>
+            <h4 style={{ margin: 0, fontSize: "1rem" }}>{title}</h4>
           </button>
         ))}
       </div>

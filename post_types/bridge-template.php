@@ -12,5 +12,7 @@ add_action('init', function () {
         ],
         'public' => false,
         'supports' => ['title', 'excerpt', 'custom-fields'],
+        'capability_type' => 'post',
+        'can_export' => false,
     ]);
 });

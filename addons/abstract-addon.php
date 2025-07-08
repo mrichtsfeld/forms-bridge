@@ -2,9 +2,7 @@
 
 namespace FORMS_BRIDGE;
 
-use Exception;
 use HTTP_BRIDGE\Http_Backend;
-use ReflectionClass;
 use TypeError;
 use WPCT_PLUGIN\Singleton;
 use FBAPI;
@@ -19,11 +17,11 @@ if (!defined('ABSPATH')) {
 abstract class Addon extends Singleton
 {
     /**
-     * Handles mounted addons instance references.
+     * Handles acitve addons instance references.
      *
      * @var array<string, Addon>
      */
-    public static $addons = [];
+    private static $addons = [];
 
     /**
      * Handles addon's registry option name.
@@ -37,69 +35,75 @@ abstract class Addon extends Singleton
      *
      * @var string
      */
-    protected static $name;
+    public const title = 'Abstract Addon';
 
     /**
      * Handles addon's API name.
      *
      * @var string
      */
-    protected static $api;
+    public const name = 'forms-bridge';
 
     /**
      * Handles addon's custom bridge class name.
      *
      * @var string
      */
-    protected static $bridge_class = '\FORMS_BRIDGE\Form_Bridge';
-
-    /**
-     * Handles addon's custom bridge template class name.
-     *
-     * @var string
-     */
-    protected static $bridge_template_class = '\FORMS_BRIDGE\Form_Bridge_Template';
+    public const bridge_class = '\FORMS_BRIDGE\Form_Bridge';
 
     /**
      * Addon's default config getter.
      *
      * @return array
      */
-    protected static function default_config()
+    public static function schema()
     {
+        $bridge_class = static::bridge_class;
+
         return [
-            'bridges' => [
-                'type' => 'array',
-                'items' => static::$bridge_class::schema(),
-                'default' => [],
-            ],
-            'credentials' => [
-                'type' => 'array',
-                'items' => [
-                    'type' => 'object',
-                    'properties' => [
-                        'name' => [
-                            'type' => 'string',
-                            'minLength' => 1,
-                        ],
-                    ],
-                    'required' => ['name'],
+            'type' => 'object',
+            'properties' => [
+                'title' => ['type' => 'string'],
+                'description' => [
+                    'type' => 'string',
+                    'default' => '',
                 ],
-                'default' => [],
+                'logo' => [
+                    'type' => 'string',
+                    'default' => '',
+                ],
+                'bridges' => [
+                    'type' => 'array',
+                    'items' => $bridge_class::schema(),
+                    'default' => [],
+                ],
+                'credentials' => [
+                    'type' => 'array',
+                    'items' => [
+                        'type' => 'object',
+                        'properties' => [
+                            'name' => [
+                                'type' => 'string',
+                                'minLength' => 1,
+                            ],
+                        ],
+                        'required' => ['name'],
+                    ],
+                    'default' => [],
+                ],
             ],
+            'required' => ['title', 'bridges'],
         ];
     }
 
-    /**
-     * Merges addon's config with defaults and returns the result.
-     *
-     * @param array $config Addon config.
-     *
-     * @return array
-     */
-    protected static function merge_setting_config($config)
+    protected static function defaults()
     {
-        return wpct_plugin_merge_object($config, self::default_config());
+        $defaults = [
+            'title' => static::title,
+            'bridges' => [],
+        ];
+
+        return $defaults;
     }
 
     /**
@@ -115,10 +119,10 @@ abstract class Addon extends Singleton
      *
      * @return array Addons registry state.
      */
-    final public static function registry()
+    private static function registry()
     {
-        $state = (array) get_option(self::registry, ['rest-api' => true]);
-        $addons_dir = dirname(__FILE__);
+        $state = get_option(self::registry, ['rest-api' => true]) ?: [];
+        $addons_dir = FORMS_BRIDGE_ADDONS_DIR;
         $addons = array_diff(scandir($addons_dir), ['.', '..']);
 
         $registry = [];
@@ -129,10 +133,8 @@ abstract class Addon extends Singleton
             }
 
             $index = "{$addon_dir}/{$addon}.php";
-            if (is_file($index)) {
-                $registry[$addon] = isset($state[$addon])
-                    ? (bool) $state[$addon]
-                    : false;
+            if (is_file($index) && is_readable($index)) {
+                $registry[$addon] = boolval($state[$addon] ?? false);
             }
         }
 
@@ -158,80 +160,103 @@ abstract class Addon extends Singleton
         update_option(self::registry, $registry);
     }
 
-    /**
-     * Public addons loader.
-     */
-    final public static function load()
+    final public static function addons()
     {
-        $registry = self::registry();
-        foreach ($registry as $addon => $enabled) {
-            $addon_dir = dirname(__FILE__) . "/{$addon}";
-
-            if ($enabled) {
-                require_once "{$addon_dir}/{$addon}.php";
-                self::$addons[$addon]->mount();
+        $addons = [];
+        foreach (self::$addons as $addon) {
+            if ($addon->enabled) {
+                $addons[] = $addon;
             }
         }
 
-        $general_setting = Forms_Bridge::slug() . '_general';
-        add_filter(
-            'wpct_plugin_setting_default',
-            static function ($default, $name) use ($general_setting) {
-                if ($name !== $general_setting) {
-                    return $default;
-                }
+        return $addons;
+    }
 
-                return array_merge($default, ['addons' => self::registry()]);
-            },
-            10,
-            2
-        );
-
-        add_filter(
-            "option_{$general_setting}",
-            static function ($value) {
-                if (!is_array($value)) {
-                    return $value;
-                }
-
-                return array_merge($value, ['addons' => self::registry()]);
-            },
-            10,
-            1
-        );
-
-        add_filter(
-            'wpct_plugin_validate_setting',
-            static function ($data, $setting) use ($general_setting) {
-                if ($setting->full_name() !== $general_setting) {
-                    return $data;
-                }
-
-                self::update_registry((array) $data['addons']);
-                unset($data['addons']);
-
-                return $data;
-            },
-            9,
-            2
-        );
+    final public static function addon($name)
+    {
+        return self::$addons[$name] ?? null;
     }
 
     /**
-     * Abstract setting registration method to be overwriten by its descendants.
+     * Public addons loader.
      */
-    abstract protected static function setting_config();
+    final public static function load_addons()
+    {
+        $addons_dir = FORMS_BRIDGE_ADDONS_DIR;
+        $registry = self::registry();
+        foreach ($registry as $addon => $enabled) {
+            require_once "{$addons_dir}/{$addon}/{$addon}.php";
+
+            if ($enabled) {
+                self::$addons[$addon]->load();
+            }
+        }
+
+        Settings_Store::ready(function ($store) {
+            $store::use_getter('general', function ($data) {
+                $registry = self::registry();
+                $addons = [];
+                foreach (self::$addons as $name => $addon) {
+                    $logo_path =
+                        FORMS_BRIDGE_ADDONS_DIR .
+                        '/' .
+                        $addon::name .
+                        '/assets/logo.png';
+                    if (is_file($logo_path) && is_readable($logo_path)) {
+                        $logo = plugin_dir_url($logo_path) . 'logo.png';
+                    } else {
+                        $logo = '';
+                    }
+
+                    $addons[$name] = [
+                        'name' => $name,
+                        'title' => $addon::title,
+                        'enabled' => $registry[$name] ?? false,
+                        'logo' => $logo,
+                    ];
+                }
+
+                ksort($addons);
+                $addons = array_values($addons);
+
+                $addons = apply_filters('forms_bridge_addons', $addons);
+                return array_merge($data, ['addons' => $addons]);
+            });
+
+            $store::use_setter(
+                'general',
+                function ($data) {
+                    if (!isset($data['addons']) || !is_array($data['addons'])) {
+                        return $data;
+                    }
+
+                    $registry = [];
+                    foreach ($data['addons'] as $addon) {
+                        $registry[$addon['name']] = (bool) $addon['enabled'];
+                    }
+
+                    self::update_registry($registry);
+
+                    unset($data['addons']);
+                    return $data;
+                },
+                9
+            );
+        });
+    }
 
     /**
-     * Abstract setting validation method to be overwriten by its descendants.
-     * This method will be executed before each database update on the options table.
+     * Middelware to the addon settings validation method to filter out of domain
+     * setting updates.
      *
-     * @param array $data Setting value.
-     * @param Setting $setting Setting instance.
+     * @param array $data Setting data.
      *
-     * @return array Validated value.
+     * @return array Validated setting data.
      */
-    abstract protected static function validate_setting($data, $setting);
+    protected static function sanitize_setting($data)
+    {
+        return $data;
+    }
 
     /**
      * Common bridge validation method.
@@ -241,7 +266,7 @@ abstract class Addon extends Singleton
      *
      * @return array Validated and sanitized bridge data.
      */
-    protected static function validate_bridge($bridge, &$uniques = [])
+    protected static function sanitize_bridge($bridge, &$uniques = [])
     {
         if (empty($bridge['name'])) {
             return;
@@ -348,7 +373,7 @@ abstract class Addon extends Singleton
         $bridge['is_valid'] =
             !empty($bridge['form_id']) && !empty($bridge['backend']);
 
-        $bridge['enabled'] = boolval($bridge['enabeld'] ?? true);
+        $bridge['enabled'] = boolval($bridge['enabled'] ?? true);
         return $bridge;
     }
 
@@ -361,7 +386,7 @@ abstract class Addon extends Singleton
      *
      * @return array Validated and sanitized credential data.
      */
-    protected static function validate_credential(
+    protected static function sanitize_credential(
         $credential,
         $fields,
         &$uniques = []
@@ -388,45 +413,165 @@ abstract class Addon extends Singleton
         return $credential;
     }
 
+    public $enabled = false;
+
     /**
      * Private class constructor. Add addons scripts as dependency to the
      * plugin's scripts and setup settings hooks.
      */
     protected function construct(...$args)
     {
-        if (!(static::$name && static::$api)) {
-            throw new Exception('Invalid addon registration');
-        }
-
-        self::$addons[static::$api] = $this;
+        self::$addons[static::name] = $this;
     }
 
-    public function mount()
+    public function load()
     {
         add_action(
             'init',
             static function () {
-                static::load_data();
-                static::load_templates();
-                static::load_workflow_jobs();
+                self::load_data();
             },
             5,
             0
         );
 
-        add_action(
-            'wpct_plugin_registered_settings',
-            static function ($settings, $group) {
-                if ($group === Forms_Bridge::slug()) {
-                    static::load_bridges();
+        add_filter(
+            'forms_bridge_templates',
+            static function ($templates, $addon = null) {
+                if (!wp_is_numeric_array($templates)) {
+                    $templates = [];
                 }
+
+                if ($addon && $addon !== static::name) {
+                    return $templates;
+                }
+
+                foreach (static::load_templates() as $template) {
+                    $templates[] = $template;
+                }
+
+                return $templates;
             },
             10,
             2
         );
 
-        static::handle_settings();
-        static::admin_scripts();
+        add_filter(
+            'forms_bridge_jobs',
+            static function ($jobs, $addon = null) {
+                if (!wp_is_numeric_array($jobs)) {
+                    $jobs = [];
+                }
+
+                if ($addon && $addon !== static::name) {
+                    return $jobs;
+                }
+
+                foreach (static::load_jobs() as $job) {
+                    $jobs[] = $job;
+                }
+
+                return $jobs;
+            },
+            10,
+            2
+        );
+
+        add_filter(
+            'forms_bridge_bridges',
+            static function ($bridges, $addon = null) {
+                if (!wp_is_numeric_array($bridges)) {
+                    $bridges = [];
+                }
+
+                if ($addon && $addon !== static::name) {
+                    return $bridges;
+                }
+
+                $setting = static::setting();
+                if (!$setting) {
+                    return $bridges;
+                }
+
+                foreach ($setting->bridges ?: [] as $bridge_data) {
+                    $bridges[] = new static::bridge_class($bridge_data);
+                }
+
+                return $bridges;
+            },
+            10,
+            2
+        );
+
+        add_filter(
+            'forms_bridge_credentials',
+            static function ($credentials, $addon = null) {
+                if (!wp_is_numeric_array($credentials)) {
+                    $credentials = [];
+                }
+
+                if ($addon && $addon !== static::name) {
+                    return $credentials;
+                }
+
+                $setting = static::setting();
+                if (!$setting) {
+                    return $credentials;
+                }
+
+                foreach ($setting->credentials ?: [] as $credential_data) {
+                    $credentials[] = new Credential(
+                        $credential_data,
+                        static::name
+                    );
+                }
+
+                return $credentials;
+            },
+            10,
+            2
+        );
+
+        Settings_Store::enqueue(static function ($settings) {
+            $schema = static::schema();
+            $schema['name'] = static::name;
+            $schema['default'] = static::defaults();
+
+            $settings[] = $schema;
+            return $settings;
+        });
+
+        Settings_Store::ready(static function ($store) {
+            $store::use_getter(static::name, static function ($data) {
+                $templates = FBAPI::get_addon_templates(static::name);
+                $jobs = FBAPI::get_addon_jobs(static::name);
+
+                return array_merge($data, [
+                    'templates' => array_map(static function ($template) {
+                        return [
+                            'title' => $template->title,
+                            'name' => $template->name,
+                            'integrations' => $template->integrations,
+                        ];
+                    }, $templates),
+                    'jobs' => array_map(static function ($job) {
+                        return [
+                            'title' => $job->title,
+                            'name' => $job->name,
+                        ];
+                    }, $jobs),
+                ]);
+            });
+
+            $store::use_setter(static::name, static function ($data) {
+                unset($data['templates']);
+                unset($data['jobs']);
+
+                return static::sanitize_setting($data);
+            });
+        });
+
+        $this->enabled = true;
     }
 
     /**
@@ -436,7 +581,7 @@ abstract class Addon extends Singleton
      */
     final protected static function setting_name()
     {
-        return Forms_Bridge::slug() . '_' . static::$api;
+        return 'forms-bridge_' . static::name;
     }
 
     /**
@@ -446,22 +591,40 @@ abstract class Addon extends Singleton
      */
     final protected static function setting()
     {
-        return Forms_Bridge::setting(static::$api);
+        return Forms_Bridge::setting(static::name);
     }
 
     /**
      * Proxy to the addons' do_ping private method.
      *
-     * @params string $api Target API name.
+     * @params string $addon Target addon name.
      * @params array $backend Backend data to be used on the request.
      * @params array|null $credential Credential data.
      *
      * @return array Ping result.
      */
-    final public static function ping($api, $backend, $credential)
+    final public static function ping($addon, $backend, $credential)
     {
+        $addon = self::addon($addon);
+        if (!$addon) {
+            return new WP_Error('bad_request', 'Unknown API', [
+                'status' => 400,
+            ]);
+        }
+
         self::temp_backend_registration($backend);
-        return self::$addons[$api]->do_ping($backend['name'], $credential);
+
+        $result = $addon->do_ping($backend['name'], $credential);
+
+        if (is_wp_error($result)) {
+            return $result;
+        }
+
+        if ($result !== true) {
+            return ['success' => false];
+        }
+
+        return ['success' => true];
     }
 
     /**
@@ -470,28 +633,32 @@ abstract class Addon extends Singleton
      * @param string $backend Target backend name.
      * @params WP_REST_Request $request Current REST request.
      *
-     * @return array Ping result.
+     * @return boolean Ping result.
      */
     abstract protected function do_ping($backend, $request);
 
     /**
      * Proxy to the addons' do_fetch private method.
      *
-     * @param string $api Target API name.
+     * @param string $addon Addon name.
      * @param array $backend Backend data to be used on the request.
      * @param string $endpoint Target endpoint name.
      * @params array|null $credential Credential data.
      *
-     * @return array Fetched records.
+     * @return array
      */
-    final public static function fetch($api, $backend, $endpoint, $credential)
+    final public static function fetch($addon, $backend, $endpoint, $credential)
     {
+        $addon = self::addon($addon);
+        if (!$addon) {
+            return new WP_Error('bad_request', 'Unknown API', [
+                'status' => 400,
+            ]);
+        }
+
         self::temp_backend_registration($backend);
-        return self::$addons[$api]->do_fetch(
-            $backend['name'],
-            $endpoint,
-            $credential
-        );
+
+        return $addon->do_fetch($backend['name'], $endpoint, $credential);
     }
 
     /**
@@ -501,7 +668,7 @@ abstract class Addon extends Singleton
      * @param string $endpoint Target endpoint name.
      * @params WP_REST_Request $request Current REST request.
      *
-     * @return array Fetched records.
+     * @return array
      */
     abstract protected function do_fetch($backend, $endpoint, $request);
 
@@ -521,8 +688,16 @@ abstract class Addon extends Singleton
         $endpoint,
         $request
     ) {
+        $addon = self::addon($api);
+        if (!$addon) {
+            return new WP_Error('bad_request', 'Unknown API', [
+                'status' => 400,
+            ]);
+        }
+
         self::temp_backend_registration($backend);
-        return self::$addons[$api]->get_endpoint_schema(
+
+        return $addon->get_endpoint_schema(
             $backend['name'],
             $endpoint,
             $request
@@ -554,203 +729,47 @@ abstract class Addon extends Singleton
     private static function temp_backend_registration($data)
     {
         add_filter(
-            'http_bridge_backend',
-            static function ($backend, $name) use ($data) {
-                if ($backend instanceof Http_Backend) {
-                    return $backend;
+            'http_bridge_backends',
+            static function ($backends) use ($data) {
+                foreach ($backends as $candidate) {
+                    if ($candidate->name === $data['name']) {
+                        $backend = $candidate;
+                        break;
+                    }
                 }
 
-                if ($name === $data['name']) {
-                    return new Http_Backend($data);
-                }
-            },
-            2,
-            90
-        );
-    }
+                if (!isset($backend)) {
+                    $backend = new Http_Backend($data);
 
-    /**
-     * Settings hooks interceptors to register on the plugin's settings store
-     * the addon setting.
-     */
-    private static function handle_settings()
-    {
-        add_filter(
-            'wpct_plugin_settings_config',
-            static function ($config, $group) {
-                if ($group !== Forms_Bridge::slug()) {
-                    return $config;
+                    if ($backend->is_valid) {
+                        $backends[] = $backend;
+                    }
                 }
 
-                return array_merge($config, [static::setting_config()]);
+                return $backends;
             },
-            10,
-            2
-        );
-
-        // Validate the addon setting before updates
-        add_filter(
-            'wpct_plugin_validate_setting',
-            static function ($data, $setting) {
-                return static::do_validation($data, $setting);
-            },
-            11,
-            2
-        );
-
-        add_filter(
-            'wpct_plugin_setting_default',
-            static function ($default, $name) {
-                if ($name !== static::setting_name()) {
-                    return $default;
-                }
-
-                $templates = FBAPI::get_api_templates(static::$api);
-                $jobs = FBAPI::get_api_jobs(static::$api);
-
-                return array_merge($default, [
-                    'templates' => array_map(function ($template) {
-                        return [
-                            'title' => $template->title,
-                            'name' => $template->name,
-                            'integrations' => $template->config['integrations'],
-                        ];
-                    }, $templates),
-                    'workflow_jobs' => array_map(function ($job) {
-                        return [
-                            'title' => $job->title,
-                            'name' => $job->name,
-                        ];
-                    }, $jobs),
-                ]);
-            },
-            10,
-            2
-        );
-
-        add_filter(
-            'option_' . static::setting_name(),
-            static function ($value) {
-                if (!is_array($value)) {
-                    return $value;
-                }
-
-                $templates = FBAPI::get_api_templates(static::$api);
-                $jobs = FBAPI::get_api_jobs(static::$api);
-
-                return array_merge($value, [
-                    'templates' => array_map(function ($template) {
-                        return [
-                            'title' => $template->title,
-                            'name' => $template->name,
-                            'integrations' => $template->config['integrations'],
-                        ];
-                    }, $templates),
-                    'workflow_jobs' => array_map(function ($job) {
-                        return [
-                            'title' => $job->title,
-                            'name' => $job->name,
-                        ];
-                    }, $jobs),
-                ]);
-            },
-            10,
+            99,
             1
         );
-    }
-
-    /**
-     * Enqueue addon scripts as wordpress scripts and shifts it
-     * as dependency to the forms bridge admin script.
-     */
-    private static function admin_scripts()
-    {
-        add_action(
-            'admin_enqueue_scripts',
-            static function ($admin_page) {
-                if ('settings_page_' . Forms_Bridge::slug() !== $admin_page) {
-                    return;
-                }
-
-                $reflector = new ReflectionClass(static::class);
-                $__FILE__ = $reflector->getFileName();
-
-                $slug = Forms_Bridge::slug();
-                $script_name = Forms_Bridge::slug() . '-' . static::$api;
-                wp_enqueue_script(
-                    $script_name,
-                    plugins_url('assets/addon.bundle.js', $__FILE__),
-                    [
-                        $slug,
-                        $slug . '-admin',
-                        'react',
-                        'react-jsx-runtime',
-                        'wp-api-fetch',
-                        'wp-components',
-                        'wp-dom-ready',
-                        'wp-element',
-                        'wp-i18n',
-                        'wp-api',
-                    ],
-                    Forms_Bridge::version(),
-                    ['in_footer' => true]
-                );
-
-                wp_set_script_translations(
-                    $script_name,
-                    Forms_Bridge::slug(),
-                    Forms_Bridge::path() . 'languages'
-                );
-
-                // add_filter('forms_bridge_admin_script_deps', static function (
-                //     $deps
-                // ) use ($script_name) {
-                //     return array_merge($deps, [$script_name]);
-                // });
-            },
-            9,
-            1
-        );
-    }
-
-    /**
-     * Middelware to the addon settings validation method to filter out of domain
-     * setting updates.
-     *
-     * @param array $data Setting data.
-     * @param Setting $setting Setting instance.
-     *
-     * @return array Validated setting data.
-     */
-    private static function do_validation($data, $setting)
-    {
-        if ($setting->full_name() !== static::setting_name()) {
-            return $data;
-        }
-
-        unset($data['templates']);
-        unset($data['workflow_jobs']);
-
-        return static::validate_setting($data, $setting);
     }
 
     private static function autoload_posts($post_type, $api)
     {
-        if (!in_array($post_type, ['fb-bridge-template', 'fb-workflow-job'])) {
+        if (!in_array($post_type, ['fb-bridge-template', 'fb-job'])) {
             return [];
         }
 
         return get_posts([
             'post_type' => $post_type,
             'posts_per_page' => -1,
-            'meta_key' => '_workflow-job-api',
+            'meta_key' => '_fb-api',
             'meta_value' => $api,
         ]);
     }
 
     /**
      * Autoload config files from a given addon's directory. Used to load
-     * template and workflow job config files.
+     * template and job config files.
      *
      * @param string $dir Path of the target directory.
      *
@@ -761,6 +780,8 @@ abstract class Addon extends Singleton
         if (!is_readable($dir) || !is_dir($dir)) {
             return [];
         }
+
+        static $load_cache;
 
         $files = [];
         foreach (array_diff(scandir($dir), ['.', '..']) as $file) {
@@ -781,6 +802,11 @@ abstract class Addon extends Singleton
                 continue;
             }
 
+            if (isset($load_cache[$file_path])) {
+                $loaded[] = $load_cache[$file_path];
+                continue;
+            }
+
             $data = null;
             if ($ext === 'php') {
                 $data = include_once $file_path;
@@ -796,6 +822,7 @@ abstract class Addon extends Singleton
             if (is_array($data)) {
                 $data['name'] = $name;
                 $loaded[] = $data;
+                $load_cache[$file_path] = $data;
             }
         }
 
@@ -807,62 +834,45 @@ abstract class Addon extends Singleton
      */
     private static function load_data()
     {
-        $__FILE__ = (new ReflectionClass(static::class))->getFileName();
-        $dir = dirname($__FILE__) . '/data';
-
-        if (!is_dir($dir)) {
-            $res = mkdir($dir, 0755, true);
-            if (!$res) {
-                return;
-            }
-        }
-
+        $dir = FORMS_BRIDGE_ADDONS_DIR . '/' . static::name . '/data';
         self::autoload_dir($dir);
-    }
-
-    private static function load_bridges()
-    {
-        $bridges = static::setting()->bridges ?: [];
-        foreach ($bridges as $bridge) {
-            new static::$bridge_class($bridge, static::$api);
-        }
     }
 
     /**
      * Loads addon's bridge templates.
+     *
+     * @return Form_Bridge_Template[].
      */
     private static function load_templates()
     {
-        $__FILE__ = (new ReflectionClass(static::class))->getFileName();
-        $dir = dirname($__FILE__) . '/templates';
-
-        if (!is_dir($dir)) {
-            $res = mkdir($dir, 0755, true);
-            if (!$res) {
-                return;
-            }
-        }
+        $dir = FORMS_BRIDGE_ADDONS_DIR . '/' . static::name . '/templates';
 
         $directories = apply_filters(
             'forms_bridge_template_directories',
             [
                 $dir,
+                Forms_Bridge::path() . 'includes/templates',
                 get_stylesheet_directory() .
                 '/forms-bridge/templates/' .
-                static::$api,
+                static::name,
             ],
-            static::$api
+            static::name
         );
 
         $templates = [];
         foreach ($directories as $dir) {
+            if (!is_dir($dir)) {
+                continue;
+            }
+
             foreach (self::autoload_dir($dir) as $template) {
+                $template['name'] = sanitize_title($template['name']);
                 $templates[$template['name']] = $template;
             }
         }
 
         foreach (
-            self::autoload_posts('fb-bridge-template', static::$api)
+            self::autoload_posts('fb-bridge-template', static::name)
             as $template_post
         ) {
             $template[$template->post_name] = $template_post;
@@ -873,9 +883,10 @@ abstract class Addon extends Singleton
         $templates = apply_filters(
             'forms_bridge_load_templates',
             $templates,
-            static::$api
+            static::name
         );
 
+        $loaded = [];
         foreach ($templates as $template) {
             if (
                 is_array($template) &&
@@ -886,65 +897,126 @@ abstract class Addon extends Singleton
                 ]);
             }
 
-            new static::$bridge_template_class($template);
+            $template = new Form_Bridge_Template($template, static::name);
+
+            if ($template->is_valid) {
+                $loaded[] = $template;
+            }
         }
+
+        return $loaded;
     }
 
     /**
-     * Loads addon's workflow jobs.
+     * Loads addon's jobs.
      */
-    private static function load_workflow_jobs()
+    private static function load_jobs()
     {
-        $__FILE__ = (new ReflectionClass(static::class))->getFileName();
-        $dir = dirname($__FILE__) . '/jobs';
-
-        if (!is_dir($dir)) {
-            $res = mkdir($dir, 0755, true);
-            if (!$res) {
-                return;
-            }
-        }
+        $dir = FORMS_BRIDGE_ADDONS_DIR . '/' . static::name . '/jobs';
 
         $directories = apply_filters(
             'forms_bridge_job_directories',
             [
                 $dir,
-                Forms_Bridge::path() . 'includes/workflow-jobs',
+                Forms_Bridge::path() . 'includes/jobs',
                 get_stylesheet_directory() .
-                '/forms-bridge/workflow-jobs/' .
-                static::$api,
+                '/forms-bridge/jobs/' .
+                static::name,
             ],
-            static::$api
+            static::name
         );
 
         $jobs = [];
         foreach ($directories as $dir) {
+            if (!is_dir($dir)) {
+                continue;
+            }
+
             foreach (self::autoload_dir($dir) as $job) {
+                $job['name'] = sanitize_title($job['name']);
                 $jobs[$job['name']] = $job;
             }
         }
 
-        foreach (
-            self::autoload_posts('fb-workflow-job', static::$api)
-            as $job_post
-        ) {
+        foreach (self::autoload_posts('fb-job', static::name) as $job_post) {
             $jobs[$job_post->post_name] = $job_post;
         }
 
         $jobs = array_values($jobs);
 
-        $jobs = apply_filters(
-            'forms_bridge_load_workflow_jobs',
-            $jobs,
-            static::$api
-        );
+        $jobs = apply_filters('forms_bridge_load_jobs', $jobs, static::name);
 
+        $loaded = [];
         foreach ($jobs as $job) {
             if (is_array($job) && isset($job['data'], $job['name'])) {
                 $job = array_merge($job['data'], ['name' => $job['name']]);
             }
 
-            new Workflow_Job($job, static::$api);
+            $job = new Job($job, static::name);
+
+            if ($job->is_valid) {
+                $loaded[] = $job;
+            }
         }
+
+        return $loaded;
     }
+
+    // public static function get_api()
+    // {
+    //     $__FILE__ = (new ReflectionClass(static::class))->getFileName();
+    //     $file = dirname($__FILE__) . '/api.php';
+
+    //     if (!is_file($file) || !is_readable($file)) {
+    //         return [];
+    //     }
+
+    //     $source = file_get_contents($file);
+    //     $tokens = token_get_all($source);
+
+    //     $functions = [];
+    //     $nextStringIsFunc = false;
+    //     $inClass = false;
+    //     $bracesCount = 0;
+
+    //     foreach ($tokens as $token) {
+    //         switch ($token[0]) {
+    //             case T_CLASS:
+    //                 $inClass = true;
+    //                 break;
+    //             case T_FUNCTION:
+    //                 if (!$inClass) {
+    //                     $nextStringIsFunc = true;
+    //                 }
+    //                 break;
+
+    //             case T_STRING:
+    //                 if ($nextStringIsFunc) {
+    //                     $nextStringIsFunc = false;
+    //                     $functions[] = $token[1];
+    //                 }
+    //                 break;
+    //             case '(':
+    //             case ';':
+    //                 $nextStringIsFunc = false;
+    //                 break;
+    //             case '{':
+    //                 if ($inClass) {
+    //                     $bracesCount++;
+    //                 }
+    //                 break;
+
+    //             case '}':
+    //                 if ($inClass) {
+    //                     $bracesCount--;
+    //                     if ($bracesCount === 0) {
+    //                         $inClass = false;
+    //                     }
+    //                 }
+    //                 break;
+    //         }
+    //     }
+
+    //     return $functions;
+    // }
 }

@@ -1,10 +1,10 @@
 // source
-import { useBridges } from "../providers/Settings";
+import { useBridges } from "./useAddon";
 
 const { useMemo } = wp.element;
 
-export default function useBridgeNames(api) {
-  const bridges = useBridges(api);
+export default function useBridgeNames() {
+  const [bridges] = useBridges();
 
   return useMemo(() => {
     return new Set(bridges.map(({ name }) => name));

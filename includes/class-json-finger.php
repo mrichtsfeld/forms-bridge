@@ -297,11 +297,19 @@ class JSON_Finger
     {
         $flat = preg_match('/\[\]$/', $pointer);
 
-        $parts = array_filter(explode('[]', $pointer));
+        $parts = explode('[]', $pointer);
         $before = $parts[0];
-        $after = implode('[]', array_slice($parts, 1));
+        $after = implode('[]', array_filter(array_slice($parts, 1)));
 
-        $items = $this->get($before);
+        if (!$before) {
+            if (!wp_is_numeric_array($this->data)) {
+                return [];
+            }
+
+            $items = $this->data;
+        } else {
+            $items = $this->get($before);
+        }
 
         if (empty($after) || !wp_is_numeric_array($items)) {
             return $items;

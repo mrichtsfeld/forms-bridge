@@ -1,41 +1,38 @@
 // source
-import { useGeneral } from "../../providers/Settings";
+import { useIntegrations } from "../../hooks/useGeneral";
 
 const {
   PanelBody,
   ToggleControl,
   __experimentalSpacer: Spacer,
 } = wp.components;
-const { useMemo } = wp.element;
+const { useMemo, useCallback } = wp.element;
 const { __ } = wp.i18n;
 
 export default function Integrations() {
-  const [general, patch] = useGeneral();
+  const [integrations, setIntegrations] = useIntegrations();
 
-  const toggle = (integration) =>
-    patch({
-      ...general,
-      integrations: {
-        ...general.integrations,
-        [integration]: !general.integrations[integration],
-      },
-    });
+  const toggleEnabled = useCallback(
+    (target) => {
+      const newIntegrations = integrations.map(({ name, enabled }) => {
+        if (target === name) {
+          enabled = !enabled;
+        }
 
-  const isEmpty = useMemo(
-    () => Object.keys(general.integrations).length === 0,
-    [general]
+        return { name, enabled };
+      });
+
+      setIntegrations(newIntegrations);
+    },
+    [integrations]
   );
-  const isMulti = useMemo(
-    () => Object.keys(general.integrations).length > 1,
-    [general]
-  );
+
+  const isEmpty = useMemo(() => integrations.length === 0, [integrations]);
+  const isMulti = useMemo(() => integrations.length > 1, [integrations]);
   const isUnconfigured = useMemo(
     () =>
-      Object.keys(general.integrations).reduce(
-        (isEmpty, key) => isEmpty && !general.integrations[key],
-        true
-      ),
-    [general]
+      integrations.reduce((isEmpty, { enabled }) => isEmpty && !enabled, true),
+    [integrations]
   );
 
   if (!(isMulti || isEmpty)) return;
@@ -83,17 +80,17 @@ export default function Integrations() {
         </p>
       )}
       <Spacer paddingBottom="5px" />
-      {Object.entries(general.integrations).map(([integration, enabled]) => {
+      {integrations.map(({ name, title, enabled }) => {
         return (
           <div
-            key={integration}
+            key={name}
             style={{ display: "flex", justifyContent: "left", height: "2em" }}
           >
             <ToggleControl
               __nextHasNoMarginBottom
-              label={__(integration, "forms-bridge")}
+              label={title}
               checked={enabled}
-              onChange={() => toggle(integration)}
+              onChange={() => toggleEnabled(name)}
             />
           </div>
         );

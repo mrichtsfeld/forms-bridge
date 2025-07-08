@@ -16,8 +16,14 @@ class Dolibarr_Form_Bridge extends Rest_Form_Bridge
      *
      * @var string
      */
-    protected $api = 'dolibarr';
+    public const addon = 'dolibarr';
 
+    public static function schema()
+    {
+        $schema = parent::schema();
+        $schema['properties']['method']['default'] = 'POST';
+        return $schema;
+    }
     /**
      * Returns json as static bridge content type.
      *

@@ -61,5 +61,24 @@ window.wpfb = (() => {
     leave: function (name, callback) {
       this.off(name, callback, "bus");
     },
+    components: {},
+    hooks: {},
+    addon: function ({ api, title, root }) {
+      this.join("addons", ({ data: registry }) => {
+        registry[api] = title;
+        const el = document.createElement("div");
+        el.style.visibility = "hidden";
+        el.setAttribute("aria-hidden", "true");
+        document.body.appendChild(el);
+
+        if (typeof root === "function") {
+          root = root({ api });
+        }
+
+        wp.element
+          .createRoot(el)
+          .render(this.components.Addon({ api, children: [root] }));
+      });
+    },
   };
 })();

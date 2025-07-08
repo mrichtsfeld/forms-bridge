@@ -23,7 +23,9 @@ class Google_Sheets_Form_Bridge extends Form_Bridge
     public static function schema()
     {
         $schema = parent::schema();
+
         $schema['properties']['spreadsheet'] = [
+            '$ref' => '#/gsheets/spreadsheets/id',
             'description' => __('ID of the spreadhseet', 'forms-bridge'),
             'type' => 'string',
         ];
@@ -33,6 +35,7 @@ class Google_Sheets_Form_Bridge extends Form_Bridge
         $schema['properties']['tab'] = [
             'description' => __('Name of the spreadsheet tab', 'forms-bridge'),
             'type' => 'string',
+            'minLength' => 1,
         ];
 
         $schema['required'][] = 'tab';
@@ -43,6 +46,8 @@ class Google_Sheets_Form_Bridge extends Form_Bridge
                 'forms-bridge'
             ),
             'type' => 'string',
+            'pattern' => '^.*::.*$',
+            'default' => '${spreadsheet}::${tab}',
         ];
 
         $schema['required'][] = 'endpoint';
@@ -59,7 +64,7 @@ class Google_Sheets_Form_Bridge extends Form_Bridge
             return;
         }
 
-        return new Http_Backend(Google_Sheets_Addon::$static_backend);
+        return new Http_Backend(Google_Sheets_Addon::static_backend);
     }
 
     /**

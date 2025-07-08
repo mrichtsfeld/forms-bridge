@@ -14,7 +14,7 @@ require_once 'class-gs-rest-controller.php';
 require_once 'class-gs-ajax-controller.php';
 require_once 'class-gs-service.php';
 require_once 'class-gs-form-bridge.php';
-require_once 'class-gs-form-bridge-template.php';
+require_once 'hooks.php';
 
 /**
  * Google Sheets addon class.
@@ -22,25 +22,25 @@ require_once 'class-gs-form-bridge-template.php';
 class Google_Sheets_Addon extends Addon
 {
     /**
-     * Handles the addon name.
+     * Handles the addon's title.
      *
      * @var string
      */
-    protected static $name = 'Google Sheets';
+    public const title = 'Google Sheets';
 
     /**
-     * Handles the addon's API name.
+     * Handles the addon's name.
      *
      * @var string
      */
-    protected static $api = 'gsheets';
+    public const name = 'gsheets';
 
     /**
      * Google Sheets API static data. Works as a placeholder to fit into the common bridge schema.
      *
      * @var array
      */
-    public static $static_backend = [
+    public const static_backend = [
         'name' => 'Sheets API',
         'base_url' => 'https://sheets.googleapis.com/v4/spreadsheets',
         'headers' => [
@@ -55,14 +55,7 @@ class Google_Sheets_Addon extends Addon
      *
      * @var string
      */
-    protected static $bridge_class = '\FORMS_BRIDGE\Google_Sheets_Form_Bridge';
-
-    /**
-     * Handles the addon's custom form bridge template class.
-     *
-     * @var string
-     */
-    protected static $bridge_template_class = '\FORMS_BRIDGE\Google_Sheets_Form_Bridge_Template';
+    public const bridge_class = '\FORMS_BRIDGE\Google_Sheets_Form_Bridge';
 
     /**
      * Addon constructor. Inherits from the abstract addon and sets up interceptors
@@ -71,8 +64,19 @@ class Google_Sheets_Addon extends Addon
     protected function construct(...$args)
     {
         parent::construct(...$args);
-        self::register_api();
-        self::setting_hooks();
+
+        add_action(
+            'wpct_plugin_registered_settings',
+            function ($settings, $group, $store) {
+                if ($group === 'http-bridge') {
+                    self::register_backed_proxy($store);
+                } elseif ($group === 'forms-bridge') {
+                    self::register_setting_proxy($store);
+                }
+            },
+            10,
+            3
+        );
 
         add_filter(
             'forms_bridge_prune_empties',
@@ -88,61 +92,38 @@ class Google_Sheets_Addon extends Addon
         );
     }
 
-    private static function register_api()
+    private static function register_backed_proxy($store)
     {
-        add_filter(
-            'option_http-bridge_general',
-            static function ($value) {
-                if (!is_array($value)) {
-                    return $value;
-                }
-
-                $index = array_search(
-                    self::$static_backend['name'],
-                    array_column($value['backends'], 'name')
-                );
-
-                if ($index === false) {
-                    $value['backends'][] = self::$static_backend;
-                }
-
-                return $value;
-            },
-            5,
-            1
-        );
-
-        add_filter(
-            'wpct_plugin_setting_default',
-            static function ($data, $name) {
-                if ($name !== 'http-bridge_general') {
+        $store::use_getter(
+            'general',
+            function ($data) {
+                if (!isset($data['backends']) || !is_array($data['backends'])) {
                     return $data;
                 }
 
                 $index = array_search(
-                    self::$static_backend['name'],
+                    self::static_backend['name'],
                     array_column($data['backends'], 'name')
                 );
 
                 if ($index === false) {
-                    $data['backends'][] = self::$static_backend;
+                    $data['backends'][] = self::static_backend;
                 }
 
                 return $data;
             },
-            9,
-            2
+            20
         );
 
-        add_filter(
-            'wpct_plugin_validate_setting',
-            static function ($data, $name) {
-                if ($name !== 'http-bridge_general') {
+        $store::use_setter(
+            'general',
+            function ($data) {
+                if (!isset($data['backends']) || !is_array($data['backends'])) {
                     return $data;
                 }
 
                 $index = array_search(
-                    self::$static_backend['name'],
+                    self::static_backend['name'],
                     array_column($data['backends'], 'name')
                 );
 
@@ -152,58 +133,27 @@ class Google_Sheets_Addon extends Addon
 
                 return $data;
             },
-            5,
-            2
+            8
         );
     }
 
     /**
      * Intercept setting hooks and add authorized attribute.
      */
-    private static function setting_hooks()
+    private static function register_setting_proxy($store)
     {
-        // Patch authorized state on the setting default value
-        add_filter(
-            'wpct_plugin_setting_default',
-            static function ($data, $name) {
-                if ($name !== self::setting_name()) {
-                    return $data;
-                }
+        $store::use_getter('gsheets', function ($data) {
+            $data['authorized'] = Google_Sheets_Service::is_authorized();
+            return $data;
+        });
 
-                return array_merge($data, [
-                    'authorized' => Google_Sheets_Service::is_authorized(),
-                ]);
-            },
-            10,
-            2
-        );
-
-        add_filter(
-            'wpct_plugin_validate_setting',
-            static function ($data, $setting) {
-                if ($setting->full_name() !== self::setting_name()) {
-                    return $data;
-                }
-
+        $store::use_setter(
+            'gsheets',
+            function ($data) {
                 unset($data['authorized']);
                 return $data;
             },
-            9,
-            2
-        );
-
-        add_filter(
-            'option_' . self::setting_name(),
-            static function ($value) {
-                if (!is_array($value)) {
-                    return $value;
-                }
-
-                $value['authorized'] = Google_Sheets_Service::is_authorized();
-                return $value;
-            },
-            9,
-            1
+            9
         );
     }
 
@@ -212,28 +162,21 @@ class Google_Sheets_Addon extends Addon
      *
      * @return array Addon's settings configuration.
      */
-    protected static function setting_config()
+    protected static function config()
     {
-        return [
-            self::$api,
-            self::default_config(),
-            [
-                'bridges' => [],
-            ],
-        ];
+        return [self::name, self::schema(), self::defaults()];
     }
 
     /**
      * Sanitizes the setting value before updates.
      *
      * @param array $data Setting data.
-     * @param Setting $setting Setting instance.
      *
      * @return array Sanitized data.
      */
-    protected static function validate_setting($data, $setting)
+    protected static function sanitize_setting($data)
     {
-        $data['bridges'] = self::validate_bridges($data['bridges']);
+        $data['bridges'] = self::sanitize_bridges($data['bridges']);
         return $data;
     }
 
@@ -245,7 +188,7 @@ class Google_Sheets_Addon extends Addon
      *
      * @return array Array with valid bridge configurations.
      */
-    private static function validate_bridges($bridges)
+    private static function sanitize_bridges($bridges)
     {
         if (!wp_is_numeric_array($bridges)) {
             return [];
@@ -254,7 +197,7 @@ class Google_Sheets_Addon extends Addon
         $uniques = [];
         $validated = [];
         foreach ($bridges as $bridge) {
-            $bridge = self::validate_bridge($bridge, $uniques);
+            $bridge = self::sanitize_bridge($bridge, $uniques);
 
             if (!$bridge) {
                 continue;

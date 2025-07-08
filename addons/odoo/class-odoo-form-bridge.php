@@ -40,6 +40,7 @@ class Odoo_Form_Bridge extends Form_Bridge
         $schema = parent::schema();
 
         $schema['properties']['credential'] = [
+            'name' => __('Database', 'forms-bridge'),
             'description' => __(
                 'Name of the database credential',
                 'forms-bridge'
@@ -50,6 +51,7 @@ class Odoo_Form_Bridge extends Form_Bridge
         $schema['required'][] = 'credential';
 
         $schema['properties']['endpoint'] = [
+            'name' => __('Model', 'forms-bridge'),
             'description' => __('Name of the target db model', 'forms-bridge'),
             'type' => 'string',
         ];
@@ -57,6 +59,7 @@ class Odoo_Form_Bridge extends Form_Bridge
         $schema['required'][] = 'endpoint';
 
         $schema['properties']['method'] = [
+            'name' => __('Method', 'forms-bridge'),
             'description' => __('RPC call method name', 'forms-bridge'),
             'type' => 'string',
             'enum' => [

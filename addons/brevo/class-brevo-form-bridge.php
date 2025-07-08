@@ -16,7 +16,14 @@ class Brevo_Form_Bridge extends Rest_Form_Bridge
      *
      * @var string
      */
-    protected $api = 'brevo';
+    public const addon = 'brevo';
+
+    public static function schema()
+    {
+        $schema = parent::schema();
+        $schema['properties']['method']['default'] = 'POST';
+        return $schema;
+    }
 
     /**
      * Gets bridge's default body encoding schema.

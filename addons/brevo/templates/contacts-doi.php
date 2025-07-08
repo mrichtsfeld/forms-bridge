@@ -19,6 +19,7 @@ return [
         [
             'ref' => '#bridge/custom_fields[]',
             'name' => 'includeListIds',
+            'endpoint' => '/v3/contacts/lists',
             'label' => __('Segments', 'forms-bridge'),
             'type' => 'string',
             'required' => true,
@@ -26,6 +27,7 @@ return [
         [
             'ref' => '#bridge/custom_fields[]',
             'name' => 'templateId',
+            'endpoint' => '/v3/smtp/templates',
             'label' => __('Double opt-in template', 'forms-bridge'),
             'type' => 'string',
             'required' => true,

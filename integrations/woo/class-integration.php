@@ -12,6 +12,10 @@ use WC_Customer;
 
 class Integration extends BaseIntegration
 {
+    public const name = 'woo';
+
+    public const title = 'WooCommerce';
+
     /**
      * The integration will store order's bridged result as a custom field. This const handles the custom field name.
      *
@@ -727,3 +731,5 @@ class Integration extends BaseIntegration
         return rest_sanitize_value_from_schema($data, self::order_data_schema);
     }
 }
+
+Integration::setup();

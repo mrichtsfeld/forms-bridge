@@ -1,9 +1,10 @@
-import { useGeneral } from "../../../providers/Settings";
 import { useTemplateConfig } from "../../../providers/Templates";
 import useBackendNames from "../../../hooks/useBackendNames";
 import TemplateStep from "./Step";
 import Field from "../Field";
 import { sortByNamesOrder, prependEmptyOption } from "../../../lib/utils";
+import { validateBackend } from "../Wizard/lib";
+import useBackends from "../../../hooks/useBackends";
 
 const { SelectControl } = wp.components;
 const { useMemo, useState, useEffect, useRef } = wp.element;
@@ -11,53 +12,21 @@ const { __ } = wp.i18n;
 
 const FIELDS_ORDER = ["name", "base_url", "headers"];
 
-function validateBackend(backend, schema, fields) {
-  if (!backend?.name) return false;
-
-  const isValid = fields.reduce((isValid, { name, ref, required }) => {
-    if (!isValid || !required) return isValid;
-
-    let value;
-    if (ref === "#backend/headers[]") {
-      value = backend.headers.find((header) => header.name === name)?.value;
-    } else {
-      value = backend[name];
-    }
-
-    return value !== undefined && value !== null;
-  }, true);
-
-  if (!isValid) return isValid;
-
-  if (schema.base_url && backend.base_url !== schema.base_url) {
-    return false;
-  }
-
-  return schema.headers.reduce((isValid, { name, value }) => {
-    if (!isValid) return isValid;
-
-    const header = backend.headers.find((header) => header.name === name);
-    if (!header) return false;
-
-    return header.value === value;
-  }, isValid);
-}
-
 export default function BackendStep({ fields, data, setData, wired }) {
-  const [{ backends }] = useGeneral();
+  const [backends] = useBackends();
   const names = useBackendNames();
-  const { backend: schema } = useTemplateConfig();
+  const [{ backend: defaults }] = useTemplateConfig();
 
   const validBackends = useMemo(
     () =>
-      backends.filter((backend) => validateBackend(backend, schema, fields)),
-    [backends]
+      backends.filter((backend) => validateBackend(backend, defaults, fields)),
+    [backends, defaults, fields]
   );
 
   const backendOptions = useMemo(() => {
     return prependEmptyOption(
       validBackends.map(({ name }) => ({ label: name, value: name }))
-    );
+    ).sort((a, b) => (a.label > b.label ? 1 : -1));
   }, [validBackends]);
 
   const previousReuse = useRef(
@@ -86,8 +55,31 @@ export default function BackendStep({ fields, data, setData, wired }) {
 
   const backend = useMemo(
     () => validBackends.find((backend) => backend.name === reuse),
-    [validBackends, reuse]
+    [validBackends, reuse, defaults, fields]
   );
+
+  const mockBackend = useMemo(() => {
+    const backend = {
+      name: data.name || defaults.name,
+      base_url: data.base_url || defaults.base_url,
+      headers: Object.keys(data)
+        .filter((k) => !["name", "base_url"].includes(k))
+        .map((k) => ({
+          name: k,
+          value: data[k],
+        })),
+    };
+
+    defaults.headers.forEach(({ name, value }) => {
+      if (!backend.headers.find((h) => h.name === name)) {
+        backend.headers.push({ name, value });
+      }
+    });
+
+    if (validateBackend(backend, defaults, fields)) {
+      return backend;
+    }
+  }, [data, defaults, fields]);
 
   useEffect(() => {
     if (!backend || reuse !== previousReuse.current) return;
@@ -124,12 +116,15 @@ export default function BackendStep({ fields, data, setData, wired }) {
       return "👌";
     } else if (wired === false) {
       return "👎";
-    } else if (validateBackend(backend, schema, fields)) {
+    } else if (
+      validateBackend(backend, defaults, fields) ||
+      validateBackend(mockBackend, defaults, fields)
+    ) {
       return "⏳";
     }
 
     return null;
-  }, [wired, backend, schema, fields]);
+  }, [wired, backend, mockBackend, defaults, fields]);
 
   return (
     <TemplateStep

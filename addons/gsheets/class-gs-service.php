@@ -6,7 +6,7 @@ use Error;
 use Exception;
 use TypeError;
 use WP_Error;
-use WPCT_ABSTRACT\Singleton;
+use WPCT_PLUGIN\Singleton;
 
 if (!defined('ABSPATH')) {
     exit();

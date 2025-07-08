@@ -9,7 +9,7 @@ if (!defined('ABSPATH')) {
 require_once FORMS_BRIDGE_ADDONS_DIR . '/rest-api/rest-api.php';
 
 require_once 'class-listmonk-form-bridge.php';
-require_once 'class-listmonk-form-bridge-template.php';
+require_once 'hooks.php';
 
 /**
  * Listmonk Addon class.
@@ -17,32 +17,25 @@ require_once 'class-listmonk-form-bridge-template.php';
 class Listmonk_Addon extends Rest_Addon
 {
     /**
-     * Handles the addon name.
+     * Handles the addon's title.
      *
      * @var string
      */
-    protected static $name = 'Listmonk';
+    public const title = 'Listmonk';
 
     /**
-     * Handles the addon's API name.
+     * Handles the addon's name.
      *
      * @var string
      */
-    protected static $api = 'listmonk';
+    public const name = 'listmonk';
 
     /**
      * Handles the addom's custom bridge class.
      *
      * @var string
      */
-    protected static $bridge_class = '\FORMS_BRIDGE\Listmonk_Form_Bridge';
-
-    /**
-     * Handles the addon's custom form bridge template class.
-     *
-     * @var string
-     */
-    protected static $bridge_template_class = '\FORMS_BRIDGE\Listmonk_Form_Bridge_Template';
+    public const bridge_class = '\FORMS_BRIDGE\Listmonk_Form_Bridge';
 
     /**
      * Performs a request against the backend to check the connexion status.

@@ -24,146 +24,154 @@ abstract class Form_Bridge
      */
     public static function schema()
     {
-        return [
-            '$schema' => 'http://json-schema.org/draft-04/schema#',
-            'title' => 'form-bridge-schema',
-            'type' => 'object',
-            'properties' => [
-                'name' => [
-                    'description' => __(
-                        'Unique name of the bridge',
-                        'forms-bridge'
-                    ),
-                    'type' => 'string',
-                    'minLength' => 1,
-                ],
-                'form_id' => [
-                    'description' => __(
-                        'Internal form id with api prefix',
-                        'forms-bridge'
-                    ),
-                    'type' => 'string',
-                    'pattern' => '^\w+:\d+$',
-                ],
-                'backend' => [
-                    'description' => __('Backend name', 'forms-bridge'),
-                    'type' => 'string',
-                    'default' => '',
-                ],
-                'credential' => [
-                    'description' => __('Credential name', 'forms-bridge'),
-                    'type' => 'string',
-                    'default' => '',
-                ],
-                'custom_fields' => [
-                    'description' => __(
-                        'Array of bridge\'s custom fields',
-                        'forms-bridge'
-                    ),
-                    'type' => 'array',
-                    'items' => [
-                        'type' => 'object',
-                        'properties' => [
-                            'name' => [
-                                'type' => 'string',
-                                'minLength' => 1,
-                            ],
-                            'value' => [
-                                'type' => 'string',
-                                'minLength' => 1,
-                            ],
-                        ],
-                        'additionalProperties' => false,
-                        'required' => ['name', 'value'],
-                    ],
-                    'default' => [],
-                ],
-                'mutations' => [
-                    'description' => __(
-                        'Stack of bridge mutations',
-                        'forms-bridge'
-                    ),
-                    'type' => 'array',
-                    'items' => [
-                        'type' => 'array',
-                        'items' => [
-                            'type' => 'object',
-                            'additionalProperties' => false,
-                            'properties' => [
-                                'from' => [
-                                    'type' => 'string',
-                                    'minLength' => 1,
-                                ],
-                                'to' => [
-                                    'type' => 'string',
-                                    'minLength' => 1,
-                                ],
-                                'cast' => [
-                                    'type' => 'string',
-                                    'enum' => [
-                                        'boolean',
-                                        'string',
-                                        'integer',
-                                        'number',
-                                        'json',
-                                        'csv',
-                                        'concat',
-                                        'join',
-                                        'sum',
-                                        'count',
-                                        'inherit',
-                                        'copy',
-                                        'null',
-                                    ],
-                                ],
-                            ],
-                            'additionalProperties' => false,
-                            'required' => ['from', 'to', 'cast'],
-                        ],
-                    ],
-                    'default' => [],
-                ],
-                'workflow' => [
-                    'description' => __(
-                        'Chain of workflow job names',
-                        'forms-bridge'
-                    ),
-                    'type' => 'array',
-                    'items' => [
+        return apply_filters(
+            'forsm_bridge_bridge_schema',
+            [
+                '$schema' => 'http://json-schema.org/draft-04/schema#',
+                'title' => 'form-bridge-schema',
+                'type' => 'object',
+                'properties' => [
+                    'name' => [
+                        'name' => __('Name', 'forms-bridge'),
+                        'description' => __(
+                            'Unique name of the bridge',
+                            'forms-bridge'
+                        ),
                         'type' => 'string',
                         'minLength' => 1,
                     ],
-                    'default' => [],
+                    'form_id' => [
+                        'name' => __('Form', 'forms-bridge'),
+                        'description' => __(
+                            'Internal form id with integration prefix',
+                            'forms-bridge'
+                        ),
+                        'type' => 'string',
+                        // 'pattern' => '^\w+:\d+$',
+                        'default' => '',
+                    ],
+                    'backend' => [
+                        'name' => __('Backend', 'forms-bridge'),
+                        'description' => __('Backend name', 'forms-bridge'),
+                        'type' => 'string',
+                        'default' => '',
+                    ],
+                    // 'credential' => [
+                    //     'description' => __('Credential name', 'forms-bridge'),
+                    //     'type' => 'string',
+                    //     'default' => '',
+                    // ],
+                    'custom_fields' => [
+                        'description' => __(
+                            'Array of bridge\'s custom fields',
+                            'forms-bridge'
+                        ),
+                        'type' => 'array',
+                        'items' => [
+                            'type' => 'object',
+                            'properties' => [
+                                'name' => [
+                                    'type' => 'string',
+                                    'minLength' => 1,
+                                ],
+                                'value' => [
+                                    'type' => 'string',
+                                    'minLength' => 1,
+                                ],
+                            ],
+                            'additionalProperties' => false,
+                            'required' => ['name', 'value'],
+                        ],
+                        'default' => [],
+                    ],
+                    'mutations' => [
+                        'description' => __(
+                            'Stack of bridge mutations',
+                            'forms-bridge'
+                        ),
+                        'type' => 'array',
+                        'items' => [
+                            'type' => 'array',
+                            'items' => [
+                                'type' => 'object',
+                                'additionalProperties' => false,
+                                'properties' => [
+                                    'from' => [
+                                        'type' => 'string',
+                                        'minLength' => 1,
+                                    ],
+                                    'to' => [
+                                        'type' => 'string',
+                                        'minLength' => 1,
+                                    ],
+                                    'cast' => [
+                                        'type' => 'string',
+                                        'enum' => [
+                                            'boolean',
+                                            'string',
+                                            'integer',
+                                            'number',
+                                            'json',
+                                            'csv',
+                                            'concat',
+                                            'join',
+                                            'sum',
+                                            'count',
+                                            'inherit',
+                                            'copy',
+                                            'null',
+                                        ],
+                                    ],
+                                ],
+                                'additionalProperties' => false,
+                                'required' => ['from', 'to', 'cast'],
+                            ],
+                        ],
+                        'default' => [],
+                    ],
+                    'workflow' => [
+                        'description' => __(
+                            'Chain of workflow job names',
+                            'forms-bridge'
+                        ),
+                        'type' => 'array',
+                        'items' => [
+                            'type' => 'string',
+                            'minLength' => 1,
+                        ],
+                        'default' => [],
+                    ],
+                    'is_valid' => [
+                        'description' => __(
+                            'Validation result of the bridge setting',
+                            'forms-bridge'
+                        ),
+                        'type' => 'boolean',
+                        'default' => true,
+                    ],
+                    'enabled' => [
+                        'description' => __(
+                            'Boolean flag to enable/disable a bridge',
+                            'forms-bridge'
+                        ),
+                        'type' => 'boolean',
+                        'default' => true,
+                    ],
                 ],
-                'is_valid' => [
-                    'description' => __(
-                        'Validation result of the bridge setting',
-                        'forms-bridge'
-                    ),
-                    'type' => 'boolean',
-                    'default' => true,
+                'required' => [
+                    'name',
+                    // 'form_id',
+                    // 'backend',
+                    'custom_fields',
+                    'mutations',
+                    'workflow',
+                    'is_valid',
+                    'enabled',
                 ],
-                'enabled' => [
-                    'description' => __(
-                        'Boolean flag to enable/disable a bridge',
-                        'forms-bridge'
-                    ),
-                    'type' => 'boolean',
-                    'default' => true,
-                ],
+                'additionalProperties' => false,
             ],
-            'required' => [
-                'name',
-                'form_id',
-                'backend',
-                'custom_fields',
-                'mutations',
-                'workflow',
-                'is_valid',
-                'enabled',
-            ],
-            'additionalProperties' => false,
-        ];
+            static::addon
+        );
     }
 
     /**
@@ -176,61 +184,21 @@ abstract class Form_Bridge
     protected $id;
 
     /**
-     * Handles form bridge's api slug.
+     * Handles form bridge's addon slug.
      *
      * @var string
      */
-    protected $api;
+    public const addon = 'forms-bridge';
 
     /**
      * Stores the form bridge's data as a private attribute.
      */
     public function __construct($data)
     {
-        $this->data = wpct_plugin_validate_with_schema($data, static::schema());
+        $this->data = wpct_plugin_sanitize_with_schema($data, static::schema());
 
-        if (!is_wp_error($this->data)) {
-            $this->id = $this->api . '-' . $data['name'];
-
-            add_filter(
-                'forms_bridge_bridges',
-                function ($bridges, $form_id = null, $api = null) {
-                    if (!wp_is_numeric_array($bridges)) {
-                        $bridges = [];
-                    }
-
-                    if ($form_id && $form_id !== $this->form_id) {
-                        return $bridges;
-                    }
-
-                    if ($api && $api !== $this->api) {
-                        return $bridges;
-                    }
-
-                    $bridges[] = $this;
-                    return $bridges;
-                },
-                10,
-                3
-            );
-
-            add_filter(
-                'forms_bridge_bridge',
-                function ($bridge, $name, $api) {
-                    if ($bridge instanceof Form_Bridge) {
-                        return $bridge;
-                    }
-
-                    $id = $api . '-' . $name;
-                    if ($id !== $this->id) {
-                        return $bridge;
-                    }
-
-                    return $this;
-                },
-                10,
-                3
-            );
+        if ($this->is_valid) {
+            $this->id = static::addon . '-' . $data['name'];
         }
     }
 
@@ -246,8 +214,8 @@ abstract class Form_Bridge
         switch ($name) {
             case 'id':
                 return $this->id;
-            case 'api':
-                return $this->api;
+            case 'addon':
+                return static::addon;
             case 'form':
                 return $this->form();
             case 'integration':
@@ -263,7 +231,9 @@ abstract class Form_Bridge
             case 'workflow':
                 return $this->workflow();
             case 'is_valid':
-                return !is_wp_error($this->data) && $this->data['is_valid'];
+                return !is_wp_error($this->data) &&
+                    $this->data['is_valid'] &&
+                    Addon::addon(static::addon) !== null;
             default:
                 if (!$this->is_valid) {
                     return;
@@ -284,12 +254,7 @@ abstract class Form_Bridge
             return;
         }
 
-        $backend_name = $this->data['backend'];
-        if (!$backend_name) {
-            return;
-        }
-
-        return FBAPI::get_backend($backend_name);
+        return FBAPI::get_backend($this->data['backend']);
     }
 
     /**
@@ -335,7 +300,7 @@ abstract class Form_Bridge
             return;
         }
 
-        $backend = $this->data['backend'];
+        $backend = FBAPI::get_backend($this->data['backend']);
         if (!$backend) {
             return;
         }
@@ -371,10 +336,7 @@ abstract class Form_Bridge
             return [];
         }
 
-        return Workflow_Job::from_workflow(
-            $this->data['workflow'] ?? [],
-            $this->api
-        );
+        return Job::from_workflow($this->data['workflow'], static::addon);
     }
 
     /**
@@ -423,6 +385,57 @@ abstract class Form_Bridge
         }
 
         $data = array_merge($this->data, $partial);
-        return new static($data, $this->api);
+        return new static($data, static::addon);
+    }
+
+    public function save()
+    {
+        if (!$this->is_valid) {
+            return false;
+        }
+
+        $setting = Settings_Store::setting(static::addon);
+        if (!$setting) {
+            return false;
+        }
+
+        $bridges = $setting->bridges ?: [];
+
+        $index = array_search($this->name, array_column($bridges, 'name'));
+
+        if ($index === false) {
+            $bridges[] = $this->data;
+        } else {
+            $bridges[$index] = $this->data;
+        }
+
+        $setting->bridges = $bridges;
+
+        return true;
+    }
+
+    public function delete()
+    {
+        if (!$this->is_valid) {
+            return false;
+        }
+
+        $setting = Settings_Store::setting(static::addon);
+        if (!$setting) {
+            return false;
+        }
+
+        $bridges = $setting->bridges ?: [];
+
+        $index = array_search($this->name, array_column($bridges, 'name'));
+
+        if ($index === false) {
+            return false;
+        }
+
+        array_splice($bridges, $index, 1);
+        $setting->bridges = $bridges;
+
+        return true;
     }
 }

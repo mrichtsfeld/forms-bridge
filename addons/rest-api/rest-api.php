@@ -7,7 +7,7 @@ if (!defined('ABSPATH')) {
 }
 
 require_once 'class-rest-form-bridge.php';
-require_once 'class-rest-form-bridge-template.php';
+require_once 'hooks.php';
 
 /**
  * REST API Addon class.
@@ -15,48 +15,25 @@ require_once 'class-rest-form-bridge-template.php';
 class Rest_Addon extends Addon
 {
     /**
-     * Handles the addon name.
+     * Handles the addon's title.
      *
      * @var string
      */
-    protected static $name = 'REST API';
+    public const title = 'REST API';
 
     /**
-     * Handles the addon's API name.
+     * Handles the addon's name.
      *
      * @var string
      */
-    protected static $api = 'rest-api';
+    public const name = 'rest-api';
 
     /**
      * Handles the addom's custom bridge class.
      *
      * @var string
      */
-    protected static $bridge_class = '\FORMS_BRIDGE\Rest_Form_Bridge';
-
-    /**
-     * Handles the addon's custom form bridge template class.
-     *
-     * @var string
-     */
-    protected static $bridge_template_class = '\FORMS_BRIDGE\Rest_Form_Bridge_Template';
-
-    /**
-     * Registers the setting and its fields.
-     *
-     * @return array Addon's settings configuration.
-     */
-    protected static function setting_config()
-    {
-        return [
-            static::$api,
-            self::default_config(),
-            [
-                'bridges' => [],
-            ],
-        ];
-    }
+    public const bridge_class = '\FORMS_BRIDGE\Rest_Form_Bridge';
 
     /**
      * Apply settings' data validations before db updates.
@@ -65,12 +42,12 @@ class Rest_Addon extends Addon
      *
      * @return array Validated setting data.
      */
-    protected static function validate_setting($data, $setting)
+    protected static function sanitize_setting($data)
     {
-        $data['bridges'] = self::validate_bridges(
-            $data['bridges'],
-            \HTTP_BRIDGE\Settings_Store::setting('general')->backends ?: []
-        );
+        $backends =
+            \HTTP_BRIDGE\Settings_Store::setting('general')->backends ?: [];
+
+        $data['bridges'] = self::sanitize_bridges($data['bridges'], $backends);
 
         return $data;
     }
@@ -84,7 +61,7 @@ class Rest_Addon extends Addon
      *
      * @return array Array with valid bridge configurations.
      */
-    private static function validate_bridges($bridges, $backends)
+    private static function sanitize_bridges($bridges, $backends)
     {
         if (!wp_is_numeric_array($bridges)) {
             return [];
@@ -94,12 +71,13 @@ class Rest_Addon extends Addon
             return $backend['name'];
         }, $backends);
 
-        $http_methods = static::$bridge_class::allowed_methods;
+        $bridge_class = static::bridge_class;
+        $http_methods = $bridge_class::allowed_methods;
 
         $uniques = [];
         $validated = [];
         foreach ($bridges as $bridge) {
-            $bridge = self::validate_bridge($bridge, $uniques);
+            $bridge = self::sanitize_bridge($bridge, $uniques);
 
             if (!$bridge) {
                 continue;

@@ -1,5 +1,5 @@
 // source
-import useDebug from "../../hooks/useDebug";
+import { useDebug } from "../../hooks/useGeneral";
 import useLogs from "../../hooks/useLogs";
 
 const { useEffect, useRef } = wp.element;
