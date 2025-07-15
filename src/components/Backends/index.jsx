@@ -5,8 +5,12 @@ import NewBackend from "../Backend/NewBackend";
 import TabTitle from "../TabTitle";
 import AddIcon from "../icons/Add";
 
+const { useRef, useEffect } = wp.element;
 const { TabPanel, __experimentalSpacer: Spacer } = wp.components;
 const { __ } = wp.i18n;
+
+const CSS = `.backends-tabs-panel .components-tab-panel__tabs{overflow-x:auto;}
+.backends-tabs-panel .components-tab-panel__tabs>button{flex-shrink:0;}`;
 
 export default function Backends({ backends, setBackends }) {
   const names = useBackendNames();
@@ -74,6 +78,16 @@ export default function Backends({ backends, setBackends }) {
     setBackends(backends.concat(copy));
   };
 
+  const style = useRef(document.createElement("style"));
+  useEffect(() => {
+    style.current.appendChild(document.createTextNode(CSS));
+    document.head.appendChild(style.current);
+
+    return () => {
+      document.head.removeChild(style.current);
+    };
+  }, []);
+
   return (
     <div style={{ width: "100%" }}>
       <p>
@@ -83,7 +97,7 @@ export default function Backends({ backends, setBackends }) {
         )}
       </p>
       <Spacer paddingBottom="5px" />
-      <TabPanel tabs={tabs}>
+      <TabPanel tabs={tabs} className="backends-tabs-panel">
         {(tab) => {
           const backend = backends[tab.index];
 

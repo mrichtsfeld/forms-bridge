@@ -5,6 +5,7 @@ import BackendHeaders from "./Headers";
 import { downloadJson, validateUrl, validateBackend } from "../../lib/utils";
 import useResponsive from "../../hooks/useResponsive";
 import CopyIcon from "../icons/Copy";
+import ArrowDownIcon from "../icons/ArrowDown";
 import diff from "../../lib/diff";
 import { useLoading } from "../../providers/Loading";
 import BackendFields from "./Fields";
@@ -143,7 +144,7 @@ export default function Backend({ update, remove, data, copy }) {
             showTooltip
             __next40pxDefaultSize
           >
-            ⬇
+            <ArrowDownIcon width="12" height="20" color="gray" />
           </Button>
         </div>
       </div>

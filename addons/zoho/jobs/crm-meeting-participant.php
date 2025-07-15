@@ -12,7 +12,6 @@ function forms_bridge_crm_meeting_participant($payload, $bridge)
         return $lead;
     }
 
-    $payload['Participants'] = $payload['Participants'] ?? [];
     $payload['Participants'][] = [
         'type' => 'lead',
         'participant' => $lead['id'],

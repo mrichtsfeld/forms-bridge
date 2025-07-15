@@ -34,7 +34,9 @@ export default function Settings() {
         <div id={tab.name}>
           <Card size="large" style={{ height: "fit-content" }}>
             <CardHeader>
-              <Heading level={3}>{__(tab.title, "forms-bridge")}</Heading>
+              <Heading level={2} style={{ fontSize: "1.5em" }}>
+                {__(tab.title, "forms-bridge")}
+              </Heading>
               <img
                 style={{
                   width: "auto",

@@ -189,19 +189,10 @@ class Forms_Bridge extends Base_Plugin
     {
         $version = self::version();
 
-        // wp_enqueue_script(
-        //     'forms-bridge',
-        //     plugins_url('assets/wpfb.js', __FILE__),
-        //     [],
-        //     $version,
-        //     ['in_footer' => false]
-        // );
-
         wp_enqueue_script(
             'forms-bridge',
             plugins_url('assets/plugin.bundle.js', __FILE__),
             [
-                // 'forms-bridge',
                 'react',
                 'react-jsx-runtime',
                 'wp-api-fetch',

@@ -4,6 +4,7 @@ import { uploadJson, validateBackend, validateUrl } from "../../lib/utils";
 import BackendFields from "./Fields";
 import BackendHeaders from "./Headers";
 import useResponsive from "../../hooks/useResponsive";
+import ArrowUpIcon from "../icons/ArrowUp";
 
 const { Button } = wp.components;
 const { useState, useMemo, useCallback } = wp.element;
@@ -135,10 +136,10 @@ export default function NewBackend({ add }) {
             }}
             onClick={uploadConfig}
             __next40pxDefaultSize
-            label={__("Upload config", "forms-bridge")}
+            label={__("Upload", "forms-bridge")}
             showTooltip
           >
-            ⬆
+            <ArrowUpIcon width="12" height="20" color="gray" />
           </Button>
         </div>
       </div>

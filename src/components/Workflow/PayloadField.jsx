@@ -107,10 +107,15 @@ function ObjectProperties({
   exit,
   mutated,
   touched,
-  arrayItem = false,
+  arrayItem = 0,
   simple = false,
 }) {
-  const type = arrayItem ? "object[]" : "object";
+  const type = arrayItem
+    ? "object" +
+      Array.apply(null, Array(arrayItem))
+        .map(() => "[]")
+        .join("")
+    : "object";
 
   if (simple) return <div>{type}</div>;
 
@@ -153,6 +158,7 @@ function ArrayItems({
   mutated,
   touched,
   simple,
+  arrayItem = 0,
 }) {
   if (Array.isArray(items)) {
     const types = items.reduce((types, { type }) => {
@@ -186,10 +192,16 @@ function ArrayItems({
         exit={exit}
         mutated={mutated}
         touched={touched}
-        arrayItem
+        arrayItem={arrayItem + 1}
       />
     );
   }
 
-  return <div>{items.type + "[]"}</div>;
+  const type =
+    items.type +
+    Array.apply(null, Array(arrayItem))
+      .map(() => "[]")
+      .join("");
+
+  return <div>{type}</div>;
 }

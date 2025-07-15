@@ -99,6 +99,20 @@ export default function WorkflowStage({ setEdit, setMappers: setJobMappers }) {
     });
   }, [workflowJob]);
 
+  // const jobOutpus = useMemo(() => {
+  //   if (!Array.isArray(workflowJob?.output)) return [];
+
+  //   return workflowJob.output.map(({ name, schema, touch, forward }) => {
+  //     return {
+  //       name,
+  //       schema,
+  //       missing: false,
+  //       mutated: touch,
+  //       optional: forward,
+  //     };
+  //   });
+  // }, [workflowJob]);
+
   const jobTitle = useMemo(() => {
     if (!workflowJob) return "";
 
@@ -124,7 +138,7 @@ export default function WorkflowStage({ setEdit, setMappers: setJobMappers }) {
             justifyContent: "space-between",
           }}
         >
-          <h2 style={{ margin: 0, paddingRight: "1rem" }}>{jobTitle}</h2>
+          <h3 style={{ margin: 0, paddingRight: "1rem" }}>{jobTitle}</h3>
           {step < outputStep && (
             <div style={{ width: "max-content", flexShrink: 0 }}>
               <ToggleControl

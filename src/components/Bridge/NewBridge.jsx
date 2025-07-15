@@ -8,6 +8,7 @@ import { uploadJson } from "../../lib/utils";
 import useResponsive from "../../hooks/useResponsive";
 import BridgePayload from "./Payload";
 import useBackends from "../../hooks/useBackends";
+import ArrowUpIcon from "../icons/ArrowUp";
 
 const { Button } = wp.components;
 const { useState, useEffect, useMemo, useRef, useCallback } = wp.element;
@@ -164,10 +165,10 @@ export default function NewBridge({ add, schema }) {
               disabled={!!error}
               onClick={uploadConfig}
               __next40pxDefaultSize
-              label={__("Upload bridge config", "forms-bridge")}
+              label={__("Upload", "forms-bridge")}
               showTooltip
             >
-              ⬆
+              <ArrowUpIcon width="12" height="20" color="gray" />
             </Button>
           </div>
         </div>

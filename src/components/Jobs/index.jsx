@@ -3,20 +3,35 @@ import { useJobs } from "../../hooks/useAddon";
 import { prependEmptyOption } from "../../lib/utils";
 import { useJob, useJobConfig } from "../../providers/Jobs";
 import RemoveButton from "../RemoveButton";
-import JobInterface from "../Workflow/JobInterface";
+import JobInterface from "./Interface";
 import JobModal from "./Modal";
 import JobSnippet from "./Snippet";
+import FieldWrapper from "../FieldWrapper";
+import EditIcon from "../icons/Edit";
+import { useError } from "../../providers/Error";
 
-const { useState, useMemo } = wp.element;
-const {
-  PanelBody,
-  SelectControl,
-  Button,
-  __experimentalSpacer: Spacer,
-} = wp.components;
+const { useState, useEffect, useRef, useMemo } = wp.element;
+const { PanelBody, SelectControl, Button, TabPanel, Spinner } = wp.components;
 const { __ } = wp.i18n;
 
+const TABS = [
+  {
+    name: "input",
+    title: __("Input interface", "forms-bridge"),
+  },
+  {
+    name: "output",
+    title: __("Output interface", "forms-bridge"),
+  },
+  {
+    name: "snippet",
+    title: __("Job snippet", "forms-bridge"),
+  },
+];
+
 export default function Jobs() {
+  const [error] = useError();
+
   const [jobs] = useJobs();
   const [job, setJob] = useJob();
   const [config, , reset] = useJobConfig();
@@ -34,33 +49,11 @@ export default function Jobs() {
     );
   }, [jobs]);
 
-  const jobInput = useMemo(() => {
-    if (!Array.isArray(config?.input)) return [];
-
-    return config.input.map(({ name, schema, required }) => {
-      return {
-        name,
-        schema,
-        required,
-        missing: false,
-        mutated: false,
-        optional: true,
-      };
-    });
-  }, [config]);
-
-  const jobOutput = useMemo(() => {
-    if (!Array.isArray(config?.output)) return [];
-
-    return config.output.map(({ name, schema, touch }) => ({
-      name,
-      schema,
-      required: false,
-      missing: false,
-      mutated: touch,
-      optional: true,
-    }));
-  }, [config]);
+  useEffect(() => {
+    if (error) {
+      setEdit(false);
+    }
+  }, [error]);
 
   const loading = job && !config;
 
@@ -70,9 +63,11 @@ export default function Jobs() {
         title={__("Workflow jobs", "forms-bridge")}
         initialOpen={false}
       >
-        <p>{__("Manage and edit addon jobs", "forms-bridge")}</p>
-        <div style={{ display: "flex", gap: "1em" }}>
-          <div style={{ width: "250px" }}>
+        <p style={{ marginBottom: "2em" }}>
+          {__("Manage and edit addon's jobs", "forms-bridge")}
+        </p>
+        <div style={{ display: "flex", gap: "0.5rem", marginBottom: "2rem" }}>
+          <FieldWrapper>
             <SelectControl
               value={job || ""}
               onChange={setJob}
@@ -80,72 +75,146 @@ export default function Jobs() {
               __nextHasNoMarginBottom
               __next40pxDefaultSize
             />
-          </div>
+          </FieldWrapper>
           <Button
             variant="secondary"
             style={{ width: "40px", justifyContent: "center" }}
+            onClick={() => {
+              setJob(null);
+              setEdit(true);
+            }}
             __next40pxDefaultSize
           >
             +
           </Button>
         </div>
-        <div>
-          {(loading && <p>Loading...</p>) ||
-            (config && (
-              <>
-                <Spacer paddingTop="calc(8px)" />
-                <hr />
-                <div style={{ display: "flex" }}>
-                  <div style={{ flex: 2 }}>
-                    <h2>{config.title}</h2>
-                    <p style={{ margin: 0 }}>{config.description}</p>
-                  </div>
-                  <div
-                    style={{
-                      flex: 1,
-                      display: "flex",
-                      gap: "0.5em",
-                      justifyContent: "end",
-                      alignItems: "end",
-                    }}
-                  >
-                    <Button
-                      variant="secondary"
-                      onClick={() => setEdit(true)}
-                      style={{
-                        display: "flex",
-                        justifyContent: "center",
-                        width: "100px",
-                      }}
-                      __next40pxDefaultSize
-                    >
-                      {__("Edit", "forms-bridge")}
-                    </Button>
-                    <RemoveButton
-                      onClick={() => reset(job)}
-                      style={{ width: "100px" }}
-                    >
-                      {__("Reset", "forms-bridge")}
-                    </RemoveButton>
-                  </div>
-                </div>
-                <Spacer paddingTop="calc(8px)" />
-                <hr />
-                <Spacer paddingTop="calc(16px)" />
-                <JobInterface fields={jobInput} collapsible={false} />
-                <Spacer paddingY="calc(8px)" />
-                <JobInterface fields={jobOutput} collapsible={false} />
-                <div
-                  style={{ padding: "0 calc(8px)", border: "1px solid #ddd" }}
-                >
-                  <JobSnippet id={config.id} snippet={config.snippet} />
-                </div>
-              </>
-            )) ||
-            null}
-        </div>
+        <JobsContent
+          loading={loading}
+          config={config}
+          setEdit={setEdit}
+          reset={reset}
+        />
       </PanelBody>
       <JobModal show={edit} onClose={() => setEdit(false)} />
     </>
   );
+}
+
+function JobsContent({ loading, config, setEdit, reset }) {
+  const tabRef = useRef("input");
+  const setTab = useRef((tab) =>
+    setTimeout(() => (tabRef.current = tab))
+  ).current;
+
+  const contentRef = useRef();
+  const fitToViewbox = useRef(() => {
+    if (!contentRef.current) return;
+
+    setTimeout(() => {
+      if (window.scrollY < contentRef.current.offsetTop) {
+        window.scrollTo({
+          left: 0,
+          top: contentRef.current.offsetTop,
+          behavior: "smooth",
+        });
+      }
+    }, 100);
+  }).current;
+
+  useEffect(() => {
+    if (!config) return;
+    fitToViewbox();
+  }, [config]);
+
+  if (loading)
+    return (
+      <div
+        style={{
+          height: "240px",
+          backgroundColor: "rgb(245, 245, 245)",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+        }}
+      >
+        <Spinner />
+      </div>
+    );
+  if (!config) return;
+
+  return (
+    <div
+      style={{
+        padding: "calc(24px) calc(32px)",
+        width: "calc(100% - 64px)",
+        backgroundColor: "rgb(245, 245, 245)",
+      }}
+    >
+      <div ref={contentRef} style={{ display: "flex" }}>
+        <div style={{ flex: 2 }}>
+          <h3 style={{ margin: 0 }}>{config.title}</h3>
+          <p>{config.description}</p>
+        </div>
+        <div
+          style={{
+            flex: 1,
+            display: "flex",
+            gap: "0.5em",
+            justifyContent: "end",
+            alignItems: "end",
+          }}
+        >
+          <Button
+            variant="secondary"
+            onClick={() => setEdit(true)}
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              width: "40px",
+            }}
+            __next40pxDefaultSize
+          >
+            <EditIcon
+              width="20"
+              height="20"
+              color="var(--wp-components-color-accent,var(--wp-admin-theme-color,#3858e9))"
+            />
+          </Button>
+          <RemoveButton
+            label={__("Reset", "forms-bridge")}
+            onClick={() => reset(job)}
+            icon
+          />
+        </div>
+      </div>
+      <TabPanel tabs={TABS} onSelect={setTab}>
+        {({ name }) => {
+          if (name !== tabRef.current) fitToViewbox();
+
+          return (
+            <div
+              style={{
+                background: "white",
+                padding: "calc(12px) calc(24px)",
+                width: "calc(100% - 48px)",
+              }}
+            >
+              <TabContent tab={name} config={config} />
+            </div>
+          );
+        }}
+      </TabPanel>
+    </div>
+  );
+}
+
+function TabContent({ tab, config }) {
+  switch (tab) {
+    case "input":
+      return <JobInterface fields={config.input} />;
+    case "output":
+      return <JobInterface fields={config.output} />;
+    case "snippet":
+      return <JobSnippet id={config.id} snippet={config.snippet} />;
+  }
 }

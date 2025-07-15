@@ -8,6 +8,10 @@ ${snippet}
     return $payload;
 }`;
 
+    if (!hljs) {
+      return "<p style='margin:0;color:#cc1818'><b>ERROR</b>: Highlight.js is unavailable</p>";
+    }
+
     return hljs.highlight(code, { language: "php" })?.value || "";
   }, [id, snippet]);
 

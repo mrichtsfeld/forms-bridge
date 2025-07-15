@@ -4,6 +4,7 @@ import { uploadJson } from "../../lib/utils";
 import { useError } from "../../providers/Error";
 import CredentialFields, { INTERNALS } from "./Fields";
 import useResponsive from "../../hooks/useResponsive";
+import ArrowUpIcon from "../icons/ArrowUp";
 
 const { Button } = wp.components;
 const { useState, useMemo, useCallback } = wp.element;
@@ -153,10 +154,10 @@ export default function NewCredential({ add, schema }) {
             disabled={!!error}
             onClick={uploadConfig}
             __next40pxDefaultSize
-            label={__("Upload credential config", "forms-bridge")}
+            label={__("Upload", "forms-bridge")}
             showTooltip
           >
-            ⬆
+            <ArrowUpIcon width="12" height="20" color="gray" />
           </Button>
         </div>
       </div>

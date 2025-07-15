@@ -10,6 +10,7 @@ import BridgeFields, { INTERNALS } from "./Fields";
 import ToggleControl from "../Toggle";
 import useResponsive from "../../hooks/useResponsive";
 import CopyIcon from "../icons/Copy";
+import ArrowDownIcon from "../icons/ArrowDown";
 import diff from "../../lib/diff";
 import { useLoading } from "../../providers/Loading";
 import BridgePayload from "./Payload";
@@ -249,7 +250,7 @@ export default function Bridge({ data, update, remove, schema, copy }) {
               label={__("Download bridge config", "forms-bridge")}
               showTooltip
             >
-              ⬇
+              <ArrowDownIcon width="12" height="20" color="gray" />
             </Button>
             <Button
               disabled={!!error || loading || ping}

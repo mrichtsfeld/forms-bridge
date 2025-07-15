@@ -401,7 +401,7 @@ class FBAPI
     {
         $job = new Job($data, $addon);
 
-        if ($job->is_valid) {
+        if (!$job->is_valid) {
             return false;
         }
 

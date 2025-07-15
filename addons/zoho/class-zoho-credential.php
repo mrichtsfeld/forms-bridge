@@ -112,6 +112,24 @@ class Zoho_Credential extends Credential
         }
     }
 
+    protected function revoke_token()
+    {
+        if (empty($this->data['refresh_token'])) {
+            return parent::revoke_token();
+        }
+
+        $refresh_token = $this->data['refresh_token'];
+
+        $url = "https://accounts.{$this->region}/oauth/v2/token/revoke?token={$refresh_token}";
+        $response = http_bridge_post($url);
+
+        if (is_wp_error($response)) {
+            return false;
+        }
+
+        return parent::revoke_token();
+    }
+
     public function oauth_grant()
     {
         if (!$this->is_valid) {

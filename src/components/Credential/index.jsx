@@ -9,6 +9,7 @@ import { useError } from "../../providers/Error";
 import diff from "../../lib/diff";
 import useResponsive from "../../hooks/useResponsive";
 import CopyIcon from "../icons/Copy";
+import ArrowDownIcon from "../icons/ArrowDown";
 
 const { Button } = wp.components;
 const { useState, useEffect, useMemo, useRef, useCallback } = wp.element;
@@ -214,7 +215,7 @@ export default function Credential({
             label={__("Download bridge config", "forms-bridge")}
             showTooltip
           >
-            ⬇
+            <ArrowDownIcon width="12" height="20" color="gray" />
           </Button>
         </div>
       </div>

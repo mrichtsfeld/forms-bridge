@@ -91,7 +91,7 @@ function InputField({ data }) {
         ? __("Field is optional", "forms-bridge")
         : "";
 
-  const displayName = required ? name + "*" : name;
+  const displayName = required ? name + "∗" : name;
 
   return (
     <Tooltip text={feedback}>

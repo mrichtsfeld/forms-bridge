@@ -212,7 +212,7 @@ class Brevo_Addon extends Addon
 
             return $fields;
         } else {
-            if (preg_match('/\/([a-z]+)$/', $bridge->endpoint, $matches)) {
+            if (!preg_match('/\/([a-z]+)$/', $bridge->endpoint, $matches)) {
                 return [];
             }
 

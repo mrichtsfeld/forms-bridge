@@ -7,9 +7,12 @@ import useTab from "../../hooks/useTab";
 import TabTitle from "../TabTitle";
 import AddIcon from "../icons/Add";
 
-const { useMemo } = wp.element;
+const { useEffect, useRef, useMemo } = wp.element;
 const { PanelBody, TabPanel } = wp.components;
 const { __ } = wp.i18n;
+
+const CSS = `.credentials-tabs-panel .components-tab-panel__tabs{overflow-x:auto;}
+.credentials-tabs-panel .components-tab-panel__tabs>button{flex-shrink:0;}`;
 
 export default function Credentials() {
   const [addon] = useTab();
@@ -76,13 +79,23 @@ export default function Credentials() {
     setCredentials(credentials.concat(copy));
   };
 
+  const style = useRef(document.createElement("style"));
+  useEffect(() => {
+    style.current.appendChild(document.createTextNode(CSS));
+    document.head.appendChild(style.current);
+
+    return () => {
+      document.head.removeChild(style.current);
+    };
+  }, []);
+
   if (!schema) return null;
 
   return (
     <PanelBody title={__("Credentials", "forms-bridge")} initialOpen={false}>
       <div style={{ width: "100%" }}>
         <p>{schema.description || ""}</p>
-        <TabPanel tabs={tabs}>
+        <TabPanel tabs={tabs} className="credentials-tabs-panel">
           {(tab) => {
             const credential = credentials[tab.index];
 
