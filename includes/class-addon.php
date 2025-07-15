@@ -96,6 +96,11 @@ class Addon extends Singleton
         ];
     }
 
+    /**
+     * Addon's default data getter.
+     *
+     * @return array
+     */
     protected static function defaults()
     {
         $defaults = [
@@ -172,6 +177,13 @@ class Addon extends Singleton
         return $addons;
     }
 
+    /**
+     * Addon instances getter.
+     *
+     * @var string $name Addon name.
+     *
+     * @return Addon|null
+     */
     final public static function addon($name)
     {
         return self::$addons[$name] ?? null;
@@ -271,6 +283,14 @@ class Addon extends Singleton
         return $data;
     }
 
+    /**
+     * Apply bridges setting data sanitization and validation.
+     *
+     * @param array $bridges Collection of bridges data.
+     * @param array $setting_data Parent setting data.
+     *
+     * @return array
+     */
     private static function sanitize_bridges($bridges, $setting_data)
     {
         $uniques = [];
@@ -365,6 +385,13 @@ class Addon extends Singleton
         return $bridge;
     }
 
+    /**
+     * Apply bridges setting data sanitization and validation.
+     *
+     * @param array $credentials Collection of credentials data.
+     *
+     * @return array
+     */
     private static function sanitize_credentials($credentials)
     {
         $uniques = [];
@@ -603,7 +630,7 @@ class Addon extends Singleton
     }
 
     /**
-     * Addon setting getter.
+     * Addon's setting instance getter.
      *
      * @return Setting|null Setting instance.
      */
@@ -824,7 +851,9 @@ class Addon extends Singleton
     }
 
     /**
-     * Loads addon's jobs.
+     * Addon's jobs loader.
+     *
+     * @return Job[]
      */
     private static function load_jobs()
     {

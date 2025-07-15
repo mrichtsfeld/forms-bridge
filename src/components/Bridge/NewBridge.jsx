@@ -1,15 +1,21 @@
 // source
+import WorkflowProvider from "../../providers/Workflow";
 import { useError } from "../../providers/Error";
 import useBridgeNames from "../../hooks/useBridgeNames";
 import BridgeFields, { INTERNALS } from "./Fields";
 import Templates from "../Templates";
 import { uploadJson } from "../../lib/utils";
+import useResponsive from "../../hooks/useResponsive";
+import BridgePayload from "./Payload";
+import useBackends from "../../hooks/useBackends";
 
 const { Button } = wp.components;
-const { useState, useMemo, useCallback } = wp.element;
+const { useState, useEffect, useMemo, useRef, useCallback } = wp.element;
 const { __ } = wp.i18n;
 
 export default function NewBridge({ add, schema }) {
+  const isResponsive = useResponsive();
+
   const [data, setData] = useState({});
 
   const [error, setError] = useError();
@@ -19,6 +25,16 @@ export default function NewBridge({ add, schema }) {
     if (!data.name) return false;
     return names.has(data.name.trim());
   }, [names, data.name]);
+
+  const [backends] = useBackends();
+  const includeFiles = useMemo(() => {
+    const headers =
+      backends.find(({ name }) => name === data.backend)?.headers || [];
+    const contentType = headers.find(
+      (header) => header.name === "Content-Type"
+    )?.value;
+    return contentType !== undefined && contentType !== "multipart/form-data";
+  }, [backends, data.backend]);
 
   const create = () => {
     setData({});
@@ -84,36 +100,47 @@ export default function NewBridge({ add, schema }) {
       });
   }, [names]);
 
+  const fieldsRef = useRef();
+  const [height, setHeight] = useState(0);
+  useEffect(() => {
+    setHeight(0);
+    setTimeout(() => setHeight(fieldsRef.current.offsetHeight), 100);
+  }, [schema]);
+
   return (
-    <div
-      style={{
-        padding: "calc(24px) calc(32px)",
-        width: "calc(100% - 64px)",
-        backgroundColor: "rgb(245, 245, 245)",
-      }}
+    <WorkflowProvider
+      formId={data.form_id}
+      mutations={[]}
+      workflow={[]}
+      customFields={[]}
+      includeFiles={includeFiles}
     >
-      <div style={{ display: "flex", gap: "2rem" }}>
-        <div style={{ flex: 1 }}>
-          <div
-            style={{
-              display: "flex",
-              gap: "0.5rem",
-              flexWrap: "wrap",
+      <div
+        style={{
+          padding: "calc(24px) calc(32px)",
+          width: "calc(100% - 64px)",
+          backgroundColor: "rgb(245, 245, 245)",
+          display: "flex",
+          flexDirection: isResponsive ? "column" : "row",
+          gap: "2rem",
+        }}
+      >
+        <div
+          ref={fieldsRef}
+          style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}
+        >
+          <BridgeFields
+            data={data}
+            setData={setData}
+            schema={schema}
+            optionals={true}
+            errors={{
+              name: nameConflict
+                ? __("This name is already in use", "forms-bridge")
+                : false,
             }}
-          >
-            <BridgeFields
-              data={data}
-              setData={setData}
-              schema={schema}
-              optionals={true}
-              errors={{
-                name: nameConflict
-                  ? __("This name is already in use", "forms-bridge")
-                  : false,
-              }}
-            />
-          </div>
-          <div style={{ marginTop: "10px", display: "flex", gap: "0.5rem" }}>
+          />
+          <div style={{ marginTop: "0.5rem", display: "flex", gap: "0.5rem" }}>
             <Button
               variant="primary"
               onClick={create}
@@ -145,19 +172,35 @@ export default function NewBridge({ add, schema }) {
           </div>
         </div>
         <div
-          style={{
-            marginTop: "23px",
-            paddingLeft: "2rem",
-            borderLeft: "1px solid",
-          }}
+          style={
+            isResponsive
+              ? {
+                  paddingTop: "2rem",
+                  borderTop: "1px solid",
+                }
+              : {
+                  paddingLeft: "2rem",
+                  borderLeft: "1px solid",
+                  display: "flex",
+                  flexDirection: "column",
+                  flex: 1,
+                }
+          }
         >
+          <BridgePayload height={height} />
           <div
-            style={{ display: "flex", gap: "0.5rem", flexDirection: "column" }}
+            style={{
+              paddingTop: "16px",
+              display: "flex",
+              gap: "0.5rem",
+              flexDirection: "column",
+              borderTop: "1px solid",
+            }}
           >
             <Templates />
           </div>
         </div>
       </div>
-    </div>
+    </WorkflowProvider>
   );
 }

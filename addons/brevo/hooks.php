@@ -67,12 +67,12 @@ add_filter(
             return $data;
         }
 
-        $custom_field_names = array_column(
-            $data['bridge']['custom_fields'],
-            'name'
+        $get_index = fn($name) => array_search(
+            $name,
+            array_column($data['bridge']['custom_fields'], 'name')
         );
 
-        $index = array_search('listIds', $custom_field_names);
+        $index = $get_index('listIds');
 
         if ($index !== false) {
             $field = $data['bridge']['custom_fields'][$index];
@@ -93,7 +93,7 @@ add_filter(
             array_splice($data['bridge']['custom_fields'], $index, 1);
         }
 
-        $index = array_search('includeListIds', $custom_field_names);
+        $index = $get_index('includeListIds');
 
         if ($index !== false) {
             $field = $data['bridge']['custom_fields'][$index];
@@ -114,7 +114,7 @@ add_filter(
             array_splice($data['bridge']['custom_fields'], $index, 1);
         }
 
-        $index = array_search('redirectionUrl', $custom_field_names);
+        $index = $get_index('redirectionUrl');
 
         if ($index !== false) {
             $field = &$data['bridge']['custom_fields'][$index];

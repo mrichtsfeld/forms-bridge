@@ -17,7 +17,7 @@ function useStyle(state, diff, simple) {
   };
 }
 
-export default function WorkflowStageField({
+export default function PayloadField({
   name,
   schema,
   showDiff,
@@ -129,7 +129,7 @@ function ObjectProperties({
       >
         {Object.keys(properties).map((prop) => (
           <li>
-            <WorkflowStageField
+            <PayloadField
               name={prop}
               schema={properties[prop]}
               showDiff={showDiff}

@@ -1,4 +1,5 @@
 // source
+import WorkflowProvider from "../../providers/Workflow";
 import useBridgeNames from "../../hooks/useBridgeNames";
 import CustomFields from "../CustomFields";
 import Workflow from "../Workflow";
@@ -7,20 +8,44 @@ import RemoveButton from "../RemoveButton";
 import { downloadJson } from "../../lib/utils";
 import BridgeFields, { INTERNALS } from "./Fields";
 import ToggleControl from "../Toggle";
+import useResponsive from "../../hooks/useResponsive";
+import CopyIcon from "../icons/Copy";
+import diff from "../../lib/diff";
+import { useLoading } from "../../providers/Loading";
+import BridgePayload from "./Payload";
+import Mutations from "../Mutations";
+import useBackends from "../../hooks/useBackends";
+import { useError } from "../../providers/Error";
 
 const { Button } = wp.components;
-const { useState, useEffect, useMemo, useCallback } = wp.element;
+const { useState, useEffect, useMemo, useCallback, useRef } = wp.element;
 const { __ } = wp.i18n;
 
-export default function Bridge({ data, update, remove, schema }) {
+export default function Bridge({ data, update, remove, schema, copy }) {
+  const [loading] = useLoading();
+  const [error, setError] = useError();
+  const isResponsive = useResponsive();
+
+  const name = useRef(data.name);
   const [state, setState] = useState({ ...data });
 
   const names = useBridgeNames();
 
   const nameConflict = useMemo(() => {
     if (!state.name) return false;
-    return state.name.trim() !== data.name && names.has(state.name.trim());
+    if (state.name.trim() === name.current.trim()) return false;
+    return state.name !== name.current && names.has(state.name.trim());
   }, [names, state.name]);
+
+  const [backends] = useBackends();
+  const includeFiles = useMemo(() => {
+    const headers =
+      backends.find(({ name }) => name === state.backend)?.headers || [];
+    const contentType = headers.find(
+      (header) => header.name === "Content-Type"
+    )?.value;
+    return contentType !== undefined && contentType !== "multipart/form-data";
+  }, [backends, state.backend]);
 
   const validate = useCallback(
     (data) => {
@@ -48,63 +73,123 @@ export default function Bridge({ data, update, remove, schema }) {
     [state, nameConflict]
   );
 
-  if (!isValid && state.is_valid) {
-    setState({ ...state, is_valid: false });
-    update({ ...state, is_valid: false });
+  if (!isValid && data.is_valid) {
+    update({ ...data, is_valid: false });
   }
 
+  const timeout = useRef();
   useEffect(() => {
-    if (isValid) update({ ...state, is_valid: true });
+    clearTimeout(timeout.current);
+
+    if (isValid) {
+      timeout.current = setTimeout(
+        () => {
+          name.current = state.name;
+          update({ ...state, is_valid: true });
+        },
+        (data.name !== state.name && 1e3) || 0
+      );
+    }
   }, [isValid, state]);
 
   useEffect(() => {
-    setState(data);
+    if (data.name !== name.current) {
+      name.current = data.name;
+      setState(data);
+    }
   }, [data.name]);
+
+  const reloaded = useRef(false);
+  useEffect(() => {
+    if (reloaded.current && diff(data, state)) {
+      setState(data);
+    }
+
+    return () => {
+      reloaded.current = loading;
+    };
+  }, [loading, data, state]);
 
   const exportConfig = () => {
     const bridgeData = { ...data };
-    delete bridgeData.is_valid;
-
     downloadJson(bridgeData, bridgeData.name + " bridge config");
   };
 
+  const fieldsRef = useRef();
+  const [height, setHeight] = useState(0);
+  useEffect(() => {
+    setHeight(0);
+    setTimeout(() => setHeight(fieldsRef.current.offsetHeight), 100);
+  }, [schema]);
+
+  const enabled = isValid && state.enabled;
+
   return (
-    <div
-      style={{
-        padding: "calc(24px) calc(32px)",
-        width: "calc(100% - 64px)",
-        backgroundColor: "rgb(245, 245, 245)",
-      }}
+    <WorkflowProvider
+      formId={state.form_id}
+      mutations={state.mutations}
+      workflow={state.workflow}
+      customFields={state.custom_fields}
+      includeFiles={includeFiles}
     >
-      <div style={{ display: "flex", gap: "2rem" }}>
-        <div style={{ flex: 1 }}>
+      <div
+        style={{
+          padding: "calc(24px) calc(32px)",
+          width: "calc(100% - 64px)",
+          backgroundColor: "rgb(245, 245, 245)",
+          display: "flex",
+          flexDirection: isResponsive ? "column" : "row",
+          gap: "2rem",
+        }}
+      >
+        <div
+          ref={fieldsRef}
+          style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}
+        >
+          <BridgeFields
+            data={state}
+            setData={setState}
+            schema={schema}
+            errors={{
+              name: nameConflict
+                ? __("This name is already in use", "forms-bridge")
+                : false,
+            }}
+          />
           <div
             style={{
+              marginTop: "0.5rem",
               display: "flex",
               gap: "0.5rem",
-              flexWrap: "wrap",
             }}
           >
-            <BridgeFields
-              data={state}
-              setData={setState}
-              schema={schema}
-              errors={{
-                name: nameConflict
-                  ? __("This name is already in use", "forms-bridge")
-                  : false,
-              }}
-            />
-          </div>
-          <div style={{ marginTop: "10px", display: "flex", gap: "0.5rem" }}>
             <RemoveButton
+              label={__("Delete", "forms-bridge")}
               onClick={() => remove(data)}
-              style={{ width: "100px" }}
-            >
-              {__("Remove", "forms-bridge")}
-            </RemoveButton>
+              icon
+            />
             <Button
-              size="compact"
+              variant="tertiary"
+              style={{
+                height: "40px",
+                width: "40px",
+                justifyContent: "center",
+                fontSize: "1.5em",
+                border: "1px solid",
+                padding: "6px 6px",
+              }}
+              onClick={copy}
+              label={__("Duplaicate", "forms-bridge")}
+              showTooltip
+              __next40pxDefaultSize
+            >
+              <CopyIcon
+                width="25"
+                height="25"
+                color="var(--wp-components-color-accent,var(--wp-admin-theme-color,#3858e9))"
+              />
+            </Button>
+            <Button
               variant="tertiary"
               style={{
                 height: "40px",
@@ -121,12 +206,91 @@ export default function Bridge({ data, update, remove, schema }) {
             >
               ⬇
             </Button>
+            <Button
+              disabled={!!error}
+              size="compact"
+              variant="primary"
+              onClick={() => setError("No ping", "forms-bridge")}
+              style={{
+                marginLeft: "auto",
+                height: "40px",
+                justifyContent: "center",
+              }}
+              __nextHasNoMarginBottom
+              __next40pxDefaultSize
+            >
+              Ping
+            </Button>
+          </div>
+        </div>
+        <div
+          style={
+            isResponsive
+              ? {}
+              : {
+                  paddingLeft: "2rem",
+                  borderLeft: "1px solid",
+                  display: "flex",
+                  flexDirection: "column",
+                  flex: 1,
+                }
+          }
+        >
+          <BridgePayload height={height} />
+          <div
+            style={{
+              paddingTop: "16px",
+              display: "flex",
+              flexDirection: isResponsive ? "column" : "row",
+              gap: "0.5rem",
+              borderTop: "1px solid",
+            }}
+          >
+            <div style={{ display: "flex", gap: "0.5rem" }}>
+              <CustomFields
+                customFields={state.custom_fields || []}
+                setCustomFields={(custom_fields) =>
+                  setState({
+                    ...state,
+                    custom_fields,
+                  })
+                }
+              />
+              <Mutations
+                formId={state.form_id}
+                customFields={state.custom_fields}
+                mappers={state.mutations[0]}
+                setMappers={(mappers) =>
+                  setState({
+                    ...state,
+                    mutations: [mappers, state.mutations.slice(1)],
+                  })
+                }
+                includeFiles={includeFiles}
+              />
+              <Workflow
+                backend={state.backend}
+                formId={state.form_id}
+                customFields={state.custom_fields}
+                mutations={state.mutations}
+                workflow={state.workflow}
+                setWorkflow={(workflow) => setState({ ...state, workflow })}
+                setMutationMappers={(mutation, mappers) => {
+                  setState({
+                    ...state,
+                    mutations: state.mutations
+                      .slice(0, mutation)
+                      .concat([mappers])
+                      .concat(state.mutations.slice(mutation + 1)),
+                  });
+                }}
+              />
+            </div>
             <div
               style={{
-                marginLeft: "15px",
+                marginLeft: isResponsive ? 0 : "auto",
                 display: "flex",
                 alignItems: "center",
-                justifyContent: "center",
               }}
             >
               <ToggleControl
@@ -135,61 +299,26 @@ export default function Bridge({ data, update, remove, schema }) {
                 onChange={() => setState({ ...state, enabled: !state.enabled })}
                 __nextHasNoMarginBottom
               />
-              {(!isValid || !state.enabled) && (
-                <span
-                  style={{
-                    marginLeft: "-5px",
-                    fontStyle: "normal",
-                    fontSize: "12px",
-                    color: "rgb(117, 117, 117)",
-                  }}
-                >
-                  {__("Disabled", "forms-bridge")}
-                </span>
-              )}
+              <span
+                style={{
+                  width: "50px",
+                  marginLeft: "-10px",
+                  fontStyle: "normal",
+                  fontSize: "12px",
+                  color: enabled
+                    ? "var(--wp-components-color-accent,var(--wp-admin-theme-color,#3858e9))"
+                    : "rgb(117, 117, 117)",
+                }}
+              >
+                {!isValid || !state.enabled
+                  ? __("Disabled", "forms-bridge")
+                  : __("Enabled", "forms-bridge")}
+              </span>
             </div>
           </div>
         </div>
-        <div
-          style={{
-            marginTop: "23px",
-            paddingLeft: "2rem",
-            borderLeft: "1px solid",
-          }}
-        >
-          <div
-            style={{ display: "flex", gap: "0.5rem", flexDirection: "column" }}
-          >
-            <CustomFields
-              customFields={state.custom_fields || []}
-              setCustomFields={(custom_fields) =>
-                setState({
-                  ...state,
-                  custom_fields,
-                })
-              }
-            />
-            <Workflow
-              backend={state.backend}
-              formId={state.form_id}
-              customFields={state.custom_fields}
-              mutations={state.mutations}
-              workflow={state.workflow}
-              setWorkflow={(workflow) => setState({ ...state, workflow })}
-              setMutationMappers={(mutation, mappers) => {
-                setState({
-                  ...state,
-                  mutations: state.mutations
-                    .slice(0, mutation)
-                    .concat([mappers])
-                    .concat(state.mutations.slice(mutation + 1)),
-                });
-              }}
-            />
-          </div>
-        </div>
       </div>
-    </div>
+    </WorkflowProvider>
   );
 }
 

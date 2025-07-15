@@ -14,7 +14,32 @@ export function validateUrl(url) {
     return false;
   }
 
+  if (url.pathname !== "/" || url.hash !== "" || url.search !== "") {
+    return false;
+  }
+
+  if (/[^-a-zA-Z0-9\._\+]+/.test(url.hostname)) {
+    return false;
+  }
+
   return url.protocol === "http:" || url.protocol === "https:";
+}
+
+export function validateBackend(data) {
+  if (!data?.name) return false;
+
+  let isValid = validateUrl(data.base_url) && Array.isArray(data.headers);
+  if (!isValid) return false;
+
+  if (data.authentication?.type) {
+    isValid = isValid && data.authentication.client_secret;
+
+    if (data.authentication.type !== "Bearer") {
+      isValid = isValid && data.authentication.client_id;
+    }
+  }
+
+  return isValid;
 }
 
 export function sortByNamesOrder(items, order) {

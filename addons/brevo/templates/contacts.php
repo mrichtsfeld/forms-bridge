@@ -21,7 +21,15 @@ return [
             'name' => 'listIds',
             'endpoint' => '/v3/contacts/lists',
             'label' => __('Segments', 'forms-bridge'),
-            'type' => 'string',
+            'type' => 'options',
+            'options' => [
+                'endpoint' => '/v3/contacts/lists',
+                'finger' => [
+                    'value' => 'lists[].id',
+                    'label' => 'lists[].name',
+                ],
+            ],
+            'is_multi' => true,
             'required' => true,
         ],
         [

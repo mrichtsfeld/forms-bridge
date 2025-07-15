@@ -109,12 +109,13 @@ add_filter(
             return $data;
         }
 
-        $custom_field_names = array_column(
-            $data['bridge']['custom_fields'],
-            'name'
+        $get_index = fn($name) => array_search(
+            $name,
+            array_column($data['bridge']['custom_fields'], 'name')
         );
 
-        $index = array_search('skip_merge_validation', $custom_field_names);
+        $index = $get_index('skip_merge_validation');
+
         if ($index !== false) {
             if (!empty($data['bridge']['custom_field'][$index])) {
                 $endpoint = $data['bridge']['endpoint'];
@@ -133,7 +134,8 @@ add_filter(
             array_splice($data['bridge']['custom_fields'], $index, 1);
         }
 
-        $index = array_search('list_id', $custom_field_names);
+        $index = $get_index('list_id');
+
         if ($index !== false) {
             $list_id = $data['bridge']['custom_fields'][$index]['value'];
             $data['bridge']['endpoint'] = preg_replace(
@@ -145,7 +147,8 @@ add_filter(
             array_splice($data['bridge']['custom_fields'], $index, 1);
         }
 
-        $index = array_search('tags', $custom_field_names);
+        $index = $get_index('tags');
+
         if ($index !== false) {
             $field = &$data['bridge']['custom_fields'][$index];
 

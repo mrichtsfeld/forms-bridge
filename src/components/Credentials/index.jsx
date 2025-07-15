@@ -1,27 +1,15 @@
 // source
 import Credential from "../Credential";
 import NewCredential from "../Credential/NewCredential";
-import CopyIcon from "../CopyIcon";
 import { useCredentials } from "../../hooks/useAddon";
 import { useSchemas } from "../../providers/Schemas";
 import useTab from "../../hooks/useTab";
+import TabTitle from "../TabTitle";
+import AddIcon from "../icons/Add";
 
+const { useMemo } = wp.element;
 const { PanelBody, TabPanel } = wp.components;
-const { useState } = wp.element;
 const { __ } = wp.i18n;
-
-function TabTitle({ name, focus, setFocus, copy }) {
-  return (
-    <div
-      style={{ position: "relative", padding: "0px 24px 0px 10px" }}
-      onMouseEnter={() => setFocus(true)}
-      onMouseLeave={() => setFocus(false)}
-    >
-      <span>{name}</span>
-      {focus && <CopyIcon onClick={copy} />}
-    </div>
-  );
-}
 
 export default function Credentials() {
   const [addon] = useTab();
@@ -29,32 +17,35 @@ export default function Credentials() {
   const { credential: schema } = useSchemas();
   const [credentials, setCredentials] = useCredentials();
 
-  const [tabFocus, setTabFocus] = useState(null);
+  const names = useMemo(() => {
+    return new Set(credentials.map((c) => c.name));
+  }, [credentials]);
 
   const tabs = credentials
     .map(({ name }, index) => ({
       index,
       name: String(index),
       title: name,
-      icon: (
-        <TabTitle
-          name={name}
-          focus={tabFocus === name}
-          setFocus={(value) => setTabFocus(value ? name : null)}
-          copy={() => copyCredential(name)}
-        />
-      ),
+      icon: <TabTitle name={name} />,
     }))
     .concat([
       {
         index: -1,
         name: "new",
-        title: __("Add credential", "forms-bridge"),
+        title: __("Add a credential", "forms-bridge"),
+        icon: (
+          <div style={{ marginBottom: "-2px" }}>
+            <AddIcon width="15" height="15" />
+          </div>
+        ),
       },
     ]);
 
   const updateCredential = (index, data) => {
     if (index === -1) index = credentials.length;
+
+    data.name = data.name.trim();
+
     const newcredentials = credentials
       .slice(0, index)
       .concat([data])
@@ -76,11 +67,10 @@ export default function Credentials() {
     const credential = credentials[i];
     const copy = { ...credential };
 
-    let isUnique = false;
-    if (!isUnique) {
+    copy.name = copy.name.trim();
+
+    while (names.has(copy.name)) {
       copy.name += "-copy";
-      isUnique =
-        credentials.find(({ name }) => name === copy.name) === undefined;
     }
 
     setCredentials(credentials.concat(copy));
@@ -111,6 +101,7 @@ export default function Credentials() {
                 schema={schema}
                 remove={removeCredential}
                 update={(data) => updateCredential(tab.index, data)}
+                copy={() => copyCredential(credential.name)}
               />
             );
           }}

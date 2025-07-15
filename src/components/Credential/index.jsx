@@ -6,16 +6,29 @@ import ToggleControl from "../Toggle";
 import { downloadJson } from "../../lib/utils";
 import { useLoading } from "../../providers/Loading";
 import { useError } from "../../providers/Error";
+import diff from "../../lib/diff";
+import useResponsive from "../../hooks/useResponsive";
+import CopyIcon from "../icons/Copy";
 
 const { Button } = wp.components;
-const { useState, useEffect, useMemo, useCallback } = wp.element;
+const { useState, useEffect, useMemo, useRef, useCallback } = wp.element;
 const apiFetch = wp.apiFetch;
 const { __ } = wp.i18n;
 
-export default function Credential({ addon, data, update, remove, schema }) {
+export default function Credential({
+  addon,
+  data,
+  update,
+  remove,
+  schema,
+  copy,
+}) {
+  const isResponsive = useResponsive(780);
+
   const [loading, setLoading] = useLoading();
   const [error, setError] = useError();
 
+  const name = useRef(data.name);
   const [state, setState] = useState({ ...data });
 
   const [credentials] = useCredentials();
@@ -25,7 +38,8 @@ export default function Credential({ addon, data, update, remove, schema }) {
 
   const nameConflict = useMemo(() => {
     if (!state.name) return false;
-    return data.name !== state.name.trim() && names.has(state.name.trim());
+    if (name.current.trim() === state.name.trim()) return false;
+    return name.current !== state.name && names.has(state.name.trim());
   }, [names, state.name]);
 
   const validate = useCallback(
@@ -66,13 +80,38 @@ export default function Credential({ addon, data, update, remove, schema }) {
     return !!data.access_token;
   }, [data]);
 
+  const timeout = useRef();
   useEffect(() => {
-    if (!nameConflict) update({ ...state, is_valid: isValid });
-  }, [isValid, nameConflict, state]);
+    clearTimeout(timeout.current);
+
+    if (isValid) {
+      timeout.current = setTimeout(
+        () => {
+          name.current = state.name;
+          update({ ...state, is_valid: isValid });
+        },
+        (data.name !== state.name && 1e3) || 0
+      );
+    }
+  }, [isValid, state]);
 
   useEffect(() => {
-    setState(data);
+    if (data.name !== name.current) {
+      name.current = data.name;
+      setState(data);
+    }
   }, [data.name]);
+
+  const reloaded = useRef(false);
+  useEffect(() => {
+    if (reloaded.current && diff(data, state)) {
+      setState(data);
+    }
+
+    return () => {
+      reloaded.current = loading;
+    };
+  }, [loading]);
 
   const exportConfig = () => {
     const credentialData = { ...data };
@@ -101,21 +140,21 @@ export default function Credential({ addon, data, update, remove, schema }) {
       .finally(() => setLoading(false));
   };
 
+  const enabled = isValid && state.enabled;
+  const authorizable = !!schema.properties.access_token;
+
   return (
     <div
       style={{
         padding: "calc(24px) calc(32px)",
         width: "calc(100% - 64px)",
         backgroundColor: "rgb(245, 245, 245)",
+        display: "flex",
+        flexDirection: isResponsive ? "column" : "row",
+        gap: "2rem",
       }}
     >
-      <div
-        style={{
-          display: "flex",
-          gap: "0.5rem",
-          flexWrap: "wrap",
-        }}
-      >
+      <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
         <CredentialFields
           disabled={frozen}
           data={state}
@@ -127,80 +166,125 @@ export default function Credential({ addon, data, update, remove, schema }) {
               : false,
           }}
         />
-      </div>
-      <div
-        style={{
-          marginTop: "10px",
-          display: "flex",
-          gap: "0.5rem",
-        }}
-      >
-        <RemoveButton onClick={() => remove(data)} style={{ width: "100px" }}>
-          {__("Remove", "forms-bridge")}
-        </RemoveButton>
-        <Button
-          size="compact"
-          variant="tertiary"
-          style={{
-            height: "40px",
-            width: "40px",
-            justifyContent: "center",
-            fontSize: "1.5em",
-            border: "1px solid",
-            color: "gray",
-          }}
-          onClick={exportConfig}
-          __next40pxDefaultSize
-          label={__("Download bridge config", "forms-bridge")}
-          showTooltip
-        >
-          ⬇
-        </Button>
-        {schema.properties.access_token && (
-          <Button
-            onClick={authorize}
-            variant={data.access_token ? "secondary" : "primary"}
-            isDestructive={!!data.access_token}
-            disabled={loading || error}
-            style={{
-              justifyContent: "center",
-              width: "100px",
-            }}
-            __next40pxDefaultSize
-            __nextHasNoMarginBottom
-          >
-            {data.access_token
-              ? __("Revoke", "forms-bridge")
-              : __("Authorize", "forms-bridge")}
-          </Button>
-        )}
         <div
           style={{
-            marginLeft: "15px",
+            marginTop: "0.5rem",
+            display: "flex",
+            gap: "0.5rem",
+          }}
+        >
+          <RemoveButton
+            label={__("Delete", "forms-bridge")}
+            onClick={() => remove(data)}
+            icon
+          />
+          <Button
+            variant="tertiary"
+            style={{
+              height: "40px",
+              width: "40px",
+              justifyContent: "center",
+              fontSize: "1.5em",
+              border: "1px solid",
+              padding: "6px 6px",
+            }}
+            onClick={copy}
+            label={__("Duplaicate", "forms-bridge")}
+            showTooltip
+            __next40pxDefaultSize
+          >
+            <CopyIcon
+              width="25"
+              height="25"
+              color="var(--wp-components-color-accent,var(--wp-admin-theme-color,#3858e9))"
+            />
+          </Button>
+
+          <Button
+            size="compact"
+            variant="tertiary"
+            style={{
+              height: "40px",
+              width: "40px",
+              justifyContent: "center",
+              fontSize: "1.5em",
+              border: "1px solid",
+              color: "gray",
+            }}
+            onClick={exportConfig}
+            __next40pxDefaultSize
+            label={__("Download bridge config", "forms-bridge")}
+            showTooltip
+          >
+            ⬇
+          </Button>
+        </div>
+      </div>
+      <div
+        style={
+          isResponsive
+            ? {
+                paddingTop: "2rem",
+                borderTop: "1px solid",
+                display: "flex",
+                flexDirection: "column",
+                gap: "1rem",
+              }
+            : {
+                paddingLeft: "2rem",
+                borderLeft: "1px solid",
+                display: "flex",
+                flexDirection: "column",
+                flex: 1,
+                gap: "1rem",
+              }
+        }
+      >
+        <div
+          style={{
             display: "flex",
             alignItems: "center",
-            justifyContent: "center",
+            marginTop: "10px",
+            marginLeft: "4px",
           }}
         >
           <ToggleControl
             disabled={!isValid}
-            checked={state.enabled && isValid}
+            checked={enabled}
             onChange={() => setState({ ...state, enabled: !state.enabled })}
             __nextHasNoMarginBottom
           />
-          {(!isValid || !state.enabled) && (
-            <span
-              style={{
-                marginLeft: "5px",
-                fontStyle: "normal",
-                fontSize: "12px",
-                color: "rgb(117, 117, 117)",
-              }}
-            >
-              {__("Disabled", "forms-bridge")}
-            </span>
-          )}
+          <span
+            style={{
+              width: "50px",
+              fontStyle: "normal",
+              fontSize: "12px",
+              color: enabled
+                ? "var(--wp-components-color-accent,var(--wp-admin-theme-color,#3858e9))"
+                : "rgb(117, 117, 117)",
+            }}
+          >
+            {!isValid || !state.enabled
+              ? __("Disabled", "forms-bridge")
+              : __("Enabled", "forms-bridge")}
+          </span>
         </div>
+        <Button
+          onClick={authorize}
+          variant={data.access_token || !authorizable ? "secondary" : "primary"}
+          isDestructive={!!data.access_token}
+          disabled={!authorizable || loading || error}
+          style={{
+            justifyContent: "center",
+            width: "100px",
+          }}
+          __next40pxDefaultSize
+          __nextHasNoMarginBottom
+        >
+          {data.access_token
+            ? __("Revoke", "forms-bridge")
+            : __("Authorize", "forms-bridge")}
+        </Button>
       </div>
     </div>
   );

@@ -50,7 +50,7 @@ export default function Logger() {
             <div
               ref={console}
               style={{
-                height: "300px",
+                height: "500px",
                 width: "100%",
                 background: "black",
                 color: error ? "red" : "white",

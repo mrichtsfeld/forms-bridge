@@ -1,38 +1,56 @@
 import { useError } from "../../providers/Error";
 import useBackendNames from "../../hooks/useBackendNames";
-import { uploadJson } from "../../lib/utils";
+import { uploadJson, validateBackend, validateUrl } from "../../lib/utils";
+import BackendFields from "./Fields";
+import BackendHeaders from "./Headers";
+import useResponsive from "../../hooks/useResponsive";
 
-const { TextControl, Button, __experimentalSpacer: Spacer } = wp.components;
-const { useState, useMemo } = wp.element;
+const { Button } = wp.components;
+const { useState, useMemo, useCallback } = wp.element;
 const { __ } = wp.i18n;
 
-export default function NewBackend({ add }) {
-  const backendNames = useBackendNames();
+const TEMPLATE = {
+  name: "",
+  base_url: "https://",
+  headers: [
+    {
+      name: "Content-Type",
+      value: "application/json",
+    },
+  ],
+  authentication: {},
+};
 
-  const [name, setName] = useState("");
-  const [baseUrl, setBaseUrl] = useState("https://");
+export default function NewBackend({ add }) {
+  const isResponsive = useResponsive();
+
+  const [data, setData] = useState(TEMPLATE);
 
   const [error, setError] = useError();
+  const names = useBackendNames();
 
   const nameConflict = useMemo(() => {
-    if (!name) return false;
-    return backendNames.has(name);
-  }, [backendNames, name]);
+    if (!data.name) return false;
+    return names.has(data.name.trim());
+  }, [names, data.name]);
+
+  const invalidUrl = useMemo(() => {
+    return !validateUrl(data.base_url);
+  }, [data.base_url]);
 
   const create = () => {
-    add({
-      name: name.trim(),
-      base_url: baseUrl,
-      headers: [{ name: "Content-Type", value: "application/json" }],
-    });
-    setName("");
-    setBaseUrl("https://");
+    setData(TEMPLATE);
+    add({ ...data });
   };
 
-  function uploadConfig() {
+  const isValid = useMemo(() => {
+    return !nameConflict && !invalidUrl && validateBackend(data);
+  }, [data, nameConflict, invalidUrl]);
+
+  const uploadConfig = useCallback(() => {
     uploadJson()
       .then((data) => {
-        const isValid = data.name && data.base_url;
+        const isValid = validateBackend(data);
 
         if (!isValid) {
           setError(__("Invalid backend config", "forms-bridge"));
@@ -40,7 +58,7 @@ export default function NewBackend({ add }) {
         }
 
         let i = 1;
-        while (backendNames.has(data.name)) {
+        while (names.has(data.name)) {
           data.name = data.name.replace(/\([0-9]+\)/, "") + ` (${i})`;
           i++;
         }
@@ -65,9 +83,7 @@ export default function NewBackend({ add }) {
           )
         );
       });
-  }
-
-  const disabled = !(name && baseUrl && !nameConflict);
+  }, [names]);
 
   return (
     <div
@@ -75,76 +91,75 @@ export default function NewBackend({ add }) {
         padding: "calc(24px) calc(32px)",
         width: "calc(100% - 64px)",
         backgroundColor: "rgb(245, 245, 245)",
+        display: "flex",
+        flexDirection: isResponsive ? "column" : "row",
+        gap: "2rem",
       }}
     >
-      <div
-        style={{
-          display: "flex",
-          gap: "0.5rem",
-        }}
-      >
-        <TextControl
-          style={{ minWidth: "250px" }}
-          label={__("Backend name", "forms-bridge")}
-          help={
-            nameConflict
-              ? __("This name is already in use", "forms-bridge")
-              : ""
-          }
-          value={name}
-          onChange={setName}
-          __nextHasNoMarginBottom
-          __next40pxDefaultSize
+      <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+        <BackendFields
+          state={data}
+          setState={setData}
+          errors={{
+            name: nameConflict,
+            base_url: invalidUrl,
+          }}
         />
-        <TextControl
-          style={{ minWidth: "350px" }}
-          label={__("Backend base URL", "forms-bridge")}
-          value={baseUrl}
-          onChange={setBaseUrl}
-          __nextHasNoMarginBottom
-          __next40pxDefaultSize
-        />
+        <div
+          style={{
+            marginTop: "0.5rem",
+            display: "flex",
+            gap: "0.5rem",
+          }}
+        >
+          <Button
+            variant="primary"
+            onClick={create}
+            style={{ width: "100px", justifyContent: "center" }}
+            disabled={nameConflict || !isValid}
+            __next40pxDefaultSize
+          >
+            {__("Add", "forms-bridge")}
+          </Button>
+          <Button
+            disabled={!!error}
+            variant="tertiary"
+            size="compact"
+            style={{
+              width: "40px",
+              height: "40px",
+              justifyContent: "center",
+              fontSize: "1.5em",
+              border: "1px solid",
+              color: "gray",
+            }}
+            onClick={uploadConfig}
+            __next40pxDefaultSize
+            label={__("Upload config", "forms-bridge")}
+            showTooltip
+          >
+            ⬆
+          </Button>
+        </div>
       </div>
-      <Spacer />
       <div
-        style={{
-          display: "flex",
-          gap: "0.5rem",
-          flexWrap: "wrap",
-        }}
+        style={
+          isResponsive
+            ? {
+                paddingTop: "2rem",
+                borderTop: "1px solid",
+              }
+            : {
+                paddingLeft: "2rem",
+                borderLeft: "1px solid",
+                flex: 1,
+              }
+        }
       >
-        <Button
-          variant="primary"
-          onClick={create}
-          style={{
-            width: "100px",
-            justifyContent: "center",
-            marginTop: "auto",
-          }}
-          disabled={disabled}
-          __next40pxDefaultSize
-        >
-          {__("Add", "forms-bridge")}
-        </Button>
-        <Button
-          disabled={!!error}
-          variant="tertiary"
-          size="compact"
-          style={{
-            width: "40px",
-            height: "40px",
-            justifyContent: "center",
-            fontSize: "1.5em",
-            border: "1px solid",
-            color: "gray",
-          }}
-          onClick={uploadConfig}
-          __next40pxDefaultSize
-          label={__("Upload backend config", "forms-bridge")}
-          showTooltip
-        >
-          ⬆
-        </Button>
+        <BackendHeaders
+          headers={data.headers}
+          setHeaders={(headers) => setData({ ...data, headers })}
+        />
       </div>
     </div>
   );

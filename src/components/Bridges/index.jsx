@@ -1,28 +1,16 @@
 // source
 import { useBridges } from "../../hooks/useAddon";
+import useBridgeNames from "../../hooks/useBridgeNames";
 import ApiSchemaProvider from "../../providers/ApiSchema";
 import { useSchemas } from "../../providers/Schemas";
 import Bridge from "../Bridge";
 import NewBridge from "../Bridge/NewBridge";
-import CopyIcon from "../CopyIcon";
-import Spinner from "../Spinner";
+import TabTitle from "../TabTitle";
+import AddIcon from "../icons/Add";
 
 const { TabPanel } = wp.components;
-const { useState, useEffect, useRef } = wp.element;
+const { useEffect, useRef } = wp.element;
 const { __ } = wp.i18n;
-
-function TabTitle({ name, focus, setFocus, copy }) {
-  return (
-    <div
-      style={{ position: "relative", padding: "0px 24px 0px 10px" }}
-      onMouseEnter={() => setFocus(true)}
-      onMouseLeave={() => setFocus(false)}
-    >
-      <span>{name}</span>
-      {focus && <CopyIcon onClick={copy} />}
-    </div>
-  );
-}
 
 const CSS = `.bridges-tabs-panel .components-tab-panel__tabs{overflow-x:auto;}
 .bridges-tabs-panel .components-tab-panel__tabs>button{flex-shrink:0;}`;
@@ -38,33 +26,32 @@ const DEFAULTS = {
 export default function Bridges() {
   const { bridge: schema } = useSchemas();
   const [bridges, setBridges] = useBridges();
-
-  const [tabFocus, setTabFocus] = useState(null);
+  const names = useBridgeNames();
 
   const tabs = bridges
     .map(({ name }, index) => ({
       index,
       name: String(index),
       title: name,
-      icon: (
-        <TabTitle
-          name={name}
-          focus={tabFocus === name}
-          setFocus={(value) => setTabFocus(value ? name : null)}
-          copy={() => copyBridge(name)}
-        />
-      ),
+      icon: <TabTitle name={name} />,
     }))
     .concat([
       {
         index: -1,
         name: "new",
-        title: __("Add bridge", "forms-bridge"),
+        title: __("Add a bridge", "forms-bridge"),
+        icon: (
+          <div style={{ marginBottom: "-2px" }}>
+            <AddIcon width="15" height="15" />
+          </div>
+        ),
       },
     ]);
 
   const updateBridge = (index, data) => {
     if (index === -1) index = bridges.length;
+
+    data.name = data.name.trim();
 
     const newBridges = bridges
       .slice(0, index)
@@ -93,7 +80,9 @@ export default function Bridges() {
       custom_fields: JSON.parse(JSON.stringify(bridge.custom_fields || [])),
     };
 
-    while (bridgeNames.has(copy.name)) {
+    copy.name = copy.name.trim();
+
+    while (names.has(copy.name)) {
       copy.name += "-copy";
     }
 
@@ -131,6 +120,7 @@ export default function Bridges() {
                   schema={schema}
                   remove={removeBridge}
                   update={(data) => updateBridge(tab.index, data)}
+                  copy={() => copyBridge(bridge.name)}
                 />
               )}
             </ApiSchemaProvider>

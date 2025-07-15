@@ -1,53 +1,14 @@
-const {
-  TextControl,
-  SelectControl,
-  Button,
-  __experimentalSpacer: Spacer,
-} = wp.components;
+import {
+  WELL_KNOWN_TYPES,
+  HEADER_NAME as CONTENT_TYPE_NAME,
+  DEFAULT_VALUE as DEFAUTL_CONTENT_TYPE,
+} from "./ContentType";
+
+const { TextControl, Button } = wp.components;
 const { useEffect, useMemo } = wp.element;
 const { __ } = wp.i18n;
 
-const WELL_KNOWN_CONTENT_TYPES = {
-  "application/json": "JSON",
-  "application/x-www-form-urlencoded": "URL Encoded",
-  "multipart/form-data": "Binary files",
-};
-
-function ContentTypeHeader({ setValue, value }) {
-  return (
-    <div style={{ width: "250px", marginTop: "calc(8px)" }}>
-      <SelectControl
-        label={__("Content encoding")}
-        value={WELL_KNOWN_CONTENT_TYPES[value] ? value : ""}
-        onChange={setValue}
-        options={Object.keys(WELL_KNOWN_CONTENT_TYPES)
-          .map((type) => ({
-            label: WELL_KNOWN_CONTENT_TYPES[type],
-            value: type,
-          }))
-          .concat([
-            { label: __("Custom encoding", "forms-bridge"), value: "" },
-          ])}
-        __next40pxDefaultSize
-        __nextHasNoMarginBottom
-      />
-    </div>
-  );
-}
-
 export default function BackendHeaders({ headers, setHeaders }) {
-  const contentType =
-    headers.find((header) => header.name === "Content-Type")?.value || "";
-
-  const setContentType = (type) => {
-    const index = headers.findIndex((header) => header.name === "Content-Type");
-    if (index === -1) {
-      addHeader(0, "Content-Type", type);
-    } else {
-      setHeader("value", index, type);
-    }
-  };
-
   const setHeader = (attr, index, value) => {
     const newHeaders = headers.map((header, i) => {
       if (index === i) header[attr] = value;
@@ -57,7 +18,7 @@ export default function BackendHeaders({ headers, setHeaders }) {
     setHeaders(newHeaders);
   };
 
-  const addHeader = (index, name = "Accept", value = "application/json") => {
+  const addHeader = (index, name = "Accept", value = DEFAUTL_CONTENT_TYPE) => {
     const newHeaders = headers
       .slice(0, index)
       .concat([{ name, value }])
@@ -72,15 +33,15 @@ export default function BackendHeaders({ headers, setHeaders }) {
   };
 
   useEffect(() => {
-    if (!(headers.length && headers.find((h) => h.name === "Content-Type")))
-      addHeader(0, "Content-Type", "application/json");
+    if (!(headers.length && headers.find((h) => h.name === CONTENT_TYPE_NAME)))
+      addHeader(0, CONTENT_TYPE_NAME, DEFAUTL_CONTENT_TYPE);
   }, [headers]);
 
   const sortedHeaders = useMemo(
     () =>
       headers.sort((h1, h2) => {
-        if (h1.name === "Content-Type") return -1;
-        if (h2.name === "Content-Type") return 1;
+        if (h1.name === CONTENT_TYPE_NAME) return -1;
+        if (h2.name === CONTENT_TYPE_NAME) return 1;
         return 0;
       }),
     [headers]
@@ -88,8 +49,6 @@ export default function BackendHeaders({ headers, setHeaders }) {
 
   return (
     <>
-      <ContentTypeHeader value={contentType} setValue={setContentType} />
-      <Spacer paddingY="calc(4px)" />
       <div className="components-base-control__label">
         <label
           className="components-base-control__label"
@@ -105,10 +64,16 @@ export default function BackendHeaders({ headers, setHeaders }) {
         <table
           style={{
             width: "calc(100% + 10px)",
+            maxWidth: "900px",
             borderSpacing: "5px",
             margin: "0 -5px",
           }}
         >
+          <colgroup>
+            <col span="1" style={{ width: "clamp(150px, 15vw, 300px)" }} />
+            <col span="1" style={{ width: "auto" }} />
+            <col span="1" style={{ width: "85px" }} />
+          </colgroup>
           <tbody>
             {sortedHeaders.map(({ name, value }, i) => (
               <tr key={i}>
@@ -125,8 +90,8 @@ export default function BackendHeaders({ headers, setHeaders }) {
                 <td>
                   <TextControl
                     disabled={
-                      name === "Content-Type" &&
-                      WELL_KNOWN_CONTENT_TYPES[value] &&
+                      name === CONTENT_TYPE_NAME &&
+                      WELL_KNOWN_TYPES[value] &&
                       i === 0
                     }
                     placeholder={__("Value", "forms-bridge")}

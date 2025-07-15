@@ -26,14 +26,29 @@ return [
             'ref' => '#bridge/custom_fields[]',
             'name' => 'includeListIds',
             'label' => __('Segments', 'forms-bridge'),
-            'type' => 'string',
+            'type' => 'options',
+            'options' => [
+                'endpoint' => '/v3/contacts/lists',
+                'finger' => [
+                    'value' => 'lists[].id',
+                    'label' => 'lists[].name',
+                ],
+            ],
+            'is_multi' => true,
             'required' => true,
         ],
         [
             'ref' => '#bridge/custom_fields[]',
             'name' => 'templateId',
             'label' => __('Double opt-in template', 'forms-bridge'),
-            'type' => 'string',
+            'type' => 'options',
+            'options' => [
+                'endpoint' => '/v3/smtp/templates',
+                'finger' => [
+                    'value' => 'templates[].id',
+                    'label' => 'templates[].name',
+                ],
+            ],
             'required' => true,
         ],
         [

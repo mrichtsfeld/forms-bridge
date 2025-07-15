@@ -157,12 +157,13 @@ add_filter(
             return $data;
         }
 
-        $custom_field_names = array_column(
-            $data['bridge']['custom_fields'],
-            'name'
+        $get_index = fn($name) => array_search(
+            $name,
+            array_column($data['bridge']['custom_fields'], 'name')
         );
 
-        $index = array_search('tag_ids', $custom_field_names);
+        $index = $get_index('tag_ids');
+
         if ($index !== false) {
             $field = $data['bridge']['custom_fields'][$index];
             $tags = $field['value'] ?? [];
@@ -183,7 +184,8 @@ add_filter(
             array_splice($data['bridge']['custom_fields'], $index, 1);
         }
 
-        $index = array_search('categ_ids', $custom_field_names);
+        $index = $get_index('categ_ids');
+
         if ($index !== false) {
             $field = $data['bridge']['custom_fields'][$index];
             $tags = $field['value'] ?? [];
@@ -204,7 +206,8 @@ add_filter(
             array_splice($data['bridge']['custom_fields'], $index, 1);
         }
 
-        $index = array_search('list_ids', $custom_field_names);
+        $index = $get_index('list_ids');
+
         if ($index !== false) {
             $field = $data['bridge']['custom_fields'][$index];
             $lists = $field['value'] ?? [];

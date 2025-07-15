@@ -1,4 +1,4 @@
-import WorkflowStageField from "./StageField";
+import PayloadField from "./PayloadField";
 
 const { useState, useEffect, useRef } = wp.element;
 const { Tooltip } = wp.components;
@@ -110,7 +110,7 @@ function InputField({ data }) {
         }}
       >
         {style.icon}
-        <WorkflowStageField
+        <PayloadField
           name={displayName}
           schema={schema}
           showDiff={false}

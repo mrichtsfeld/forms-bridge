@@ -4,23 +4,12 @@ import {
   useWorkflowStepper,
 } from "../../providers/Workflow";
 import MutationLayers from "../Mutations/Layers";
-import {
-  applyMappers,
-  fieldsToPayload,
-  payloadToFields,
-} from "../../lib/payload";
-import WorkflowStageField from "./StageField";
 import WorkflowJobInterface from "./JobInterface";
-import JsonFinger from "../../lib/JsonFinger";
 import JobSnippet from "../Jobs/Snippet";
+import StagePayload from "./Payload";
 
-const {
-  __experimentalItemGroup: ItemGroup,
-  __experimentalItem: Item,
-  ToggleControl,
-  Button,
-} = wp.components;
-const { useState, useMemo, useEffect } = wp.element;
+const { ToggleControl, Button } = wp.components;
+const { useState, useMemo, useEffect, useCallback, useRef } = wp.element;
 const { __ } = wp.i18n;
 
 export default function WorkflowStage({ setEdit, setMappers }) {
@@ -56,85 +45,24 @@ export default function WorkflowStage({ setEdit, setMappers }) {
     [mappers]
   );
 
-  const switchMode = (target) => {
-    if (mode !== target) {
-      setMode(target);
-    } else {
-      setMode("payload");
-    }
-  };
+  const switchMode = useCallback(
+    (target) => {
+      if (mode !== target) {
+        setMode(target);
+      } else {
+        setMode("payload");
+      }
+    },
+    [mode]
+  );
 
-  const handleSetMappers = (mappers) => {
+  const handleSetMappers = useRef((mappers) => {
     mappers.forEach((mapper) => {
       delete mapper.index;
     });
 
     setMappers(step, mappers);
-  };
-
-  const outputDiff = useMemo(() => {
-    if (!showMutations) return diff;
-
-    const outputDiff = Object.fromEntries(
-      Object.entries(diff).map(([key, set]) => [key, new Set(set)])
-    );
-
-    mappers
-      .map((m) => m)
-      .reverse()
-      .forEach((mapper) => {
-        const [from] = JsonFinger.parse(mapper.from);
-        const [to] = JsonFinger.parse(mapper.to);
-
-        if (outputDiff.enter.has(from)) {
-          outputDiff.enter.delete(from);
-          outputDiff.enter.add(to);
-        } else {
-          if (outputDiff.mutated.has(from)) {
-            outputDiff.mutated.delete(from);
-            outputDiff.mutated.add(to);
-          }
-
-          if (outputDiff.touched.has(from)) {
-            outputDiff.touched.delete(from);
-            outputDiff.touched.add(to);
-          }
-        }
-      });
-
-    return outputDiff;
-  }, [diff, showMutations, mappers]);
-
-  const outputFields = useMemo(() => {
-    let output;
-    if (mode === "mappers" || !showMutations) {
-      output = fields.map((field) => ({ ...field }));
-    } else {
-      output = payloadToFields(applyMappers(fieldsToPayload(fields), mappers));
-    }
-
-    if (showDiff) {
-      output.forEach((field) => {
-        field.enter = outputDiff.enter.has(field.name);
-        field.mutated = outputDiff.mutated.has(field.name);
-        field.touched = outputDiff.touched.has(field.name);
-        field.exit = false;
-      });
-
-      Array.from(outputDiff.exit).forEach((name) => {
-        output.push({
-          name,
-          schema: { type: "null" },
-          enter: false,
-          mutated: false,
-          touched: false,
-          exit: true,
-        });
-      });
-    }
-
-    return output;
-  }, [mode, fields, mappers, showMutations, showDiff, outputDiff]);
+  }).current;
 
   const jobInputs = useMemo(() => {
     if (!Array.isArray(workflowJob?.input)) return [];
@@ -245,13 +173,13 @@ export default function WorkflowStage({ setEdit, setMappers }) {
           null}
         {(mode === "payload" && (
           <div style={{ overflowY: "auto" }}>
-            <ItemGroup size="large" isSeparated>
-              {outputFields.map((field, i) => (
-                <Item key={field.name + i}>
-                  <WorkflowStageField {...field} showDiff={showDiff} />
-                </Item>
-              ))}
-            </ItemGroup>
+            <StagePayload
+              fields={fields}
+              mappers={mappers}
+              showMutations={showMutations}
+              showDiff={showDiff}
+              diff={diff}
+            />
           </div>
         )) ||
           null}
@@ -280,10 +208,7 @@ export default function WorkflowStage({ setEdit, setMappers }) {
             onClick={() => switchMode("mappers")}
             __next40pxDefaultSize
           >
-            {__("Mutations (%s)", "forms-bridge").replace(
-              "%s",
-              validMappers.length
-            )}
+            {__("Mappers", "forms-bridge")} ({validMappers.length})
           </Button>
         </div>
         <Button

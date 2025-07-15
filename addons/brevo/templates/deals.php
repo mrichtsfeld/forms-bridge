@@ -33,14 +33,25 @@ return [
                 'Email of the owner user of the deal',
                 'forms-bridge'
             ),
-            'type' => 'string',
+            'type' => 'options',
+            'options' => [
+                'endpoint' => '/v3/organization/invited/users',
+                'finger' => 'users[].email',
+            ],
             'required' => true,
         ],
         [
             'ref' => '#bridge/custom_fields[]',
             'name' => 'pipeline',
             'label' => __('Pipeline', 'forms-bridge'),
-            'type' => 'string',
+            'type' => 'options',
+            'options' => [
+                'endpoint' => '/v3/crm/pipeline/details/all',
+                'finger' => [
+                    'value' => '[].pipeline',
+                    'label' => '[].pipeline_name',
+                ],
+            ],
         ],
         [
             'ref' => '#form',

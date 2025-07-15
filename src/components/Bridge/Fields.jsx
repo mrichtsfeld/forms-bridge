@@ -2,6 +2,7 @@ import useBackends from "../../hooks/useBackends";
 import { useForms } from "../../providers/Forms";
 import { prependEmptyOption } from "../../lib/utils";
 import { useCredentials } from "../../hooks/useAddon";
+import FieldWrapper from "../FieldWrapper";
 
 const { TextControl, SelectControl } = wp.components;
 const { useEffect, useMemo } = wp.element;
@@ -143,27 +144,23 @@ export default function BridgeFields({
       switch (field.type) {
         case "string":
           return (
-            <div style={{ flex: 1, maxWidth: "250px" }}>
-              <StringField
-                error={errors[field.name]}
-                label={field.label}
-                value={data[field.name] || ""}
-                setValue={(value) => setData({ ...data, [field.name]: value })}
-              />
-            </div>
+            <StringField
+              error={errors[field.name]}
+              label={field.label}
+              value={data[field.name] || ""}
+              setValue={(value) => setData({ ...data, [field.name]: value })}
+            />
           );
         case "options":
           return (
-            <div style={{ flex: 1, maxWidth: "250px" }}>
-              <OptionsField
-                error={errors[field.name]}
-                label={field.label}
-                value={data[field.name] || ""}
-                setValue={(value) => setData({ ...data, [field.name]: value })}
-                options={field.options}
-                optional={optionals}
-              />
-            </div>
+            <OptionsField
+              error={errors[field.name]}
+              label={field.label}
+              value={data[field.name] || ""}
+              setValue={(value) => setData({ ...data, [field.name]: value })}
+              options={field.options}
+              optional={optionals}
+            />
           );
       }
     });
@@ -171,7 +168,7 @@ export default function BridgeFields({
 
 export function StringField({ label, value, setValue, error, disabled }) {
   return (
-    <div style={{ flex: 1 }}>
+    <FieldWrapper>
       <TextControl
         disabled={disabled}
         label={label}
@@ -181,7 +178,7 @@ export function StringField({ label, value, setValue, error, disabled }) {
         __nextHasNoMarginBottom
         __next40pxDefaultSize
       />
-    </div>
+    </FieldWrapper>
   );
 }
 
@@ -199,7 +196,7 @@ export function OptionsField({
   }
 
   return (
-    <div style={{ flex: 1 }}>
+    <FieldWrapper>
       <SelectControl
         disabled={disabled}
         label={label}
@@ -210,6 +207,6 @@ export function OptionsField({
         __nextHasNoMarginBottom
         __next40pxDefaultSize
       />
-    </div>
+    </FieldWrapper>
   );
 }

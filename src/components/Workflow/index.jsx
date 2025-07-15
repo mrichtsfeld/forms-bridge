@@ -1,12 +1,11 @@
 // source
-import { useForms } from "../../providers/Forms";
 import WorkflowProvider from "../../providers/Workflow";
 import JobEditor from "../JobEditor";
 import WorkflowPipeline from "./Pipeline";
 import WorkflowStage from "./Stage";
 
 const { Button, Modal } = wp.components;
-const { useState, useMemo } = wp.element;
+const { useState } = wp.element;
 const { __ } = wp.i18n;
 
 export default function Workflow({
@@ -21,26 +20,16 @@ export default function Workflow({
   const [open, setOpen] = useState(false);
   const [edit, setEdit] = useState(null);
 
-  const [forms] = useForms();
-  const form = useMemo(
-    () => forms.find((form) => form._id === formId),
-    [forms, formId]
-  );
-
   return (
     <>
       <Button
-        disabled={!form}
-        variant={
-          (form && workflow.length) || mutations[0]?.length
-            ? "primary"
-            : "secondary"
-        }
+        // disabled={!form}
+        variant="secondary"
         onClick={() => setOpen(true)}
         style={{ width: "150px", justifyContent: "center" }}
         __next40pxDefaultSize
       >
-        {__("Workflow", "forms-bridge")}
+        {__("Workflow", "forms-bridge")} ({workflow.length})
       </Button>
       {open && (
         <Modal
@@ -49,7 +38,7 @@ export default function Workflow({
         >
           <WorkflowProvider
             backend={backend}
-            form={form}
+            formId={formId}
             mutations={mutations}
             workflow={workflow}
             customFields={customFields}

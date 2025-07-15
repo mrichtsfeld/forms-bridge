@@ -8,7 +8,7 @@ import {
   checkType,
   payloadToSchema,
 } from "../lib/payload";
-import useBackends from "../hooks/useBackends";
+import { useForms } from "./Forms";
 
 const apiFetch = wp.apiFetch;
 const { createContext, useContext, useState, useEffect, useMemo, useCallback } =
@@ -99,18 +99,24 @@ function applyJob(payload, job) {
 
 export default function WorkflowProvider({
   children,
-  form,
-  backend,
-  customFields,
-  mutations,
-  workflow,
+  formId,
+  includeFiles,
+  customFields = [],
+  mutations = [],
+  workflow = [],
 }) {
+  const [addon] = useTab();
   const [, setError] = useError();
 
-  const [addon] = useTab();
   const [isLoading, setIsLoading] = useState(false);
   const [step, setStep] = useState(0);
   const [jobs, setJobs] = useState([]);
+
+  const [forms] = useForms();
+  const form = useMemo(
+    () => forms.find((form) => form._id === formId),
+    [forms, formId]
+  );
 
   useEffect(() => {
     if (!workflow.length || !addon) {
@@ -168,16 +174,6 @@ export default function WorkflowProvider({
     },
     [addon]
   );
-
-  const [backends] = useBackends();
-  const includeFiles = useMemo(() => {
-    const headers =
-      backends.find(({ name }) => name === backend)?.headers || [];
-    const contentType = headers.find(
-      (header) => header.name === "Content-Type"
-    )?.value;
-    return contentType !== undefined && contentType !== "multipart/form-data";
-  }, [backends, backend]);
 
   const workflowJobs = useMemo(
     () =>
@@ -239,7 +235,7 @@ export default function WorkflowProvider({
           schema: { type: "string" },
         }))
       );
-  }, [form]);
+  }, [form, customFields]);
 
   const stage = useMemo(() => {
     let payload = fieldsToPayload(formFields);
@@ -293,5 +289,5 @@ export function useWorkflowJob() {
   const { step, workflow, isLoading } = useContext(WorkflowContext);
 
   if (isLoading) return;
-  return workflow[step];
+  return workflow?.[step];
 }

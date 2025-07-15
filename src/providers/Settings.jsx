@@ -37,6 +37,7 @@ export default function SettingsProvider({ children }) {
 
   const initialState = useRef(null);
   const [state, setState] = useState(null);
+  const currentState = useRef(state);
 
   const fetch = useRef(() => {
     setLoading(true);
@@ -52,15 +53,12 @@ export default function SettingsProvider({ children }) {
       .finally(() => setLoading(false));
   }).current;
 
-  const beforeUnload = useCallback(
-    (ev) => {
-      if (diff(state, initialState.current)) {
-        ev.preventDefault();
-        ev.returnValue = true;
-      }
-    },
-    [state]
-  );
+  const beforeUnload = useRef((ev) => {
+    if (diff(currentState.current, initialState.current)) {
+      ev.preventDefault();
+      ev.returnValue = true;
+    }
+  }).current;
 
   useEffect(() => {
     window.addEventListener("beforeunload", beforeUnload);
@@ -72,24 +70,24 @@ export default function SettingsProvider({ children }) {
   }, []);
 
   useEffect(() => {
-    if (initialState.current) {
+    if (currentState.current) {
       let flush = diff(
-        initialState.current.general.integrations,
+        currentState.current.general.integrations,
         state.general.integrations
       );
 
       flush =
         flush ||
-        diff(initialState.current.general.addons, state.general.addons);
+        diff(currentState.current.general.addons, state.general.addons);
 
       flush =
-        flush || initialState.current.general.debug !== state.general.debug;
+        flush || currentState.current.general.debug !== state.general.debug;
 
       if (flush) submit(state);
     }
 
     return () => {
-      initialState.current = state;
+      currentState.current = state;
     };
   }, [state]);
 
