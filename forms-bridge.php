@@ -656,6 +656,19 @@ class Forms_Bridge extends Base_Plugin
 
         update_option(self::db_version, $to);
     }
+
+    public static function upload_dir()
+    {
+        $dir = wp_upload_dir()['basedir'] . '/forms-bridge';
+
+        if (!is_dir($dir)) {
+            if (!mkdir($dir, 755)) {
+                return;
+            }
+        }
+
+        return $dir;
+    }
 }
 
 // Start the plugin

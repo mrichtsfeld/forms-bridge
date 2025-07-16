@@ -341,7 +341,6 @@ class Form_Bridge_Template
                                     ],
                                     'required' => ['name', 'type'],
                                 ],
-                                'minItems' => 1,
                             ],
                         ],
                         'required' => ['title', 'fields'],
@@ -384,17 +383,10 @@ class Form_Bridge_Template
             $schema = static::schema($addon);
         }
 
-        $integrations = [];
-        foreach (Integration::integrations() as $integration) {
-            if ($integration !== 'woo') {
-                $integrations[] = $integration::name;
-            }
-        }
-
         return apply_filters(
             'forms_bridge_template_defaults',
             [
-                'integrations' => $integrations,
+                'integrations' => [],
                 'fields' => [
                     [
                         'ref' => '#form',
@@ -584,6 +576,14 @@ class Form_Bridge_Template
     {
         $schema = static::schema($this->addon);
         $defaults = static::defaults($this->addon, $schema);
+
+        if (empty($data['integrations'])) {
+            foreach (Integration::integrations() as $integration) {
+                if ($integration !== 'woo') {
+                    $data['integrations'][] = $integration::name;
+                }
+            }
+        }
 
         $data = wpct_plugin_merge_object($data, $defaults, $schema);
         return wpct_plugin_sanitize_with_schema($data, $schema);

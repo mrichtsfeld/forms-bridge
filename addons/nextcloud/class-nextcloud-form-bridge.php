@@ -13,6 +13,144 @@ if (!defined('ABSPATH')) {
  */
 class Nextcloud_Form_Bridge extends Form_Bridge
 {
+    private function dav_request($method, $args = [])
+    {
+        $url = $this->backend->url($this->endpoint);
+        $headers = $this->backend->headers;
+        $args = array_merge($args, [
+            'method' => $method,
+            'headers' => $headers,
+        ]);
+
+        $request = ['url' => $url, 'args' => $args];
+        $response = wp_remote_request($url, $args);
+
+        if (is_wp_error($response)) {
+            $response->add_data(['request' => $request]);
+            return $response;
+        }
+
+        $status = (int) $response['response']['code'];
+        if ($status >= 300) {
+            return new WP_Error(
+                'http_bridge_error',
+                __('HTTP error response status code', 'forms-bridge'),
+                [
+                    'response' => $response,
+                    'request' => $request,
+                ]
+            );
+        }
+
+        return $response;
+    }
+
+    private function filepath(&$touched = false)
+    {
+        $uploads = Forms_Bridge::upload_dir() . '/nextcloud';
+
+        if (!is_dir($uploads)) {
+            if (!mkdir($uploads, 755)) {
+                return;
+            }
+        }
+
+        $name = str_replace('/', '-', $this->data['endpoint']);
+        $filepath = $uploads . '/' . $name;
+
+        if (!is_file($filepath)) {
+            $touched = true;
+            $result = touch($filepath);
+
+            if (!$result) {
+                return new WP_Error('file_permission_error');
+            }
+        }
+
+        return $filepath;
+    }
+
+    public function table_headers()
+    {
+        $filepath = $this->filepath();
+
+        if (is_wp_error($filepath)) {
+            return $filepath;
+        }
+
+        $stream = fopen($filepath, 'r');
+        $line = fgets($stream);
+        fclose($stream);
+
+        if ($line === false) {
+            return;
+        }
+
+        return $this->decode_row($line);
+    }
+
+    private function get_dav_modified_date()
+    {
+        $response = $this->dav_request('HEAD');
+
+        if (is_wp_error($response)) {
+            $error_data = $response->get_error_data();
+
+            $code = $error_data['response']['response']['code'] ?? null;
+            if ($code !== 404) {
+                return $response;
+            }
+
+            return;
+        }
+
+        $last_modified = $response['headers']['last-modified'] ?? null;
+        if (!$last_modified) {
+            return;
+        }
+
+        return strtotime($last_modified);
+    }
+
+    private function payload_to_headers($payload)
+    {
+        return $this->encode_row(array_keys($payload));
+    }
+
+    private function payload_to_row($payload)
+    {
+        $headers = $this->table_headers();
+        if (!is_array($headers)) {
+            $headers = array_keys($payload);
+        }
+
+        $row = [];
+        foreach ($headers as $header) {
+            $row[] = $payload[$header];
+        }
+
+        return $this->encode_row($row);
+    }
+
+    private function encode_row($row)
+    {
+        return implode(
+            ',',
+            array_map(
+                fn($value) => json_encode(
+                    $value,
+                    JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
+                ),
+                $row
+            )
+        );
+    }
+
+    private function decode_row($row)
+    {
+        return array_map('json_decode', explode(',', $row));
+    }
+
     /**
      * Submits submission to the backend.
      *
@@ -23,6 +161,81 @@ class Nextcloud_Form_Bridge extends Form_Bridge
      */
     public function submit($payload = [], $attachments = [])
     {
-        return parent::submit($payload);
+        if (!$this->is_valid) {
+            return $this->data;
+        }
+
+        $backend_name = $this->data['backend'];
+        add_filter(
+            'http_bridge_backend_url',
+            function ($url, $backend) use ($backend_name) {
+                if ($backend->name === $backend_name) {
+                    $user = $backend->authentication['client_id'] ?? '';
+                    [$pre] = explode($this->endpoint, $url);
+                    $url =
+                        preg_replace('/\/+$/', '', $pre) .
+                        "/remote.php/dav/files/{$user}/" .
+                        $this->endpoint;
+                }
+
+                return $url;
+            },
+            10,
+            2
+        );
+
+        $filepath = $this->filepath($touched);
+
+        if (is_wp_error($filepath)) {
+            return $filepath;
+        }
+
+        $dav_modified = $this->get_dav_modified_date();
+        if (is_wp_error($dav_modified)) {
+            return $dav_modified;
+        }
+
+        if (!$dav_modified) {
+            $headers = $this->payload_to_headers($payload);
+            $row = $this->payload_to_row($payload);
+            $csv = implode("\n", [$headers, $row]);
+
+            file_put_contents($filepath, $csv);
+            $response = parent::submit($csv);
+        } else {
+            if ($touched) {
+                $headers = $this->payload_to_headers($payload);
+                $row = $this->payload_to_row($payload);
+                $csv = implode("\n", [$headers, $row]);
+
+                file_put_contents($filepath, $csv);
+                $response = parent::submit($csv);
+            } else {
+                $local_modified = filemtime($filepath);
+
+                if ($dav_modified > $local_modified) {
+                    $response = $this->dav_request('GET', [
+                        'stream' => $filepath,
+                    ]);
+
+                    if (is_wp_error($response)) {
+                        return $response;
+                    }
+                }
+
+                $row = $this->payload_to_row($payload);
+                file_put_contents($filepath, "\n" . $row, FILE_APPEND);
+
+                $csv = file_get_contents($filepath);
+                $response = parent::submit($csv);
+            }
+        }
+
+        if (is_wp_error($response)) {
+            return $response;
+        }
+
+        touch($filepath, time());
+        return $response;
     }
 }

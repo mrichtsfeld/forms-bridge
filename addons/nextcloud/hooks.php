@@ -21,7 +21,7 @@ add_filter(
         );
         $schema['properties']['endpoint']['pattern'] = '.+\.csv$';
 
-        $schema['properties']['method']['enum'] = ['GET', 'PUT'];
+        $schema['properties']['method']['enum'] = ['PUT'];
 
         return $schema;
     },
@@ -69,7 +69,7 @@ add_filter(
                     'headers' => [
                         [
                             'name' => 'Content-Type',
-                            'value' => 'text/csv',
+                            'value' => 'application/octet-strea',
                         ],
                     ],
                     'authentication' => [

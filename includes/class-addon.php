@@ -2,6 +2,7 @@
 
 namespace FORMS_BRIDGE;
 
+use Error;
 use HTTP_BRIDGE\Settings_Store as Http_Store;
 use TypeError;
 use WPCT_PLUGIN\Singleton;
@@ -750,8 +751,10 @@ class Addon extends Singleton
             } elseif ($ext === 'json') {
                 try {
                     $content = file_get_contents($file_path);
-                    $data = json_decode($content, true);
+                    $data = json_decode($content, true, JSON_THROW_ON_ERROR);
                 } catch (TypeError) {
+                    // pass
+                } catch (Error) {
                     // pass
                 }
             }

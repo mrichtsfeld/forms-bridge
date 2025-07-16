@@ -2,6 +2,8 @@
 
 namespace FORMS_BRIDGE;
 
+use FBAPI;
+
 if (!defined('ABSPATH')) {
     exit();
 }
@@ -48,21 +50,7 @@ class Nextcloud_Addon extends Addon
         $backend = FBAPI::get_backend($backend);
         $user = $backend->authentication['client_id'] ?? '';
 
-        if (!$user) {
-            return false;
-        }
-
-        $bridge = new Nextcloud_Form_Bridge(
-            [
-                'name' => '__nextcloud-' . time(),
-                'method' => 'GET',
-                'endpoint' => "/remote.php/dev/files/{$user}",
-                'backend' => $backend->name,
-            ],
-            self::name
-        );
-
-        $response = $bridge->submit();
+        $response = $backend->get('/remote.php/dav/files/' . urlencode($user));
         return !is_wp_error($response);
     }
 
@@ -77,17 +65,7 @@ class Nextcloud_Addon extends Addon
      */
     public function fetch($endpoint, $backend, $credential = null)
     {
-        $bridge = new Nextcloud_Form_Bridge(
-            [
-                'name' => '__nextcloud-' . time(),
-                'method' => 'GET',
-                'endpoint' => $endpoint,
-                'backend' => $backend,
-            ],
-            self::name
-        );
-
-        return $bridge->submit();
+        return [];
     }
 
     /**
@@ -105,50 +83,22 @@ class Nextcloud_Addon extends Addon
         $bridge = new Nextcloud_Form_Bridge(
             [
                 'name' => '__nextcloud-' . time(),
-                'method' => 'GET',
                 'endpoint' => $filepath,
                 'backend' => $backend,
             ],
             self::name
         );
 
-        $response = $bridge->submit();
-
-        if (is_wp_error($response)) {
+        $headers = $bridge->table_headers();
+        if (is_wp_error($headers)) {
             return [];
         }
 
         $fields = [];
-        foreach ($response['data']['result'] as $name => $spec) {
-            if ($spec['readonly']) {
-                continue;
-            }
-
-            if ($spec['type'] === 'char' || $spec['type'] === 'html') {
-                $schema = ['type' => 'string'];
-            } elseif ($spec['type'] === 'float') {
-                $schema = ['type' => 'number'];
-            } elseif (
-                in_array(
-                    $spec['type'],
-                    ['one2many', 'many2one', 'many2many'],
-                    true
-                )
-            ) {
-                $schema = [
-                    'type' => 'array',
-                    'items' => [['type' => 'integer'], ['type' => 'string']],
-                    'additionalItems' => false,
-                ];
-            } else {
-                $schema = ['type' => $spec['type']];
-            }
-
-            $schema['required'] = $spec['required'];
-
+        foreach ($headers as $header) {
             $fields[] = [
-                'name' => $name,
-                'schema' => $schema,
+                'name' => $header,
+                'schema' => ['type' => 'string'],
             ];
         }
 
@@ -157,3 +107,8 @@ class Nextcloud_Addon extends Addon
 }
 
 Nextcloud_Addon::setup();
+
+add_filter('http_request_args', function ($args) {
+    $args['timeout'] = 30;
+    return $args;
+});

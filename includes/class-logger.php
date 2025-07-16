@@ -18,7 +18,7 @@ class Logger extends Singleton
     /**
      * Handles the log file name.
      */
-    private const log_file = '.forms-bridge.log';
+    private const log_file = 'debug.log';
 
     /**
      * Error level constant.
@@ -48,7 +48,15 @@ class Logger extends Singleton
      */
     private static function log_path()
     {
-        return wp_upload_dir()['basedir'] . '/' . self::log_file;
+        $dir = wp_upload_dir()['basedir'] . '/forms-bridge';
+
+        if (!is_dir($dir)) {
+            if (!mkdir($dir, 755)) {
+                return;
+            }
+        }
+
+        return $dir . '/' . self::log_file;
     }
 
     /**
@@ -63,6 +71,10 @@ class Logger extends Singleton
         }
 
         $log_path = self::log_path();
+        if (!$log_path) {
+            return [];
+        }
+
         $socket = fopen($log_path, 'r');
         $cursor = -1;
         fseek($socket, $cursor, SEEK_END);
