@@ -2,7 +2,6 @@
 import RemoveButton from "../RemoveButton";
 import { useCredentials } from "../../hooks/useAddon";
 import CredentialFields, { INTERNALS } from "./Fields";
-import ToggleControl from "../Toggle";
 import { downloadJson } from "../../lib/utils";
 import { useLoading } from "../../providers/Loading";
 import { useError } from "../../providers/Error";
@@ -123,16 +122,28 @@ export default function Credential({
   const authorize = () => {
     setLoading(true);
 
+    const form = document.createElement("form");
+    form.action = wpApiSettings.root + `forms-bridge/v1/${addon}/oauth/grant`;
     apiFetch({
       path: `forms-bridge/v1/${addon}/oauth/grant`,
       method: "POST",
       data: { credential: data },
     })
-      .then(({ redirect }) => {
-        if (redirect === window.location.href) {
+      .then(({ redirect, form: html }) => {
+        if (!html && !redirect) {
           window.location.reload();
+        } else if (redirect) {
+          window.location = redirect;
         } else {
-          window.open(redirect);
+          const wrapper = document.createElement("div");
+          wrapper.style.visibility = "hidden";
+          wrapper.innerHTML = html;
+          document.body.appendChild(wrapper);
+
+          const form = wrapper.querySelector("form");
+
+          form.submit();
+          document.body.removeChild(wrapper);
         }
       })
       .catch(() => {
@@ -217,73 +228,28 @@ export default function Credential({
           >
             <ArrowDownIcon width="12" height="20" color="gray" />
           </Button>
-        </div>
-      </div>
-      <div
-        style={
-          isResponsive
-            ? {
-                paddingTop: "2rem",
-                borderTop: "1px solid",
-                display: "flex",
-                flexDirection: "column",
-                gap: "1rem",
+          {(authorizable && (
+            <Button
+              onClick={authorize}
+              variant={
+                data.access_token || !authorizable ? "secondary" : "primary"
               }
-            : {
-                paddingLeft: "2rem",
-                borderLeft: "1px solid",
-                display: "flex",
-                flexDirection: "column",
-                flex: 1,
-                gap: "1rem",
-              }
-        }
-      >
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            marginTop: "10px",
-            marginLeft: "4px",
-          }}
-        >
-          <ToggleControl
-            disabled={true}
-            checked={isValid}
-            noEdit
-            __nextHasNoMarginBottom
-          />
-          <span
-            style={{
-              width: "50px",
-              fontStyle: "normal",
-              fontSize: "12px",
-              color: isValid
-                ? "var(--wp-components-color-accent,var(--wp-admin-theme-color,#3858e9))"
-                : "rgb(117, 117, 117)",
-            }}
-          >
-            {!isValid
-              ? __("Invalid", "forms-bridge")
-              : __("Valid", "forms-bridge")}
-          </span>
+              isDestructive={!!data.access_token}
+              disabled={!authorizable || loading || error}
+              style={{
+                justifyContent: "center",
+                marginLeft: "auto",
+              }}
+              __next40pxDefaultSize
+              __nextHasNoMarginBottom
+            >
+              {data.access_token
+                ? __("Revoke", "forms-bridge")
+                : __("Authorize", "forms-bridge")}
+            </Button>
+          )) ||
+            null}
         </div>
-        <Button
-          onClick={authorize}
-          variant={data.access_token || !authorizable ? "secondary" : "primary"}
-          isDestructive={!!data.access_token}
-          disabled={!authorizable || loading || error}
-          style={{
-            justifyContent: "center",
-            width: "100px",
-          }}
-          __next40pxDefaultSize
-          __nextHasNoMarginBottom
-        >
-          {data.access_token
-            ? __("Revoke", "forms-bridge")
-            : __("Authorize", "forms-bridge")}
-        </Button>
       </div>
     </div>
   );

@@ -2,18 +2,21 @@
 
 namespace FORMS_BRIDGE;
 
+use FBAPI;
+
 if (!defined('ABSPATH')) {
     exit();
 }
 
-require_once 'vendor/autoload.php';
+// require_once 'vendor/autoload.php';
 
-require_once 'class-gsheets-store.php';
-require_once 'class-gsheets-client.php';
-require_once 'class-gsheets-rest-controller.php';
-require_once 'class-gsheets-ajax-controller.php';
-require_once 'class-gsheets-service.php';
+// require_once 'class-gsheets-store.php';
+// require_once 'class-gsheets-client.php';
+// require_once 'class-gsheets-rest-controller.php';
+// require_once 'class-gsheets-ajax-controller.php';
+// require_once 'class-gsheets-service.php';
 require_once 'class-gsheets-form-bridge.php';
+require_once 'class-gsheets-credential.php';
 require_once 'hooks.php';
 
 /**
@@ -36,38 +39,24 @@ class Google_Sheets_Addon extends Addon
     public const name = 'gsheets';
 
     /**
-     * Google Sheets API static data. Works as a placeholder to fit into the common bridge schema.
-     *
-     * @var array
-     */
-    public const static_backend = [
-        'name' => 'Sheets API',
-        'base_url' => 'https://sheets.googleapis.com/v4/spreadsheets',
-        'headers' => [
-            [
-                'name' => 'Content-Type',
-                'value' => 'application/grpc+proto',
-            ],
-        ],
-    ];
-    /**
      * Handles the addom's custom bridge class.
      *
      * @var string
      */
     public const bridge_class = '\FORMS_BRIDGE\Google_Sheets_Form_Bridge';
 
+    public const credential_class = '\FORMS_BRIDGE\Google_Sheets_Credential';
+
+    protected static function defaults()
+    {
+        $defaults = parent::defaults();
+        $defaults['credentials'] = [];
+        return $defaults;
+    }
+
     public function load()
     {
         parent::load();
-
-        Settings_Store::ready(static function ($store) {
-            self::register_setting_proxy($store);
-        });
-
-        Http_Store::ready(static function ($store) {
-            self::register_backend_proxy($store);
-        });
 
         add_filter(
             'forms_bridge_prune_empties',
@@ -83,110 +72,6 @@ class Google_Sheets_Addon extends Addon
         );
     }
 
-    private static function register_backend_proxy($store)
-    {
-        $store::use_getter(
-            'general',
-            function ($data) {
-                if (!isset($data['backends']) || !is_array($data['backends'])) {
-                    return $data;
-                }
-
-                $index = array_search(
-                    self::static_backend['name'],
-                    array_column($data['backends'], 'name')
-                );
-
-                if ($index === false) {
-                    $data['backends'][] = self::static_backend;
-                }
-
-                return $data;
-            },
-            20
-        );
-
-        $store::use_setter(
-            'general',
-            function ($data) {
-                if (!isset($data['backends']) || !is_array($data['backends'])) {
-                    return $data;
-                }
-
-                $index = array_search(
-                    self::static_backend['name'],
-                    array_column($data['backends'], 'name')
-                );
-
-                if ($index !== false) {
-                    array_splice($data['backends'], $index, 1);
-                }
-
-                return $data;
-            },
-            8
-        );
-    }
-
-    /**
-     * Intercept setting hooks and add authorized attribute.
-     */
-    private static function register_setting_proxy($store)
-    {
-        $store::use_getter('gsheets', function ($data) {
-            $data['authorized'] = Google_Sheets_Service::is_authorized();
-            return $data;
-        });
-
-        $store::use_setter(
-            'gsheets',
-            function ($data) {
-                unset($data['authorized']);
-                return $data;
-            },
-            9
-        );
-    }
-
-    /**
-     * Validate bridge settings. Filters bridges with inconsistencies with
-     * current store state.
-     *
-     * @param array $bridges Array with bridge configurations.
-     *
-     * @return array Array with valid bridge configurations.
-     */
-    private static function sanitize_bridges($bridges)
-    {
-        if (!wp_is_numeric_array($bridges)) {
-            return [];
-        }
-
-        $uniques = [];
-        $validated = [];
-        foreach ($bridges as $bridge) {
-            $bridge = self::sanitize_bridge($bridge, $uniques);
-
-            if (!$bridge) {
-                continue;
-            }
-
-            $bridge['spreadsheet'] = $bridge['spreadsheet'] ?? '';
-            $bridge['tab'] = $bridge['tab'] ?? '';
-            $bridge['endpoint'] =
-                $bridge['spreadsheet'] . '::' . $bridge['tab'];
-
-            $bridge['is_valid'] =
-                $bridge['is_valid'] &&
-                !empty($bridge['spreadsheet']) &&
-                !empty($bridge['tab']);
-
-            $validated[] = $bridge;
-        }
-
-        return $validated;
-    }
-
     /**
      * Performs a request against the backend to check the connexion status.
      *
@@ -197,7 +82,37 @@ class Google_Sheets_Addon extends Addon
      */
     public function ping($backend, $credential = null)
     {
-        return Google_Sheets_Service::is_authorized();
+        $bridge = new Google_Sheets_Form_Bridge(
+            [
+                'name' => '__gsheets-' . time(),
+                'credential' => $credential,
+                'backend' => $backend,
+                'endpoint' => '/',
+                'method' => 'GET',
+                'tab' => 'foo',
+            ],
+            self::name
+        );
+
+        $credential = $bridge->credential;
+        if (!$credential) {
+            return false;
+        }
+
+        $backend = $bridge->backend;
+        if (!$backend) {
+            return false;
+        }
+
+        $parsed = wp_parse_url($backend->base_url);
+        $host = $parsed['host'] ?? '';
+
+        if ($host !== 'sheets.googleapis.com') {
+            return false;
+        }
+
+        $access_token = $credential->get_access_token();
+        return !!$access_token;
     }
 
     /**
@@ -211,20 +126,35 @@ class Google_Sheets_Addon extends Addon
      */
     public function fetch($endpoint, $backend, $credential = null)
     {
-        [$spreadsheet, $tab] = explode('::', $endpoint);
+        $credential = FBAPI::get_credential($credential, self::name);
+        if (!$credential) {
+            return new WP_Error('invalid_credential');
+        }
 
-        $bridge = new Google_Sheets_Form_Bridge(
+        $access_token = $credential->get_access_token();
+        if (!$access_token) {
+            return new WP_Error('invalid_credential');
+        }
+
+        $backend = FBAPI::get_backend($backend);
+        if (!$backend) {
+            return new WP_Error('invalid_backend');
+        }
+
+        $response = http_bridge_get(
+            'https://www.googleapis.com/drive/v3/files',
+            ['q' => "mimeType = 'application/vnd.google-apps.spreadsheet'"],
             [
-                'name' => '__gs-' . time(),
-                'endpoint' => $endpoint,
-                'spreadsheet' => $spreadsheet,
-                'tab' => $tab,
-                'method' => 'read',
-            ],
-            self::name
+                'Authorization' => "Bearer {$access_token}",
+                'Accept' => 'application/json',
+            ]
         );
 
-        return $bridge->submit();
+        if (is_wp_error($response)) {
+            return $response;
+        }
+
+        return $response;
     }
 
     /**
@@ -239,29 +169,35 @@ class Google_Sheets_Addon extends Addon
      */
     public function get_endpoint_schema($endpoint, $backend, $credential = null)
     {
-        [$spreadsheet, $tab] = explode('::', $endpoint);
+        $bridges = FBAPI::get_addon_bridges(self::name);
+        foreach ($bridges as $candidate) {
+            $data = $candidate->data();
+            if (!$data) {
+                continue;
+            }
 
-        $bridge = new Google_Sheets_Form_Bridge(
-            [
-                'name' => '__gs-' . time(),
-                'endpoint' => $endpoint,
-                'spreadsheet' => $spreadsheet,
-                'tab' => $tab,
-                'method' => 'schema',
-            ],
-            self::name
-        );
+            if (
+                $data['endpoint'] === $endpoint &&
+                $data['backend'] === $backend
+            ) {
+                $bridge = $candidate;
+            }
+        }
 
-        $response = $bridge->submit();
+        if (!isset($bridge)) {
+            return [];
+        }
 
-        if (is_wp_error($response)) {
+        $headers = $bridge->get_headers();
+
+        if (is_wp_error($headers)) {
             return [];
         }
 
         $fields = [];
-        foreach ($response['data'] as $field) {
+        foreach ($headers as $header) {
             $fields[] = [
-                'name' => $field,
+                'name' => $header,
                 'schema' => ['type' => 'string'],
             ];
         }

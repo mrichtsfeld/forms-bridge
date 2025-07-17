@@ -40,10 +40,7 @@ class Zoho_Form_Bridge extends Form_Bridge
 
         $access_token = $credential->get_access_token();
         if (empty($access_token)) {
-            return new WP_Error(
-                'unauthorized',
-                __('OAuth invalid response', 'forms-bridge')
-            );
+            return new WP_Error('unauthorized');
         }
 
         $method_fn = strtolower($this->method);

@@ -42,23 +42,6 @@ add_filter(
                     ],
                     [
                         'ref' => '#credential',
-                        'name' => 'type',
-                        'label' => __('Auhentication type', 'forms-bridge'),
-                        'type' => 'options',
-                        'options' => [
-                            [
-                                'value' => 'Server-based',
-                                'label' => 'Server-based',
-                            ],
-                            [
-                                'value' => 'Self Client',
-                                'label' => 'Self Client',
-                            ],
-                        ],
-                        'required' => true,
-                    ],
-                    [
-                        'ref' => '#credential',
                         'name' => 'region',
                         'label' => __('Datacenter', 'forms-bridge'),
                         'type' => 'options',
@@ -103,16 +86,6 @@ add_filter(
                         'label' => __('Client secret', 'forms-bridge'),
                         'type' => 'string',
                         'required' => true,
-                    ],
-                    [
-                        'ref' => '#credential',
-                        'name' => 'organization_id',
-                        'label' => __('Organization ID', 'forms-bridge'),
-                        'description' => __(
-                            'Required if you want to use Self Client authentication protocol',
-                            'forms-bridge'
-                        ),
-                        'type' => 'string',
                     ],
                     [
                         'ref' => '#credential',
@@ -186,10 +159,8 @@ add_filter(
                 ],
                 'credential' => [
                     'name' => '',
-                    'type' => '',
                     'client_id' => '',
                     'client_secret' => '',
-                    'organization_id' => '',
                     'scope' =>
                         'ZohoCRM.modules.ALL,ZohoCRM.settings.layouts.READ,ZohoCRM.users.READ',
                 ],
@@ -255,88 +226,30 @@ add_filter(
             return $schema;
         }
 
-        return [
-            '$schema' => 'http://json-schema.org/draft-04/schema#',
-            'title' => 'zoho-credential',
-            'type' => 'object',
-            'description' => __('Zoho OAuth API credential', 'forms-bridge'),
-            'properties' => [
-                'name' => [
-                    'type' => 'string',
-                    'minLength' => 1,
-                ],
-                'type' => [
-                    'type' => 'string',
-                    'enum' => ['Server-based', 'Self Client'],
-                    'default' => 'Server-based',
-                ],
-                'region' => [
-                    'type' => 'string',
-                    'enum' => [
-                        'zoho.com',
-                        'zoho.eu',
-                        'zoho.in',
-                        'zoho.com.cn',
-                        'zoho.com.au',
-                        'zoho.jp',
-                    ],
-                    'default' => 'zoho.com',
-                ],
-                'client_id' => [
-                    'type' => 'string',
-                    'minLength' => 1,
-                ],
-                'client_secret' => [
-                    'type' => 'string',
-                    'minLength' => 1,
-                ],
-                'scope' => [
-                    'type' => 'string',
-                    'minLength' => 1,
-                    'default' =>
-                        'ZohoCRM.modules.ALL,ZohoCRM.settings.layouts.READ,ZohoCRM.users.READ',
-                ],
-                'organization_id' => [
-                    'type' => 'string',
-                    'default' => '',
-                ],
-                'access_token' => [
-                    'type' => 'string',
-                    'default' => '',
-                    'public' => false,
-                ],
-                'refresh_token' => [
-                    'type' => 'string',
-                    'default' => '',
-                    'public' => false,
-                ],
-                'expires_at' => [
-                    'type' => 'integer',
-                    'default' => 0,
-                    'public' => false,
-                ],
-                'enabled' => [
-                    'type' => 'boolean',
-                    'default' => true,
-                ],
-                'is_valid' => [
-                    'type' => 'boolean',
-                    'default' => false,
-                ],
+        $schema['description'] = __(
+            'Zoho OAuth API credential',
+            'forms-bridge'
+        );
+
+        $schema['properties']['region'] = [
+            'type' => 'string',
+            'enum' => [
+                'zoho.com',
+                'zoho.eu',
+                'zoho.in',
+                'zoho.com.cn',
+                'zoho.com.au',
+                'zoho.jp',
             ],
-            'required' => [
-                'name',
-                'type',
-                'region',
-                'client_id',
-                'client_secret',
-                'scope',
-                'access_token',
-                'refresh_token',
-                'expires_at',
-            ],
-            'additionalProperties' => false,
+            'default' => 'zoho.com',
         ];
+
+        $schema['required'][] = 'region';
+
+        $schema['properties']['scope']['default'] =
+            'ZohoCRM.modules.ALL,ZohoCRM.settings.layouts.READ,ZohoCRM.users.READ';
+
+        return $schema;
     },
     10,
     2

@@ -165,6 +165,8 @@ class Nextcloud_Form_Bridge extends Form_Bridge
             return $this->data;
         }
 
+        $payload = self::flatten_payload($payload);
+
         $backend_name = $this->data['backend'];
         add_filter(
             'http_bridge_backend_url',
@@ -237,5 +239,50 @@ class Nextcloud_Form_Bridge extends Form_Bridge
 
         touch($filepath, time());
         return $response;
+    }
+
+    /**
+     * Sheets are flat, if payload has nested arrays, flattens it and concatenate its keys
+     * as field names.
+     *
+     * @param array $payload Submission payload.
+     * @param string $path Prefix to prepend to the field name.
+     *
+     * @return array Flattened payload.
+     */
+    private static function flatten_payload($payload, $path = '')
+    {
+        $flat = [];
+        foreach ($payload as $field => $value) {
+            $key = $path . $field;
+            $value = self::flatten_value($value, $key);
+
+            if (!is_array($value)) {
+                $flat[$key] = $value;
+            } else {
+                foreach ($value as $_key => $_val) {
+                    $flat[$_key] = $_val;
+                }
+            }
+        }
+
+        return $flat;
+    }
+
+    private static function flatten_value($value, $path = '')
+    {
+        if (!is_array($value)) {
+            return $value;
+        }
+
+        if (wp_is_numeric_array($value)) {
+            $simple_items = array_filter($value, fn($item) => !is_array($item));
+
+            if (count($simple_items) === count($value)) {
+                return implode(',', $value);
+            }
+        }
+
+        return self::flatten_payload($value, $path . '.');
     }
 }

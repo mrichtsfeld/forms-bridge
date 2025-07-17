@@ -54,6 +54,7 @@ require_once 'includes/class-form-bridge.php';
 require_once 'includes/class-form-bridge-template.php';
 require_once 'includes/class-job.php';
 require_once 'includes/class-credential.php';
+require_once 'includes/class-oauth-credential.php';
 require_once 'includes/class-integration.php';
 require_once 'includes/class-addon.php';
 

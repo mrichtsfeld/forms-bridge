@@ -231,6 +231,18 @@ class Form_Bridge
         }
     }
 
+    public function data()
+    {
+        if (!$this->is_valid) {
+            return;
+        }
+
+        return array_merge($this->data, [
+            'id' => $this->id,
+            'name' => $this->name,
+            'addon' => $this->addon,
+        ]);
+    }
     /**
      * Magic method to proxy public attributes to method getters.
      *
@@ -346,7 +358,7 @@ class Form_Bridge
     /**
      * Bridge's credential data getter.
      *
-     * @return Credential|null
+     * @return Credential|Oauth_Credential|null
      */
     protected function credential()
     {

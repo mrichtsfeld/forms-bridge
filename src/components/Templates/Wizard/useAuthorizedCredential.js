@@ -87,9 +87,18 @@ export default function useAuthorizedCredential({ data = {}, fields = [] }) {
       method: "POST",
       data: { credential },
     })
-      .then(({ redirect }) => {
-        if (redirect === window.location.href) {
-          fetchSettings();
+      .then(({ redirect, form: html }) => {
+        if (html) {
+          const wrapper = document.createElement("div");
+          wrapper.style.visibility = "hidden";
+          wrapper.innerHTML = html;
+          document.body.appendChild(wrapper);
+
+          const form = wrapper.querySelector("form");
+          form.setAttribute("target", "_blank");
+
+          form.submit();
+          document.body.removeChild(wrapper);
         } else {
           window.open(redirect);
         }

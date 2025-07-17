@@ -876,24 +876,24 @@ class REST_Settings_Controller extends Base_Controller
     {
         $addon = Addon::addon($addon);
 
-        $redirect = $addon->oauth_grant($request['credential']);
+        $response = $addon->oauth_grant($request['credential']);
 
-        if (is_wp_error($redirect)) {
+        if (is_wp_error($response)) {
             $error = self::internal_server_error();
             $error->add(
-                $redirect->get_error_code(),
-                $redirect->get_error_message(),
-                $redirect->get_error_data()
+                $response->get_error_code(),
+                $response->get_error_message(),
+                $response->get_error_data()
             );
 
             return $error;
         }
 
-        if (!$redirect) {
-            return self::bad_request();
+        if (!$response) {
+            return ['form' => null, 'redirect' => null];
         }
 
-        return ['redirect' => $redirect];
+        return $response;
     }
 
     private static function oauth_redirect($addon, $request)

@@ -1,5 +1,6 @@
 import { StringField, OptionsField } from "../Bridge/Fields";
 const { useEffect, useMemo } = wp.element;
+import FieldWrapper from "../FieldWrapper";
 
 export const INTERNALS = [
   "enabled",
@@ -7,6 +8,7 @@ export const INTERNALS = [
   // "access_token",
   "refresh_token",
   // "expires_at",
+  "refresh_token_expires_at",
 ];
 
 export default function CredentialFields({
@@ -69,30 +71,25 @@ export default function CredentialFields({
       switch (field.type) {
         case "string":
           return (
-            <div style={{ flex: 1, maxWidth: "250px" }}>
-              <StringField
-                style={{ maxWidth: "300px" }}
-                label={field.label}
-                value={data[field.name] || ""}
-                setValue={(value) => setData({ ...data, [field.name]: value })}
-                error={errors[field.name]}
-                disabled={disabled}
-              />
-            </div>
+            <StringField
+              label={field.label}
+              value={data[field.name] || ""}
+              setValue={(value) => setData({ ...data, [field.name]: value })}
+              error={errors[field.name]}
+              disabled={disabled}
+            />
           );
         case "options":
           return (
-            <div style={{ flex: 1, maxWidth: "250px" }}>
-              <OptionsField
-                label={field.label}
-                value={data[field.name] || ""}
-                setValue={(value) => setData({ ...data, [field.name]: value })}
-                options={field.options}
-                optional={optionals}
-                error={errors[field.name]}
-                disabled={disabled}
-              />
-            </div>
+            <OptionsField
+              label={field.label}
+              value={data[field.name] || ""}
+              setValue={(value) => setData({ ...data, [field.name]: value })}
+              options={field.options}
+              optional={optionals}
+              error={errors[field.name]}
+              disabled={disabled}
+            />
           );
       }
     });

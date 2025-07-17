@@ -241,15 +241,10 @@ add_filter(
             return $schema;
         }
 
-        $schema = array_merge($schema, [
-            '$schema' => 'http://json-schema.org/draft-04/schema#',
-            'title' => 'odoo-credential',
-            'type' => 'object',
-            'description' => __(
-                'Odoo database RPC login credentials',
-                'forms-bridge'
-            ),
-        ]);
+        $schema['description'] = __(
+            'Odoo database RPC login credentials',
+            'forms-bridge'
+        );
 
         $schema['properties']['database'] = [
             'type' => 'string',

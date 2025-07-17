@@ -50,7 +50,9 @@ class Nextcloud_Addon extends Addon
         $backend = FBAPI::get_backend($backend);
         $user = $backend->authentication['client_id'] ?? '';
 
-        $response = $backend->get('/remote.php/dav/files/' . urlencode($user));
+        $response = $backend->get(
+            '/remote.php/dav/files/' . rawurlencode($user)
+        );
         return !is_wp_error($response);
     }
 

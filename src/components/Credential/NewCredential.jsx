@@ -161,26 +161,6 @@ export default function NewCredential({ add, schema }) {
           </Button>
         </div>
       </div>
-      <div
-        style={
-          isResponsive
-            ? {
-                paddingTop: "2rem",
-                borderTop: "1px solid",
-                display: "flex",
-                flexDirection: "column",
-                gap: "1rem",
-              }
-            : {
-                paddingLeft: "2rem",
-                borderLeft: "1px solid",
-                display: "flex",
-                flexDirection: "column",
-                flex: 1,
-                gap: "1rem",
-              }
-        }
-      ></div>
     </div>
   );
 }

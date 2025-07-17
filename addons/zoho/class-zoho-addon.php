@@ -46,37 +46,11 @@ class Zoho_Addon extends Addon
 
     public const credential_class = '\FORMS_BRIDGE\Zoho_Credential';
 
-    /**
-     * Credential data sanitization.
-     *
-     * @param array $credential Credential data.
-     * @param array $schema Credential schema.
-     *
-     * @return array
-     */
-    protected static function sanitize_credential($credential, $schema)
+    protected static function defaults()
     {
-        $credential = parent::sanitize_credential($credential, $schema);
-        if (!$credential) {
-            return;
-        }
-
-        if ($credential['type'] === 'Server-based') {
-            $credential['organization_id'] = '';
-            $is_valid =
-                !empty($credential['access_token']) &&
-                !empty($credential['refresh_token']) &&
-                !empty($credential['expires_at']);
-        } else {
-            $credential['refresh_token'] = '';
-            $is_valid =
-                !empty($credential['organization_id']) &&
-                !empty($credential['access_token']) &&
-                !empty($credential['expires_at']);
-        }
-
-        $credential['is_valid'] = $credential['is_valid'] && $is_valid;
-        return $credential;
+        $defaults = parent::defaults();
+        $defaults['credentials'] = [];
+        return $defaults;
     }
 
     /**
@@ -122,6 +96,9 @@ class Zoho_Addon extends Addon
         }
 
         $backend = $bridge->backend;
+        if (!$backend) {
+            return false;
+        }
 
         $parsed = wp_parse_url($backend->base_url);
         $host = $parsed['host'] ?? '';
@@ -141,7 +118,7 @@ class Zoho_Addon extends Addon
             return false;
         }
 
-        $access_token = $credential->get_access_token($backend);
+        $access_token = $credential->get_access_token();
         return !!$access_token;
     }
 

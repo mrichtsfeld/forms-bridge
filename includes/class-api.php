@@ -7,6 +7,7 @@ use FORMS_BRIDGE\Form_Bridge;
 use FORMS_BRIDGE\Form_Bridge_Template;
 use FORMS_BRIDGE\Integration;
 use FORMS_BRIDGE\Job;
+use FORMS_BRIDGE\Oauth_Credential;
 use HTTP_BRIDGE\Http_Backend;
 
 if (!defined('ABSPATH')) {
@@ -526,7 +527,7 @@ class FBAPI
      *
      * @param string $addon Addon name.
      *
-     * @return Credential[]
+     * @return Credential[]|Oauth_Credential[]
      */
     public static function get_addon_credentials($addon)
     {
@@ -539,7 +540,7 @@ class FBAPI
      * @param string $name Credential name.
      * @param string $addon Adddon name.
      *
-     * @return Credential|null
+     * @return Credential|Oauth_Credential|null
      */
     public static function get_credential($name, $addon)
     {
@@ -610,6 +611,7 @@ class FBAPI
             return;
         }
 
-        return Credential::schema($addon::name);
+        $credential_class = $addon::credential_class;
+        return $credential_class::schema($addon::name);
     }
 }
