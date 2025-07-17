@@ -102,7 +102,10 @@ export default function Templates() {
       {isOpen && (
         <Modal
           title={__("Templates", "forms-bridge")}
-          onRequestClose={() => setIsOpen(false)}
+          onRequestClose={() => {
+            setTemplate(null);
+            setIsOpen(false);
+          }}
         >
           {(done && (
             <>

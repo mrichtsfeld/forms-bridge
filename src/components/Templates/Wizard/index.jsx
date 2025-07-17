@@ -15,6 +15,7 @@ const { __ } = wp.i18n;
 export default function TemplateWizard({ integration, onSubmit }) {
   const [tab] = useTab();
 
+  const [loading, setLoading] = useState(false);
   const [data, setData] = useState({});
   const [fetched, setFetched] = useState(false);
   const [fieldOptions, setFieldOptions] = useState([]);
@@ -119,18 +120,17 @@ export default function TemplateWizard({ integration, onSubmit }) {
   });
 
   useEffect(() => {
-    const fetched = !!wired;
-    setFetched(fetched);
-
-    if (!fetched) {
+    if (!wired && fetched) {
+      setFetched(false);
       setFieldOptions([]);
     }
   }, [wired]);
 
   useEffect(() => {
-    if (group !== "backend" || !wired || !authorized) return;
+    if (group !== "backend" || !wired || !authorized || fetched || loading)
+      return;
     fetchOptions(backend, data.credential);
-  }, [group, wired, authorized, backend, data.credential]);
+  }, [loading, group, wired, authorized, fetched, backend, data.credential]);
 
   const submit = useCallback(() => {
     setConfig({
@@ -199,6 +199,8 @@ export default function TemplateWizard({ integration, onSubmit }) {
 
   const fetchOptions = useCallback(
     (backend, credential = {}) => {
+      setLoading(true);
+
       apiFetch({
         path: `forms-bridge/v1/${tab}/templates/${template}/options`,
         method: "POST",
@@ -212,7 +214,8 @@ export default function TemplateWizard({ integration, onSubmit }) {
         .catch(() => {
           setFetched(false);
           setFetchError(true);
-        });
+        })
+        .finally(() => setLoading(false));
     },
     [tab, template]
   );

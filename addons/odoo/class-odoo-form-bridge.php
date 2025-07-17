@@ -92,21 +92,22 @@ class Odoo_Form_Bridge extends Form_Bridge
         }
 
         if (isset($res['data']['error'])) {
-            return new WP_Error(
-                $res['data']['error']['code'],
+            $error = new WP_Error(
+                'response_code_' . $res['data']['error']['code'],
                 $res['data']['error']['message'],
                 $res['data']['error']['data']
             );
+
+            $error->add_data(['response' => $res]);
         }
 
         $data = $res['data'];
 
         if (empty($data['result'])) {
-            return new WP_Error(
-                'rpc_api_error',
-                'An unkown error has ocurred with the RPC API',
-                ['response' => $res]
-            );
+            $error = new WP_Error('not_found');
+
+            $error->add_data(['response' => $res]);
+            return $error;
         }
 
         return $data['result'];

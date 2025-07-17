@@ -19,7 +19,7 @@ const DEFAULTS = {
   enabled: true,
   workflow: [],
   is_valid: true,
-  mutations: [],
+  mutations: [[]],
   custom_fields: [],
 };
 
