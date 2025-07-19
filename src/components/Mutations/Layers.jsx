@@ -30,6 +30,10 @@ const castOptions = [
     label: __("Boolean", "forms-bridge"),
   },
   {
+    value: "not",
+    label: __("Negation", "forms-bridge"),
+  },
+  {
     value: "implode",
     label: __("Implode mutations", "forms-bridge"),
     disabled: true,
@@ -57,6 +61,18 @@ const castOptions = [
   {
     value: "count",
     label: __("Count", "forms-bridge"),
+  },
+  {
+    value: "and",
+    label: __("AND", "forms-bridge"),
+  },
+  {
+    value: "or",
+    label: __("OR", "forms-bridge"),
+  },
+  {
+    value: "xor",
+    label: __("XOR", "forms-bridge"),
   },
   {
     value: "structure",

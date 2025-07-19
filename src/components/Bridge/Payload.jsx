@@ -6,6 +6,7 @@ import {
 import StagePayload from "../Workflow/Payload";
 
 const { useEffect, useMemo } = wp.element;
+const { Spinner } = wp.components;
 const { __ } = wp.i18n;
 
 export default function BridgePayload({ height, focus }) {
@@ -56,7 +57,18 @@ export default function BridgePayload({ height, focus }) {
           <div style={{ overflowY: "auto" }}>
             <StagePayload fields={fields} mappers={mappers} />
           </div>
-        )) || <p>{__("Loading", "forms-bridge")}...</p>}
+        )) || (
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              height: "100%",
+            }}
+          >
+            <Spinner />
+          </div>
+        )}
       </div>
     </div>
   );

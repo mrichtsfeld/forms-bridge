@@ -1,4 +1,5 @@
 // source
+import { useJobs } from "../../hooks/useAddon";
 import useTab from "../../hooks/useTab";
 import { useJob } from "../../providers/Jobs";
 import { useJobConfig } from "../../providers/Jobs";
@@ -6,9 +7,9 @@ import { useFetchSettings } from "../../providers/Settings";
 import JobCodeEditor from "./CodeEditor";
 import JobInterfaceEditor from "./Interface";
 import JobMeta from "./Meta";
-import { jobTemplate, pruneEmptyFileds } from "./lib";
+import { jobTemplate, pruneEmptyFileds, sanitizeTitle } from "./lib";
 
-const { useState, useEffect, useRef } = wp.element;
+const { useState, useEffect, useMemo, useRef, useCallback } = wp.element;
 const { TabPanel, Button, Spinner } = wp.components;
 const { __ } = wp.i18n;
 
@@ -23,6 +24,9 @@ export default function JobEditor({ close }) {
   const addon = useTab();
 
   const fetchSettings = useFetchSettings();
+
+  const [jobs] = useJobs();
+  const names = useMemo(() => new Set(jobs.map((job) => job.name)), [jobs]);
 
   const [job] = useJob();
   const [config, setConfig] = useJobConfig();
@@ -41,22 +45,29 @@ export default function JobEditor({ close }) {
     }
   }, [job, config]);
 
-  const save = useRef((config) => {
-    config.name = config.name.trim();
+  const save = useCallback(
+    (config) => {
+      config.name = config.name.trim();
 
-    config.input = pruneEmptyFileds(config.input);
-    config.output = pruneEmptyFileds(config.output);
+      if (!config.name) {
+        config.name = sanitizeTitle(config.title);
+      }
 
-    setIsLoading(true);
-    setConfig(config)
-      .then(() =>
-        nameRef.current !== config.name ? fetchSettings() : Promise.resolve()
-      )
-      .finally(() => {
-        setIsLoading(false);
-        close();
-      });
-  }).current;
+      config.input = pruneEmptyFileds(config.input);
+      config.output = pruneEmptyFileds(config.output);
+
+      setIsLoading(true);
+      setConfig(config)
+        .then(() =>
+          nameRef.current !== config.name ? fetchSettings() : Promise.resolve()
+        )
+        .finally(() => {
+          setIsLoading(false);
+          close();
+        });
+    },
+    [names]
+  );
 
   if (!state?.id) return;
 
@@ -111,7 +122,7 @@ export default function JobEditor({ close }) {
       >
         <Button
           variant="primary"
-          disabled={!state.name}
+          disabled={!state.title}
           onClick={() => save(state)}
           __next40pxDefaultSize
         >
@@ -150,6 +161,7 @@ function JobEditorContent({ tab, job, update }) {
         <JobInterfaceEditor
           fields={job.output}
           setFields={(output) => update({ output })}
+          fromFields={job.input}
         />
       );
     case "snippet":

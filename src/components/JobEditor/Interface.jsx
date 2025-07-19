@@ -1,9 +1,11 @@
+import { prependEmptyOption } from "../../lib/utils";
 import FieldWrapper from "../FieldWrapper";
+import MultiSelectControl from "../MultiSelectControl";
 import Toggle from "../Toggle";
 import { mutateSchema } from "./lib";
 
 const { useEffect, useRef } = wp.element;
-const { TextControl, SelectControl, Button } = wp.components;
+const { TextControl, SelectControl, Button, Tooltip } = wp.components;
 const { __ } = wp.i18n;
 
 const TYPE_OPTIONS = [
@@ -36,7 +38,7 @@ const TYPE_OPTIONS = [
 const DEFAULT_SCHEMA = { type: "string" };
 const DEFAULT_FIELD = { name: "", schema: DEFAULT_SCHEMA };
 
-export default function JobInterfaceEditor({ fields, setFields }) {
+export default function JobInterfaceEditor({ fields, setFields, fromFields }) {
   const update = (index, field) => {
     const newFields = fields
       .slice(0, index)
@@ -72,6 +74,7 @@ export default function JobInterfaceEditor({ fields, setFields }) {
   return (
     <>
       <TableHeaders
+        mode={(Array.isArray(fromFields) && "output") || "input"}
         style={{ marginLeft: "calc(80px + 1rem)", marginBottom: "-1rem" }}
       />
       <div style={{ display: "flex", flexDirection: "column" }}>
@@ -82,6 +85,7 @@ export default function JobInterfaceEditor({ fields, setFields }) {
             update={(field) => update(i, field)}
             remove={() => remove(i)}
             add={() => add(i + 1, { ...DEFAULT_FIELD })}
+            from={fromFields}
           />
         ))}
       </div>
@@ -89,7 +93,7 @@ export default function JobInterfaceEditor({ fields, setFields }) {
   );
 }
 
-function TableHeaders({ style = {} }) {
+function TableHeaders({ style = {}, mode = "input" }) {
   return (
     <div
       style={{
@@ -106,13 +110,61 @@ function TableHeaders({ style = {} }) {
         <b>{__("Type", "forms-bridge")}</b>
       </div>
       <div style={{ width: "clamp(200px, 15vw, 300px)", padding: "0 5px" }}>
-        <b>{__("Required", "forms-bridge")}</b>
+        {(mode === "input" && (
+          <b>
+            {__("Required", "forms-bridge")}{" "}
+            <Tooltip
+              text={__(
+                "If it does not exists on the payload, the job will be skipped",
+                "forms-bridge"
+              )}
+            >
+              <span
+                style={{
+                  background: "gray",
+                  color: "white",
+                  borderRadius: "100%",
+                  padding: "0 0.35em",
+                  fontWeight: "bold",
+                  fontSize: "0.9em",
+                  cursor: "pointer",
+                }}
+              >
+                ?
+              </span>
+            </Tooltip>
+          </b>
+        )) || (
+          <b>
+            {__("Requires", "forms-bridge")}{" "}
+            <Tooltip
+              text={__(
+                "Required payload fields to include it on the job output",
+                "forms-bridge"
+              )}
+            >
+              <span
+                style={{
+                  background: "gray",
+                  color: "white",
+                  borderRadius: "100%",
+                  padding: "0 0.35em",
+                  fontWeight: "bold",
+                  fontSize: "0.9em",
+                  cursor: "pointer",
+                }}
+              >
+                ?
+              </span>
+            </Tooltip>
+          </b>
+        )}
       </div>
     </div>
   );
 }
 
-function InterfaceFieldEditor({ field, update, remove, add }) {
+function InterfaceFieldEditor({ field, update, remove, add, from }) {
   return (
     <>
       <div
@@ -170,19 +222,34 @@ function InterfaceFieldEditor({ field, update, remove, add }) {
             __next40pxDefaultSize
           />
         </FieldWrapper>
-        <div
-          style={{
-            paddingLeft: "0.5rem",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-          }}
-        >
-          <Toggle
-            checked={field.required}
-            onChange={() => update({ ...field, required: !field.required })}
-          />
-        </div>
+        {(Array.isArray(from) && (
+          <>
+            <FieldWrapper>
+              <MultiSelectControl
+                value={field.requires || []}
+                onChange={(requires) => update({ ...field, requires })}
+                options={from.map(({ name }) => ({ value: name, label: name }))}
+              />
+            </FieldWrapper>
+            <FieldWrapper>
+              <SelectControl value={field.requires} />
+            </FieldWrapper>
+          </>
+        )) || (
+          <div
+            style={{
+              paddingLeft: "0.5rem",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+          >
+            <Toggle
+              checked={field.required}
+              onChange={() => update({ ...field, required: !field.required })}
+            />
+          </div>
+        )}
       </div>
       {(field.schema.type === "object" && (
         <ObjectSchemaEditor

@@ -104,6 +104,26 @@ trait Form_Bridge_Mutations
                 return (float) $value;
             case 'boolean':
                 return (bool) $value;
+            case 'not':
+                return !$value;
+            case 'and':
+                return array_reduce(
+                    (array) $value,
+                    fn($bool, $val) => $bool && $val,
+                    !empty($val)
+                );
+            case 'or':
+                return array_reduce(
+                    (array) $value,
+                    fn($bool, $val) => $bool || $val,
+                    false
+                );
+            case 'xor':
+                return array_reduce(
+                    (array) $value,
+                    fn($bool, $val) => $bool xor $val,
+                    false
+                );
             case 'json':
                 if (!is_array($value)) {
                     return '';

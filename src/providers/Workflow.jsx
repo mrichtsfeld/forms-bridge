@@ -9,6 +9,8 @@ import {
   payloadToSchema,
 } from "../lib/payload";
 import { useForms } from "./Forms";
+import { useJobConfig } from "./Jobs";
+import diff from "../lib/diff";
 
 const apiFetch = wp.apiFetch;
 const { createContext, useContext, useState, useEffect, useMemo, useCallback } =
@@ -26,11 +28,10 @@ const WorkflowContext = createContext({
 function applyJob(payload, job) {
   const exit = new Set();
   const mutated = new Set();
-  const touched = new Set();
   const enter = new Set();
   const missing = new Set();
 
-  if (!job) return [payload, { exit, mutated, touched, enter, missing }];
+  if (!job) return [payload, { exit, mutated, enter, missing }];
 
   job.input
     .filter((field) => field.required)
@@ -51,28 +52,34 @@ function applyJob(payload, job) {
   });
 
   if (Array.from(missing).length) {
-    return [payload, { missing, exit, enter, mutated, touched }];
+    return [payload, { missing, exit, enter, mutated }];
   }
 
   job.output.forEach((output) => {
+    const requires = Array.isArray(output.requires)
+      ? output.requires.filter(
+          (name) => !Object.prototype.hasOwnProperty.call(payload, name)
+        )
+      : [];
+
+    if (requires.length) {
+      return;
+    }
+
     const input = job.input.find((field) => field.name === output.name);
     const exists = Object.prototype.hasOwnProperty.call(payload, output.name);
 
-    let addToPayload;
+    let addToPayload = false;
     if (input) {
-      if (!exists) {
-        if (!output.forward) {
-          addToPayload = true;
-          enter.add(output.name);
-
-          if (!checkType(input.schema, output.schema)) {
-            touched.add(output.name);
-            addToPayload = true;
-          }
-        }
-      } else if (output.touch) {
+      const typeCheck = checkType(input.schema, output.schema);
+      if (!typeCheck) {
+        mutated.add(output.name);
         addToPayload = true;
-        touched.add(output.name);
+      }
+
+      if (!exists) {
+        enter.add(output.name);
+        addToPayload = true;
       }
     } else {
       addToPayload = true;
@@ -94,7 +101,7 @@ function applyJob(payload, job) {
     }
   });
 
-  return [payload, { missing, enter, exit, mutated, touched }];
+  return [payload, { missing, enter, exit, mutated }];
 }
 
 export default function WorkflowProvider({
@@ -107,6 +114,8 @@ export default function WorkflowProvider({
 }) {
   const [addon] = useTab();
   const [, setError] = useError();
+
+  const [jobOnEditor] = useJobConfig();
 
   const [isLoading, setIsLoading] = useState(false);
   const [step, setStep] = useState(0);
@@ -262,6 +271,32 @@ export default function WorkflowProvider({
 
     return [fields, diff];
   }, [step, workflowJobs, formFields]);
+
+  useEffect(() => {
+    if (!jobOnEditor?.name) return;
+
+    const index = workflow.findIndex((name) => jobOnEditor.name === name);
+    if (index === -1) {
+      return;
+    }
+
+    const workflowJob = { ...workflowJobs[index + 1] };
+    delete workflowJob.mappers;
+
+    const changed = diff(jobOnEditor, workflowJob);
+    if (!changed) {
+      return;
+    }
+
+    fetchJobs([jobOnEditor.name]).then((newJobs) => {
+      newJobs = jobs
+        .slice(0, index)
+        .concat(newJobs)
+        .concat(jobs.slice(index + 1, jobs.lenght));
+
+      setJobs(newJobs);
+    });
+  }, [jobOnEditor, jobs, workflowJobs]);
 
   return (
     <WorkflowContext.Provider

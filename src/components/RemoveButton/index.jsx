@@ -45,7 +45,12 @@ export default function RemoveButton({
       disabled={disabled}
       __next40pxDefaultSize
     >
-      {(icon && <BinIcon width="12" height="20" />) || children}
+      {(icon && (
+        <div style={{ opacity: disabled ? 0.5 : 1 }}>
+          <BinIcon width="12" height="20" />
+        </div>
+      )) ||
+        children}
     </Button>
   );
 }

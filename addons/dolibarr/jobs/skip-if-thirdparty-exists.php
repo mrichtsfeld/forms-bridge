@@ -55,16 +55,17 @@ return [
         [
             'name' => 'name',
             'schema' => ['type' => 'string'],
+            'requires' => ['name'],
         ],
         [
             'name' => 'email',
             'schema' => ['type' => 'string'],
-            'forward' => true,
+            'requires' => ['email'],
         ],
         [
             'name' => 'idprof1',
             'schema' => ['type' => 'string'],
-            'forward' => true,
+            'requires' => ['idprof1'],
         ],
     ],
 ];

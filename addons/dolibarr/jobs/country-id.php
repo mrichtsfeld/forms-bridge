@@ -85,7 +85,6 @@ return [
         [
             'name' => 'country_id',
             'schema' => ['type' => 'integer'],
-            'touch' => true,
         ],
     ],
 ];

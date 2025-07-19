@@ -44,7 +44,7 @@ export function mutateSchema(type, fromSchema) {
     } else {
       fromSchema = fromSchema.items;
     }
-  } else if (fromSchema.type === "object") {
+  } else if (fromSchema.type === "object" && type !== "array") {
     const props = Object.keys(fromSchema.properties);
     if (props.length === 1) {
       fromSchema = fromSchema.properties[props[0]];
@@ -58,7 +58,7 @@ export function mutateSchema(type, fromSchema) {
     newSchema.items = fromSchema;
     newSchema.additionalItems = true;
   } else if (type === "object") {
-    newSchema.properties = { "": { type: fromSchema.type } };
+    newSchema.properties = { "": fromSchema };
     newSchema.required = [];
     newSchema.additionalProperties = false;
   }
@@ -71,7 +71,7 @@ export function jobTemplate(addon) {
   return {
     addon,
     id: `${addon}-new-job`,
-    name: "new-job",
+    name: "",
     title: __("New job", "forms-bridge"),
     description: "",
     input: [],
@@ -79,4 +79,13 @@ export function jobTemplate(addon) {
     snippet: "",
     method: `forms_bridge_${addon}_new_job`,
   };
+}
+
+export function sanitizeTitle(title) {
+  return title
+    .toLowerCase()
+    .replace(/\s+/g, "-")
+    .replace(/[^[0-9a-z-_]/g, "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
 }

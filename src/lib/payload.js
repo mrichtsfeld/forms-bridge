@@ -177,25 +177,24 @@ export function castValue(value, mapper) {
     case "json":
     case "concat":
     case "csv":
-      value = "string";
-      break;
+      return "string";
     case "count":
-      value = "integer";
-      break;
+      return "integer";
     case "sum":
-      value = "number";
-      break;
+      return "number";
     case "copy":
     case "inherit":
       value = JSON.parse(JSON.stringify(value));
       if (isFrozen) Object.freeze(value);
-      break;
+      return value;
+    case "not":
+    case "and":
+    case "or":
+    case "xor":
+      return "boolean";
     default:
-      value = mapper.cast;
-      break;
+      return mapper.cast;
   }
-
-  return value;
 }
 
 function castExpandedValue(values, mapper) {

@@ -21,6 +21,7 @@ export default function Workflow({
 
   const [, setJob] = useJob();
   const [edit, setEdit] = useState(null);
+  const [stageMode, setStageMode] = useState("payload");
 
   const [, setWorkflowStep, workflowLength] = useWorkflowStepper();
   const [fields] = useWorkflowStage();
@@ -31,10 +32,13 @@ export default function Workflow({
   }).current;
 
   const onClose = useCallback(() => {
-    setWorkflowStep(workflowLength - 1);
-    setEdit(false);
-    setJob(null);
-    setOpen(false);
+    setStageMode("payload");
+    setTimeout(() => {
+      setWorkflowStep(workflowLength - 1);
+      setEdit(false);
+      setJob(null);
+      setOpen(false);
+    });
   }, [workflowLength]);
 
   const onEditClose = useRef(() => {
@@ -120,6 +124,8 @@ export default function Workflow({
                   }}
                 >
                   <WorkflowStage
+                    mode={stageMode}
+                    setMode={setStageMode}
                     setEdit={(job) => {
                       setJob(job);
                       setEdit(true);

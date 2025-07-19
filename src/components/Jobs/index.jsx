@@ -8,9 +8,11 @@ import JobModal from "./Modal";
 import JobSnippet from "./Snippet";
 import FieldWrapper from "../FieldWrapper";
 import EditIcon from "../icons/Edit";
+import CopyIcon from "../icons/Copy";
 import { useError } from "../../providers/Error";
+import { useFetchSettings } from "../../providers/Settings";
 
-const { useState, useEffect, useRef, useMemo } = wp.element;
+const { useState, useEffect, useRef, useMemo, useCallback } = wp.element;
 const { PanelBody, SelectControl, Button, TabPanel, Spinner } = wp.components;
 const { __ } = wp.i18n;
 
@@ -32,9 +34,11 @@ const TABS = [
 export default function Jobs() {
   const [error] = useError();
 
+  const fetchSettings = useFetchSettings();
+
   const [jobs] = useJobs();
   const [job, setJob] = useJob();
-  const [config, , reset] = useJobConfig();
+  const [config, setConfig, reset] = useJobConfig();
 
   const [edit, setEdit] = useState(false);
 
@@ -54,6 +58,20 @@ export default function Jobs() {
       setEdit(false);
     }
   }, [error]);
+
+  const names = useMemo(() => new Set(jobs.map((job) => job.name)), [jobs]);
+
+  const copy = useCallback(() => {
+    const clone = { ...config };
+
+    clone.title += " (copy)";
+
+    while (names.has(clone.name)) {
+      clone.name += "-copy";
+    }
+
+    setConfig(clone).then(() => fetchSettings());
+  }, [config, names]);
 
   const loading = job && !config;
 
@@ -93,6 +111,7 @@ export default function Jobs() {
           config={config}
           setEdit={setEdit}
           reset={reset}
+          copy={copy}
         />
       </PanelBody>
       <JobModal show={edit} onClose={() => setEdit(false)} />
@@ -100,7 +119,7 @@ export default function Jobs() {
   );
 }
 
-function JobsContent({ loading, config, setEdit, reset }) {
+function JobsContent({ loading, config, setEdit, reset, copy }) {
   const tabRef = useRef("input");
   const setTab = useRef((tab) =>
     setTimeout(() => (tabRef.current = tab))
@@ -108,9 +127,8 @@ function JobsContent({ loading, config, setEdit, reset }) {
 
   const contentRef = useRef();
   const fitToViewbox = useRef(() => {
-    if (!contentRef.current) return;
-
     setTimeout(() => {
+      if (!contentRef.current) return;
       if (window.scrollY < contentRef.current.offsetTop) {
         window.scrollTo({
           left: 0,
@@ -140,8 +158,8 @@ function JobsContent({ loading, config, setEdit, reset }) {
         <Spinner />
       </div>
     );
-  if (!config) return;
 
+  if (!config) return;
   return (
     <div
       style={{
@@ -180,7 +198,25 @@ function JobsContent({ loading, config, setEdit, reset }) {
               color="var(--wp-components-color-accent,var(--wp-admin-theme-color,#3858e9))"
             />
           </Button>
+          <Button
+            variant="primary"
+            style={{
+              height: "40px",
+              width: "40px",
+              justifyContent: "center",
+              fontSize: "1.5em",
+              border: "1px solid",
+              padding: "6px 6px",
+            }}
+            onClick={copy}
+            label={__("Duplaicate", "forms-bridge")}
+            showTooltip
+            __next40pxDefaultSize
+          >
+            <CopyIcon width="25" height="25" color="white" />
+          </Button>
           <RemoveButton
+            disabled={!config.post_id}
             label={__("Reset", "forms-bridge")}
             onClick={() => reset(config.name)}
             icon
@@ -213,7 +249,14 @@ function TabContent({ tab, config }) {
     case "input":
       return <JobInterface fields={config.input} />;
     case "output":
-      return <JobInterface fields={config.output} />;
+      return (
+        <JobInterface
+          fields={config.output.map((field) => ({
+            ...field,
+            required: !field.requires?.length,
+          }))}
+        />
+      );
     case "snippet":
       return <JobSnippet id={config.id} snippet={config.snippet} />;
   }

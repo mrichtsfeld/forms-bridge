@@ -184,8 +184,10 @@ class Job
                                 'type' => 'string',
                                 'minLength' => 1,
                             ],
-                            'touch' => ['type' => 'boolean'],
-                            'forward' => ['type' => 'boolean'],
+                            'requires' => [
+                                'type' => 'array',
+                                'items' => ['type' => 'string'],
+                            ],
                             'schema' => [
                                 'type' => 'object',
                                 'properties' => [
@@ -234,6 +236,7 @@ class Job
                     ),
                     'type' => 'string',
                 ],
+                'post_id' => ['type' => 'integer'],
             ],
             'additionalProperties' => false,
             'required' => [
@@ -363,6 +366,7 @@ class Job
             'output' =>
                 (array) (get_post_meta($post->ID, '_job-output', true) ?: []),
             'snippet' => $post->post_content,
+            'post_id' => $post->ID,
         ];
     }
 

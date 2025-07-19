@@ -64,11 +64,11 @@ return [
         [
             'name' => 'vat',
             'schema' => ['type' => 'string'],
-            'touch' => true,
         ],
         [
             'name' => 'country_code',
             'schema' => ['type' => 'string'],
+            'requires' => ['country_code'],
         ],
     ],
 ];

@@ -58,22 +58,22 @@ return [
         [
             'name' => 'email',
             'schema' => ['type' => 'string'],
-            'forward' => true,
+            'requires' => ['email'],
         ],
         [
             'name' => 'firstname',
             'schema' => ['type' => 'string'],
-            'forward' => true,
+            'requires' => ['firstname'],
         ],
         [
             'name' => 'lastname',
             'schema' => ['type' => 'string'],
-            'forward' => true,
+            'requires' => ['lastname'],
         ],
         [
             'name' => 'socid',
             'schema' => ['type' => 'string'],
-            'forward' => true,
+            'requires' => ['socid'],
         ],
     ],
 ];

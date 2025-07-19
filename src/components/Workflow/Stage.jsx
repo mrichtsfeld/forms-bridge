@@ -8,11 +8,16 @@ import WorkflowJobInterface from "./JobInterface";
 import JobSnippet from "../Jobs/Snippet";
 import StagePayload from "./Payload";
 
-const { ToggleControl, Button } = wp.components;
+const { ToggleControl, Button, Spinner } = wp.components;
 const { useState, useMemo, useEffect, useCallback, useRef } = wp.element;
 const { __ } = wp.i18n;
 
-export default function WorkflowStage({ setEdit, setMappers: setJobMappers }) {
+export default function WorkflowStage({
+  mode,
+  setMode,
+  setEdit,
+  setMappers: setJobMappers,
+}) {
   const [step, _, outputStep] = useWorkflowStepper();
   const workflowJob = useWorkflowJob();
   const [fields = [], diff] = useWorkflowStage();
@@ -24,28 +29,23 @@ export default function WorkflowStage({ setEdit, setMappers: setJobMappers }) {
     return Array.from(diff.missing).length > 0;
   }, [diff]);
 
-  const modeRef = useRef("payload");
-  const [mode, setMode] = useState("payload");
+  const stepRef = useRef(step);
+
   useEffect(() => {
-    if (modeRef.current === "mappers") {
-      setJobMappers(
-        step,
-        mappers.filter(({ from, to }) => from && to)
-      );
-    }
+    if (stepRef.current !== step) {
+      if (mode !== "payload") {
+        setMode("payload");
+      }
 
-    if (mode !== "payload") {
-      setMode("payload");
-    }
-
-    if (showMutations) {
-      setShowMutations(false);
+      if (showMutations) {
+        setShowMutations(false);
+      }
     }
 
     return () => {
-      modeRef.current = mode;
+      stepRef.current = step;
     };
-  }, [step]);
+  }, [step, mode]);
 
   const jobMappers = useMemo(() => {
     return workflowJob?.mappers || [];
@@ -99,20 +99,6 @@ export default function WorkflowStage({ setEdit, setMappers: setJobMappers }) {
     });
   }, [workflowJob]);
 
-  // const jobOutpus = useMemo(() => {
-  //   if (!Array.isArray(workflowJob?.output)) return [];
-
-  //   return workflowJob.output.map(({ name, schema, touch, forward }) => {
-  //     return {
-  //       name,
-  //       schema,
-  //       missing: false,
-  //       mutated: touch,
-  //       optional: forward,
-  //     };
-  //   });
-  // }, [workflowJob]);
-
   const jobTitle = useMemo(() => {
     if (!workflowJob) return "";
 
@@ -123,8 +109,30 @@ export default function WorkflowStage({ setEdit, setMappers: setJobMappers }) {
     return workflowJob.title;
   }, [skipped, workflowJob]);
 
+  const modeRef = useRef(mode);
+
+  if (mode !== modeRef.current && modeRef.current === "mappers") {
+    setJobMappers(
+      step,
+      mappers.filter(({ from, to }) => to && from)
+    );
+  }
+
+  modeRef.current = mode;
+
   if (!workflowJob && step > 0 && step < outputStep) {
-    return <p>{__("Loading", "forms-bridge")}</p>;
+    return (
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "100%",
+        }}
+      >
+        <Spinner />
+      </div>
+    );
   }
 
   return (
@@ -144,7 +152,7 @@ export default function WorkflowStage({ setEdit, setMappers: setJobMappers }) {
               <ToggleControl
                 __nextHasNoMarginBottom
                 checked={showMutations && !skipped && mode === "payload"}
-                label={__("After mutations", "forms-bridge")}
+                label={__("Show mutations", "forms-bridge")}
                 onChange={() => setShowMutations(!showMutations)}
                 disabled={
                   skipped || mode === "mappers" || validMappers.length === 0
@@ -206,7 +214,7 @@ export default function WorkflowStage({ setEdit, setMappers: setJobMappers }) {
             <StagePayload
               fields={fields}
               mappers={mappers}
-              showMutations={showMutations}
+              showMutations={mode !== "mappers" && showMutations}
               showDiff={showDiff}
               diff={diff}
             />

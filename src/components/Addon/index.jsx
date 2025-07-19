@@ -7,14 +7,11 @@ import Bridges from "../Bridges";
 import Credentials from "../Credentials";
 import Jobs from "../Jobs";
 import useTab from "../../hooks/useTab";
-import { useLoading } from "../../providers/Loading";
 
 const { PanelRow, __experimentalSpacer: Spacer } = wp.components;
 const { useEffect, useMemo } = wp.element;
 
 export default function Addon() {
-  const [loading] = useLoading();
-
   const [name] = useTab();
   const [{ description, credentials }] = useAddon();
   const [addons] = useAddons();

@@ -11,7 +11,7 @@ function useStyle(state, diff, simple) {
       ? "#4ab866"
       : state.exit
         ? "#cc1818"
-        : state.mutated || state.touched
+        : state.mutated
           ? "#f0b849"
           : "inherit",
   };
@@ -23,11 +23,10 @@ export default function PayloadField({
   showDiff,
   enter,
   mutated,
-  touched,
   exit,
   simple = false,
 }) {
-  const style = useStyle({ enter, mutated, touched, exit }, showDiff, simple);
+  const style = useStyle({ enter, mutated, exit }, showDiff, simple);
 
   return (
     <div style={style}>
@@ -52,22 +51,13 @@ export default function PayloadField({
         enter={enter}
         exit={exit}
         mutated={mutated}
-        touched={touched}
         simple={simple}
       />
     </div>
   );
 }
 
-function FieldSchema({
-  data,
-  showDiff,
-  enter,
-  exit,
-  mutated,
-  touched,
-  simple,
-}) {
+function FieldSchema({ data, showDiff, enter, exit, mutated, simple }) {
   return useMemo(() => {
     switch (data.type) {
       case "object":
@@ -78,7 +68,6 @@ function FieldSchema({
             enter={enter}
             exit={exit}
             mutated={mutated}
-            touched={touched}
             simple={simple}
           />
         );
@@ -90,7 +79,6 @@ function FieldSchema({
             enter={enter}
             exit={exit}
             mutated={mutated}
-            touched={touched}
             simple={simple}
           />
         );
@@ -106,7 +94,6 @@ function ObjectProperties({
   enter,
   exit,
   mutated,
-  touched,
   arrayItem = 0,
   simple = false,
 }) {
@@ -140,7 +127,6 @@ function ObjectProperties({
               showDiff={showDiff}
               enter={enter}
               mutated={mutated}
-              touched={touched}
               exit={exit}
             />
           </li>
@@ -156,7 +142,6 @@ function ArrayItems({
   enter,
   exit,
   mutated,
-  touched,
   simple,
   arrayItem = 0,
 }) {
@@ -177,7 +162,6 @@ function ArrayItems({
         enter={enter}
         exit={exit}
         mutated={mutated}
-        touched={touched}
         simple={simple}
       />
     );
@@ -191,7 +175,6 @@ function ArrayItems({
         enter={enter}
         exit={exit}
         mutated={mutated}
-        touched={touched}
         arrayItem={arrayItem + 1}
       />
     );
@@ -205,7 +188,6 @@ function ArrayItems({
         enter={enter}
         exit={exit}
         mutated={mutated}
-        touched={touched}
         arrayItem={arrayItem + 1}
         simple={simple}
       />

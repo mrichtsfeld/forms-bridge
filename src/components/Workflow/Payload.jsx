@@ -1,6 +1,8 @@
 import JsonFinger from "../../lib/JsonFinger";
 import {
   applyMappers,
+  castValue,
+  checkType,
   fieldsToPayload,
   payloadToFields,
 } from "../../lib/payload";
@@ -24,42 +26,67 @@ export default function StagePayload({
       Object.entries(diff).map(([key, set]) => [key, new Set(set)])
     );
 
+    const nameMutations = {};
+
     mappers
-      .map((m) => m)
+      .map((mapper) => {
+        const [from] = JsonFinger.parse(mapper.from);
+        const [to] = JsonFinger.parse(mapper.to);
+
+        if (from !== to) {
+          nameMutations[to] = from;
+        }
+
+        return mapper;
+      })
       .reverse()
       .forEach((mapper) => {
         const [from] = JsonFinger.parse(mapper.from);
         const [to] = JsonFinger.parse(mapper.to);
 
-        if (payloadDiff.enter.has(from)) {
-          payloadDiff.enter.delete(from);
+        if (to !== from) {
           payloadDiff.enter.add(to);
-        } else {
-          if (payloadDiff.mutated.has(from)) {
+          payloadDiff.exit.add(from);
+
+          if (payloadDiff.enter.has(from)) {
+            payloadDiff.enter.delete(from);
+          } else if (payloadDiff.mutated.has(from)) {
             payloadDiff.mutated.delete(from);
             payloadDiff.mutated.add(to);
           }
+        } else {
+          let name = from;
+          while (nameMutations[name] && nameMutations[name] !== name) {
+            name = nameMutations[name];
+          }
 
-          if (payloadDiff.touched.has(from)) {
-            payloadDiff.touched.delete(from);
-            payloadDiff.touched.add(to);
+          const field = fields.find((field) => field.name === name);
+          if (!field) {
+            return;
+          }
+
+          if (!checkType(field.type, castValue(field.type, mapper))) {
+            payloadDiff.mutated.add(to);
           }
         }
       });
 
     return payloadDiff;
-  }, [diff, showMutations, mappers]);
+  }, [fields, diff, showMutations, mappers]);
 
   const payloadFields = useMemo(() => {
-    const output = payloadToFields(
-      applyMappers(fieldsToPayload(fields), mappers)
-    );
+    let output;
+
+    if (!showMutations) {
+      output = fields.map((field) => ({ ...field }));
+    } else {
+      output = payloadToFields(applyMappers(fieldsToPayload(fields), mappers));
+    }
 
     if (showDiff) {
       output.forEach((field) => {
         field.enter = payloadDiff.enter.has(field.name);
         field.mutated = payloadDiff.mutated.has(field.name);
-        field.touched = payloadDiff.touched.has(field.name);
         field.exit = false;
       });
 
@@ -69,7 +96,6 @@ export default function StagePayload({
           schema: { type: "null" },
           enter: false,
           mutated: false,
-          touched: false,
           exit: true,
         });
       });

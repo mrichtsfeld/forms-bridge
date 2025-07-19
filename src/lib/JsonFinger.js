@@ -21,7 +21,7 @@ function JsonFinger(data) {
 }
 
 JsonFinger.isConditional = function (pointer) {
-  return pointer.indexOf("?") === 0;
+  return ("" + pointer).indexOf("?") === 0;
 };
 
 JsonFinger.parse = function (pointer) {
