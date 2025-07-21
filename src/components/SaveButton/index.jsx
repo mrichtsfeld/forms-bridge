@@ -1,6 +1,6 @@
 import { useLoading } from "../../providers/Loading";
 import { useError } from "../../providers/Error";
-import useFlushStore from "../../hooks/useFlushStore";
+import { useSettings } from "../../providers/Settings";
 
 const { Button } = wp.components;
 const { __ } = wp.i18n;
@@ -8,13 +8,13 @@ const { __ } = wp.i18n;
 export default function SaveButton() {
   const [loading] = useLoading();
   const [error] = useError();
-  const flushStore = useFlushStore();
+  const [settings, saveSettings] = useSettings();
 
   return (
     <div style={{ textAlign: "right" }}>
       <Button
         variant="primary"
-        onClick={flushStore}
+        onClick={() => saveSettings(settings)}
         style={{
           minWidth: "100px",
           justifyContent: "center",

@@ -76,6 +76,7 @@ export default function Credentials() {
       copy.name += "-copy";
     }
 
+    window.__wpfbInvalidated = true;
     setCredentials(credentials.concat(copy));
   };
 

@@ -48,11 +48,22 @@ class Nextcloud_Addon extends Addon
     public function ping($backend, $credential = null)
     {
         $backend = FBAPI::get_backend($backend);
-        $user = $backend->authentication['client_id'] ?? '';
+        $credential = FBAPI::get_credential($credential, self::name);
 
-        $response = $backend->get(
-            '/remote.php/dav/files/' . rawurlencode($user)
-        );
+        if (!$backend || !$credential) {
+            return false;
+        }
+
+        $response = $backend
+            ->authorized(
+                $credential->schema,
+                $credential->client_id,
+                $credential->client_secret
+            )
+            ->get(
+                '/remote.php/dav/files/' . rawurlencode($credential->client_id)
+            );
+
         return !is_wp_error($response);
     }
 

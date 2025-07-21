@@ -24,14 +24,14 @@ add_filter(
                         'default' => 'Listmonk API',
                     ],
                     [
-                        'ref' => '#backend/authentication',
-                        'name' => 'type',
+                        'ref' => '#credential',
+                        'name' => 'schema',
                         'label' => __('Authentication', 'forms-bridge'),
                         'type' => 'string',
                         'value' => 'Token',
                     ],
                     [
-                        'ref' => '#backend/authentication',
+                        'ref' => '#credential',
                         'name' => 'client_id',
                         'label' => __('API user', 'forms-bridge'),
                         'description' => __(
@@ -42,7 +42,7 @@ add_filter(
                         'required' => true,
                     ],
                     [
-                        'ref' => '#backend/authentication',
+                        'ref' => '#credential',
                         'name' => 'client_secret',
                         'label' => __('API token', 'forms-bridge'),
                         'description' => __(
@@ -84,19 +84,9 @@ add_filter(
                 ],
                 'backend' => [
                     'name' => 'Listmonk',
-                    'headers' => [
-                        [
-                            'name' => 'Content-Type',
-                            'value' => 'application/json',
-                        ],
-                        [
-                            'name' => 'Accept',
-                            'value' => 'application/json',
-                        ],
-                    ],
-                    'authentication' => [
-                        'type' => 'Token',
-                    ],
+                ],
+                'credential' => [
+                    'schema' => 'Token',
                 ],
             ],
             $defaults,
@@ -143,6 +133,29 @@ add_filter(
         }
 
         return $data;
+    },
+    10,
+    2
+);
+
+add_filter(
+    'forms_bridge_credential_schema',
+    function ($schema, $addon) {
+        if ($addon == 'listmonk') {
+            unset($schema['properties']['realm']);
+
+            $schema['properties']['schema']['value'] = 'Token';
+            $schema['properties']['client_id']['name'] = __(
+                'Username',
+                'forms-bridge'
+            );
+            $schema['properties']['client_secret']['name'] = __(
+                'Token',
+                'forms-bridge'
+            );
+        }
+
+        return $schema;
     },
     10,
     2

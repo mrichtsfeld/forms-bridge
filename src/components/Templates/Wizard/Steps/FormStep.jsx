@@ -15,32 +15,32 @@ function validateForm(form, schema, fields, integration) {
     return false;
   }
 
-  const isValid = fields
-    .filter((field) => field.ref === "#form/fields[]")
-    .reduce((isValid, { name, required }) => {
-      if (!isValid || !required) return isValid;
+  let isValid = schema.fields.reduce((isValid, { name, type }) => {
+    if (!isValid) return isValid;
 
-      const formField = form.fields.find((field) => field.name === name);
+    const pair = form.fields.find((field) => name === field.name);
+    if (!pair) return false;
 
-      if (!formField) return false;
+    return isValid && pair.type === type;
+  }, true);
 
-      // TODO: Check form field types
-      // return formField.type === templateField.type;
-      return true;
-    }, true);
+  return (
+    isValid &&
+    fields
+      .filter((field) => field.ref === "#form/fields[]")
+      .reduce((isValid, { name, required, type }) => {
+        if (!isValid) return isValid;
 
-  if (!isValid) return isValid;
+        const pair = form.fields.find((field) => field.name === name);
 
-  return schema.fields.reduce((isValid, fieldSchema) => {
-    if (!isValid || !fieldSchema.required) return isValid;
-
-    const formField = form.fields.find(({ name }) => name === fieldSchema.name);
-    if (!formField) return false;
-
-    // TODO: Check form field types
-    // return formField.schema.type === fieldSchema.type;
-    return true;
-  }, isValid);
+        if (!pair) {
+          if (required) return false;
+          return isValid;
+        } else {
+          return isValid && type === pair.type;
+        }
+      }, true)
+  );
 }
 
 export default function FormStep({ fields, data, setData, integration }) {

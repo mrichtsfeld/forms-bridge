@@ -1,6 +1,6 @@
 import useBackends from "../../hooks/useBackends";
 import { useForms } from "../../providers/Forms";
-import { prependEmptyOption } from "../../lib/utils";
+import { isset, prependEmptyOption } from "../../lib/utils";
 import { useCredentials } from "../../hooks/useAddon";
 import FieldWrapper from "../FieldWrapper";
 
@@ -24,50 +24,49 @@ const ORDER = [
   "method",
 ];
 
-export default function BridgeFields({
-  data,
-  setData,
-  schema,
-  optionals = false,
-  setting = {},
-  errors = {},
-}) {
+export default function BridgeFields({ data, setData, schema, errors = {} }) {
   const [backends] = useBackends();
   const backendOptions = useMemo(() => {
-    return prependEmptyOption(
-      backends
-        .map(({ name }) => ({
-          label: name,
-          value: name,
-        }))
-        .sort((a, b) => {
-          return a.label > b.label ? 1 : -1;
-        })
-    );
+    if (!backends.length) return [{ label: "", value: "" }];
+
+    return backends
+      .map(({ name }) => ({
+        label: name,
+        value: name,
+      }))
+      .sort((a, b) => {
+        return a.label > b.label ? 1 : -1;
+      });
   }, [backends]);
 
   const [forms] = useForms();
   const formOptions = useMemo(() => {
-    return prependEmptyOption(
-      forms
-        .map(({ _id, title }) => ({
-          label: title,
-          value: _id,
-        }))
-        .sort((a, b) => {
-          return a.label > b.label ? 1 : -1;
-        })
-    );
+    if (!forms.length) return [{ label: "", value: "" }];
+
+    return forms
+      .map(({ _id, title }) => ({
+        label: title,
+        value: _id,
+      }))
+      .sort((a, b) => {
+        return a.label > b.label ? 1 : -1;
+      });
   }, [forms]);
 
   const [credentials] = useCredentials();
   const credentialOptions = useMemo(() => {
-    return prependEmptyOption(
-      credentials
-        .filter(({ is_valid }) => is_valid)
-        .map(({ name }) => ({ label: name, value: name }))
-        .sort((a, b) => (a.label > b.label ? 1 : -1))
-    );
+    if (!credentials.length) return [{ label: "", value: "" }];
+
+    const options = credentials
+      .filter(({ is_valid }) => is_valid)
+      .map(({ name }) => ({ label: name, value: name }))
+      .sort((a, b) => (a.label > b.label ? 1 : -1));
+
+    if (!schema.required.includes("credential")) {
+      return prependEmptyOption(options);
+    }
+
+    return options;
   }, [credentials]);
 
   const fields = useMemo(() => {
@@ -105,9 +104,6 @@ export default function BridgeFields({
             type: "options",
             options: field.enum.map((value) => ({ label: value, value })),
           };
-        } else if (field.$ref) {
-          const options = setting[field.$ref] || [];
-          return { ...field, type: "options", options };
         }
 
         return field;
@@ -116,13 +112,35 @@ export default function BridgeFields({
 
   useEffect(() => {
     const defaults = fields.reduce((defaults, field) => {
-      if (
-        field.default &&
-        !Object.prototype.hasOwnProperty.call(data, field.name)
-      ) {
+      if (field.default && !isset(data, field.name)) {
         defaults[field.name] = field.default;
       } else if (field.value && field.value !== data[field.name]) {
         defaults[field.name] = field.value;
+      } else if (field.type === "options") {
+        if (!field.options.length && data[field.name]) {
+          defaults[field.name] = "";
+        } else if (!data[field.name]) {
+          const value = field.options[0]?.value || "";
+          if (value !== data[field.name]) {
+            defaults[field.name] = value;
+          }
+        }
+      } else if (field.enum && field.enum.length === 1) {
+        if (data[field.name] !== field.enum[0]) {
+          defaults[field.name] = field.enum[0];
+        }
+      }
+
+      if (!forms.length && data.form_id) {
+        defaults.form_id = "";
+      }
+
+      if (!backends.length && data.backend) {
+        defaults.backend = "";
+      }
+
+      if (!credentials.length && data.credential) {
+        defaults.credential = "";
       }
 
       return defaults;
@@ -159,7 +177,6 @@ export default function BridgeFields({
               value={data[field.name] || ""}
               setValue={(value) => setData({ ...data, [field.name]: value })}
               options={field.options}
-              optional={optionals}
             />
           );
       }

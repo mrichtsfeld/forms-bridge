@@ -191,7 +191,7 @@ function PipelineStep({ name, title, index, options, append, update, remove }) {
       </div>
       <div style={{ flex: 1 }}>
         {(isFocus && (
-          <FieldWrapper min="150px" isResponsive={isResponsive}>
+          <FieldWrapper min="150px" max="250px" isResponsive={isResponsive}>
             <SelectControl
               value={name}
               onChange={(name) => update(name, index - 1)}

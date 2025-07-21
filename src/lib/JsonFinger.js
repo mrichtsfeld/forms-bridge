@@ -1,16 +1,6 @@
+import { isset } from "./utils";
+
 const cache = new Map();
-
-function isset(obj, attr) {
-  if (!obj || typeof obj !== "object") {
-    return false;
-  }
-
-  if (Array.isArray(obj)) {
-    return obj.length > attr;
-  }
-
-  return Object.prototype.hasOwnProperty.call(obj, attr);
-}
 
 function JsonFinger(data) {
   if (typeof data !== "object" || data === null) {

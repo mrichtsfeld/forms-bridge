@@ -1,11 +1,10 @@
 // source
 import WorkflowProvider from "../../providers/Workflow";
-import useBridgeNames from "../../hooks/useBridgeNames";
 import CustomFields from "../CustomFields";
 import Workflow from "../Workflow";
 import NewBridge from "./NewBridge";
 import RemoveButton from "../RemoveButton";
-import { downloadJson } from "../../lib/utils";
+import { isset, downloadJson } from "../../lib/utils";
 import BridgeFields, { INTERNALS } from "./Fields";
 import ToggleControl from "../Toggle";
 import useResponsive from "../../hooks/useResponsive";
@@ -25,7 +24,7 @@ const { useState, useEffect, useMemo, useCallback, useRef } = wp.element;
 const apiFetch = wp.apiFetch;
 const { __ } = wp.i18n;
 
-export default function Bridge({ data, update, remove, schema, copy }) {
+export default function Bridge({ data, update, remove, schema, copy, names }) {
   const [addon] = useTab();
 
   const [loading, setLoading] = useLoading();
@@ -35,8 +34,6 @@ export default function Bridge({ data, update, remove, schema, copy }) {
   const name = useRef(data.name);
   const [state, setState] = useState({ ...data });
   const [workflowOpen, setWorkflowOpen] = useState(false);
-
-  const names = useBridgeNames();
 
   const nameConflict = useMemo(() => {
     if (!state.name) return false;
@@ -74,13 +71,19 @@ export default function Bridge({ data, update, remove, schema, copy }) {
 
           const value = data[prop];
 
+          if (!schema.required.includes(prop)) {
+            return isValid;
+          }
+
           if (schema.properties[prop].pattern) {
             isValid =
               isValid &&
               new RegExp(schema.properties[prop].pattern).test(value);
           }
 
-          return isValid && value;
+          return (
+            isValid && (value || isset(schema.properties[prop], "default"))
+          );
         }, true);
     },
     [schema]
@@ -100,13 +103,14 @@ export default function Bridge({ data, update, remove, schema, copy }) {
     clearTimeout(timeout.current);
 
     if (isValid) {
-      timeout.current = setTimeout(
-        () => {
+      if (data.name !== state.name) {
+        timeout.current = setTimeout(() => {
           name.current = state.name;
           update({ ...state, is_valid: true });
-        },
-        (data.name !== state.name && 1e3) || 0
-      );
+        }, 1e3);
+      } else if (diff(data, state)) {
+        update({ ...state, is_valid: true });
+      }
     }
   }, [isValid, state]);
 
@@ -120,7 +124,7 @@ export default function Bridge({ data, update, remove, schema, copy }) {
 
   const reloaded = useRef(false);
   useEffect(() => {
-    if (reloaded.current && diff(data, state)) {
+    if (!loading && reloaded.current && diff(data, state)) {
       setState(data);
       setPing(false);
     }
@@ -130,10 +134,10 @@ export default function Bridge({ data, update, remove, schema, copy }) {
     };
   }, [loading, data, state]);
 
-  const exportConfig = () => {
+  const exportConfig = useCallback(() => {
     const bridgeData = { ...data };
     downloadJson(bridgeData, bridgeData.name + " bridge config");
-  };
+  }, [data]);
 
   const fieldsRef = useRef();
   const [height, setHeight] = useState(0);
@@ -146,7 +150,9 @@ export default function Bridge({ data, update, remove, schema, copy }) {
   const [ping, setPing] = useState(false);
 
   useEffect(() => {
-    setPing(false);
+    if (ping) {
+      setPing(false);
+    }
   }, [state.backend, state.credential]);
 
   const doPing = useCallback(() => {
@@ -312,7 +318,7 @@ export default function Bridge({ data, update, remove, schema, copy }) {
                 setMappers={(mappers) =>
                   setState({
                     ...state,
-                    mutations: [mappers, state.mutations.slice(1)],
+                    mutations: [mappers, ...state.mutations.slice(1)],
                   })
                 }
                 includeFiles={includeFiles}

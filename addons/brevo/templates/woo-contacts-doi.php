@@ -26,7 +26,7 @@ return [
             'ref' => '#bridge/custom_fields[]',
             'name' => 'includeListIds',
             'label' => __('Segments', 'forms-bridge'),
-            'type' => 'options',
+            'type' => 'select',
             'options' => [
                 'endpoint' => '/v3/contacts/lists',
                 'finger' => [
@@ -41,7 +41,7 @@ return [
             'ref' => '#bridge/custom_fields[]',
             'name' => 'templateId',
             'label' => __('Double opt-in template', 'forms-bridge'),
-            'type' => 'options',
+            'type' => 'select',
             'options' => [
                 'endpoint' => '/v3/smtp/templates',
                 'finger' => [
@@ -55,7 +55,7 @@ return [
             'ref' => '#bridge/custom_fields[]',
             'name' => 'redirectionUrl',
             'label' => __('Redirection URL', 'forms-bridge'),
-            'type' => 'string',
+            'type' => 'text',
             'description' => __(
                 'URL of the web page that user will be redirected to after clicking on the double opt in URL',
                 'forms-bridge'

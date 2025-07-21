@@ -13,38 +13,6 @@ if (!defined('ABSPATH')) {
  */
 class Nextcloud_Form_Bridge extends Form_Bridge
 {
-    private function dav_request($method, $args = [])
-    {
-        $url = $this->backend->url($this->endpoint);
-        $headers = $this->backend->headers;
-        $args = array_merge($args, [
-            'method' => $method,
-            'headers' => $headers,
-        ]);
-
-        $request = ['url' => $url, 'args' => $args];
-        $response = wp_remote_request($url, $args);
-
-        if (is_wp_error($response)) {
-            $response->add_data(['request' => $request]);
-            return $response;
-        }
-
-        $status = (int) $response['response']['code'];
-        if ($status >= 300) {
-            return new WP_Error(
-                'http_bridge_error',
-                __('HTTP error response status code', 'forms-bridge'),
-                [
-                    'response' => $response,
-                    'request' => $request,
-                ]
-            );
-        }
-
-        return $response;
-    }
-
     private function filepath(&$touched = false)
     {
         $uploads = Forms_Bridge::upload_dir() . '/nextcloud';
@@ -55,7 +23,8 @@ class Nextcloud_Form_Bridge extends Form_Bridge
             }
         }
 
-        $name = str_replace('/', '-', $this->data['endpoint']);
+        $endpoint = preg_replace('/^\/+/', '', $this->data['endpoint']);
+        $name = str_replace('/', '-', $endpoint);
         $filepath = $uploads . '/' . $name;
 
         if (!is_file($filepath)) {
@@ -89,9 +58,9 @@ class Nextcloud_Form_Bridge extends Form_Bridge
         return $this->decode_row($line);
     }
 
-    private function get_dav_modified_date()
+    private function get_dav_modified_date($backend)
     {
-        $response = $this->dav_request('HEAD');
+        $response = $backend->head($this->endpoint);
 
         if (is_wp_error($response)) {
             $error_data = $response->get_error_data();
@@ -148,7 +117,32 @@ class Nextcloud_Form_Bridge extends Form_Bridge
 
     private function decode_row($row)
     {
-        return array_map('json_decode', explode(',', $row));
+        $row = preg_replace('/\n+/', '', $row);
+        return array_map(function ($value) {
+            if ($decoded = json_decode($value)) {
+                return $decoded;
+            }
+
+            return $value;
+        }, explode(',', $row));
+    }
+
+    private function add_row($payload)
+    {
+        $row = $this->payload_to_row($payload);
+
+        $filepath = $this->filepath();
+        $sock = fopen($filepath, 'r');
+        $cursor = -1;
+        fseek($sock, $cursor, SEEK_END);
+        $char = fgetc($sock);
+        fclose($sock);
+
+        if ($char !== "\n" && $char !== "\r") {
+            $row = "\n" . $row;
+        }
+
+        file_put_contents($filepath, $row, FILE_APPEND);
     }
 
     /**
@@ -165,19 +159,36 @@ class Nextcloud_Form_Bridge extends Form_Bridge
             return $this->data;
         }
 
+        $backend = $this->backend;
+        $credential = $this->credential;
+
+        if (!$backend || !$credential) {
+            return new WP_Error('invalid_bridge');
+        }
+
+        $backend = $backend->authorized(
+            $credential->schema,
+            $credential->client_id,
+            $credential->client_secret
+        );
+
+        if (!$backend->is_valid) {
+            return new WP_Error('invalid_bridge');
+        }
+
         $payload = self::flatten_payload($payload);
 
         $backend_name = $this->data['backend'];
         add_filter(
             'http_bridge_backend_url',
-            function ($url, $backend) use ($backend_name) {
+            function ($url, $backend) use ($backend_name, $credential) {
                 if ($backend->name === $backend_name) {
-                    $user = $backend->authentication['client_id'] ?? '';
+                    $user = $credential->client_id;
                     [$pre] = explode($this->endpoint, $url);
                     $url =
                         preg_replace('/\/+$/', '', $pre) .
                         "/remote.php/dav/files/{$user}/" .
-                        $this->endpoint;
+                        preg_replace('/^\/+/', '', $this->endpoint);
                 }
 
                 return $url;
@@ -192,7 +203,7 @@ class Nextcloud_Form_Bridge extends Form_Bridge
             return $filepath;
         }
 
-        $dav_modified = $this->get_dav_modified_date();
+        $dav_modified = $this->get_dav_modified_date($backend);
         if (is_wp_error($dav_modified)) {
             return $dav_modified;
         }
@@ -216,17 +227,22 @@ class Nextcloud_Form_Bridge extends Form_Bridge
                 $local_modified = filemtime($filepath);
 
                 if ($dav_modified > $local_modified) {
-                    $response = $this->dav_request('GET', [
-                        'stream' => $filepath,
-                    ]);
+                    $response = $backend->get(
+                        $this->endpoint,
+                        [],
+                        [],
+                        [
+                            'stream' => true,
+                            'filename' => $filepath,
+                        ]
+                    );
 
                     if (is_wp_error($response)) {
                         return $response;
                     }
                 }
 
-                $row = $this->payload_to_row($payload);
-                file_put_contents($filepath, "\n" . $row, FILE_APPEND);
+                $this->add_row($payload);
 
                 $csv = file_get_contents($filepath);
                 $response = parent::submit($csv);

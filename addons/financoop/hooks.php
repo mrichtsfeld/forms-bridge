@@ -11,7 +11,7 @@ add_filter(
             return $schema;
         }
 
-        $schema['properties']['method']['enum'] = 'POST';
+        $schema['properties']['method']['enum'] = ['POST'];
         return $schema;
     },
     10,
@@ -45,27 +45,27 @@ add_filter(
                         'name' => 'name',
                         'default' => 'FinanCoop',
                     ],
-                    [
-                        'ref' => '#backend/headers[]',
-                        'name' => 'X-Odoo-Db',
-                        'label' => 'Database',
-                        'type' => 'string',
-                        'required' => true,
-                    ],
-                    [
-                        'ref' => '#backend/headers[]',
-                        'name' => 'X-Odoo-Username',
-                        'label' => 'Username',
-                        'type' => 'string',
-                        'required' => true,
-                    ],
-                    [
-                        'ref' => '#backend/headers[]',
-                        'name' => 'X-Odoo-Api-Key',
-                        'label' => 'API Key',
-                        'type' => 'string',
-                        'required' => true,
-                    ],
+                    // [
+                    //     'ref' => '#backend/headers[]',
+                    //     'name' => 'X-Odoo-Db',
+                    //     'label' => 'Database',
+                    //     'type' => 'string',
+                    //     'required' => true,
+                    // ],
+                    // [
+                    //     'ref' => '#backend/headers[]',
+                    //     'name' => 'X-Odoo-Username',
+                    //     'label' => 'Username',
+                    //     'type' => 'string',
+                    //     'required' => true,
+                    // ],
+                    // [
+                    //     'ref' => '#backend/headers[]',
+                    //     'name' => 'X-Odoo-Api-Key',
+                    //     'label' => 'API Key',
+                    //     'type' => 'string',
+                    //     'required' => true,
+                    // ],
                     [
                         'ref' => '#bridge',
                         'name' => 'method',
@@ -199,6 +199,21 @@ add_filter(
         }
 
         return $data;
+    },
+    10,
+    2
+);
+
+add_filter(
+    'forms_bridge_credential_schema',
+    function ($schema, $addon) {
+        if ($addon !== 'financoop') {
+            return $schema;
+        }
+
+        $schema['properties']['realm']['name'] = __('Database', 'forms-bridge');
+
+        return $schema;
     },
     10,
     2

@@ -26,7 +26,7 @@ return [
             'ref' => '#bridge/custom_fields[]',
             'name' => 'listIds',
             'label' => __('Segments', 'forms-bridge'),
-            'type' => 'options',
+            'type' => 'select',
             'options' => [
                 'endpoint' => '/v3/contacts/lists',
                 'finger' => [

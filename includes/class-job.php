@@ -76,7 +76,7 @@ class Job
     {
         return [
             '$schema' => 'http://json-schema.org/draft-04/schema#',
-            'title' => 'job-schema',
+            'title' => 'job',
             'type' => 'object',
             'properties' => [
                 'name' => [
@@ -642,8 +642,8 @@ class Job
 
         foreach ($input_fields as $input_field) {
             foreach ($this->output as $output_field) {
-                if ($input_field['name'] === $output_field['name']) {
-                    if (is_array($output_field['requires'])) {
+                if ($input_field === $output_field['name']) {
+                    if (is_array($output_field['requires'] ?? null)) {
                         $requires = array_filter(
                             $output_field['requires'],
                             fn($name) => array_search($name, $input_fields) !==
@@ -661,7 +661,7 @@ class Job
             }
 
             if (!isset($persist)) {
-                unset($payload[$input_field['name']]);
+                unset($payload[$input_field]);
             }
         }
 

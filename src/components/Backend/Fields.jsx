@@ -1,5 +1,5 @@
 import ContentType from "./ContentType";
-import BackendAuthentication from "./Authentication";
+// import BackendAuthentication from "./Authentication";
 import FieldWrapper from "../FieldWrapper";
 
 const { TextControl } = wp.components;
@@ -34,10 +34,10 @@ export default function BackendFields({ state, setState, errors }) {
         headers={state.headers}
         setHeaders={(headers) => setState({ ...state, headers })}
       />
-      <BackendAuthentication
-        data={state.authentication}
-        setData={(authentication) => setState({ ...state, authentication })}
-      />
+      {/* <BackendAuthentication */}
+      {/*   data={state.authentication} */}
+      {/*   setData={(authentication) => setState({ ...state, authentication })} */}
+      {/* /> */}
     </>
   );
 }

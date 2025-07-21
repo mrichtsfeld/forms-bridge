@@ -1,3 +1,5 @@
+import { isset } from "./utils";
+
 export default function (to, from) {
   try {
     const changes = diff(to, from);
@@ -44,11 +46,11 @@ function diff(to, from, changes = {}) {
 
 function getChanges(to, from, changes) {
   for (const k in to) {
-    if (Object.prototype.hasOwnProperty.call(changes, k)) {
+    if (isset(changes, k)) {
       continue;
     }
 
-    if (!Object.prototype.hasOwnProperty.call(from, k)) {
+    if (!isset(from, k)) {
       changes[k] = true;
       continue;
     }

@@ -28,7 +28,7 @@ export default function BackendStep({ fields, data, setData, wired, fetched }) {
   const defaults = useMemo(() => {
     return fields.reduce((defaults, field) => {
       let val = field.default || config?.[field.name] || "";
-      if (!val && field.type === "options" && field.required) {
+      if (!val && field.type === "select" && field.required) {
         val = field.options[0].value;
       }
 

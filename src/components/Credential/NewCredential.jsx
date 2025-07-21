@@ -1,6 +1,6 @@
 // source
 import { useCredentials } from "../../hooks/useAddon";
-import { uploadJson } from "../../lib/utils";
+import { isset, uploadJson } from "../../lib/utils";
 import { useError } from "../../providers/Error";
 import CredentialFields, { INTERNALS } from "./Fields";
 import useResponsive from "../../hooks/useResponsive";
@@ -35,13 +35,17 @@ export default function NewCredential({ add, schema }) {
       }
     });
 
+    window.__wpfbInvalidated = true;
+
     setData({});
     add(credential);
   };
 
   const validate = useCallback(
     (data) => {
-      return Object.keys(schema.properties)
+      const realmRequired = ["RPC", "Bearer", "Digest"].includes(data.schema);
+
+      return !!Object.keys(schema.properties)
         .filter((prop) => !INTERNALS.includes(prop))
         .filter((prop) => !["access_token", "expires_at"].includes(prop))
         .reduce((isValid, prop) => {
@@ -49,7 +53,10 @@ export default function NewCredential({ add, schema }) {
 
           const value = data[prop];
 
-          if (!schema.required.includes(prop)) {
+          if (
+            !schema.required.includes(prop) &&
+            !(realmRequired && prop !== "realm")
+          ) {
             return isValid;
           }
 
@@ -59,8 +66,10 @@ export default function NewCredential({ add, schema }) {
               new RegExp(schema.properties[prop].pattern).test(value);
           }
 
-          return isValid && value;
-        });
+          return (
+            isValid && (value || isset(schema.properties[prop], "default"))
+          );
+        }, true);
     },
     [schema]
   );
@@ -117,7 +126,6 @@ export default function NewCredential({ add, schema }) {
           data={data}
           setData={setData}
           schema={schema}
-          optionals={true}
           errors={{
             name: nameConflict
               ? __("This name is already in use", "forms-bridge")

@@ -5,7 +5,7 @@ if (!defined('ABSPATH')) {
 }
 
 return [
-    'title' => __('Subscription DOI', 'forms-bridge'),
+    'title' => __('Contacts DOI', 'forms-bridge'),
     'description' => __(
         'Subscription form template. The resulting bridge will convert form submissions into new list subscriptions with a double opt-in confirmation check.',
         'forms-bridge'
@@ -20,7 +20,7 @@ return [
             'ref' => '#bridge/custom_fields[]',
             'name' => 'includeListIds',
             'label' => __('Segments', 'forms-bridge'),
-            'type' => 'options',
+            'type' => 'select',
             'options' => [
                 'endpoint' => '/v3/contacts/lists',
                 'finger' => [
@@ -35,7 +35,7 @@ return [
             'ref' => '#bridge/custom_fields[]',
             'name' => 'templateId',
             'label' => __('Double opt-in template', 'forms-bridge'),
-            'type' => 'options',
+            'type' => 'select',
             'options' => [
                 'endpoint' => '/v3/smtp/templates',
                 'finger' => [
@@ -49,7 +49,7 @@ return [
             'ref' => '#bridge/custom_fields[]',
             'name' => 'redirectionUrl',
             'label' => __('Redirection URL', 'forms-bridge'),
-            'type' => 'string',
+            'type' => 'text',
             'description' => __(
                 'URL of the web page that user will be redirected to after clicking on the double opt in URL',
                 'forms-bridge'
@@ -59,11 +59,11 @@ return [
         [
             'ref' => '#form',
             'name' => 'title',
-            'default' => __('Subscription DOI', 'forms-bridge'),
+            'default' => __('Contacts DOI', 'forms-bridge'),
         ],
     ],
     'form' => [
-        'title' => __('Subscription DOI', 'forms-bridge'),
+        'title' => __('Contacts DOI', 'forms-bridge'),
         'fields' => [
             [
                 'name' => 'email',

@@ -27,7 +27,7 @@ export default function ContentType({ headers, setHeaders }) {
   };
 
   useEffect(() => {
-    if (!value && headers.length) {
+    if (value === undefined && headers.length) {
       setHeaders([{ name: HEADER_NAME, value: DEFAULT_VALUE }, ...headers]);
     }
   }, [value]);

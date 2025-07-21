@@ -9,7 +9,7 @@ import TabTitle from "../TabTitle";
 import AddIcon from "../icons/Add";
 
 const { TabPanel } = wp.components;
-const { useEffect, useRef } = wp.element;
+const { useEffect, useMemo, useRef } = wp.element;
 const { __ } = wp.i18n;
 
 const CSS = `.bridges-tabs-panel .components-tab-panel__tabs{overflow-x:auto;}
@@ -28,25 +28,27 @@ export default function Bridges() {
   const [bridges, setBridges] = useBridges();
   const names = useBridgeNames();
 
-  const tabs = bridges
-    .map(({ name }, index) => ({
-      index,
-      name: String(index),
-      title: name,
-      icon: <TabTitle name={name} />,
-    }))
-    .concat([
-      {
-        index: -1,
-        name: "new",
-        title: __("Add a bridge", "forms-bridge"),
-        icon: (
-          <div style={{ marginBottom: "-2px" }}>
-            <AddIcon width="15" height="15" />
-          </div>
-        ),
-      },
-    ]);
+  const tabs = useMemo(() => {
+    return Array.from(names)
+      .map((name, index) => ({
+        index,
+        name: String(index),
+        title: name,
+        icon: <TabTitle name={name} />,
+      }))
+      .concat([
+        {
+          index: -1,
+          name: "new",
+          title: __("Add a bridge", "forms-bridge"),
+          icon: (
+            <div style={{ marginBottom: "-2px" }}>
+              <AddIcon width="15" height="15" />
+            </div>
+          ),
+        },
+      ]);
+  }, [names]);
 
   const updateBridge = (index, data) => {
     if (index === -1) index = bridges.length;
@@ -86,6 +88,7 @@ export default function Bridges() {
       copy.name += "-copy";
     }
 
+    window.__wpfbInvalidated = true;
     setBridges(bridges.concat(copy));
   };
 
@@ -113,6 +116,7 @@ export default function Bridges() {
                 <NewBridge
                   add={(data) => updateBridge(tab.index, data)}
                   schema={schema}
+                  names={names}
                 />
               )) || (
                 <Bridge
@@ -121,6 +125,7 @@ export default function Bridges() {
                   remove={removeBridge}
                   update={(data) => updateBridge(tab.index, data)}
                   copy={() => copyBridge(bridge.name)}
+                  names={names}
                 />
               )}
             </ApiSchemaProvider>

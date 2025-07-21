@@ -10,36 +10,52 @@ class Credential
 {
     public static function schema($addon = null)
     {
-        return apply_filters(
-            'forms_bridge_credential_schema',
-            [
-                '$schema' => 'http://json-schema.org/draft-04/schema#',
-                'title' => "{$addon}-credential",
-                'type' => 'object',
-                'properties' => [
-                    'name' => [
-                        'name' => __('Name', 'forms-bridge'),
-                        'description' => __(
-                            'Unique name of the credential',
-                            'forms-bridge'
-                        ),
-                        'type' => 'string',
-                        'minLength' => 1,
-                    ],
-                    'is_valid' => [
-                        'description' => __(
-                            'Validation result of the bridge setting',
-                            'forms-bridge'
-                        ),
-                        'type' => 'boolean',
-                        'default' => false,
-                    ],
+        $schema = [
+            '$schema' => 'http://json-schema.org/draft-04/schema#',
+            'title' => 'credential',
+            'type' => 'object',
+            'properties' => [
+                'name' => [
+                    'name' => __('Name', 'forms-bridge'),
+                    'description' => __(
+                        'Unique name of the credential',
+                        'forms-bridge'
+                    ),
+                    'type' => 'string',
+                    'minLength' => 1,
                 ],
-                'required' => ['name', 'is_valid'],
-                'additionalProperties' => false,
+                'schema' => [
+                    'type' => 'string',
+                    'enum' => ['Basic', 'Digest', 'Token', 'URL'],
+                    'default' => 'Basic',
+                ],
+                'client_id' => ['type' => 'string'],
+                'client_secret' => ['type' => 'string'],
+                'realm' => ['type' => 'string'],
+                'is_valid' => [
+                    'description' => __(
+                        'Validation result of the bridge setting',
+                        'forms-bridge'
+                    ),
+                    'type' => 'boolean',
+                    'default' => false,
+                ],
             ],
-            $addon
-        );
+            'required' => [
+                'name',
+                'schema',
+                'client_id',
+                'client_secret',
+                'is_valid',
+            ],
+            'additionalProperties' => false,
+        ];
+
+        if (!$addon) {
+            return $schema;
+        }
+
+        return apply_filters('forms_bridge_credential_schema', $schema, $addon);
     }
 
     protected $data;
@@ -79,6 +95,21 @@ class Credential
 
                 return $this->data[$name] ?? null;
         }
+    }
+
+    public function login()
+    {
+        return implode(
+            ':',
+            array_map(
+                'trim',
+                array_filter([
+                    $this->client_id,
+                    $this->realm,
+                    $this->client_secret,
+                ])
+            )
+        );
     }
 
     public function data()

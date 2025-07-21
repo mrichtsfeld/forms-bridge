@@ -38,8 +38,8 @@ function App() {
       >
         <ErrorProvider>
           <LoadingProvider>
-            <FormsProvider>
-              <SettingsProvider>
+            <SettingsProvider>
+              <FormsProvider>
                 <SchemasProvider>
                   <div
                     style={{
@@ -54,8 +54,8 @@ function App() {
                   </div>
                   <Settings />
                 </SchemasProvider>
-              </SettingsProvider>
-            </FormsProvider>
+              </FormsProvider>
+            </SettingsProvider>
           </LoadingProvider>
         </ErrorProvider>
       </ErrorBoundary>

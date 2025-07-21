@@ -116,12 +116,12 @@ class Odoo_Form_Bridge extends Form_Bridge
     /**
      * JSON RPC login request.
      *
-     * @param Credential $credential
+     * @param [string, string, string] $login
      * @param Http_Backend $backend
      *
      * @return array|WP_Error Tuple with RPC session id and user id.
      */
-    private static function rpc_login($credential, $backend)
+    private static function rpc_login($login, $backend)
     {
         if (self::$session) {
             return self::$session;
@@ -129,11 +129,7 @@ class Odoo_Form_Bridge extends Form_Bridge
 
         $session_id = Forms_Bridge::slug() . '-' . time();
 
-        $payload = self::rpc_payload($session_id, 'common', 'login', [
-            $credential->database,
-            $credential->user,
-            $credential->password,
-        ]);
+        $payload = self::rpc_payload($session_id, 'common', 'login', $login);
 
         $response = $backend->post(self::endpoint, $payload);
 
@@ -182,26 +178,21 @@ class Odoo_Form_Bridge extends Form_Bridge
             );
         }
 
-        $session = self::rpc_login($credential, $backend);
+        $login = $credential->login();
+        $session = self::rpc_login($login, $backend);
 
         if (is_wp_error($session)) {
             return $session;
         }
 
         [$sid, $uid] = $session;
+        $login[1] = $uid;
 
         $payload = self::rpc_payload(
             $sid,
             'object',
             'execute',
-            [
-                $credential->database,
-                $uid,
-                $credential->password,
-                $this->endpoint,
-                $this->method,
-                $payload,
-            ],
+            array_merge($login, [$this->endpoint, $this->method, $payload]),
             $more_args
         );
 

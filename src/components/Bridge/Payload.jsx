@@ -9,6 +9,13 @@ const { useEffect, useMemo } = wp.element;
 const { Spinner } = wp.components;
 const { __ } = wp.i18n;
 
+const DIFF_MOCK = {
+  enter: new Set(),
+  exit: new Set(),
+  mutated: new Set(),
+  missing: new Set(),
+};
+
 export default function BridgePayload({ height, focus }) {
   const [, setWorkflowStep, workflowLength] = useWorkflowStepper();
   const workflowJob = useWorkflowJob();
@@ -55,7 +62,12 @@ export default function BridgePayload({ height, focus }) {
       >
         {(workflowJob && (
           <div style={{ overflowY: "auto" }}>
-            <StagePayload fields={fields} mappers={mappers} />
+            <StagePayload
+              fields={fields}
+              mappers={mappers}
+              showMutations={true}
+              diff={DIFF_MOCK}
+            />
           </div>
         )) || (
           <div

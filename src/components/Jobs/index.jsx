@@ -219,6 +219,7 @@ function JobsContent({ loading, config, setEdit, reset, copy }) {
             disabled={!config.post_id}
             label={__("Reset", "forms-bridge")}
             onClick={() => reset(config.name)}
+            isDestructive={false}
             icon
           />
         </div>

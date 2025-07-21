@@ -22,7 +22,7 @@ return [
             'ref' => '#bridge/custom_fields[]',
             'name' => 'deal_name',
             'label' => __('Deal name', 'forms-bridge'),
-            'type' => 'string',
+            'type' => 'text',
             'required' => true,
         ],
         [
@@ -33,7 +33,7 @@ return [
                 'Email of the owner user of the deal',
                 'forms-bridge'
             ),
-            'type' => 'options',
+            'type' => 'select',
             'options' => [
                 'endpoint' => '/v3/organization/invited/users',
                 'finger' => 'users[].email',
@@ -44,7 +44,7 @@ return [
             'ref' => '#bridge/custom_fields[]',
             'name' => 'pipeline',
             'label' => __('Pipeline', 'forms-bridge'),
-            'type' => 'options',
+            'type' => 'select',
             'options' => [
                 'endpoint' => '/v3/crm/pipeline/details/all',
                 'finger' => [
@@ -52,6 +52,13 @@ return [
                     'label' => '[].pipeline_name',
                 ],
             ],
+        ],
+        [
+            'ref' => '#bridge/custom_fields[]',
+            'name' => 'amount',
+            'label' => __('Deal amount', 'forms-bridge'),
+            'type' => 'number',
+            'min' => 0,
         ],
         [
             'ref' => '#form',
@@ -110,7 +117,7 @@ return [
                     'cast' => 'string',
                 ],
                 [
-                    'from' => 'pipeline',
+                    'from' => '?pipeline',
                     'to' => 'attributes.pipeline',
                     'cast' => 'string',
                 ],
@@ -118,6 +125,11 @@ return [
                     'from' => 'deal_owner',
                     'to' => 'attributes.deal_owner',
                     'cast' => 'string',
+                ],
+                [
+                    'from' => '?amount',
+                    'to' => 'attributes.amount',
+                    'cast' => 'number',
                 ],
             ],
         ],

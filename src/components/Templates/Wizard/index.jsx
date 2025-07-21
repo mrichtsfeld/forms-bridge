@@ -5,7 +5,7 @@ import useStepper from "./useStepper";
 import { refToGroup, getGroupFields } from "./lib";
 import useWiredBackend from "./useWiredBackend";
 import useAuthorizedCredential from "./useAuthorizedCredential";
-import { prependEmptyOption } from "../../../lib/utils";
+import { prependEmptyOption, isset } from "../../../lib/utils";
 
 const { Button, Notice } = wp.components;
 const { useMemo, useState, useEffect, useCallback } = wp.element;
@@ -26,9 +26,7 @@ export default function TemplateWizard({ integration, onSubmit }) {
 
   const fields = useMemo(() => {
     const fields = config?.fields || [];
-    return fields.filter(
-      (f) => !Object.prototype.hasOwnProperty.call(f, "value")
-    );
+    return fields.filter((f) => !isset(f, "value"));
   }, [config]);
 
   const {
@@ -63,7 +61,7 @@ export default function TemplateWizard({ integration, onSubmit }) {
       if (options) {
         return {
           ...field,
-          type: "options",
+          type: "select",
           options: prependEmptyOption(options),
         };
       }
@@ -84,7 +82,7 @@ export default function TemplateWizard({ integration, onSubmit }) {
         const group = refToGroup(field.ref);
         defaults[group] = defaults[group];
         defaults[group][field.name] = value;
-      } else if (field.type === "options" && field.required) {
+      } else if (field.type === "select" && field.required) {
         const group = refToGroup(field.ref);
         defaults[group] = defaults[group] || {};
 
@@ -140,7 +138,7 @@ export default function TemplateWizard({ integration, onSubmit }) {
         const group = refToGroup(field.ref);
 
         if (
-          Object.prototype.hasOwnProperty.call(data[group], field.name) &&
+          isset(data[group], field.name) &&
           data[group][field.name] !== null
         ) {
           if (
@@ -161,7 +159,7 @@ export default function TemplateWizard({ integration, onSubmit }) {
             // case "number":
             //   field.value = 0;
             //   break;
-            case "options":
+            case "select":
               field.value = [];
               break;
             case "boolean":
@@ -234,7 +232,10 @@ export default function TemplateWizard({ integration, onSubmit }) {
 
   const needsAuth = credential && !authorized;
   const canGoForward =
-    isStepDone && (group !== "backend" || fetched) && !needsAuth;
+    isStepDone &&
+    (group !== "backend" || fetched) &&
+    (group !== "credential" || credential) &&
+    !needsAuth;
 
   if (!config?.fields.length) return;
   if (data[group] === undefined) return;

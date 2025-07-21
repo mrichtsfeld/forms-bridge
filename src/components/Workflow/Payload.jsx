@@ -17,7 +17,7 @@ export default function StagePayload({
   mappers,
   showMutations = false,
   showDiff = false,
-  diff = {},
+  diff,
 }) {
   const payloadDiff = useMemo(() => {
     if (!showMutations) return diff;

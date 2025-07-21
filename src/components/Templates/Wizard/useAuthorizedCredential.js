@@ -1,4 +1,5 @@
 import useTab from "../../../hooks/useTab";
+import { isset } from "../../../lib/utils";
 import { useLoading } from "../../../providers/Loading";
 import { useSchemas } from "../../../providers/Schemas";
 import { useFetchSettings } from "../../../providers/Settings";
@@ -40,12 +41,7 @@ export default function useAuthorizedCredential({ data = {}, fields = [] }) {
       const credential = { ...data };
 
       Object.keys(schema.properties).forEach((prop) => {
-        if (
-          Object.prototype.hasOwnProperty.call(
-            schema.properties[prop],
-            "default"
-          )
-        ) {
+        if (isset(schema.properties[prop], "default")) {
           credential[prop] =
             credential[prop] || schema.properties[prop].default;
         }
@@ -59,10 +55,7 @@ export default function useAuthorizedCredential({ data = {}, fields = [] }) {
     setError(false);
   }, [credential]);
 
-  const isOauth = Object.prototype.hasOwnProperty.call(
-    schema?.properties || {},
-    "access_token"
-  );
+  const isOauth = isset(schema?.properties || {}, "access_token");
 
   const authorized = !isOauth || !!data.access_token;
 

@@ -29,7 +29,7 @@ return [
                 'Name of the host user of the appointment',
                 'forms-bridge'
             ),
-            'type' => 'options',
+            'type' => 'select',
             'options' => [
                 'endpoint' => 'res.users',
                 'finger' => [
@@ -43,7 +43,7 @@ return [
             'ref' => '#bridge/custom_fields[]',
             'name' => 'event_name',
             'label' => __('Appointment name', 'forms-bridge'),
-            'type' => 'string',
+            'type' => 'text',
             'required' => true,
             'default' => __('Web Appointment', 'forms-bridge'),
         ],
@@ -65,7 +65,7 @@ return [
             'ref' => '#bridge/custom_fields[]',
             'name' => 'categ_ids',
             'label' => __('Appointment tags', 'forms-bridge'),
-            'type' => 'options',
+            'type' => 'select',
             'options' => [
                 'endpoint' => 'calendar.event.type',
                 'finger' => [

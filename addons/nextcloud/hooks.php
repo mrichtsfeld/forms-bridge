@@ -22,6 +22,9 @@ add_filter(
         $schema['properties']['endpoint']['pattern'] = '.+\.csv$';
 
         $schema['properties']['method']['enum'] = ['PUT'];
+        $schema['properties']['method']['default'] = 'PUT';
+
+        $schema['required'][] = 'credential';
 
         return $schema;
     },
@@ -48,7 +51,7 @@ add_filter(
                         'ref' => '#bridge',
                         'name' => 'endpoint',
                         'label' => __('Filepath', 'forms-bridge'),
-                        'type' => 'string',
+                        'type' => 'text',
                         'required' => true,
                         'pattern' => '.+.csv$',
                     ],
@@ -56,8 +59,46 @@ add_filter(
                         'ref' => '#bridge',
                         'name' => 'method',
                         'label' => __('Method', 'forms-bridge'),
-                        'type' => 'string',
+                        'type' => 'text',
                         'value' => 'PUT',
+                        'required' => true,
+                    ],
+                    [
+                        'ref' => '#bridge',
+                        'name' => 'endpoint',
+                        'label' => __('Filepath', 'forms-bridge'),
+                        'pattern' => '.+\.csv$',
+                    ],
+                    [
+                        'ref' => '#credential',
+                        'name' => 'name',
+                        'label' => __('Name', 'forms-bridge'),
+                        'type' => 'text',
+                        'required' => true,
+                    ],
+                    [
+                        'ref' => '#credential',
+                        'name' => 'schema',
+                        'label' => __('Authentication', 'forms-bridge'),
+                        'type' => 'text',
+                        'value' => 'Basic',
+                    ],
+                    [
+                        'ref' => '#credential',
+                        'name' => 'client_id',
+                        'label' => __('User login', 'forms-bridge'),
+                        'description' => __(
+                            'Either, a user name or email',
+                            'forms-bridge'
+                        ),
+                        'type' => 'text',
+                        'required' => true,
+                    ],
+                    [
+                        'ref' => '#credential',
+                        'name' => 'client_secret',
+                        'label' => __('Password', 'forms-bridge'),
+                        'type' => 'text',
                         'required' => true,
                     ],
                 ],
@@ -69,14 +110,12 @@ add_filter(
                     'headers' => [
                         [
                             'name' => 'Content-Type',
-                            'value' => 'application/octet-strea',
+                            'value' => 'application/octet-stream',
                         ],
                     ],
-                    'authentication' => [
-                        'type' => 'Basic',
-                        'client_id' => '',
-                        'client_secret' => '',
-                    ],
+                ],
+                'credential' => [
+                    'schema' => 'Basic',
                 ],
             ],
             $defaults,
@@ -94,7 +133,34 @@ add_filter(
             return $data;
         }
 
+        if (!preg_match('/\.csv$/i', $data['bridge']['endpoint'])) {
+            $data['bridge']['endpoint'] .= '.csv';
+        }
+
         return $data;
+    },
+    10,
+    2
+);
+
+add_filter(
+    'forms_bridge_credential_schema',
+    function ($schema, $addon) {
+        if ($addon == 'nextcloud') {
+            unset($schema['properties']['realm']);
+
+            $schema['properties']['schema']['value'] = 'Basic';
+            $schema['properties']['client_id']['name'] = __(
+                'User login',
+                'forms-bridge'
+            );
+            $schema['properties']['client_secret']['name'] = __(
+                'Password',
+                'forms-bridge'
+            );
+        }
+
+        return $schema;
     },
     10,
     2

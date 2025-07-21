@@ -21,7 +21,7 @@ return [
             'name' => 'listIds',
             'endpoint' => '/v3/contacts/lists',
             'label' => __('Segments', 'forms-bridge'),
-            'type' => 'options',
+            'type' => 'select',
             'options' => [
                 'endpoint' => '/v3/contacts/lists',
                 'finger' => [

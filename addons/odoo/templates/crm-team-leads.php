@@ -29,7 +29,7 @@ return [
                 'Name of the owner team of the lead',
                 'forms-bridge'
             ),
-            'type' => 'options',
+            'type' => 'select',
             'options' => [
                 'endpoint' => 'crm.team',
                 'finger' => [
@@ -43,7 +43,7 @@ return [
             'ref' => '#bridge/custom_fields[]',
             'name' => 'lead_name',
             'label' => __('Lead name', 'forms-bridge'),
-            'type' => 'string',
+            'type' => 'text',
             'required' => true,
             'default' => __('Web Lead', 'forms-bridge'),
         ],
@@ -68,7 +68,7 @@ return [
             'ref' => '#bridge/custom_fields[]',
             'name' => 'tag_ids',
             'label' => __('Lead tags', 'forms-bridge'),
-            'type' => 'options',
+            'type' => 'select',
             'options' => [
                 'endpoint' => 'crm.tag',
                 'finger' => [

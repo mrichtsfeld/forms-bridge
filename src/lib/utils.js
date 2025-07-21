@@ -31,6 +31,14 @@ export function validateBackend(data) {
   let isValid = validateUrl(data.base_url) && Array.isArray(data.headers);
   if (!isValid) return false;
 
+  const contentType = data.headers.find(
+    ({ name }) => name === "Content-Type"
+  )?.value;
+
+  if (!contentType) {
+    return false;
+  }
+
   if (data.authentication?.type) {
     isValid = isValid && data.authentication.client_secret;
 
@@ -114,4 +122,16 @@ export function uploadJson() {
     document.body.appendChild(input);
     input.click();
   });
+}
+
+export function isset(obj, attr) {
+  if (!obj || typeof obj !== "object") {
+    return false;
+  }
+
+  if (Array.isArray(obj)) {
+    return obj.length > attr;
+  }
+
+  return Object.prototype.hasOwnProperty.call(obj, attr);
 }

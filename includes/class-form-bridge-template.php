@@ -76,297 +76,285 @@ class Form_Bridge_Template
         $bridge_schema = FBAPI::get_bridge_schema($addon);
         $credential_schema = FBAPI::get_credential_schema($addon);
 
-        $backend_schema['properties']['authentication']['required'] = [];
+        // $backend_schema['properties']['authentication']['required'] = [];
 
-        return apply_filters(
-            'forms_bridge_template_schema',
-            [
-                '$schema' => 'http://json-schema.org/draft-04/schema#',
-                'title' => 'form-bridge-template-schema',
-                'type' => 'object',
-                'properties' => [
-                    'name' => [
-                        'description' => __(
-                            'Internal and unique name of the template',
-                            'forms-bridge'
-                        ),
-                        'type' => 'string',
-                        'minLength' => 1,
-                    ],
-                    'title' => [
-                        'description' => __(
-                            'Public title of the template',
-                            'forms-bridge'
-                        ),
-                        'type' => 'string',
-                        'minLength' => 1,
-                    ],
-                    'description' => [
-                        'description' => __(
-                            'Short description of the template purpose',
-                            'forms-bridge'
-                        ),
-                        'type' => 'string',
-                        'default' => '',
-                    ],
-                    'integrations' => [
-                        'description' => __(
-                            'Template\'s supported integrations',
-                            'forms-bridge'
-                        ),
-                        'type' => 'array',
-                        'items' => ['type' => 'string'],
-                        'uniqueItems' => true,
-                        'minItems' => 1,
-                    ],
-                    'fields' => [
-                        'description' => __(
-                            'Template fields to be filled by the user',
-                            'forms-bridge'
-                        ),
-                        'type' => 'array',
-                        'items' => [
-                            'type' => 'object',
-                            'properties' => [
-                                'ref' => [
-                                    'type' => 'string',
-                                    'pattern' => '^#.+',
+        $schema = [
+            '$schema' => 'http://json-schema.org/draft-04/schema#',
+            'title' => 'form-bridge-template',
+            'type' => 'object',
+            'properties' => [
+                'name' => [
+                    'description' => __(
+                        'Internal and unique name of the template',
+                        'forms-bridge'
+                    ),
+                    'type' => 'string',
+                    'minLength' => 1,
+                ],
+                'title' => [
+                    'description' => __(
+                        'Public title of the template',
+                        'forms-bridge'
+                    ),
+                    'type' => 'string',
+                    'minLength' => 1,
+                ],
+                'description' => [
+                    'description' => __(
+                        'Short description of the template purpose',
+                        'forms-bridge'
+                    ),
+                    'type' => 'string',
+                    'default' => '',
+                ],
+                'integrations' => [
+                    'description' => __(
+                        'Template\'s supported integrations',
+                        'forms-bridge'
+                    ),
+                    'type' => 'array',
+                    'items' => ['type' => 'string'],
+                    'uniqueItems' => true,
+                    'minItems' => 1,
+                ],
+                'fields' => [
+                    'description' => __(
+                        'Template fields to be filled by the user',
+                        'forms-bridge'
+                    ),
+                    'type' => 'array',
+                    'items' => [
+                        'type' => 'object',
+                        'properties' => [
+                            'ref' => [
+                                'type' => 'string',
+                                'pattern' => '^#.+',
+                            ],
+                            'name' => [
+                                'type' => 'string',
+                                'minLength' => 1,
+                            ],
+                            'label' => [
+                                'type' => 'string',
+                                'minLength' => 1,
+                            ],
+                            'description' => ['type' => 'string'],
+                            'type' => [
+                                'type' => 'string',
+                                'enum' => [
+                                    'text',
+                                    'number',
+                                    'select',
+                                    'boolean',
+                                    'email',
+                                    'url',
                                 ],
-                                'name' => [
-                                    'type' => 'string',
-                                    'minLength' => 1,
-                                ],
-                                'label' => [
-                                    'type' => 'string',
-                                    'minLength' => 1,
-                                ],
-                                'description' => ['type' => 'string'],
+                            ],
+                            'required' => ['type' => 'boolean'],
+                            'value' => [
                                 'type' => [
-                                    'type' => 'string',
-                                    'enum' => [
-                                        'string',
-                                        'number',
-                                        'options',
-                                        'boolean',
-                                    ],
+                                    'integer',
+                                    'number',
+                                    'string',
+                                    'array',
+                                    'boolean',
                                 ],
-                                'required' => ['type' => 'boolean'],
-                                'value' => [
-                                    'type' => [
-                                        'integer',
-                                        'number',
-                                        'string',
-                                        'array',
-                                        'boolean',
-                                    ],
+                            ],
+                            'default' => [
+                                'type' => [
+                                    'integer',
+                                    'number',
+                                    'string',
+                                    'array',
+                                    'boolean',
                                 ],
-                                'default' => [
-                                    'type' => [
-                                        'integer',
-                                        'number',
-                                        'string',
-                                        'array',
-                                        'boolean',
-                                    ],
-                                ],
-                                'options' => [
-                                    'anyOf' => [
-                                        [
-                                            'description' => __(
-                                                'List of field options',
-                                                'forms-bridge'
-                                            ),
-                                            'type' => 'array',
-                                            'items' => [
-                                                'type' => 'object',
-                                                'properties' => [
-                                                    'label' => [
-                                                        'type' => 'string',
-                                                    ],
-                                                    'value' => [
-                                                        'type' => 'string',
-                                                    ],
-                                                ],
-                                                'required' => [
-                                                    'value',
-                                                    'label',
-                                                ],
-                                            ],
-                                            'uniqueItems' => true,
-                                        ],
-                                        [
-                                            'description' => __(
-                                                'How to get options from the addon API',
-                                                'forms-bridge'
-                                            ),
+                            ],
+                            'options' => [
+                                'anyOf' => [
+                                    [
+                                        'description' => __(
+                                            'List of field options',
+                                            'forms-bridge'
+                                        ),
+                                        'type' => 'array',
+                                        'items' => [
                                             'type' => 'object',
                                             'properties' => [
-                                                'endpoint' => [
-                                                    'description' => __(
-                                                        'Endpoint to get values from',
-                                                        'forms-bridge'
-                                                    ),
+                                                'label' => [
                                                     'type' => 'string',
                                                 ],
-                                                'finger' => [
-                                                    'description' => __(
-                                                        'Fingers to get values from the endpoint response',
-                                                        'forms-bridge'
-                                                    ),
-                                                    'oneOf' => [
-                                                        [
-                                                            'type' => 'object',
-                                                            'properties' => [
-                                                                'value' => [
-                                                                    'type' =>
-                                                                        'string',
-                                                                ],
-                                                                'label' => [
-                                                                    'type' =>
-                                                                        'string',
-                                                                ],
+                                                'value' => [
+                                                    'type' => 'string',
+                                                ],
+                                            ],
+                                            'required' => ['value', 'label'],
+                                        ],
+                                        'uniqueItems' => true,
+                                    ],
+                                    [
+                                        'description' => __(
+                                            'How to get options from the addon API',
+                                            'forms-bridge'
+                                        ),
+                                        'type' => 'object',
+                                        'properties' => [
+                                            'endpoint' => [
+                                                'description' => __(
+                                                    'Endpoint to get values from',
+                                                    'forms-bridge'
+                                                ),
+                                                'type' => 'string',
+                                            ],
+                                            'finger' => [
+                                                'description' => __(
+                                                    'Fingers to get values from the endpoint response',
+                                                    'forms-bridge'
+                                                ),
+                                                'oneOf' => [
+                                                    [
+                                                        'type' => 'object',
+                                                        'properties' => [
+                                                            'value' => [
+                                                                'type' =>
+                                                                    'string',
                                                             ],
-                                                            'required' => [
-                                                                'value',
+                                                            'label' => [
+                                                                'type' =>
+                                                                    'string',
                                                             ],
                                                         ],
-                                                        [
-                                                            'type' => 'string',
-                                                        ],
+                                                        'required' => ['value'],
+                                                    ],
+                                                    [
+                                                        'type' => 'string',
                                                     ],
                                                 ],
                                             ],
-                                            'required' => [
-                                                'endpoint',
-                                                'finger',
-                                            ],
                                         ],
+                                        'required' => ['endpoint', 'finger'],
                                     ],
                                 ],
-                                'enum' => [
-                                    'type' => 'array',
-                                    'items' => [
+                            ],
+                            'enum' => [
+                                'type' => 'array',
+                                'items' => [
+                                    'type' => ['integer', 'number', 'string'],
+                                ],
+                                'uniqueItems' => true,
+                            ],
+                            'min' => ['type' => 'integer'],
+                            'max' => ['type' => 'integer'],
+                            'multiple' => ['type' => 'boolean'],
+                        ],
+                        'required' => ['ref', 'name', 'type'],
+                        'additionalProperties' => true,
+                    ],
+                ],
+                'form' => [
+                    'description' => __(
+                        'Form title and fields settings',
+                        'forms-bridge'
+                    ),
+                    'type' => 'object',
+                    'properties' => [
+                        'title' => [
+                            'type' => 'string',
+                            'default' => '',
+                        ],
+                        'fields' => [
+                            'type' => 'array',
+                            'items' => [
+                                'type' => 'object',
+                                'properties' => [
+                                    'name' => [
+                                        'type' => 'string',
+                                        'minLength' => 1,
+                                    ],
+                                    'label' => ['type' => 'string'],
+                                    'type' => [
+                                        'type' => 'string',
+                                        'enum' => [
+                                            'text',
+                                            'textarea',
+                                            'number',
+                                            'url',
+                                            'email',
+                                            'select',
+                                            'date',
+                                            'hidden',
+                                            'file',
+                                        ],
+                                    ],
+                                    'required' => ['type' => 'boolean'],
+                                    'options' => [
+                                        'type' => 'array',
+                                        'items' => [
+                                            'type' => 'object',
+                                            'properties' => [
+                                                'value' => [
+                                                    'type' => [
+                                                        'integer',
+                                                        'number',
+                                                        'string',
+                                                        'boolean',
+                                                    ],
+                                                ],
+                                                'label' => [
+                                                    'type' => 'string',
+                                                ],
+                                            ],
+                                            'required' => ['value', 'label'],
+                                        ],
+                                    ],
+                                    'value' => [
                                         'type' => [
                                             'integer',
                                             'number',
                                             'string',
+                                            // 'boolean',
+                                            // 'object',
+                                            'array',
+                                            // 'null',
                                         ],
                                     ],
-                                    'uniqueItems' => true,
+                                    'is_file' => ['type' => 'boolean'],
+                                    'is_multi' => ['type' => 'boolean'],
+                                    'filetypes' => ['type' => 'string'],
+                                    'min' => ['type' => 'number'],
+                                    'max' => ['type' => 'number'],
+                                    'step' => ['type' => 'number'],
+                                    'format' => ['type' => 'string'],
                                 ],
-                                'min' => ['type' => 'integer'],
-                                'max' => ['type' => 'integer'],
-                                'multiple' => ['type' => 'boolean'],
+                                'required' => ['name', 'type'],
                             ],
-                            'required' => ['ref', 'name', 'type'],
-                            'additionalProperties' => true,
                         ],
                     ],
-                    'form' => [
-                        'description' => __(
-                            'Form title and fields settings',
-                            'forms-bridge'
-                        ),
-                        'type' => 'object',
-                        'properties' => [
-                            'title' => [
-                                'type' => 'string',
-                                'default' => '',
-                            ],
-                            'fields' => [
-                                'type' => 'array',
-                                'items' => [
-                                    'type' => 'object',
-                                    'properties' => [
-                                        'name' => [
-                                            'type' => 'string',
-                                            'minLength' => 1,
-                                        ],
-                                        'label' => ['type' => 'string'],
-                                        'type' => [
-                                            'type' => 'string',
-                                            'enum' => [
-                                                'text',
-                                                'textarea',
-                                                'number',
-                                                'url',
-                                                'email',
-                                                'options',
-                                                'date',
-                                                'hidden',
-                                            ],
-                                        ],
-                                        'required' => ['type' => 'boolean'],
-                                        'options' => [
-                                            'type' => 'array',
-                                            'items' => [
-                                                'type' => 'object',
-                                                'properties' => [
-                                                    'value' => [
-                                                        'type' => [
-                                                            'integer',
-                                                            'number',
-                                                            'string',
-                                                            'boolean',
-                                                        ],
-                                                    ],
-                                                    'label' => [
-                                                        'type' => 'string',
-                                                    ],
-                                                ],
-                                                'required' => [
-                                                    'value',
-                                                    'label',
-                                                ],
-                                            ],
-                                        ],
-                                        'value' => [
-                                            'type' => [
-                                                'integer',
-                                                'number',
-                                                'string',
-                                                // 'boolean',
-                                                // 'object',
-                                                'array',
-                                                // 'null',
-                                            ],
-                                        ],
-                                        'is_file' => ['type' => 'boolean'],
-                                        'is_multi' => ['type' => 'boolean'],
-                                        'filetypes' => ['type' => 'string'],
-                                        'min' => ['type' => 'number'],
-                                        'max' => ['type' => 'number'],
-                                        'step' => ['type' => 'number'],
-                                        'format' => ['type' => 'string'],
-                                    ],
-                                    'required' => ['name', 'type'],
-                                ],
-                            ],
-                        ],
-                        'required' => ['title', 'fields'],
-                        'additionalProperties' => false,
-                    ],
-                    'bridge' => self::child_schema_to_template($bridge_schema),
-                    'backend' => self::child_schema_to_template(
-                        $backend_schema
-                    ),
-                    'credential' => self::child_schema_to_template(
-                        $credential_schema
-                    ),
+                    'required' => ['title', 'fields'],
+                    'additionalProperties' => false,
                 ],
-                'additionalProperties' => false,
-                'required' => [
-                    'name',
-                    'title',
-                    'integrations',
-                    'fields',
-                    'form',
-                    'backend',
-                    'bridge',
-                ],
+                'bridge' => self::child_schema_to_template($bridge_schema),
+                'backend' => self::child_schema_to_template($backend_schema),
+                'credential' => self::child_schema_to_template(
+                    $credential_schema
+                ),
             ],
-            $addon
-        );
+            'additionalProperties' => false,
+            'required' => [
+                'name',
+                'title',
+                'integrations',
+                'fields',
+                'form',
+                'backend',
+                'bridge',
+            ],
+        ];
+
+        if (!$addon) {
+            return $schema;
+        }
+
+        return apply_filters('forms_bridge_template_schema', $schema, $addon);
     }
 
     /**
@@ -392,27 +380,27 @@ class Form_Bridge_Template
                         'ref' => '#form',
                         'name' => 'id',
                         'label' => __('Form ID', 'forms-bridge'),
-                        'type' => 'string',
+                        'type' => 'text',
                     ],
                     [
                         'ref' => '#form',
                         'name' => 'title',
                         'label' => __('Form title', 'forms-bridge'),
-                        'type' => 'string',
+                        'type' => 'text',
                         'required' => true,
                     ],
                     [
                         'ref' => '#backend',
                         'name' => 'name',
                         'label' => __('Name', 'forms-bridge'),
-                        'type' => 'string',
+                        'type' => 'text',
                         'required' => true,
                     ],
                     [
                         'ref' => '#backend',
                         'name' => 'base_url',
                         'label' => __('Base URL', 'forms-bridge'),
-                        'type' => 'string',
+                        'type' => 'url',
                         'required' => true,
                         'default' => 'https://',
                         'format' => 'uri',
@@ -421,7 +409,7 @@ class Form_Bridge_Template
                         'ref' => '#bridge',
                         'name' => 'name',
                         'label' => __('Bridge name', 'forms-bridge'),
-                        'type' => 'string',
+                        'type' => 'text',
                         'required' => true,
                         'minLength' => 1,
                     ],
@@ -429,7 +417,7 @@ class Form_Bridge_Template
                         'ref' => '#bridge',
                         'name' => 'endpoint',
                         'label' => __('Endpoint', 'forms-bridge'),
-                        'type' => 'string',
+                        'type' => 'text',
                         'required' => true,
                         'default' => '',
                     ],
@@ -532,8 +520,6 @@ class Form_Bridge_Template
 
         if ($this->is_valid) {
             $this->id = $this->addon . '-' . $data['name'];
-        } else {
-            $a = 1;
         }
     }
 

@@ -91,6 +91,13 @@ export default function SettingsProvider({ children }) {
     };
   }, [state]);
 
+  useEffect(() => {
+    if (window.__wpfbInvalidated === true) {
+      submit(state);
+      window.__wpfbInvalidated = false;
+    }
+  }, [state]);
+
   const patch = useCallback(
     (partial) => setState({ ...state, ...partial }),
     [state]
@@ -111,8 +118,9 @@ export default function SettingsProvider({ children }) {
         setError(__("Settings submission error", "forms-bridge"));
         return { success: false };
       })
-      .then((result) => {
-        if (result.success) return fetch();
+      .then((state) => {
+        initialState.current = state;
+        setState(state);
       })
       .finally(() => setLoading(false));
   }).current;

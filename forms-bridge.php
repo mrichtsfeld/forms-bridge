@@ -53,10 +53,13 @@ require_once 'includes/class-menu.php';
 require_once 'includes/class-form-bridge.php';
 require_once 'includes/class-form-bridge-template.php';
 require_once 'includes/class-job.php';
-require_once 'includes/class-credential.php';
-require_once 'includes/class-oauth-credential.php';
 require_once 'includes/class-integration.php';
 require_once 'includes/class-addon.php';
+
+// Credentials
+require_once 'includes/class-credential.php';
+require_once 'includes/class-oauth-credential.php';
+require_once 'includes/class-rpc-credential.php';
 
 // Post types
 require_once 'post_types/job.php';
@@ -274,12 +277,7 @@ class Forms_Bridge extends Base_Plugin
         }
 
         foreach ($bridges as $bridge) {
-            if (!$bridge->is_valid) {
-                Logger::log(
-                    'Skip submission for invalid bridge ' . $bridge->name
-                );
-                continue;
-            } elseif (!$bridge->enabled) {
+            if (!$bridge->enabled) {
                 Logger::log(
                     'Skip submission for disabled bridge ' . $bridge->name
                 );

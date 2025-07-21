@@ -15,77 +15,49 @@ class Oauth_Credential extends Credential
 
     public static function schema($addon = null)
     {
-        return apply_filters(
-            'forms_bridge_credential_schema',
-            [
-                '$schema' => 'http://json-schema.org/draft-04/schema#',
-                'title' => 'credential-schema',
-                'type' => 'object',
-                'properties' => [
-                    'name' => [
-                        'name' => __('Name', 'forms-bridge'),
-                        'description' => __(
-                            'Unique name of the credential',
-                            'forms-bridge'
-                        ),
-                        'type' => 'string',
-                        'minLength' => 1,
-                    ],
-                    'client_id' => [
-                        'type' => 'string',
-                        'minLength' => 1,
-                    ],
-                    'client_secret' => [
-                        'type' => 'string',
-                        'minLength' => 1,
-                    ],
-                    'scope' => [
-                        'type' => 'string',
-                        'minLength' => 1,
-                    ],
-                    'access_token' => [
-                        'type' => 'string',
-                        'default' => '',
-                        'public' => false,
-                    ],
-                    'expires_at' => [
-                        'type' => 'integer',
-                        'default' => 0,
-                        'public' => false,
-                    ],
-                    'refresh_token' => [
-                        'type' => 'string',
-                        'default' => '',
-                        'public' => false,
-                    ],
-                    'refresh_token_expires_at' => [
-                        'type' => 'integer',
-                        'default' => 0,
-                        'public' => false,
-                    ],
-                    'is_valid' => [
-                        'description' => __(
-                            'Validation result of the credential setting',
-                            'forms-bridge'
-                        ),
-                        'type' => 'boolean',
-                        'default' => false,
-                    ],
-                ],
-                'required' => [
-                    'name',
-                    'client_id',
-                    'client_secret',
-                    'scope',
-                    'access_token',
-                    'refresh_token',
-                    'expires_at',
-                    'is_valid',
-                ],
-                'additionalProperties' => false,
+        $schema = parent::schema();
+
+        $schema['title'] = 'oauth-credential';
+
+        $schema['properties']['schema']['enum'] = ['Bearer'];
+        $schema['properties']['schema']['value'] = 'Bearer';
+
+        $schema['properties']['realm']['name'] = 'scope';
+
+        $schema['properties'] = array_merge($schema['properties'], [
+            'access_token' => [
+                'type' => 'string',
+                'default' => '',
+                'public' => false,
             ],
-            $addon
-        );
+            'expires_at' => [
+                'type' => 'integer',
+                'default' => 0,
+                'public' => false,
+            ],
+            'refresh_token' => [
+                'type' => 'string',
+                'default' => '',
+                'public' => false,
+            ],
+            'refresh_token_expires_at' => [
+                'type' => 'integer',
+                'default' => 0,
+                'public' => false,
+            ],
+        ]);
+
+        $schema['requires'] = array_merge($schema['required'], [
+            'access_token',
+            'refresh_token',
+            'expires_at',
+        ]);
+
+        if (!$addon) {
+            return $schema;
+        }
+
+        return apply_filters('forms_bridge_credential_schema', $schema, $addon);
     }
 
     public function __get($name)
@@ -99,6 +71,11 @@ class Oauth_Credential extends Credential
             default:
                 return parent::__get($name);
         }
+    }
+
+    public function login()
+    {
+        return $this->get_access_token();
     }
 
     protected function oauth_service_url($verb)
@@ -262,7 +239,7 @@ class Oauth_Credential extends Credential
 
         $query = http_build_query([
             'client_id' => $this->client_id,
-            'scope' => $this->scope,
+            'scope' => $this->realm,
             'response_type' => 'code',
             'redirect_uri' => $this->redirect_uri(),
             'access_type' => 'offline',

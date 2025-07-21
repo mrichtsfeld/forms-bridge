@@ -22,10 +22,10 @@ function Field({ data, error }) {
           error={error}
         />
       );
-    case "options":
+    case "select":
       if (!Array.isArray(data.options)) return null;
       return (
-        <OptionsField
+        <SelectField
           required={!!data.required}
           name={data.name}
           value={data.value}
@@ -34,10 +34,11 @@ function Field({ data, error }) {
           multiple={!!data.is_multi}
         />
       );
-    case "string":
+    case "text":
     default:
       return (
         <TextField
+          type={data.type}
           required={!!data.required}
           name={data.name}
           value={data.value}
@@ -63,7 +64,7 @@ function CheckboxField({ name, value, onChange }) {
   );
 }
 
-function TextField({ name, value, onChange, required, error }) {
+function TextField({ type, name, value, onChange, required, error }) {
   const constraints = {};
   if (required) constraints.required = true;
 
@@ -75,7 +76,7 @@ function TextField({ name, value, onChange, required, error }) {
   return (
     <>
       <input
-        type="text"
+        type={type}
         name={name}
         value={value || ""}
         onChange={({ target }) => onChange(target.value)}
@@ -136,7 +137,7 @@ function NumberField({
   );
 }
 
-function OptionsField({
+function SelectField({
   name,
   value,
   onChange,

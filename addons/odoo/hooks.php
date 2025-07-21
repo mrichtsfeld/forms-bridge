@@ -17,7 +17,6 @@ add_filter(
                 'Name of the database credential',
                 'forms-bridge'
             ),
-            'default' => '',
         ];
 
         $schema['required'][] = 'credential';
@@ -27,6 +26,7 @@ add_filter(
             'Name of the target DB model',
             'forms-bridge'
         );
+        $schema['properties']['endpoint']['default'] = 'res.partner';
 
         $schema['properties']['method']['description'] = __(
             'RPC call method name',
@@ -41,6 +41,7 @@ add_filter(
             'unlink',
             'fields_get',
         ];
+        $schema['properties']['method']['default'] = 'create';
 
         return $schema;
     },
@@ -62,40 +63,46 @@ add_filter(
                         'ref' => '#credential',
                         'name' => 'name',
                         'label' => __('Name', 'forms-bridge'),
-                        'type' => 'string',
+                        'type' => 'text',
                         'required' => true,
                     ],
                     [
                         'ref' => '#credential',
-                        'name' => 'database',
+                        'name' => 'schema',
+                        'type' => 'text',
+                        'value' => 'RPC',
+                    ],
+                    [
+                        'ref' => '#credential',
+                        'name' => 'realm',
                         'label' => __('Database', 'forms-bridge'),
                         'description' => __(
                             'Name of the database',
                             'forms-bridge'
                         ),
-                        'type' => 'string',
+                        'type' => 'text',
                         'required' => true,
                     ],
                     [
                         'ref' => '#credential',
-                        'name' => 'user',
+                        'name' => 'client_id',
                         'label' => __('User', 'forms-bridge'),
                         'description' => __(
                             'User name or email',
                             'forms-bridge'
                         ),
-                        'type' => 'string',
+                        'type' => 'text',
                         'required' => true,
                     ],
                     [
                         'ref' => '#credential',
-                        'name' => 'password',
+                        'name' => 'client_secret',
                         'description' => __(
                             'User password or API token',
                             'forms-bridge'
                         ),
                         'label' => __('Password', 'forms-bridge'),
-                        'type' => 'string',
+                        'type' => 'text',
                         'required' => true,
                     ],
                     [
@@ -107,14 +114,14 @@ add_filter(
                         'ref' => '#bridge',
                         'name' => 'endpoint',
                         'label' => __('Model', 'forms-bridge'),
-                        'type' => 'string',
+                        'type' => 'text',
                         'required' => true,
                     ],
                     [
                         'ref' => '#bridge',
                         'name' => 'method',
                         'label' => __('Method', 'forms-bridge'),
-                        'type' => 'string',
+                        'type' => 'text',
                         'value' => 'create',
                         'required' => true,
                     ],
@@ -137,9 +144,9 @@ add_filter(
                 ],
                 'credential' => [
                     'name' => '',
-                    'database' => '',
-                    'user' => '',
-                    'password' => '',
+                    'realm' => '',
+                    'client_id' => '',
+                    'client_secret' => '',
                 ],
             ],
             $defaults,
@@ -157,12 +164,10 @@ add_filter(
             return $data;
         }
 
-        $get_index = fn($name) => array_search(
-            $name,
+        $index = array_search(
+            'tag_ids',
             array_column($data['bridge']['custom_fields'], 'name')
         );
-
-        $index = $get_index('tag_ids');
 
         if ($index !== false) {
             $field = $data['bridge']['custom_fields'][$index];
@@ -184,7 +189,10 @@ add_filter(
             array_splice($data['bridge']['custom_fields'], $index, 1);
         }
 
-        $index = $get_index('categ_ids');
+        $index = array_search(
+            'categ_ids',
+            array_column($data['bridge']['custom_fields'], 'name')
+        );
 
         if ($index !== false) {
             $field = $data['bridge']['custom_fields'][$index];
@@ -206,7 +214,10 @@ add_filter(
             array_splice($data['bridge']['custom_fields'], $index, 1);
         }
 
-        $index = $get_index('list_ids');
+        $index = array_search(
+            'list_ids',
+            array_column($data['bridge']['custom_fields'], 'name')
+        );
 
         if ($index !== false) {
             $field = $data['bridge']['custom_fields'][$index];
@@ -246,24 +257,7 @@ add_filter(
             'forms-bridge'
         );
 
-        $schema['properties']['database'] = [
-            'type' => 'string',
-            'minLength' => 1,
-        ];
-
-        $schema['properties']['user'] = [
-            'type' => 'string',
-            'minLength' => 1,
-        ];
-
-        $schema['properties']['password'] = [
-            'type' => 'string',
-            'minLength' => 1,
-        ];
-
-        $schema['required'][] = 'database';
-        $schema['required'][] = 'user';
-        $schema['required'][] = 'password';
+        $schema['properties']['realm']['name'] = __('Database', 'forms-bridge');
 
         return $schema;
     },

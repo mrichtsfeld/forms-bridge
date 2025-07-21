@@ -1,4 +1,4 @@
-import { prependEmptyOption } from "../../lib/utils";
+import { isset } from "../../lib/utils";
 import FieldWrapper from "../FieldWrapper";
 import MultiSelectControl from "../MultiSelectControl";
 import Toggle from "../Toggle";
@@ -430,7 +430,7 @@ function ObjectSchemaEditor({ schema, setSchema }) {
       <Button
         size="compact"
         variant="secondary"
-        disabled={Object.prototype.hasOwnProperty.call(schema.properties, "")}
+        disabled={isset(schema.properties, "")}
         onClick={() => {
           setSchema({
             ...schema,

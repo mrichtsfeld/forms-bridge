@@ -479,6 +479,7 @@ class REST_Settings_Controller extends Base_Controller
                     'callback' => static function ($request) use ($addon) {
                         return self::oauth_redirect($addon, $request);
                     },
+                    'permission_callback' => '__return_true',
                 ]
             );
         }

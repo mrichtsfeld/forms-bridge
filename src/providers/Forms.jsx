@@ -1,5 +1,7 @@
 import { useLoading } from "./Loading";
 import { useError } from "./Error";
+import { useIntegrations } from "../hooks/useGeneral";
+import diff from "../lib/diff";
 
 const { createContext, useContext, useState, useEffect, useRef } = wp.element;
 const apiFetch = wp.apiFetch;
@@ -8,9 +10,30 @@ const { __ } = wp.i18n;
 const FormsContext = createContext([]);
 
 export default function FormsProvider({ children }) {
-  const [, setLoading] = useLoading();
+  const [loading, setLoading] = useLoading();
   const [, setError] = useError();
   const [forms, setForms] = useState([]);
+
+  const invalid = useRef(false);
+  const [integrations] = useIntegrations();
+
+  const integrationsRef = useRef(integrations);
+  useEffect(() => {
+    if (!invalid.current) {
+      invalid.current = diff(integrations, integrationsRef.current);
+    }
+
+    return () => {
+      integrationsRef.current = integrations;
+    };
+  }, [integrations]);
+
+  useEffect(() => {
+    if (loading) return;
+    if (invalid.current) {
+      fetch().then(() => (invalid.current = false));
+    }
+  }, [loading, integrations]);
 
   const fetch = useRef(() => {
     setLoading(true);
@@ -23,9 +46,9 @@ export default function FormsProvider({ children }) {
       .finally(() => setLoading(false));
   }).current;
 
-  useEffect(() => {
-    fetch();
-  }, []);
+  // useEffect(() => {
+  //   fetch();
+  // }, []);
 
   return (
     <FormsContext.Provider value={[forms, fetch]}>

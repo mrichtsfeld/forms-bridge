@@ -3,7 +3,7 @@ import { useForms } from "../../providers/Forms";
 import MutationLayers from "./Layers";
 
 const { Button, Modal } = wp.components;
-const { useState, useMemo, useEffect, useRef } = wp.element;
+const { useState, useMemo, useEffect, useRef, useCallback } = wp.element;
 const { __ } = wp.i18n;
 
 const CSS = `.components-modal__frame.no-scrollable .components-modal__content {
@@ -23,6 +23,10 @@ export default function Mutations({
   const [open, setOpen] = useState(false);
 
   const [state, setState] = useState(mappers);
+
+  useEffect(() => {
+    setState(mappers);
+  }, [mappers]);
 
   const [forms] = useForms();
   const form = useMemo(() => {
@@ -64,11 +68,11 @@ export default function Mutations({
     setState(state);
   }).current;
 
-  const onClose = () => {
+  const onClose = useCallback(() => {
     const mappers = state.filter(({ from, to, cast }) => from && to && cast);
     setMappers(mappers);
     setOpen(false);
-  };
+  }, [state]);
 
   const style = useRef(document.createElement("style"));
   useEffect(() => {

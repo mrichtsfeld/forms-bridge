@@ -2,7 +2,7 @@
 import CustomFieldsTable from "./Table";
 
 const { Button, Modal } = wp.components;
-const { useState, useEffect, useRef } = wp.element;
+const { useState, useEffect, useRef, useCallback } = wp.element;
 const { __ } = wp.i18n;
 
 const CSS = `.components-modal__frame.no-scrollable .components-modal__content {
@@ -17,7 +17,12 @@ export default function CustomFields({ customFields, setCustomFields }) {
 
   const [state, setState] = useState(customFields);
 
+  useEffect(() => {
+    setState(customFields);
+  }, [customFields]);
+
   const handleSetState = useRef((customFields) => {
+    console.log({ customFields });
     const state = customFields.map(({ name, value }) => {
       return { name, value };
     });
@@ -25,11 +30,11 @@ export default function CustomFields({ customFields, setCustomFields }) {
     setState(state);
   }).current;
 
-  const onClose = () => {
+  const onClose = useCallback(() => {
     const customFields = state.filter(({ name, value }) => name && value);
     setCustomFields(customFields);
     setOpen(false);
-  };
+  }, [state]);
 
   const style = useRef(document.createElement("style"));
   useEffect(() => {

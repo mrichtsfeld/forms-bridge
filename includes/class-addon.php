@@ -93,7 +93,7 @@ class Addon extends Singleton
                     'default' => [],
                 ],
             ],
-            'required' => ['title', 'bridges'],
+            'required' => ['title', 'bridges', 'credentials'],
         ];
     }
 
@@ -104,12 +104,11 @@ class Addon extends Singleton
      */
     protected static function defaults()
     {
-        $defaults = [
+        return [
             'title' => static::title,
             'bridges' => [],
+            'credentials' => [],
         ];
-
-        return $defaults;
     }
 
     /**
@@ -297,13 +296,14 @@ class Addon extends Singleton
         $uniques = [];
         $sanitized = [];
 
+        $schema = FBAPI::get_bridge_schema(static::name);
         foreach ($bridges as $bridge) {
             $bridge['name'] = trim($bridge['name']);
             if (in_array($bridge['name'], $uniques, true)) {
                 continue;
             }
 
-            $bridge = static::sanitize_bridge($bridge, $setting_data);
+            $bridge = static::sanitize_bridge($bridge, $schema);
             if ($bridge) {
                 $sanitized[] = $bridge;
                 $uniques[] = $bridge['name'];
@@ -317,11 +317,11 @@ class Addon extends Singleton
      * Common bridge sanitization method.
      *
      * @param array $bridge Bridge data.
-     * @param array $setting_data Addon setting data.
+     * @param array $schema Bridge schema.
      *
      * @return array
      */
-    protected static function sanitize_bridge($bridge, $setting_data)
+    protected static function sanitize_bridge($bridge, $schema)
     {
         $backends = Http_Store::setting('general')->backends ?: [];
 
@@ -362,10 +362,15 @@ class Addon extends Singleton
             $bridge['mutations'][$i] = $bridge['mutations'][$i] ?? [];
         }
 
-        $check_credentials = isset($setting_data['credentials']);
+        static $credentials;
+        $check_credentials = in_array('credential', $schema['required'], true);
         if ($check_credentials) {
-            foreach ($setting_data['credentials'] as $candidate) {
-                if ($candidate['name'] === $bridge['credential']) {
+            if ($credentials === null) {
+                $credentials = FBAPI::get_credentials(static::name);
+            }
+
+            foreach ($credentials as $candidate) {
+                if ($candidate->name === $bridge['credential']) {
                     $credential = $candidate;
                 }
             }
@@ -425,13 +430,40 @@ class Addon extends Singleton
     protected static function sanitize_credential($credential, $schema)
     {
         $is_valid = true;
+
+        $schema = $credential['schema'] ?? 'Basic';
+
+        if (empty($credential['client_id'])) {
+            $credential['client_id'] = '';
+            $is_valid = false;
+        }
+
+        if (empty($credential['client_secret'])) {
+            $credential['client_secret'] = '';
+            $is_valid = false;
+        }
+
+        if (
+            in_array($schema, ['RPC', 'Digest', 'Bearer'], true) &&
+            empty($credential['realm'])
+        ) {
+            $credential['realm'] = '';
+            $is_valid = false;
+        }
+
         foreach ($credential as $prop => $val) {
             if ($prop === 'is_valid') {
                 continue;
             }
 
             $required = $schema['properties'][$prop]['required'] ?? false;
-            $is_valid = $is_valid && (!$required || $val);
+            $default = $schema['properties'][$prop]['default'] ?? null;
+
+            if (!$required && !$val && $default) {
+                $credential[$prop] = $default;
+            }
+
+            $is_valid = $is_valid && (!$required || $val || $default);
         }
 
         $credential['is_valid'] = $is_valid;
@@ -599,16 +631,20 @@ class Addon extends Singleton
                 ]);
             });
 
-            $store::use_setter(static::name, static function ($data) {
-                if (!is_array($data)) {
-                    return $data;
-                }
+            $store::use_setter(
+                static::name,
+                static function ($data) {
+                    if (!is_array($data)) {
+                        return $data;
+                    }
 
-                unset($data['templates']);
-                unset($data['jobs']);
+                    unset($data['templates']);
+                    unset($data['jobs']);
 
-                return static::sanitize_setting($data);
-            });
+                    return static::sanitize_setting($data);
+                },
+                9
+            );
         });
 
         $this->enabled = true;

@@ -32,17 +32,18 @@ export default function RemoveButton({
 
   return (
     <Button
-      isDestructive={isDestructive}
       variant={variant}
       onClick={doubleClickAlert}
       onDoubleClick={(ev) => {
         onClick(ev);
         clearTimeout(alertDelay.current);
+        window.__wpfbInvalidated = !!isDestructive;
       }}
       style={style}
       showTooltip={true}
       label={label || __("Double click to remove", "forms-bridge")}
       disabled={disabled}
+      isDestructive
       __next40pxDefaultSize
     >
       {(icon && (

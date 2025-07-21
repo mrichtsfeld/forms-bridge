@@ -19,6 +19,20 @@ return [
             'value' => '/v3/companies',
         ],
         [
+            'ref' => '#bridge/custom_fields[]',
+            'name' => 'owner',
+            'label' => __('Owner email', 'forms-bridge'),
+            'description' => __(
+                'Email of the owner user of the company contact',
+                'forms-bridge'
+            ),
+            'type' => 'select',
+            'options' => [
+                'endpoint' => '/v3/organization/invited/users',
+                'finger' => 'users[].email',
+            ],
+        ],
+        [
             'ref' => '#form',
             'name' => 'title',
             'default' => __('Companies', 'forms-bridge'),
@@ -36,7 +50,7 @@ return [
             [
                 'name' => 'country',
                 'label' => __('Country', 'forms-bridge'),
-                'type' => 'options',
+                'type' => 'select',
                 'options' => array_map(function ($country) {
                     return [
                         'value' => $country,
@@ -135,6 +149,11 @@ return [
                 [
                     'from' => 'industry',
                     'to' => 'attributes.industry',
+                    'cast' => 'string',
+                ],
+                [
+                    'from' => '?owner',
+                    'to' => 'attributes.owner',
                     'cast' => 'string',
                 ],
             ],

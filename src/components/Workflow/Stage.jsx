@@ -147,7 +147,12 @@ export default function WorkflowStage({
             <div style={{ width: "max-content", flexShrink: 0 }}>
               <ToggleControl
                 __nextHasNoMarginBottom
-                checked={showMutations && !skipped && mode === "payload"}
+                checked={
+                  showMutations &&
+                  !skipped &&
+                  mode === "payload" &&
+                  validMappers.length
+                }
                 label={__("Show mutations", "forms-bridge")}
                 onChange={() => setShowMutations(!showMutations)}
                 disabled={

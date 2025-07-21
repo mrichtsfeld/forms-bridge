@@ -11,6 +11,7 @@ import {
 import { useForms } from "./Forms";
 import { useJobConfig } from "./Jobs";
 import diff from "../lib/diff";
+import { isset } from "../lib/utils";
 
 const apiFetch = wp.apiFetch;
 const { createContext, useContext, useState, useEffect, useMemo, useCallback } =
@@ -57,9 +58,7 @@ function applyJob(payload, job) {
 
   job.output.forEach((output) => {
     const requires = Array.isArray(output.requires)
-      ? output.requires.filter(
-          (name) => !Object.prototype.hasOwnProperty.call(payload, name)
-        )
+      ? output.requires.filter((name) => !isset(payload, name))
       : [];
 
     if (requires.length) {
@@ -67,7 +66,7 @@ function applyJob(payload, job) {
     }
 
     const input = job.input.find((field) => field.name === output.name);
-    const exists = Object.prototype.hasOwnProperty.call(payload, output.name);
+    const exists = isset(payload, output.name);
 
     let addToPayload = false;
     if (input) {
@@ -92,7 +91,7 @@ function applyJob(payload, job) {
   });
 
   job.input.forEach((input) => {
-    const exists = Object.prototype.hasOwnProperty.call(payload, input.name);
+    const exists = isset(payload, input.name);
     const output = job.output.find((field) => field.name === input.name);
 
     if (!output && exists) {

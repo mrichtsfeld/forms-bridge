@@ -33,14 +33,21 @@ add_filter(
                         'default' => 'https://{dc}.api.mailchimp.com',
                     ],
                     [
-                        'ref' => '#backend/authentication',
+                        'ref' => '#credential',
+                        'name' => 'schema',
+                        'label' => __('Authentication schema', 'forms-bridge'),
+                        'type' => 'string',
+                        'value' => 'Basic',
+                    ],
+                    [
+                        'ref' => '#credential',
                         'name' => 'client_id',
                         'label' => __('Client ID', 'forms-bridge'),
                         'type' => 'string',
                         'value' => 'forms-bridge',
                     ],
                     [
-                        'ref' => '#backend/authentication',
+                        'ref' => '#credential',
                         'name' => 'client_secret',
                         'label' => __('API key', 'forms-bridge'),
                         'description' => __(
@@ -88,10 +95,11 @@ add_filter(
                 'backend' => [
                     'name' => 'Mailchimp API',
                     'base_url' => 'https://{dc}.api.mailchimp.com',
-                    'authentication' => [
-                        'type' => 'Basic',
-                        'client_id' => 'forms-bridge',
-                    ],
+                ],
+                'credential' => [
+                    'schema' => 'Basic',
+                    'client_id' => '',
+                    'client_secret' => '',
                 ],
             ],
             $defaults,
@@ -109,12 +117,10 @@ add_filter(
             return $data;
         }
 
-        $get_index = fn($name) => array_search(
-            $name,
+        $index = array_search(
+            'skip_merge_validation',
             array_column($data['bridge']['custom_fields'], 'name')
         );
-
-        $index = $get_index('skip_merge_validation');
 
         if ($index !== false) {
             if (!empty($data['bridge']['custom_field'][$index])) {
@@ -134,7 +140,10 @@ add_filter(
             array_splice($data['bridge']['custom_fields'], $index, 1);
         }
 
-        $index = $get_index('list_id');
+        $index = array_search(
+            'list_id',
+            array_column($data['bridge']['custom_fields'], 'name')
+        );
 
         if ($index !== false) {
             $list_id = $data['bridge']['custom_fields'][$index]['value'];
@@ -147,7 +156,10 @@ add_filter(
             array_splice($data['bridge']['custom_fields'], $index, 1);
         }
 
-        $index = $get_index('tags');
+        $index = array_search(
+            'tags',
+            array_column($data['bridge']['custom_fields'], 'name')
+        );
 
         if ($index !== false) {
             $field = &$data['bridge']['custom_fields'][$index];
@@ -166,6 +178,26 @@ add_filter(
         }
 
         return $data;
+    },
+    10,
+    2
+);
+
+add_filter(
+    'forms_bridge_credential_schema',
+    function ($schema, $addon) {
+        if ($addon == 'mailchimp') {
+            unset($schema['properties']['realm']);
+
+            $schema['properties']['schema']['value'] = 'Basic';
+            $schema['properties']['client_id']['value'] = 'forms-bridge';
+            $schema['properties']['client_secret']['name'] = __(
+                'API key',
+                'forms-bridge'
+            );
+        }
+
+        return $schema;
     },
     10,
     2

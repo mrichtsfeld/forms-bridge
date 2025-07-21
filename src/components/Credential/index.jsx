@@ -2,7 +2,7 @@
 import RemoveButton from "../RemoveButton";
 import { useCredentials } from "../../hooks/useAddon";
 import CredentialFields, { INTERNALS } from "./Fields";
-import { downloadJson } from "../../lib/utils";
+import { downloadJson, isset } from "../../lib/utils";
 import { useLoading } from "../../providers/Loading";
 import { useError } from "../../providers/Error";
 import diff from "../../lib/diff";
@@ -44,6 +44,8 @@ export default function Credential({
 
   const validate = useCallback(
     (data) => {
+      const realmRequired = ["RPC", "Bearer", "Digest"].includes(data.schema);
+
       return !!Object.keys(schema.properties)
         .filter((prop) => !INTERNALS.includes(prop))
         .reduce((isValid, prop) => {
@@ -51,7 +53,10 @@ export default function Credential({
 
           const value = data[prop];
 
-          if (!schema.required.includes(prop)) {
+          if (
+            !schema.required.includes(prop) &&
+            !(realmRequired && prop !== "realm")
+          ) {
             return isValid;
           }
 
@@ -61,7 +66,9 @@ export default function Credential({
               new RegExp(schema.properties[prop].pattern).test(value);
           }
 
-          return isValid && value;
+          return (
+            isValid && (value || isset(schema.properties[prop], "default"))
+          );
         }, true);
     },
     [schema]
@@ -85,13 +92,14 @@ export default function Credential({
     clearTimeout(timeout.current);
 
     if (isValid) {
-      timeout.current = setTimeout(
-        () => {
+      if (data.name !== state.name) {
+        timeout.current = setTimeout(() => {
           name.current = state.name;
-          update({ ...state, is_valid: isValid });
-        },
-        (data.name !== state.name && 1e3) || 0
-      );
+          update({ ...state, is_valid: true });
+        }, 1e3);
+      } else if (diff(data, state)) {
+        update({ ...state, is_valid: true });
+      }
     }
   }, [isValid, state]);
 
@@ -104,14 +112,14 @@ export default function Credential({
 
   const reloaded = useRef(false);
   useEffect(() => {
-    if (reloaded.current && diff(data, state)) {
+    if (!loading && reloaded.current && diff(data, state)) {
       setState(data);
     }
 
     return () => {
       reloaded.current = loading;
     };
-  }, [loading]);
+  }, [loading, data, state]);
 
   const exportConfig = () => {
     const credentialData = { ...data };

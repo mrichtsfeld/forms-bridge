@@ -14,13 +14,6 @@ if (!defined('ABSPATH')) {
 class Finan_Coop_Form_Bridge extends Form_Bridge
 {
     /**
-     * Handles bridge class API name.
-     *
-     * @var string
-     */
-    protected $api = 'financoop';
-
-    /**
      * Returns json as static bridge content type.
      *
      * @return string.
@@ -50,6 +43,27 @@ class Finan_Coop_Form_Bridge extends Form_Bridge
                 'params' => $payload,
             ];
         }
+
+        $credential = $this->credential();
+        if (!$credential) {
+            return new WP_Error('unauthorized');
+        }
+
+        add_filter(
+            'http_bridge_backend_headers',
+            function ($headers, $backend) use ($credential) {
+                if ($backend->name === $this->data['backend']) {
+                    [$database, $username, $password] = $credential->login();
+                    $headers['X-Odoo-Db'] = $database;
+                    $headers['X-Odoo-Username'] = $username;
+                    $headers['X-Odoo-Api-Key'] = $password;
+                }
+
+                return $headers;
+            },
+            10,
+            2
+        );
 
         $response = parent::submit($payload);
 

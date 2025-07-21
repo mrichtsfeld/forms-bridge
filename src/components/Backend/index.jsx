@@ -43,13 +43,14 @@ export default function Backend({ update, remove, data, copy }) {
     clearTimeout(timeout.current);
 
     if (isValid) {
-      timeout.current = setTimeout(
-        () => {
+      if (state.name !== data.name) {
+        timeout.current = setTimeout(() => {
           name.current = state.name;
           update(state);
-        },
-        (data.name !== state.name && 1e3) || 0
-      );
+        }, 1e3);
+      } else if (diff(state, data)) {
+        update(state);
+      }
     }
   }, [isValid, state]);
 
@@ -62,14 +63,14 @@ export default function Backend({ update, remove, data, copy }) {
 
   const reloaded = useRef(false);
   useEffect(() => {
-    if (reloaded.current && diff(data, state)) {
+    if (!loading && reloaded.current && diff(data, state)) {
       setState(data);
     }
 
     return () => {
       reloaded.current = loading;
     };
-  }, [loading]);
+  }, [loading, data, state]);
 
   function exportConfig() {
     const backendData = { ...data };

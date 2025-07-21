@@ -5,6 +5,20 @@ if (!defined('ABSPATH')) {
 }
 
 add_filter(
+    'forms_bridge_bridge_schema',
+    function ($schema, $addon) {
+        if ($addon !== 'brevo') {
+            return $schema;
+        }
+
+        unset($schema['properties']['credential']);
+        return $schema;
+    },
+    10,
+    2
+);
+
+add_filter(
     'forms_bridge_template_defaults',
     function ($defaults, $addon, $schema) {
         if ($addon !== 'brevo') {
@@ -36,7 +50,7 @@ add_filter(
                             'Get it from your <a href="https://app.brevo.com/settings/keys/api" target="_blank">account</a>',
                             'forms-bridge'
                         ),
-                        'type' => 'string',
+                        'type' => 'text',
                         'required' => true,
                     ],
                     [
@@ -72,7 +86,10 @@ add_filter(
             array_column($data['bridge']['custom_fields'], 'name')
         );
 
-        $index = $get_index('listIds');
+        $index = array_search(
+            'listIds',
+            array_column($data['bridge']['custom_fields'], 'name')
+        );
 
         if ($index !== false) {
             $field = $data['bridge']['custom_fields'][$index];
@@ -93,7 +110,10 @@ add_filter(
             array_splice($data['bridge']['custom_fields'], $index, 1);
         }
 
-        $index = $get_index('includeListIds');
+        $index = array_search(
+            'includeListIds',
+            array_column($data['bridge']['custom_fields'], 'name')
+        );
 
         if ($index !== false) {
             $field = $data['bridge']['custom_fields'][$index];
@@ -114,7 +134,10 @@ add_filter(
             array_splice($data['bridge']['custom_fields'], $index, 1);
         }
 
-        $index = $get_index('redirectionUrl');
+        $index = array_search(
+            'redirectionUrl',
+            array_column($data['bridge']['custom_fields'], 'name')
+        );
 
         if ($index !== false) {
             $field = &$data['bridge']['custom_fields'][$index];

@@ -17,32 +17,6 @@ return [
             'name' => 'title',
             'value' => __('Woo Checkout', 'forms-bridge'),
         ],
-        [
-            'ref' => '#backend/authentication',
-            'name' => 'type',
-            'value' => 'Basic',
-            'type' => 'string',
-        ],
-        [
-            'ref' => '#backend/authentication',
-            'name' => 'client_id',
-            'label' => __('Username', 'forms-bridge'),
-            'type' => 'string',
-            'required' => true,
-        ],
-        [
-            'ref' => '#backend/authentication',
-            'name' => 'client_secret',
-            'label' => __('Password', 'forms-bridge'),
-            'type' => 'string',
-            'required' => true,
-        ],
-        [
-            'ref' => '#bridge',
-            'name' => 'endpoint',
-            'label' => __('Filepath', 'forms-bridge'),
-            'pattern' => '.+\.csv$',
-        ],
     ],
     'bridge' => [
         'mutations' => [

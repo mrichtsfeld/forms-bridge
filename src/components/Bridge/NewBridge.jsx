@@ -1,10 +1,9 @@
 // source
 import WorkflowProvider from "../../providers/Workflow";
 import { useError } from "../../providers/Error";
-import useBridgeNames from "../../hooks/useBridgeNames";
 import BridgeFields, { INTERNALS } from "./Fields";
 import Templates from "../Templates";
-import { uploadJson } from "../../lib/utils";
+import { isset, uploadJson } from "../../lib/utils";
 import useResponsive from "../../hooks/useResponsive";
 import BridgePayload from "./Payload";
 import useBackends from "../../hooks/useBackends";
@@ -14,13 +13,12 @@ const { Button } = wp.components;
 const { useState, useEffect, useMemo, useRef, useCallback } = wp.element;
 const { __ } = wp.i18n;
 
-export default function NewBridge({ add, schema }) {
+export default function NewBridge({ add, schema, names }) {
   const isResponsive = useResponsive();
 
   const [data, setData] = useState({});
 
   const [error, setError] = useError();
-  const names = useBridgeNames();
 
   const nameConflict = useMemo(() => {
     if (!data.name) return false;
@@ -38,6 +36,8 @@ export default function NewBridge({ add, schema }) {
   }, [backends, data.backend]);
 
   const create = () => {
+    window.__wpfbInvalidated = true;
+
     setData({});
     add({ ...data, name: data.name.trim() });
   };
@@ -59,7 +59,9 @@ export default function NewBridge({ add, schema }) {
             isValid = new RegExp(schema.properties[prop].pattern).test(value);
           }
 
-          return isValid && value;
+          return (
+            isValid && (value || isset(schema.properties[prop], "default"))
+          );
         }, true);
     },
     [schema]

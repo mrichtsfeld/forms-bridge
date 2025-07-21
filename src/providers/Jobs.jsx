@@ -2,7 +2,7 @@
 import { useLoading } from "../providers/Loading";
 import { useError } from "../providers/Error";
 import useTab from "../hooks/useTab";
-import useFlushStore from "../hooks/useFlushStore";
+import { useSettings } from "./Settings";
 
 const apiFetch = wp.apiFetch;
 const { createContext, useContext, useEffect, useState, useCallback } =
@@ -25,7 +25,7 @@ export default function JobsProvider({ children }) {
   const [job, setJob] = useState(null);
   const [config, setConfig] = useState(null);
 
-  const flushStore = useFlushStore();
+  const [settings, submitSettings] = useSettings();
 
   useEffect(() => {
     setJob(null);
@@ -95,7 +95,7 @@ export default function JobsProvider({ children }) {
           } else {
             setConfig(null);
             setJob(null);
-            flushStore();
+            submitSettings(settings);
           }
         })
         .catch((err) => {
@@ -104,7 +104,7 @@ export default function JobsProvider({ children }) {
         })
         .finally(() => setLoading(false));
     },
-    [addon]
+    [addon, settings]
   );
 
   return (

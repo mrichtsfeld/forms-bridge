@@ -6,32 +6,6 @@
       "ref": "#form",
       "name": "title",
       "default": "Contacts"
-    },
-    {
-      "ref": "#backend/authentication",
-      "name": "type",
-      "value": "Basic",
-      "type": "string"
-    },
-    {
-      "ref": "#backend/authentication",
-      "name": "client_id",
-      "label": "Username",
-      "type": "string",
-      "required": true
-    },
-    {
-      "ref": "#backend/authentication",
-      "name": "client_secret",
-      "label": "Password",
-      "type": "string",
-      "required": true
-    },
-    {
-      "ref": "#bridge",
-      "name": "endpoint",
-      "label": "Filepath",
-      "pattern": ".+\\.csv$"
     }
   ],
   "form": {

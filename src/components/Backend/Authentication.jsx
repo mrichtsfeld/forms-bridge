@@ -16,14 +16,14 @@ export default function BackendAuthentication({ data = {}, setData }) {
       <FieldWrapper>
         <SelectControl
           label={__("Authentication", "forms-bridge")}
-          value={data.type || ""}
-          onChange={(type) => setData({ ...data, type })}
+          value={data.schema || ""}
+          onChange={(schema) => setData({ ...data, schema })}
           options={OPTIONS}
           __next40pxDefaultSize
           __nextHasNoMarginBottom
         />
       </FieldWrapper>
-      {data.type && data.type !== "Bearer" && (
+      {data.schema && data.schema !== "Bearer" && (
         <FieldWrapper>
           <TextControl
             label={__("Client ID", "forms-bridge")}
@@ -35,7 +35,7 @@ export default function BackendAuthentication({ data = {}, setData }) {
           />
         </FieldWrapper>
       )}
-      {data.type && (
+      {data.schema && (
         <FieldWrapper>
           <TextControl
             label={__("Client secret", "forms-bridge")}

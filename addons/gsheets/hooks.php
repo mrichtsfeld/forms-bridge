@@ -69,12 +69,12 @@ add_filter(
                     ],
                     [
                         'ref' => '#credential',
-                        'name' => 'scope',
+                        'name' => 'realm',
                         'label' => __('Scope', 'forms-bridge'),
-                        'description' => __(
-                            'See <a href="https://www.zoho.com/accounts/protocol/oauth/scope.html">the documentation</a> for more information',
-                            'forms-bridge'
-                        ),
+                        // 'description' => __(
+                        //     'See <a href="https://www.zoho.com/accounts/protocol/oauth/scope.html">the documentation</a> for more information',
+                        //     'forms-bridge'
+                        // ),
                         'type' => 'string',
                         'value' =>
                             'https://www.googleapis.com/auth/drive.readonly https://www.googleapis.com/auth/spreadsheets',
@@ -136,7 +136,7 @@ add_filter(
                     'name' => '',
                     'client_id' => '',
                     'client_secret' => '',
-                    'scope' =>
+                    'realm' =>
                         'https://www.googleapis.com/auth/drive.readonly https://www.googleapis.com/auth/spreadsheets',
                 ],
             ],
@@ -177,7 +177,7 @@ add_filter(
             'forms-bridge'
         );
 
-        $schema['properties']['scope']['default'] =
+        $schema['properties']['realm']['default'] =
             'https://www.googleapis.com/auth/drive.readonly https://www.googleapis.com/auth/spreadsheets';
 
         return $schema;

@@ -27,7 +27,7 @@ return [
             'ref' => '#bridge/custom_fields[]',
             'name' => 'product_id',
             'label' => __('Product', 'forms-bridge'),
-            'type' => 'options',
+            'type' => 'select',
             'options' => [
                 'endpoint' => 'product.product',
                 'finger' => [

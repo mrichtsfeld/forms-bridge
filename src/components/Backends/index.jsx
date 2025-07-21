@@ -75,6 +75,7 @@ export default function Backends({ backends, setBackends }) {
       copy.name += "-copy";
     }
 
+    window.__wpfbInvalidated = true;
     setBackends(backends.concat(copy));
   };
 

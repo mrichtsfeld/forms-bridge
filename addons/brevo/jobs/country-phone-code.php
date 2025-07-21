@@ -25,7 +25,7 @@ return [
         ],
         [
             'name' => 'countryCode',
-            'schema' => ['type' => 'string'],
+            'schema' => ['type' => 'integer'],
         ],
     ],
 ];
@@ -45,12 +45,12 @@ function forms_bridge_brevo_country_phone_prefix($payload)
 
     if (isset($forms_bridge_iso2_countries[$country])) {
         $country = $forms_bridge_iso2_countries[$country];
-    } elseif (isset($forms_bridge_iso3_countries)) {
+    } elseif (isset($forms_bridge_iso3_countries[$country])) {
         $country = $forms_bridge_iso3_countries[$country];
     }
 
     if (isset($countries[$country])) {
-        $payload['countryCode'] = $countries[$country];
+        $payload['countryCode'] = (int) $countries[$country];
     } else {
         $payload['countryCode'] = null;
     }

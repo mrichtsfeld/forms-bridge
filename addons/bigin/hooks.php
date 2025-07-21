@@ -49,13 +49,13 @@ add_filter(
                 'fields' => [
                     [
                         'ref' => '#credential',
-                        'name' => 'scope',
+                        'name' => 'realm',
                         'value' =>
                             'BiginCRM.modules.ALL,BiginCRM.settings.layouts.READ,BiginCRM.users.READ',
                     ],
                 ],
                 'credential' => [
-                    'scope' =>
+                    'realm' =>
                         'BiginCRM.modules.ALL,BiginCRM.settings.layouts.READ,BiginCRM.users.READ',
                 ],
             ],
@@ -80,7 +80,7 @@ add_filter(
             'zoho'
         );
 
-        $schema['properties']['scope']['default'] =
+        $schema['properties']['realm']['default'] =
             'ZohoBigin.modules.ALL,ZohoBigin.settings.layouts.READ,ZohoBigin.users.READ';
         return $schema;
     },
