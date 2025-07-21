@@ -729,10 +729,10 @@ class Integration extends BaseIntegration
                     }
 
                     break;
-                case 'options':
+                case 'select':
                     $args[] = $field['options'] ?? [];
                     $args[] = $field['is_multi'] ?? false;
-                    $wp_fields[strval($id)] = $this->options_field(...$args);
+                    $wp_fields[strval($id)] = $this->select_field(...$args);
                     break;
                 case 'file':
                     $args[] = $field['filetypes'] ?? '';
@@ -905,7 +905,7 @@ class Integration extends BaseIntegration
     }
 
     /**
-     * Returns a valid multi options field data, as a select field if is single, as
+     * Returns a valid multi select field data, as a select field if is single, as
      * a checkbox field if is multiple.
      *
      * @param int $id Field id.
@@ -916,7 +916,7 @@ class Integration extends BaseIntegration
      *
      * @return array
      */
-    private function options_field($id, $name, $required, $options, $is_multi)
+    private function select_field($id, $name, $required, $options, $is_multi)
     {
         $choices = array_map(function ($opt) {
             return [

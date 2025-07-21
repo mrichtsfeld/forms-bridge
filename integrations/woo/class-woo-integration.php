@@ -564,7 +564,7 @@ class Integration extends BaseIntegration
                 $field_type = 'boolean';
                 break;
             case 'array':
-                $field_type = 'options';
+                $field_type = 'select';
                 break;
             default:
                 $field_type = $schema['type'];

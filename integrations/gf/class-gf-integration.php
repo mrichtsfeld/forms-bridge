@@ -734,10 +734,10 @@ class Integration extends BaseIntegration
                 case 'email':
                     $gf_fields[] = $this->email_field(...$args);
                     break;
-                case 'options':
+                case 'select':
                     $args[] = $field['options'] ?? [];
                     $args[] = $field['is_multi'] ?? false;
-                    $gf_fields[] = $this->options_field(...$args);
+                    $gf_fields[] = $this->select_field(...$args);
                     break;
                 case 'textarea':
                     $gf_fields[] = $this->textarea_field(...$args);
@@ -860,7 +860,7 @@ class Integration extends BaseIntegration
     }
 
     /**
-     * Returns a valid multi options field data, as a select field if is single, as
+     * Returns a valid multi select field data, as a select field if is single, as
      * a checkbox field if is multiple.
      *
      * @param int $id Field id.
@@ -872,7 +872,7 @@ class Integration extends BaseIntegration
      *
      * @return array
      */
-    private function options_field(
+    private function select_field(
         $id,
         $name,
         $label,

@@ -27,10 +27,6 @@ return [
         'endpoint' => 'sale.order',
         'custom_fields' => [
             [
-                'name' => 'lang',
-                'value' => '$locale',
-            ],
-            [
                 'name' => 'state',
                 'value' => 'sale',
             ],

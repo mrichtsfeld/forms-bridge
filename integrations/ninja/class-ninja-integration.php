@@ -682,10 +682,10 @@ class Integration extends BaseIntegration
                     }
 
                     break;
-                case 'options':
+                case 'select':
                     $args[] = $field['options'] ?? [];
                     $args[] = $field['is_multi'] ?? false;
-                    $nf_fields[] = $this->options_field(...$args);
+                    $nf_fields[] = $this->select_field(...$args);
                     break;
                 default:
                     $args = array_merge([$field['type']], $args);
@@ -769,7 +769,7 @@ class Integration extends BaseIntegration
         );
     }
 
-    private function options_field(
+    private function select_field(
         $order,
         $name,
         $label,

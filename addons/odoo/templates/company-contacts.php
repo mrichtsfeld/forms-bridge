@@ -33,12 +33,6 @@ return [
             'contact-company',
             'skip-if-partner-exists',
         ],
-        'custom_fields' => [
-            [
-                'name' => 'contact_lang',
-                'value' => '$locale',
-            ],
-        ],
         'mutations' => [
             [
                 [
@@ -55,7 +49,13 @@ return [
                 ],
             ],
             [],
-            [],
+            [
+                [
+                    'from' => 'country_code',
+                    'to' => 'country_code',
+                    'cast' => 'null',
+                ],
+            ],
             [
                 [
                     'from' => 'contact_name',
@@ -70,11 +70,6 @@ return [
                 [
                     'from' => 'contact_phone',
                     'to' => 'phone',
-                    'cast' => 'string',
-                ],
-                [
-                    'from' => 'contact_lang',
-                    'to' => 'lang',
                     'cast' => 'string',
                 ],
             ],
@@ -116,7 +111,7 @@ return [
             [
                 'label' => __('Country', 'forms-bridge'),
                 'name' => 'country',
-                'type' => 'options',
+                'type' => 'select',
                 'options' => array_map(function ($country_code) {
                     global $forms_bridge_iso2_countries;
                     return [

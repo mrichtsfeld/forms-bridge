@@ -242,7 +242,7 @@ return [
         'mutations' => [
             [
                 [
-                    'from' => 'duration',
+                    'from' => '?duration',
                     'to' => 'duration',
                     'cast' => 'number',
                 ],

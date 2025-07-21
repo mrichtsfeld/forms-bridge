@@ -22,6 +22,7 @@ export default function Integrations() {
         return { name, enabled };
       });
 
+      window.__wpfbInvalidated = true;
       setIntegrations(newIntegrations);
     },
     [integrations]

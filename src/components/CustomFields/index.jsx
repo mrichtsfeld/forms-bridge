@@ -22,7 +22,6 @@ export default function CustomFields({ customFields, setCustomFields }) {
   }, [customFields]);
 
   const handleSetState = useRef((customFields) => {
-    console.log({ customFields });
     const state = customFields.map(({ name, value }) => {
       return { name, value };
     });
@@ -31,7 +30,9 @@ export default function CustomFields({ customFields, setCustomFields }) {
   }).current;
 
   const onClose = useCallback(() => {
-    const customFields = state.filter(({ name, value }) => name && value);
+    const customFields = state.filter(
+      ({ name, value }) => name && value !== ""
+    );
     setCustomFields(customFields);
     setOpen(false);
   }, [state]);

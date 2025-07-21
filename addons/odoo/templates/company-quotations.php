@@ -42,10 +42,6 @@ return [
         'endpoint' => 'sale.order',
         'custom_fields' => [
             [
-                'name' => 'lang',
-                'value' => '$locale',
-            ],
-            [
                 'name' => 'state',
                 'value' => 'draft',
             ],
@@ -94,6 +90,11 @@ return [
                     'from' => 'company-name',
                     'to' => 'name',
                     'cast' => 'string',
+                ],
+                [
+                    'from' => 'country_code',
+                    'to' => 'country_code',
+                    'cast' => 'null',
                 ],
             ],
             [
@@ -167,7 +168,7 @@ return [
             [
                 'label' => __('Country', 'forms-bridge'),
                 'name' => 'country',
-                'type' => 'options',
+                'type' => 'select',
                 'options' => array_map(function ($country_code) {
                     global $forms_bridge_iso2_countries;
                     return [

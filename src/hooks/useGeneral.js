@@ -39,5 +39,11 @@ export function useIntegrations() {
 
 export function useDebug() {
   const [general, setGeneral] = useGeneral();
-  return [general.debug, (debug) => setGeneral({ ...general, debug })];
+  return [
+    general.debug,
+    (debug) => {
+      window.__wpfbInvalidated = true;
+      setGeneral({ ...general, debug });
+    },
+  ];
 }

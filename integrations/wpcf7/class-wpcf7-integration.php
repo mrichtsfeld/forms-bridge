@@ -457,11 +457,7 @@ class Integration extends BaseIntegration
         if (isset($field['value'])) {
             $type = 'hidden';
         } else {
-            if ($field['type'] === 'options') {
-                $type = 'select';
-            } else {
-                $type = sanitize_text_field($field['type']);
-            }
+            $type = sanitize_text_field($field['type']);
 
             if (($field['required'] ?? false) && $type !== 'hidden') {
                 $type .= '*';

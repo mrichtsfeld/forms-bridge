@@ -646,8 +646,10 @@ class Job
                     if (is_array($output_field['requires'] ?? null)) {
                         $requires = array_filter(
                             $output_field['requires'],
-                            fn($name) => array_search($name, $input_fields) !==
-                                false
+                            function ($name) use ($input_fields) {
+                                return array_search($name, $input_fields) ===
+                                    false;
+                            }
                         );
 
                         if (count($requires)) {

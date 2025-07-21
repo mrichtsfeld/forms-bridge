@@ -91,12 +91,12 @@ return [
                     'cast' => 'string',
                 ],
                 [
-                    'from' => 'allday',
+                    'from' => '?allday',
                     'to' => 'allday',
                     'cast' => 'boolean',
                 ],
                 [
-                    'from' => 'duration',
+                    'from' => '?duration',
                     'to' => 'duration',
                     'cast' => 'number',
                 ],
@@ -151,7 +151,7 @@ return [
             [
                 'name' => 'hour',
                 'label' => __('Hour', 'forms-bridge'),
-                'type' => 'options',
+                'type' => 'select',
                 'required' => true,
                 'options' => [
                     [
@@ -255,7 +255,7 @@ return [
             [
                 'name' => 'minute',
                 'label' => __('Minute', 'forms-bridge'),
-                'type' => 'options',
+                'type' => 'select',
                 'required' => true,
                 'options' => [
                     ['label' => '00', 'value' => '00.0'],

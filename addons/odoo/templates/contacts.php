@@ -31,10 +31,6 @@ return [
                 'name' => 'is_company',
                 'value' => '0',
             ],
-            [
-                'name' => 'lang',
-                'value' => '$locale',
-            ],
         ],
         'mutations' => [
             [
@@ -100,7 +96,7 @@ return [
             [
                 'label' => __('Country', 'forms-bridge'),
                 'name' => 'country',
-                'type' => 'options',
+                'type' => 'select',
                 'options' => array_map(function ($country_code) {
                     global $forms_bridge_iso2_countries;
                     return [

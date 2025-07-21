@@ -730,6 +730,26 @@ class Form_Bridge_Template
                 );
             }
 
+            if (!isset($field['value'])) {
+                continue;
+            }
+
+            if (is_array($field['value']) && empty($field['type'])) {
+                continue;
+            }
+
+            if ($field['value'] === '') {
+                continue;
+            }
+
+            if ($field['type'] === 'boolean') {
+                if (!isset($field['value'][0])) {
+                    continue;
+                } else {
+                    $field['value'] = '1';
+                }
+            }
+
             // Inherit form field structure if field ref points to form fields
             if ($field['ref'] === '#form/fields[]') {
                 $index = array_search(
@@ -737,44 +757,18 @@ class Form_Bridge_Template
                     array_column($template['form']['fields'], 'name')
                 );
 
-                if ($index === false) {
-                    return new WP_Error(
-                        'invalid_template',
-                        sprintf(
-                            __(
-                                /* translators: %s: Field name */
-                                'Template does not include form field `%s`',
-                                'forms-bridge'
-                            ),
-                            $field['name']
-                        )
-                    );
-                }
-
                 $form_field = $template['form']['fields'][$index];
                 $field['index'] = $index;
                 $field['value'] = array_merge($form_field, [
                     'value' => $field['value'],
                 ]);
-
-                if (
-                    $field['type'] === 'boolean' &&
-                    isset($field['value']['value']) &&
-                    is_array($field['value']['value'])
-                ) {
-                    $field['value']['value'] =
-                        ($field['value']['value'][0] ?? false) === '1';
-                }
-            }
-
-            // Format backend headers' values
-            if (
+            } elseif (
                 $field['ref'] === '#backend/headers[]' ||
                 $field['ref'] === '#bridge/custom_fields[]'
             ) {
                 $field['value'] = [
                     'name' => $field['name'],
-                    'value' => $field['value'],
+                    'value' => $field['value'] ?? null,
                 ];
             }
 
@@ -931,7 +925,9 @@ class Form_Bridge_Template
 
             if (!$bridge_created) {
                 if ($create_form) {
-                    $integration_instance->remove_form($data['form_id']);
+                    $integration_instance->remove_form(
+                        $data['bridge']['form_id']
+                    );
                 }
 
                 if ($create_backend) {

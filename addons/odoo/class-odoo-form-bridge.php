@@ -28,6 +28,8 @@ class Odoo_Form_Bridge extends Form_Bridge
      */
     private static $session;
 
+    private static $request;
+
     /**
      * RPC payload decorator.
      *
@@ -98,7 +100,13 @@ class Odoo_Form_Bridge extends Form_Bridge
                 $res['data']['error']['data']
             );
 
-            $error->add_data(['response' => $res]);
+            $error_data = ['response' => $res];
+            if (self::$request) {
+                $error_data['request'] = self::$request;
+            }
+
+            $error->add_data($error_data);
+            return $error;
         }
 
         $data = $res['data'];
@@ -106,7 +114,12 @@ class Odoo_Form_Bridge extends Form_Bridge
         if (empty($data['result'])) {
             $error = new WP_Error('not_found');
 
-            $error->add_data(['response' => $res]);
+            $error_data = ['response' => $res];
+            if (self::$request) {
+                $error_data['request'] = self::$request;
+            }
+
+            $error->add_data($error_data);
             return $error;
         }
 
@@ -177,6 +190,16 @@ class Odoo_Form_Bridge extends Form_Bridge
                 'The bridge does not have a valid backend'
             );
         }
+
+        add_filter(
+            'http_bridge_request',
+            static function ($request) {
+                self::$request = $request;
+                return $request;
+            },
+            10,
+            1
+        );
 
         $login = $credential->login();
         $session = self::rpc_login($login, $backend);

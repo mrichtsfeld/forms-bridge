@@ -18,6 +18,8 @@ export default function Addons() {
         return { name, enabled };
       });
 
+      window.__wpfbInvalidated = true;
+      window.__wpfbReload = true;
       setAddons(newAddons);
     },
     [addons]

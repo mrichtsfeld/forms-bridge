@@ -38,6 +38,7 @@ export default function SettingsProvider({ children }) {
   const initialState = useRef(null);
   const [state, setState] = useState(null);
   const currentState = useRef(state);
+  currentState.current = state;
 
   const fetch = useRef(() => {
     setLoading(true);
@@ -47,6 +48,7 @@ export default function SettingsProvider({ children }) {
     })
       .then((state) => {
         initialState.current = state;
+        currentState.current = state;
         setState(state);
       })
       .catch(() => setError(__("Settings loading error", "forms-bridge")))
@@ -70,30 +72,17 @@ export default function SettingsProvider({ children }) {
   }, []);
 
   useEffect(() => {
-    if (currentState.current) {
-      let flush = diff(
-        currentState.current.general.integrations,
-        state.general.integrations
-      );
-
-      flush =
-        flush ||
-        diff(currentState.current.general.addons, state.general.addons);
-
-      flush =
-        flush || currentState.current.general.debug !== state.general.debug;
-
-      if (flush) submit(state);
-    }
-
-    return () => {
-      currentState.current = state;
-    };
-  }, [state]);
-
-  useEffect(() => {
     if (window.__wpfbInvalidated === true) {
-      submit(state);
+      submit(state)
+        .then(() => {
+          if (window.__wpfbReload) {
+            window.location.reload();
+          }
+        })
+        .finally(() => {
+          window.__wpfbReload = false;
+        });
+
       window.__wpfbInvalidated = false;
     }
   }, [state]);
@@ -120,6 +109,7 @@ export default function SettingsProvider({ children }) {
       })
       .then((state) => {
         initialState.current = state;
+        currentState.current = state;
         setState(state);
       })
       .finally(() => setLoading(false));

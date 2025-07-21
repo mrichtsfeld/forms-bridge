@@ -125,9 +125,10 @@ export default function TemplateWizard({ integration, onSubmit }) {
   }, [wired]);
 
   useEffect(() => {
-    if (group !== "backend" || !wired || !authorized || fetched || loading)
-      return;
-    fetchOptions(backend, data.credential);
+    if (fetched || fetchError || loading) return;
+    if (group === "backend" && wired && authorized) {
+      fetchOptions(backend, data.credential);
+    }
   }, [loading, group, wired, authorized, fetched, backend, data.credential]);
 
   const submit = useCallback(() => {
