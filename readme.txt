@@ -4,7 +4,7 @@ Tags: odoo, dolibarr, holded, forms, woocommerce
 Donate link: https://buymeacoffee.com/codeccoop
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
-Stable Tag: 3.5.4
+Stable Tag: 4.0.0
 Tested up to: 6.8
 
 Bridge your WordPress forms without code, add custom fields, set up a workflow and make your data flow to your backend.
@@ -38,6 +38,7 @@ Forms Bridge has core support for generic REST API bridges and addons for:
 * [Google Sheets](https://workspace.google.com/products/sheets/)
 * [Holded](https://developers.holded.com/reference/api-key)
 * [Listmonk](https://listmonk.app/docs/apis/apis/)
+* [Nextcloud](https://docs.nextcloud.com/server/20/user_manual/en/files/access_webdav.html)
 * [Mailchimp](https://mailchimp.com/developer/)
 * [Odoo](https://www.odoo.com/)
 * [Zoho CRM](https://www.zoho.com/developer/rest-api.html)
