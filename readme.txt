@@ -11,7 +11,7 @@ Bridge your WordPress forms without code, add custom fields, set up a workflow a
 
 == Bridges ==
 
-Think of a bridge as a pipeline through which your form submissions data flows to your backend or service. In the middle, you can add custom fields to the form submissions or use workflow jobs to mutate the data before it is sent over the wire. It doesn't matter if you want to connect your forms to an ERP, a CRM or a mailing marketing platform. If it has an API it can be bridged!
+Think of a bridge as a pipeline through which your form submissions data flows to your backend or service. In the middle, you can add custom fields to the form submissions, use mappers to rename and mutate your form responses, or use workflow jobs to process the data before it is sent over the wire. It doesn't matter if you want to connect your forms to an ERP, a CRM or a mailing marketing platform, if it has an API it can be bridged!
 
 == Integrations ==
 
@@ -52,8 +52,17 @@ To register a new backend you only have to set 3 fields:
 1. A unique name for the new connection
 2. The URL of your backend
 3. An array of HTTP headers with connection metadata and credentials
+4. Optional, an HTTP authentication credential (Basic, Bearer, etc)
 
 Once registered, you can reuse your backend connection on your form bridges.
+
+== Custom fields ==
+
+Custom fields are data that will be added the bridge payload. Use them to store private data you don’t want to place on your public forms, like user emails, or config values, like product IDs or lead tags.
+
+== Mappers ==
+
+Use mappers to rename your form fields to fit the backend API schema.
 
 == Templates ==
 
@@ -80,6 +89,16 @@ Browse the plugin's documentation on [formsbridge.codeccoop.org](https://formsbr
 6. Debug console
 
 == Changelog ==
+
+= 4.0.0 =
+* feat: Workflow jobs editor
+* feat: Nextcloud integration
+* fix: Edge case of mutations and fingers
+* feat: HTTP authentication
+* feat: Admin UI refactor
+* feat: Wipe config button
+* feat: Settings API refactor
+* feat: Zoho and Google Oauth web based credentials
 
 = 3.5.4 =
 * fix: use conditional mappers on stringify attachments
