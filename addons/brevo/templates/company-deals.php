@@ -22,7 +22,7 @@ return [
             'ref' => '#bridge/custom_fields[]',
             'name' => 'deal_name',
             'label' => __('Deal name', 'forms-bridge'),
-            'type' => 'string',
+            'type' => 'text',
             'required' => true,
         ],
         [
@@ -33,14 +33,32 @@ return [
                 'Email of the owner user of the deal',
                 'forms-bridge'
             ),
-            'type' => 'string',
+            'type' => 'select',
+            'options' => [
+                'endpoint' => '/v3/organization/invited/users',
+                'finger' => 'users[].email',
+            ],
             'required' => true,
         ],
         [
             'ref' => '#bridge/custom_fields[]',
             'name' => 'pipeline',
             'label' => __('Pipeline', 'forms-bridge'),
-            'type' => 'string',
+            'type' => 'select',
+            'options' => [
+                'endpoint' => '/v3/crm/pipeline/details/all',
+                'finger' => [
+                    'value' => '[].pipeline',
+                    'label' => '[].pipeline_name',
+                ],
+            ],
+        ],
+        [
+            'ref' => '#bridge/custom_fields[]',
+            'name' => 'amount',
+            'label' => __('Deal amount', 'forms-bridge'),
+            'type' => 'number',
+            'min' => 0,
         ],
         [
             'ref' => '#form',
@@ -60,7 +78,7 @@ return [
             [
                 'name' => 'country',
                 'label' => __('Country', 'forms-bridge'),
-                'type' => 'options',
+                'type' => 'select',
                 'options' => array_map(function ($country) {
                     return [
                         'value' => $country,
@@ -152,6 +170,11 @@ return [
                     'to' => 'attributes.industry',
                     'cast' => 'string',
                 ],
+                [
+                    'from' => 'deal_owner',
+                    'to' => 'attributes.owner',
+                    'cast' => 'copy',
+                ],
             ],
             [
                 [
@@ -160,7 +183,7 @@ return [
                     'cast' => 'string',
                 ],
                 [
-                    'from' => 'pipeline',
+                    'from' => '?pipeline',
                     'to' => 'attributes.pipeline',
                     'cast' => 'string',
                 ],
@@ -169,12 +192,17 @@ return [
                     'to' => 'attributes.deal_owner',
                     'cast' => 'string',
                 ],
+                [
+                    'from' => '?amount',
+                    'to' => 'attributes.amount',
+                    'cast' => 'number',
+                ],
             ],
         ],
         'workflow' => [
-            'brevo-linked-contact',
-            'brevo-country-phone-code',
-            'brevo-linked-company',
+            'linked-contact',
+            'country-phone-code',
+            'linked-company',
         ],
     ],
     'backend' => [

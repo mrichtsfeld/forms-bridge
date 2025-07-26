@@ -1,5 +1,5 @@
 // source
-import useDebug from "../../hooks/useDebug";
+import { useDebug } from "../../hooks/useGeneral";
 import useLogs from "../../hooks/useLogs";
 
 const { useEffect, useRef } = wp.element;
@@ -50,7 +50,7 @@ export default function Logger() {
             <div
               ref={console}
               style={{
-                height: "300px",
+                height: "500px",
                 width: "100%",
                 background: "black",
                 color: error ? "red" : "white",

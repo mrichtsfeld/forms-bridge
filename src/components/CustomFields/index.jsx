@@ -2,7 +2,7 @@
 import CustomFieldsTable from "./Table";
 
 const { Button, Modal } = wp.components;
-const { useState, useMemo, useEffect, useRef } = wp.element;
+const { useState, useEffect, useRef, useCallback } = wp.element;
 const { __ } = wp.i18n;
 
 const CSS = `.components-modal__frame.no-scrollable .components-modal__content {
@@ -15,13 +15,27 @@ const CSS = `.components-modal__frame.no-scrollable .components-modal__content {
 export default function CustomFields({ customFields, setCustomFields }) {
   const [open, setOpen] = useState(false);
 
-  const handleSetCustomFields = (customFields) => {
-    customFields.forEach((constant) => {
-      delete constant.index;
+  const [state, setState] = useState(customFields);
+
+  useEffect(() => {
+    setState(customFields);
+  }, [customFields]);
+
+  const handleSetState = useRef((customFields) => {
+    const state = customFields.map(({ name, value }) => {
+      return { name, value };
     });
 
+    setState(state);
+  }).current;
+
+  const onClose = useCallback(() => {
+    const customFields = state.filter(
+      ({ name, value }) => name && value !== ""
+    );
     setCustomFields(customFields);
-  };
+    setOpen(false);
+  }, [state]);
 
   const style = useRef(document.createElement("style"));
   useEffect(() => {
@@ -36,19 +50,16 @@ export default function CustomFields({ customFields, setCustomFields }) {
   return (
     <>
       <Button
-        variant={
-          customFields.filter((m) => m.name).length ? "primary" : "secondary"
-        }
+        variant="secondary"
         onClick={() => setOpen(true)}
-        style={{ width: "150px", justifyContent: "center" }}
         __next40pxDefaultSize
       >
-        {__("Custom fields", "forms-bridge")}
+        {__("Custom fields", "forms-bridge")} ({customFields.length})
       </Button>
       {open && (
         <Modal
           title={__("Custom fields", "forms-bridge")}
-          onRequestClose={() => setOpen(false)}
+          onRequestClose={onClose}
           className="no-scrollable"
         >
           <p
@@ -77,11 +88,11 @@ export default function CustomFields({ customFields, setCustomFields }) {
             }}
           >
             <CustomFieldsTable
-              customFields={customFields.map((constant, index) => ({
+              customFields={state.map((constant, index) => ({
                 ...constant,
                 index,
               }))}
-              setCustomFields={handleSetCustomFields}
+              setCustomFields={handleSetState}
             />
           </div>
         </Modal>

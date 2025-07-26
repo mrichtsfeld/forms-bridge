@@ -4,40 +4,6 @@ if (!defined('ABSPATH')) {
     exit();
 }
 
-add_filter(
-    'forms_bridge_template_data',
-    function ($data, $template_name) {
-        if ($template_name === 'bigin-deals') {
-            $index = array_search(
-                'Tag',
-                array_column($data['bridge']['custom_fields'], 'name')
-            );
-
-            if ($index !== false) {
-                $field = &$data['bridge']['custom_fields'][$index];
-
-                if (!empty($field['value'])) {
-                    $tags = array_filter(
-                        array_map('trim', explode(',', strval($field['value'])))
-                    );
-                    for ($i = 0; $i < count($tags); $i++) {
-                        $data['bridge']['custom_fields'][] = [
-                            'name' => "Tag[{$i}].name",
-                            'value' => $tags[$i],
-                        ];
-                    }
-                }
-
-                array_splice($data['bridge']['custom_fields'], $index, 1);
-            }
-        }
-
-        return $data;
-    },
-    10,
-    2
-);
-
 return [
     'title' => __('Deals', 'forms-bridge'),
     'description' => __(
@@ -58,22 +24,28 @@ return [
                 'Email of the owner user of the deal',
                 'forms-bridge'
             ),
-            'type' => 'string',
+            'type' => 'select',
+            'options' => [
+                'endpoint' => '/bigin/v2/users',
+                'finger' => [
+                    'value' => 'users[].id',
+                    'label' => 'users[].full_name',
+                ],
+            ],
             'required' => true,
         ],
         [
             'ref' => '#bridge/custom_fields[]',
             'name' => 'Deal_Name',
             'label' => __('Deal name', 'forms-bridge'),
-            'description' => __('Name of the pipeline deals', 'forms-bridge'),
-            'type' => 'string',
+            'type' => 'text',
             'required' => true,
         ],
         [
             'ref' => '#bridge/custom_fields[]',
             'name' => 'Stage',
             'label' => __('Deal stage', 'forms-bridge'),
-            'type' => 'options',
+            'type' => 'select',
             'options' => [
                 [
                     'value' => 'Qualification',
@@ -106,7 +78,7 @@ return [
             'ref' => '#bridge/custom_fields[]',
             'name' => 'Sub_Pipeline',
             'label' => __('Pipeline name', 'forms-bridge'),
-            'type' => 'string',
+            'type' => 'text',
             'required' => true,
         ],
         [
@@ -123,7 +95,7 @@ return [
                 'Tag names separated by commas',
                 'forms-bridge'
             ),
-            'type' => 'string',
+            'type' => 'text',
         ],
         [
             'ref' => '#form',
@@ -202,7 +174,7 @@ return [
     ],
     'bridge' => [
         'endpoint' => '/bigin/v2/Pipelines',
-        'workflow' => ['bigin-account-name', 'bigin-contact-name'],
+        'workflow' => ['account-name', 'contact-name'],
         'mutations' => [
             [
                 [

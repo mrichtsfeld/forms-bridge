@@ -51,17 +51,17 @@ return [
         [
             'name' => 'phone',
             'schema' => ['type' => 'string'],
-            'forward' => true,
+            'requires' => ['phone'],
         ],
         [
             'name' => 'mobile',
             'schema' => ['type' => 'string'],
-            'forward' => true,
+            'requires' => ['mobile'],
         ],
         [
             'name' => 'customId',
             'schema' => ['type' => 'string'],
-            'forward' => true,
+            'requires' => ['customId'],
         ],
     ],
 ];

@@ -21,7 +21,7 @@ export default function useLogs({ debug }) {
   useEffect(() => {
     if (!debug) return;
 
-    fetch();
+    setTimeout(fetch, 1e3);
     interval.current = setInterval(() => fetch(), 1e4);
 
     return () => {

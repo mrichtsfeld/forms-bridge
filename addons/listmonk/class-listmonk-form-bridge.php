@@ -11,43 +11,19 @@ if (!defined('ABSPATH')) {
 /**
  * Form bridge implamentation for the REST API protocol.
  */
-class Listmonk_Form_Bridge extends Rest_Form_Bridge
+class Listmonk_Form_Bridge extends Form_Bridge
 {
-    /**
-     * Handles bridge class API name.
-     *
-     * @var string
-     */
-    protected $api = 'listmonk';
-
-    /**
-     * Handles the array of accepted HTTP header names of the bridge API.
-     *
-     * @var array<string>
-     */
-    protected static $api_headers = ['Accept', 'Content-Type', 'Authorization'];
-
-    /**
-     * Gets bridge's default body encoding schema.
-     *
-     * @return string|null
-     */
-    protected function content_type()
-    {
-        return 'application/json';
-    }
-
     /**
      * Performs an http request to backend's REST API.
      *
      * @param array $payload Payload data.
      * @param array $attachments Submission's attached files.
      *
-     * @return array|WP_Error Http request response.
+     * @return array|WP_Error
      */
-    protected function do_submit($payload, $attachments = [])
+    public function submit($payload = [], $attachments = [])
     {
-        $response = parent::do_submit($payload, $attachments);
+        $response = parent::submit($payload, $attachments);
 
         if (is_wp_error($response)) {
             $error_response = $response->get_error_data()['response'] ?? null;
@@ -86,69 +62,5 @@ class Listmonk_Form_Bridge extends Rest_Form_Bridge
         }
 
         return $response;
-    }
-
-    protected function api_schema()
-    {
-        if ($this->endpoint === '/api/subscribers') {
-            return [
-                [
-                    'name' => 'email',
-                    'schema' => ['type' => 'string'],
-                    'required' => true,
-                ],
-                [
-                    'name' => 'name',
-                    'schema' => ['type' => 'string'],
-                ],
-                [
-                    'name' => 'status',
-                    'schema' => ['type' => 'string'],
-                ],
-                [
-                    'name' => 'lists',
-                    'schema' => [
-                        'type' => 'array',
-                        'items' => ['type' => 'number'],
-                    ],
-                ],
-                [
-                    'name' => 'preconfirm_subscriptions',
-                    'schema' => ['type' => 'boolean'],
-                ],
-                [
-                    'name' => 'attribs',
-                    'schema' => [
-                        'type' => 'object',
-                        'properties' => [],
-                    ],
-                ],
-            ];
-        }
-
-        return [];
-    }
-
-    /**
-     * Filter and decoration of default http headers.
-     *
-     * @param array $request HTTP request args.
-     *
-     * @return array
-     */
-    public static function do_filter_request($request)
-    {
-        $headers = &$request['args']['headers'];
-
-        $user = $headers['Api-User'] ?? null;
-        $token = $headers['Token'] ?? null;
-
-        if (empty($user) || empty($token)) {
-            return $request;
-        }
-
-        $headers['Authorization'] = "token {$user}:{$token}";
-
-        return $request;
     }
 }

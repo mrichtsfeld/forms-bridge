@@ -24,7 +24,14 @@ return [
                 'Email of the owner user of the account',
                 'forms-bridge'
             ),
-            'type' => 'string',
+            'type' => 'select',
+            'options' => [
+                'endpoint' => '/bigin/v2/users',
+                'finger' => [
+                    'value' => 'users[].id',
+                    'label' => 'users[].full_name',
+                ],
+            ],
         ],
         [
             'ref' => '#form',
@@ -103,6 +110,6 @@ return [
     ],
     'bridge' => [
         'endpoint' => '/bigin/v2/Contacts/upsert',
-        'workflow' => ['bigin-account-name'],
+        'workflow' => ['account-name'],
     ],
 ];

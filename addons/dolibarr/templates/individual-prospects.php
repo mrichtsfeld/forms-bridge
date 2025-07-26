@@ -21,7 +21,7 @@ return [
             'name' => 'stcomm_id',
             'label' => __('Prospect status', 'forms-bridge'),
             'required' => true,
-            'type' => 'options',
+            'type' => 'select',
             'options' => [
                 [
                     'label' => __('Never contacted', 'forms-bridge'),
@@ -120,9 +120,6 @@ return [
                 ],
             ],
         ],
-        'workflow' => [
-            'dolibarr-skip-if-thirdparty-exists',
-            'dolibarr-next-client-code',
-        ],
+        'workflow' => ['skip-if-thirdparty-exists', 'next-client-code'],
     ],
 ];

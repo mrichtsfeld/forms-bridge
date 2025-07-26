@@ -1,101 +1,64 @@
 // source
+import { useBridges } from "../../hooks/useAddon";
+import useBridgeNames from "../../hooks/useBridgeNames";
 import ApiSchemaProvider from "../../providers/ApiSchema";
-import CopyIcon from "../CopyIcon";
+import { useSchemas } from "../../providers/Schemas";
+import Bridge from "../Bridge";
+import NewBridge from "../Bridge/NewBridge";
+import TabTitle from "../TabTitle";
+import AddIcon from "../icons/Add";
 
 const { TabPanel } = wp.components;
-const { useState, useEffect, useRef } = wp.element;
+const { useEffect, useMemo, useRef } = wp.element;
 const { __ } = wp.i18n;
-
-function TabTitle({ name, focus, setFocus, copy }) {
-  return (
-    <div
-      style={{ position: "relative", padding: "0px 24px 0px 10px" }}
-      onMouseEnter={() => setFocus(true)}
-      onMouseLeave={() => setFocus(false)}
-    >
-      <span>{name}</span>
-      {focus && <CopyIcon onClick={copy} />}
-    </div>
-  );
-}
 
 const CSS = `.bridges-tabs-panel .components-tab-panel__tabs{overflow-x:auto;}
 .bridges-tabs-panel .components-tab-panel__tabs>button{flex-shrink:0;}`;
 
-export default function Bridges({
-  bridges,
-  setBridges,
-  Bridge,
-  credentials = [],
-}) {
-  const [currentTab, setCurrentTab] = useState(String(bridges.length ? 0 : -1));
-  const [tabFocus, setTabFocus] = useState(null);
-  const tabs = bridges
-    .map(
-      (
-        {
-          name,
-          backend,
-          credential,
-          form_id,
-          custom_fields,
-          mutations,
-          workflow = [],
-          ...customFields
-        },
-        i
-      ) => ({
-        ...customFields,
-        name: String(i),
+const DEFAULTS = {
+  enabled: true,
+  workflow: [],
+  is_valid: true,
+  mutations: [[]],
+  custom_fields: [],
+};
+
+export default function Bridges() {
+  const { bridge: schema } = useSchemas();
+  const [bridges, setBridges] = useBridges();
+  const names = useBridgeNames();
+
+  const tabs = useMemo(() => {
+    return Array.from(names)
+      .map((name, index) => ({
+        index,
+        name: String(index),
         title: name,
-        backend,
-        form_id,
-        credential,
-        custom_fields,
-        mutations,
-        workflow,
-        icon: (
-          <TabTitle
-            name={name}
-            focus={tabFocus === name}
-            setFocus={(value) => setTabFocus(value ? name : null)}
-            copy={() => copyBridge(name)}
-          />
-        ),
-      })
-    )
-    .concat([
-      {
-        name: "-1",
-        title: __("Add bridge", "forms-bridge"),
-      },
-    ]);
-
-  const bridgesCount = useRef(bridges.length);
-  useEffect(() => {
-    if (bridges.length > bridgesCount.current) {
-      setCurrentTab(String(bridges.length - 1));
-    } else if (bridges.length < bridgesCount.current) {
-      setCurrentTab(String(currentTab - 1));
-    }
-
-    return () => {
-      bridgesCount.current = bridges.length;
-    };
-  }, [bridges]);
+        icon: <TabTitle name={name} />,
+      }))
+      .concat([
+        {
+          index: -1,
+          name: "new",
+          title: __("Add a bridge", "forms-bridge"),
+          icon: (
+            <div style={{ marginBottom: "-2px" }}>
+              <AddIcon width="15" height="15" />
+            </div>
+          ),
+        },
+      ]);
+  }, [names]);
 
   const updateBridge = (index, data) => {
     if (index === -1) index = bridges.length;
 
+    data.name = data.name.trim();
+
     const newBridges = bridges
       .slice(0, index)
-      .concat([data])
+      .concat([{ ...DEFAULTS, ...data }])
       .concat(bridges.slice(index + 1, bridges.length));
-
-    newBridges.forEach((bridge) => {
-      delete bridge.title;
-      delete bridge.icon;
-    });
 
     setBridges(newBridges);
   };
@@ -119,12 +82,13 @@ export default function Bridges({
       custom_fields: JSON.parse(JSON.stringify(bridge.custom_fields || [])),
     };
 
-    let isUnique = false;
-    while (!isUnique) {
+    copy.name = copy.name.trim();
+
+    while (names.has(copy.name)) {
       copy.name += "-copy";
-      isUnique = bridges.find((h) => h.name === copy.name) === undefined;
     }
 
+    window.__wpfbInvalidated = true;
     setBridges(bridges.concat(copy));
   };
 
@@ -138,28 +102,35 @@ export default function Bridges({
     };
   }, []);
 
+  if (!schema) return null;
+
   return (
     <div style={{ width: "100%" }}>
-      <TabPanel
-        tabs={tabs}
-        onSelect={setCurrentTab}
-        initialTabName={currentTab}
-        className="bridges-tabs-panel"
-      >
-        {(bridge) => {
-          bridge.name = bridge.name >= 0 ? bridges[+bridge.name].name : "add";
+      <h3 style={{ marginTop: 0, fontSize: "13px" }}>
+        {__("Bridges", "forms-bridge")}
+      </h3>
+      <TabPanel tabs={tabs} className="bridges-tabs-panel">
+        {(tab) => {
+          const bridge = bridges[tab.index];
+
           return (
-            <ApiSchemaProvider bridge={bridge} credentials={credentials}>
-              <Bridge
-                data={bridge}
-                remove={removeBridge}
-                update={(data) =>
-                  updateBridge(
-                    bridges.findIndex(({ name }) => name === bridge.name),
-                    data
-                  )
-                }
-              />
+            <ApiSchemaProvider bridge={bridge}>
+              {(!bridge && (
+                <NewBridge
+                  add={(data) => updateBridge(tab.index, data)}
+                  schema={schema}
+                  names={names}
+                />
+              )) || (
+                <Bridge
+                  data={bridge}
+                  schema={schema}
+                  remove={removeBridge}
+                  update={(data) => updateBridge(tab.index, data)}
+                  copy={() => copyBridge(bridge.name)}
+                  names={names}
+                />
+              )}
             </ApiSchemaProvider>
           );
         }}

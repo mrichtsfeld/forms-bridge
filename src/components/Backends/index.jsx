@@ -1,75 +1,54 @@
 // source
-import CopyIcon from "../CopyIcon";
+import useBackendNames from "../../hooks/useBackendNames";
+import Backend from "../Backend";
+import NewBackend from "../Backend/NewBackend";
+import TabTitle from "../TabTitle";
+import AddIcon from "../icons/Add";
 
-const { TabPanel, __experimentalSpacer: Spacer } = wp.components;
-const { useState, useEffect, useRef } = wp.element;
+const { useRef, useEffect } = wp.element;
+const { PanelBody, TabPanel, __experimentalSpacer: Spacer } = wp.components;
 const { __ } = wp.i18n;
 
-function TabTitle({ name, focus, setFocus, copy }) {
-  return (
-    <div
-      style={{ position: "relative", padding: "0px 24px 0px 10px" }}
-      onMouseEnter={() => setFocus(true)}
-      onMouseLeave={() => setFocus(false)}
-    >
-      <span>{name}</span>
-      {focus && <CopyIcon onClick={copy} />}
-    </div>
-  );
-}
+const CSS = `.backends-tabs-panel .components-tab-panel__tabs{overflow-x:auto;}
+.backends-tabs-panel .components-tab-panel__tabs>button{flex-shrink:0;}`;
 
-export default function Backends({ backends, setBackends, Backend }) {
-  const [currentTab, setCurrentTab] = useState(
-    String(backends.length ? 0 : -1)
-  );
-  const [tabFocus, setTabFocus] = useState(null);
+export default function Backends({ backends, setBackends }) {
+  const names = useBackendNames();
+
   const tabs = backends
-    .map(({ name, base_url, headers }, i) => ({
-      name: String(i),
+    .map(({ name }, index) => ({
+      index,
+      name: String(index),
       title: name,
-      base_url,
-      headers,
-      icon: (
-        <TabTitle
-          name={name}
-          focus={tabFocus === name}
-          setFocus={(value) => setTabFocus(value ? name : null)}
-          copy={() => copyBackend(name)}
-        />
-      ),
+      icon: <TabTitle name={name} />,
     }))
     .concat([
       {
-        name: "-1",
-        title: __("Add Backend", "forms-bridge"),
+        index: -1,
+        name: "new",
+        title: __("Add a backend", "forms-bridge"),
+        icon: (
+          <div style={{ marginBottom: "-2px" }}>
+            <AddIcon width="15" height="15" />
+          </div>
+        ),
       },
     ]);
 
-  const backendsCount = useRef(backends.length);
-  useEffect(() => {
-    if (backends.length > backendsCount.current) {
-      setCurrentTab(String(backends.length - 1));
-    } else if (backends.length < backendsCount.current) {
-      setCurrentTab(String(currentTab - 1));
-    }
-
-    return () => {
-      backendsCount.current = backends.length;
-    };
-  }, [backends]);
-
   const updateBackend = (index, data) => {
     if (index === -1) index = backends.length;
+
+    if (!data.headers?.length) {
+      data.headers = [{ name: "Content-Type", value: "application/json" }];
+    }
+
+    data.name = data.name.trim();
+    data.base_url = data.base_url.trim();
 
     const newBackends = backends
       .slice(0, index)
       .concat([data])
       .concat(backends.slice(index + 1, backends.length));
-
-    newBackends.forEach((backend) => {
-      delete backend.title;
-      delete backend.icon;
-    });
 
     setBackends(newBackends);
   };
@@ -89,43 +68,48 @@ export default function Backends({ backends, setBackends, Backend }) {
     const backend = backends[i];
     const copy = { ...backend };
 
-    let isUnique = false;
-    while (!isUnique) {
+    copy.name = copy.name.trim();
+    copy.base_url = copy.base_url.trim();
+
+    while (names.has(copy.name)) {
       copy.name += "-copy";
-      isUnique =
-        backends.find((backend) => backend.name === copy.name) === undefined;
     }
 
+    window.__wpfbInvalidated = true;
     setBackends(backends.concat(copy));
   };
 
+  const style = useRef(document.createElement("style"));
+  useEffect(() => {
+    style.current.appendChild(document.createTextNode(CSS));
+    document.head.appendChild(style.current);
+
+    return () => {
+      document.head.removeChild(style.current);
+    };
+  }, []);
+
   return (
     <div style={{ width: "100%" }}>
-      <p>
-        {__(
-          "Configure your backend connexions and reuse them on your form bridges",
-          "forms-bridge"
-        )}
-      </p>
-      <Spacer paddingBottom="5px" />
-      <TabPanel
-        tabs={tabs}
-        onSelect={setCurrentTab}
-        initialTabName={currentTab}
-      >
-        {(backend) => {
-          backend.name =
-            backend.name >= 0 ? backends[+backend.name].name : "add";
+      <h3 style={{ marginTop: 0, fontSize: "13px" }}>
+        {__("Backends", "forms-bridge")}
+      </h3>
+      <TabPanel tabs={tabs} className="backends-tabs-panel">
+        {(tab) => {
+          const backend = backends[tab.index];
+
+          if (!backend) {
+            return (
+              <NewBackend add={(data) => updateBackend(tab.index, data)} />
+            );
+          }
+
           return (
             <Backend
-              {...backend}
+              data={backend}
               remove={removeBackend}
-              update={(newBackend) =>
-                updateBackend(
-                  backends.findIndex(({ name }) => name === backend.name),
-                  newBackend
-                )
-              }
+              update={(newBackend) => updateBackend(tab.index, newBackend)}
+              copy={() => copyBackend(backend.name)}
             />
           );
         }}

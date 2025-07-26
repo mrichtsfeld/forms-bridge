@@ -15,13 +15,6 @@ if (!defined('ABSPATH')) {
 class Odoo_Form_Bridge extends Form_Bridge
 {
     /**
-     * Handles bridge class API name.
-     *
-     * @var string
-     */
-    protected $api = 'odoo';
-
-    /**
      * Handles the Odoo JSON-RPC well known endpoint.
      *
      * @var string
@@ -29,18 +22,13 @@ class Odoo_Form_Bridge extends Form_Bridge
     private const endpoint = '/jsonrpc';
 
     /**
-     * Handles the array of accepted HTTP header names of the bridge API.
-     *
-     * @var array<string>
-     */
-    protected static $api_headers = ['Content-Type', 'Accept'];
-
-    /**
      * Handles active RPC session data.
      *
      * @var array Tuple with session and user ids.
      */
     private static $session;
+
+    private static $request;
 
     /**
      * RPC payload decorator.
@@ -58,7 +46,7 @@ class Odoo_Form_Bridge extends Form_Bridge
         $service,
         $method,
         $args,
-        $more_args = null
+        $more_args = []
     ) {
         if (!empty($more_args)) {
             $args[] = $more_args;
@@ -106,21 +94,33 @@ class Odoo_Form_Bridge extends Form_Bridge
         }
 
         if (isset($res['data']['error'])) {
-            return new WP_Error(
-                $res['data']['error']['code'],
+            $error = new WP_Error(
+                'response_code_' . $res['data']['error']['code'],
                 $res['data']['error']['message'],
                 $res['data']['error']['data']
             );
+
+            $error_data = ['response' => $res];
+            if (self::$request) {
+                $error_data['request'] = self::$request;
+            }
+
+            $error->add_data($error_data);
+            return $error;
         }
 
         $data = $res['data'];
 
         if (empty($data['result'])) {
-            return new WP_Error(
-                'rpc_api_error',
-                'An unkown error has ocurred with the RPC API',
-                ['response' => $res]
-            );
+            $error = new WP_Error('not_found');
+
+            $error_data = ['response' => $res];
+            if (self::$request) {
+                $error_data['request'] = self::$request;
+            }
+
+            $error->add_data($error_data);
+            return $error;
         }
 
         return $data['result'];
@@ -129,11 +129,12 @@ class Odoo_Form_Bridge extends Form_Bridge
     /**
      * JSON RPC login request.
      *
-     * @param array $credential Credential data.
+     * @param [string, string, string] $login
+     * @param Backend $backend
      *
      * @return array|WP_Error Tuple with RPC session id and user id.
      */
-    private static function rpc_login($credential, $backend)
+    private static function rpc_login($login, $backend)
     {
         if (self::$session) {
             return self::$session;
@@ -141,11 +142,7 @@ class Odoo_Form_Bridge extends Form_Bridge
 
         $session_id = Forms_Bridge::slug() . '-' . time();
 
-        $payload = self::rpc_payload($session_id, 'common', 'login', [
-            $credential['database'],
-            $credential['user'],
-            $credential['password'],
-        ]);
+        $payload = self::rpc_payload($session_id, 'common', 'login', $login);
 
         $response = $backend->post(self::endpoint, $payload);
 
@@ -160,66 +157,65 @@ class Odoo_Form_Bridge extends Form_Bridge
     }
 
     /**
-     * Returns json as static bridge content type.
-     *
-     * @return string.
-     */
-    protected function content_type()
-    {
-        return 'application/json';
-    }
-
-    /**
-     * Bridge's credential data getter.
-     *
-     * @return array|null
-     */
-    protected function credential()
-    {
-        $credentials = Forms_Bridge::setting($this->api)->credentials ?: [];
-        foreach ($credentials as $credential) {
-            if ($credential['name'] === $this->data['credential']) {
-                return $credential;
-            }
-        }
-    }
-
-    /**
      * Submits submission to the backend.
      *
      * @param array $payload Submission data.
-     * @param array $attachments Submission's attached files.
+     * @param array|null $more_args Additional RPC call params.
      *
-     * @return array|WP_Error Http request response.
+     * @return array|WP_Error Http
      */
-    protected function do_submit($payload, $more_args = null)
+    public function submit($payload = [], $more_args = [])
     {
-        $credential = $this->credential();
+        if (!$this->is_valid) {
+            return new WP_Error('invalid_bridge');
+        }
 
-        $session = self::rpc_login($credential, $this->backend);
+        $backend = $this->backend();
+
+        if (!$backend) {
+            return new WP_Error(
+                'invalid_backend',
+                'The bridge does not have a valid backend'
+            );
+        }
+
+        $credential = $backend->credential;
+        if (!$credential) {
+            return new WP_Error(
+                'invalid_credential',
+                'The bridge does not have a valid credential'
+            );
+        }
+
+        add_filter(
+            'http_bridge_request',
+            static function ($request) {
+                self::$request = $request;
+                return $request;
+            },
+            10,
+            1
+        );
+
+        $login = $credential->authorization();
+        $session = self::rpc_login($login, $backend);
 
         if (is_wp_error($session)) {
             return $session;
         }
 
         [$sid, $uid] = $session;
+        $login[1] = $uid;
 
         $payload = self::rpc_payload(
             $sid,
             'object',
             'execute',
-            [
-                $credential['database'],
-                $uid,
-                $credential['password'],
-                $this->endpoint,
-                $this->method ?? 'create',
-                $payload,
-            ],
+            array_merge($login, [$this->endpoint, $this->method, $payload]),
             $more_args
         );
 
-        $response = $this->backend()->post(self::endpoint, $payload);
+        $response = $backend->post(self::endpoint, $payload);
 
         $result = self::rpc_response($response);
         if (is_wp_error($result)) {
@@ -227,58 +223,5 @@ class Odoo_Form_Bridge extends Form_Bridge
         }
 
         return $response;
-    }
-
-    /**
-     * Bridge's endpoint fields schema getter.
-     *
-     * @return array
-     */
-    protected function api_schema()
-    {
-        $response = $this->patch([
-            'name' => 'odoo-api-schema-introspection',
-            'method' => 'fields_get',
-        ])->submit([]);
-
-        if (is_wp_error($response)) {
-            return [];
-        }
-
-        $fields = [];
-        foreach ($response['data']['result'] as $name => $spec) {
-            if ($spec['readonly']) {
-                continue;
-            }
-
-            if ($spec['type'] === 'char' || $spec['type'] === 'html') {
-                $schema = ['type' => 'string'];
-            } elseif ($spec['type'] === 'float') {
-                $schema = ['type' => 'number'];
-            } elseif (
-                in_array(
-                    $spec['type'],
-                    ['one2many', 'many2one', 'many2many'],
-                    true
-                )
-            ) {
-                $schema = [
-                    'type' => 'array',
-                    'items' => [['type' => 'integer'], ['type' => 'string']],
-                    'additionalItems' => false,
-                ];
-            } else {
-                $schema = ['type' => $spec['type']];
-            }
-
-            $schema['required'] = $spec['required'];
-
-            $fields[] = [
-                'name' => $name,
-                'schema' => $schema,
-            ];
-        }
-
-        return $fields;
     }
 }

@@ -7,14 +7,47 @@ export function debounce(fn, ms = 500) {
   };
 }
 
-export function validateUrl(url) {
+export function validateUrl(url, base = false) {
   try {
     url = new URL(url);
   } catch {
     return false;
   }
 
+  if (base === true && (url.hash !== "" || url.search !== "")) {
+    return false;
+  }
+
+  if (/[^-a-zA-Z0-9\._\+]+/.test(url.hostname)) {
+    return false;
+  }
+
   return url.protocol === "http:" || url.protocol === "https:";
+}
+
+export function validateBackend(data) {
+  if (!data?.name) return false;
+
+  let isValid = validateUrl(data.base_url) && Array.isArray(data.headers);
+  if (!isValid) return false;
+
+  const contentType = data.headers.find(
+    ({ name }) => name === "Content-Type"
+  )?.value;
+
+  if (!contentType) {
+    return false;
+  }
+
+  if (data.authentication?.type) {
+    isValid = isValid && data.authentication.client_secret;
+
+    if (data.authentication.type !== "Bearer") {
+      isValid = isValid && data.authentication.client_id;
+    }
+  }
+
+  return isValid;
 }
 
 export function sortByNamesOrder(items, order) {
@@ -30,6 +63,7 @@ export function sortByNamesOrder(items, order) {
 }
 
 export function prependEmptyOption(options) {
+  if (options[0]?.value === "") return options;
   return [{ label: "", value: "" }].concat(options);
 }
 
@@ -88,4 +122,40 @@ export function uploadJson() {
     document.body.appendChild(input);
     input.click();
   });
+}
+
+export function defrost(obj) {
+  if (obj === null || typeof obj !== "object") return obj;
+
+  if (Array.isArray(obj)) {
+    return [...obj];
+  }
+
+  return { ...obj };
+}
+
+export function isset(obj, attr) {
+  if (!obj || typeof obj !== "object") {
+    return false;
+  }
+
+  if (Array.isArray(obj)) {
+    return obj.length > attr;
+  }
+
+  return Object.prototype.hasOwnProperty.call(obj, attr);
+}
+
+export function adminUrl(path = "", query = {}) {
+  const url = new URL(wpApiSettings.root.replace(/wp-json/, "wp-admin"));
+  url.pathname += path.replace(/^\/+/, "");
+  url.search = new URLSearchParams(query).toString();
+  return url.toString();
+}
+
+export function restUrl(path = "", query = {}) {
+  const url = new URL(wpApiSettings.root);
+  url.pathname += path.replace(/^\/+/, "");
+  url.search = new URLSearchParams(query).toString();
+  return url.toString();
 }

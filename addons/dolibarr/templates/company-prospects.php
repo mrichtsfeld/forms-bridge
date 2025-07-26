@@ -4,7 +4,7 @@ if (!defined('ABSPATH')) {
     exit();
 }
 
-global $forms_bridge_dolibarr_countries;
+global $forms_bridge_iso2_countries;
 
 return [
     'title' => __('Company Prospects', 'forms-bridge'),
@@ -20,35 +20,10 @@ return [
         ],
         [
             'ref' => '#bridge/custom_fields[]',
-            'name' => 'typent_id',
-            'label' => __('Third party type', 'forms-bridge'),
-            'type' => 'options',
-            'options' => [
-                [
-                    'label' => __('Large company', 'forms-bridge'),
-                    'value' => '2',
-                ],
-                [
-                    'label' => __('Medium company', 'forms-bridge'),
-                    'value' => '3',
-                ],
-                [
-                    'label' => __('Small company', 'forms-bridge'),
-                    'value' => '4',
-                ],
-                [
-                    'label' => __('Governmental', 'forms-bridge'),
-                    'value' => '5',
-                ],
-            ],
-            'required' => true,
-        ],
-        [
-            'ref' => '#bridge/custom_fields[]',
             'name' => 'stcomm_id',
             'label' => __('Prospect status', 'forms-bridge'),
             'required' => true,
-            'type' => 'options',
+            'type' => 'select',
             'options' => [
                 [
                     'label' => __('Never contacted', 'forms-bridge'),
@@ -71,7 +46,39 @@ return [
                     'value' => '-1',
                 ],
             ],
-            'default' => ' 0',
+            'default' => '0',
+        ],
+        [
+            'ref' => '#bridge/custom_fields[]',
+            'name' => 'typent_id',
+            'label' => __('Thirdparty type', 'forms-bridge'),
+            'type' => 'select',
+            'options' => [
+                [
+                    'label' => __('Large company', 'forms-bridge'),
+                    'value' => '2',
+                ],
+                [
+                    'label' => __('Medium company', 'forms-bridge'),
+                    'value' => '3',
+                ],
+                [
+                    'label' => __('Small company', 'forms-bridge'),
+                    'value' => '4',
+                ],
+                [
+                    'label' => __('Governmental', 'forms-bridge'),
+                    'value' => '5',
+                ],
+                [
+                    'label' => __('Startup', 'forms-bridge'),
+                    'value' => '1',
+                ],
+                [
+                    'label' => __('Other', 'forms-bridge'),
+                    'value' => '100',
+                ],
+            ],
         ],
         [
             'ref' => '#form',
@@ -113,17 +120,16 @@ return [
                 'required' => true,
             ],
             [
-                'name' => 'country_id',
+                'name' => 'country',
                 'label' => __('Country', 'forms-bridge'),
-                'type' => 'options',
-                'options' => array_map(function ($country_id) {
-                    global $forms_bridge_dolibarr_countries;
+                'type' => 'select',
+                'options' => array_map(function ($country_code) {
+                    global $forms_bridge_iso2_countries;
                     return [
-                        'value' => $country_id,
-                        'label' =>
-                            $forms_bridge_dolibarr_countries[$country_id],
+                        'value' => $country_code,
+                        'label' => $forms_bridge_iso2_countries[$country_code],
                     ];
-                }, array_keys($forms_bridge_dolibarr_countries)),
+                }, array_keys($forms_bridge_iso2_countries)),
                 'required' => true,
             ],
             [
@@ -170,18 +176,33 @@ return [
             ],
         ],
         'mutations' => [
+            [],
+            [],
             [
                 [
                     'from' => 'company_name',
                     'to' => 'name',
                     'cast' => 'string',
                 ],
+                [
+                    'from' => 'email',
+                    'to' => 'contact_email',
+                    'cast' => 'copy',
+                ],
+            ],
+            [
+                [
+                    'from' => 'contact_email',
+                    'to' => 'email',
+                    'cast' => 'string',
+                ],
             ],
         ],
         'workflow' => [
-            'dolibarr-country-id',
-            'dolibarr-contact-socid',
-            'dolibarr-skip-if-contact-exists',
+            'iso2-country-code',
+            'country-id',
+            'contact-socid',
+            'skip-if-contact-exists',
         ],
     ],
 ];

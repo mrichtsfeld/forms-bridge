@@ -1,4 +1,3 @@
-const { useEffect } = wp.element;
 const { __ } = wp.i18n;
 
 function Field({ data, error }) {
@@ -23,21 +22,23 @@ function Field({ data, error }) {
           error={error}
         />
       );
-    case "options":
+    case "select":
+      if (!Array.isArray(data.options)) return null;
       return (
-        <OptionsField
+        <SelectField
           required={!!data.required}
           name={data.name}
           value={data.value}
           onChange={data.onChange}
           options={data.options}
-          multiple={!!data.multiple}
+          multiple={!!data.is_multi}
         />
       );
-    case "string":
+    case "text":
     default:
       return (
         <TextField
+          type={data.type}
           required={!!data.required}
           name={data.name}
           value={data.value}
@@ -63,7 +64,7 @@ function CheckboxField({ name, value, onChange }) {
   );
 }
 
-function TextField({ name, value, onChange, required, error }) {
+function TextField({ type, name, value, onChange, required, error }) {
   const constraints = {};
   if (required) constraints.required = true;
 
@@ -75,14 +76,18 @@ function TextField({ name, value, onChange, required, error }) {
   return (
     <>
       <input
-        type="text"
+        type={type}
         name={name}
         value={value || ""}
         onChange={({ target }) => onChange(target.value)}
         style={style}
         {...constraints}
       />
-      {error && <p style={{ color: "red" }}>{error}</p>}
+      {error && (
+        <p style={{ margin: "5px 0 0", fontSize: "12px", color: "red" }}>
+          {error}
+        </p>
+      )}
     </>
   );
 }
@@ -132,13 +137,13 @@ function NumberField({
   );
 }
 
-function OptionsField({
+function SelectField({
   name,
   value,
   onChange,
   required,
   multiple,
-  options,
+  options = [],
   error,
 }) {
   const constraints = {};

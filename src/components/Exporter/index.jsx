@@ -1,22 +1,24 @@
 // source
-import { useStoreSubmit } from "../../providers/Store";
-import { useGeneral, useApis } from "../../providers/Settings";
+import { useError } from "../../providers/Error";
+import { useLoading } from "../../providers/Loading";
+import { useFetchSettings, useSettings } from "../../providers/Settings";
+import { uploadJson } from "../../lib/utils";
 
-const { useState, useEffect } = wp.element;
-const { __experimentalSpacer: Spacer, Button, Modal, Notice } = wp.components;
+const apiFetch = wp.apiFetch;
+const { useState, useEffect, useCallback } = wp.element;
+const { __experimentalSpacer: Spacer, Button, Modal } = wp.components;
 const { __ } = wp.i18n;
 
 export default function Exporter() {
-  const [general] = useGeneral();
-  const [apis] = useApis();
-  const submit = useStoreSubmit();
+  const [loading, setLoading] = useLoading();
+  const [error, setError] = useError();
+  const [settings, setSettings] = useSettings();
+  const fetchSettings = useFetchSettings();
 
   const [showModal, setShowModal] = useState(false);
   const [userConsent, setUserConsent] = useState(false);
-  const [error, setError] = useState(false);
 
-  const downloadConfig = () => {
-    const settings = wpfb.bus("submit", {});
+  const downloadConfig = useCallback(() => {
     const blob = new Blob([JSON.stringify(settings)], {
       type: "application/json",
     });
@@ -35,81 +37,60 @@ export default function Exporter() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-  };
+  }, [settings]);
 
-  const importConfig = () => {
-    const input = document.createElement("input");
-    input.type = "file";
-    input.accept = "application/json";
-    document.body.appendChild(input);
-    input.click();
-    input.addEventListener("change", () => {
-      const file = input.files[0];
-      if (!file) return;
-
-      const reader = new FileReader();
-      reader.onload = () => {
-        let config;
-        try {
-          config = JSON.parse(reader.result);
-        } catch {
+  const importConfig = useCallback(() => {
+    uploadJson()
+      .then((settings) => {
+        setSettings(settings).catch(() => {
+          setError(
+            __("It has been an error with config import", "forms-bridge")
+          );
+        });
+      })
+      .catch((err) => {
+        if (err.name === "SyntaxError") {
           setError(__("JSON syntax error", "forms-bridge"));
-          return;
+        } else {
+          setError(
+            __("Something went wrong with the file upload", "forms-bridge")
+          );
         }
+      });
+  }, [setSettings]);
 
-        const newState = {
-          general: { ...general, ...(config.general || {}) },
-          apis: {
-            ...apis,
-            ...Object.fromEntries(
-              Object.entries(config)
-                .filter(
-                  ([key]) =>
-                    key !== "general" && Object.keys(apis).indexOf(key) !== -1
-                )
-                .map(([key, data]) => [key, { ...apis[key], ...data }])
-            ),
-          },
-        };
+  const wipeConfig = useCallback(() => {
+    setLoading(true);
 
-        wpfb.emit("patch", newState);
-        setTimeout(() =>
-          submit()
-            .then(() => setError(false))
-            .catch(() =>
-              setError(
-                __("It has been an error with config import", "forms-bridge")
-              )
-            )
-        );
-      };
-
-      reader.onerror = () =>
-        setError(
-          __("Somthing went wrong with the file upload", "forms-bridge")
-        );
-
-      reader.readAsText(file);
-    });
-  };
+    apiFetch({
+      path: "forms-bridge/v1/settings",
+      method: "DELETE",
+    })
+      .then(fetchSettings)
+      .catch(() => {
+        setError(__("Wipe config error", "forms-bridge"));
+      })
+      .finally(() => setLoading(false));
+  }, [fetchSettings]);
 
   useEffect(() => {
     return () => {
-      if (showModal && userConsent) {
+      if (!showModal) return;
+      setShowModal(false);
+
+      if (!userConsent) return;
+      if (showModal === "import") {
         importConfig();
-        setUserConsent(false);
+      } else {
+        wipeConfig();
       }
+
+      setUserConsent(false);
     };
   }, [showModal, userConsent]);
 
   return (
     <>
-      <Spacer paddyngY="calc(3px)" />
-      {error && (
-        <Notice status="error" isDismissable={false} politeness="assertive">
-          {error}
-        </Notice>
-      )}
       <p>
         {__(
           "Export or import your configuration as a JSON to migrate your bridges to, or from, any other WordPress instance",
@@ -119,7 +100,8 @@ export default function Exporter() {
       <Spacer paddingBottom="5px" />
       <div style={{ display: "flex", gap: "0.5rem" }}>
         <Button
-          variant="primary"
+          disabled={!!error || loading}
+          variant="secondary"
           description={__("Export Forms Bridge config as JSON", "forms-bridge")}
           onClick={downloadConfig}
           style={{ width: "150px", justifyContent: "center" }}
@@ -128,16 +110,28 @@ export default function Exporter() {
           {__("Download config", "forms-bridge")}
         </Button>
         <Button
-          variant="secondary"
+          disabled={!!error || loading}
+          variant="primary"
           description={__("Import Forms Bridge JSON config", "forms-bridge")}
-          onClick={() => setShowModal(true)}
+          onClick={() => setShowModal("import")}
           style={{ width: "150px", justifyContent: "center" }}
           __next40pxDefaultSize
         >
           {__("Import config", "forms-bridge")}
         </Button>
+        <Button
+          disabled={!!error || loading}
+          variant="primary"
+          description={__("Wipe Forms Bridge settings", "forms-bridge")}
+          onClick={() => setShowModal("wipe")}
+          style={{ width: "150px", justifyContent: "center" }}
+          isDestructive
+          __next40pxDefaultSize
+        >
+          {__("Wipe config", "forms-bridge")}
+        </Button>
       </div>
-      {showModal && (
+      {showModal === "import" && (
         <Modal
           title={__("Config import warning", "forms-bridge")}
           onRequestClose={() => setShowModal(false)}
@@ -155,22 +149,50 @@ export default function Exporter() {
           >
             <Button
               variant="primary"
-              description={__("Continue with the import", "forms-bridge")}
-              onClick={() => {
-                setUserConsent(true);
-                setTimeout(() => setShowModal(false));
-              }}
+              description={__("Continue", "forms-bridge")}
+              onClick={() => setUserConsent(true)}
             >
               {__("Continue", "forms-bridge")}
             </Button>
             <Button
               variant="primary"
               isDestructive={true}
-              description={__("Cancel the import", "forms-bridge")}
-              onClick={() => {
-                setUserConsent(false);
-                setTimeout(() => setShowModal(false));
-              }}
+              description={__("Cancel", "forms-bridge")}
+              onClick={() => setUserConsent(false)}
+            >
+              {__("Cancel", "forms-bridge")}
+            </Button>
+          </div>
+        </Modal>
+      )}
+      {showModal === "wipe" && (
+        <Modal
+          title={__("Wipe config warning", "forms-bridge")}
+          onRequestClose={() => setShowModal(false)}
+          size="small"
+        >
+          <p>
+            {__(
+              "You are going to wipe Forms Bridge config. After that, Forms Bridge will be reset to factory defaults. All your data will be lost.",
+              "forms-bridge"
+            )}
+          </p>
+          <p>{__("Are you sure to continue?", "forms-bridge")}</p>
+          <div
+            style={{ display: "flex", gap: "0.5rem", justifyContent: "center" }}
+          >
+            <Button
+              variant="primary"
+              description={__("Continue", "forms-bridge")}
+              onClick={() => setUserConsent(true)}
+            >
+              {__("Continue", "forms-bridge")}
+            </Button>
+            <Button
+              variant="primary"
+              isDestructive={true}
+              description={__("Cancel", "forms-bridge")}
+              onClick={() => setUserConsent(false)}
             >
               {__("Cancel", "forms-bridge")}
             </Button>

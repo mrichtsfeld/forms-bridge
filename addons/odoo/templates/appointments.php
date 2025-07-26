@@ -24,19 +24,26 @@ return [
         [
             'ref' => '#bridge/custom_fields[]',
             'name' => 'user_id',
-            'label' => __('Owner email', 'forms-bridge'),
+            'label' => __('Host', 'forms-bridge'),
             'description' => __(
-                'Email of the owner user of the appointment',
+                'Name of the host user of the appointment',
                 'forms-bridge'
             ),
-            'type' => 'string',
+            'type' => 'select',
+            'options' => [
+                'endpoint' => 'res.users',
+                'finger' => [
+                    'value' => 'result.[].id',
+                    'label' => 'result.[].name',
+                ],
+            ],
             'required' => true,
         ],
         [
             'ref' => '#bridge/custom_fields[]',
             'name' => 'event_name',
             'label' => __('Appointment name', 'forms-bridge'),
-            'type' => 'string',
+            'type' => 'text',
             'required' => true,
             'default' => __('Web Appointment', 'forms-bridge'),
         ],
@@ -54,13 +61,27 @@ return [
             'type' => 'number',
             'default' => 1,
         ],
+        [
+            'ref' => '#bridge/custom_fields[]',
+            'name' => 'categ_ids',
+            'label' => __('Appointment tags', 'forms-bridge'),
+            'type' => 'select',
+            'options' => [
+                'endpoint' => 'calendar.event.type',
+                'finger' => [
+                    'value' => 'result.[].id',
+                    'label' => 'result.[].name',
+                ],
+            ],
+            'is_multi' => true,
+        ],
     ],
     'bridge' => [
         'endpoint' => 'calendar.event',
         'mutations' => [
             [
                 [
-                    'from' => 'user_id',
+                    'from' => '?user_id',
                     'to' => 'user_id',
                     'cast' => 'integer',
                 ],
@@ -70,12 +91,12 @@ return [
                     'cast' => 'string',
                 ],
                 [
-                    'from' => 'allday',
+                    'from' => '?allday',
                     'to' => 'allday',
                     'cast' => 'boolean',
                 ],
                 [
-                    'from' => 'duration',
+                    'from' => '?duration',
                     'to' => 'duration',
                     'cast' => 'number',
                 ],
@@ -97,9 +118,9 @@ return [
             ],
         ],
         'workflow' => [
-            'forms-bridge-date-fields-to-date',
-            'odoo-appointment-dates',
-            'odoo-appointment-attendee',
+            'date-fields-to-date',
+            'appointment-dates',
+            'appointment-attendee',
         ],
     ],
     'form' => [
@@ -130,7 +151,7 @@ return [
             [
                 'name' => 'hour',
                 'label' => __('Hour', 'forms-bridge'),
-                'type' => 'options',
+                'type' => 'select',
                 'required' => true,
                 'options' => [
                     [
@@ -234,7 +255,7 @@ return [
             [
                 'name' => 'minute',
                 'label' => __('Minute', 'forms-bridge'),
-                'type' => 'options',
+                'type' => 'select',
                 'required' => true,
                 'options' => [
                     ['label' => '00', 'value' => '00.0'],

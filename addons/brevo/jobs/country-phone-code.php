@@ -25,7 +25,7 @@ return [
         ],
         [
             'name' => 'countryCode',
-            'schema' => ['type' => 'string'],
+            'schema' => ['type' => 'integer'],
         ],
     ],
 ];
@@ -33,21 +33,26 @@ return [
 function forms_bridge_brevo_country_phone_prefix($payload)
 {
     global $forms_bridge_country_phone_codes;
+    global $forms_bridge_iso2_countries;
+    global $forms_bridge_iso3_countries;
 
-    $countries = array_reduce(
-        array_keys($forms_bridge_country_phone_codes),
-        function ($countries, $phone_code) {
-            global $forms_bridge_country_phone_codes;
-            $name = $forms_bridge_country_phone_codes[$phone_code];
-            $countries[$name] = $phone_code;
-            return $countries;
-        },
-        []
-    );
+    $countries = [];
+    foreach ($forms_bridge_country_phone_codes as $phone_code => $country) {
+        $countries[$country] = $phone_code;
+    }
 
     $country = $payload['country'];
+
+    if (isset($forms_bridge_iso2_countries[$country])) {
+        $country = $forms_bridge_iso2_countries[$country];
+    } elseif (isset($forms_bridge_iso3_countries[$country])) {
+        $country = $forms_bridge_iso3_countries[$country];
+    }
+
     if (isset($countries[$country])) {
-        $payload['countryCode'] = $countries[$country];
+        $payload['countryCode'] = (int) $countries[$country];
+    } else {
+        $payload['countryCode'] = null;
     }
 
     return $payload;

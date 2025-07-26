@@ -31,10 +31,6 @@ return [
                 'name' => 'is_company',
                 'value' => '0',
             ],
-            [
-                'name' => 'lang',
-                'value' => '$locale',
-            ],
         ],
         'mutations' => [
             [
@@ -49,18 +45,12 @@ return [
                     'cast' => 'string',
                 ],
             ],
-            [
-                [
-                    'from' => 'country',
-                    'to' => 'country',
-                    'cast' => 'null',
-                ],
-            ],
+            [],
         ],
         'workflow' => [
-            'forms-bridge-iso2-country-code',
-            'odoo-country-id',
-            'odoo-skip-if-partner-exists',
+            'iso2-country-code',
+            'country-id',
+            'skip-if-partner-exists',
         ],
     ],
     'form' => [
@@ -100,7 +90,7 @@ return [
             [
                 'label' => __('Country', 'forms-bridge'),
                 'name' => 'country',
-                'type' => 'options',
+                'type' => 'select',
                 'options' => array_map(function ($country_code) {
                     global $forms_bridge_iso2_countries;
                     return [

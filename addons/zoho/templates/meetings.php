@@ -24,14 +24,21 @@ return [
                 'Email of the owner user of the deal',
                 'forms-bridge'
             ),
-            'type' => 'string',
+            'type' => 'select',
+            'options' => [
+                'endpoint' => '/crm/v7/users',
+                'finger' => [
+                    'value' => 'users[].id',
+                    'label' => 'users[].full_name',
+                ],
+            ],
             'required' => true,
         ],
         [
             'ref' => '#bridge/custom_fields[]',
             'name' => 'Event_Title',
             'label' => __('Event title', 'forms-bridge'),
-            'type' => 'string',
+            'type' => 'text',
             'required' => true,
             'default' => __('Web Meetting', 'forms-bridge'),
         ],
@@ -43,7 +50,7 @@ return [
                 'Label to identify your website sourced leads',
                 'forms-bridge'
             ),
-            'type' => 'string',
+            'type' => 'text',
             'required' => true,
             'default' => 'WordPress',
         ],
@@ -51,7 +58,7 @@ return [
             'ref' => '#bridge/custom_fields[]',
             'name' => 'Lead_Status',
             'label' => __('Lead status', 'forms-bridge'),
-            'type' => 'options',
+            'type' => 'select',
             'options' => [
                 [
                     'label' => __('Not Contacted', 'forms-bridge'),
@@ -145,7 +152,7 @@ return [
             [
                 'name' => 'hour',
                 'label' => __('Hour', 'forms-bridge'),
-                'type' => 'options',
+                'type' => 'select',
                 'options' => [
                     [
                         'label' => __('1 AM', 'forms-bridge'),
@@ -249,7 +256,7 @@ return [
             [
                 'name' => 'minute',
                 'label' => __('Minute', 'forms-bridge'),
-                'type' => 'options',
+                'type' => 'select',
                 'options' => [
                     ['label' => '00', 'value' => '00.0'],
                     ['label' => '05', 'value' => '05'],
@@ -275,11 +282,10 @@ return [
     ],
     'bridge' => [
         'endpoint' => '/crm/v7/Events',
-        'scope' => 'ZohoCRM.modules.ALL',
         'workflow' => [
-            'forms-bridge-date-fields-to-date',
-            'zoho-event-dates',
-            'zoho-crm-meeting-participant',
+            'date-fields-to-date',
+            'event-dates',
+            'crm-meeting-participant',
         ],
         'mutations' => [
             [

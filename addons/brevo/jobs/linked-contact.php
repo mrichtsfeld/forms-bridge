@@ -74,7 +74,6 @@ function forms_bridge_brevo_linked_contact($payload, $bridge)
         return $contact;
     }
 
-    $payload['linkedContactsIds'] = $payload['linkedContactsIds'] ?? [];
     $payload['linkedContactsIds'][] = $contact['id'];
 
     return $payload;

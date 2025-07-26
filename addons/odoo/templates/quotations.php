@@ -27,17 +27,20 @@ return [
             'ref' => '#bridge/custom_fields[]',
             'name' => 'product_id',
             'label' => __('Product', 'forms-bridge'),
-            'type' => 'string',
+            'type' => 'select',
+            'options' => [
+                'endpoint' => 'product.product',
+                'finger' => [
+                    'value' => 'result[].id',
+                    'label' => 'result[].name',
+                ],
+            ],
             'required' => true,
         ],
     ],
     'bridge' => [
         'endpoint' => 'sale.order',
         'custom_fields' => [
-            [
-                'name' => 'lang',
-                'value' => '$locale',
-            ],
             [
                 'name' => 'state',
                 'value' => 'draft',
@@ -79,20 +82,8 @@ return [
                     'cast' => 'integer',
                 ],
             ],
-            [
-                [
-                    'from' => 'country',
-                    'to' => 'country',
-                    'cast' => 'null',
-                ],
-            ],
         ],
-        'workflow' => [
-            'forms-bridge-iso2-country-code',
-            'odoo-vat-id',
-            'odoo-country-id',
-            'odoo-contact',
-        ],
+        'workflow' => ['iso2-country-code', 'vat-id', 'country-id', 'contact'],
     ],
     'form' => [
         'fields' => [
@@ -149,7 +140,7 @@ return [
             [
                 'label' => __('Country', 'forms-bridge'),
                 'name' => 'country',
-                'type' => 'options',
+                'type' => 'select',
                 'options' => array_map(function ($country_code) {
                     global $forms_bridge_iso2_countries;
                     return [

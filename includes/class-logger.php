@@ -4,7 +4,7 @@ namespace FORMS_BRIDGE;
 
 use WP_Error;
 use WP_REST_Server;
-use WPCT_ABSTRACT\Singleton;
+use WPCT_PLUGIN\Singleton;
 
 if (!defined('ABSPATH')) {
     exit();
@@ -18,7 +18,7 @@ class Logger extends Singleton
     /**
      * Handles the log file name.
      */
-    private const log_file = '.forms-bridge.log';
+    private const log_file = 'debug.log';
 
     /**
      * Error level constant.
@@ -48,7 +48,15 @@ class Logger extends Singleton
      */
     private static function log_path()
     {
-        return wp_upload_dir()['basedir'] . '/' . self::log_file;
+        $dir = wp_upload_dir()['basedir'] . '/forms-bridge';
+
+        if (!is_dir($dir)) {
+            if (!mkdir($dir, 755)) {
+                return;
+            }
+        }
+
+        return $dir . '/' . self::log_file;
     }
 
     /**
@@ -63,6 +71,10 @@ class Logger extends Singleton
         }
 
         $log_path = self::log_path();
+        if (!$log_path) {
+            return [];
+        }
+
         $socket = fopen($log_path, 'r');
         $cursor = -1;
         fseek($socket, $cursor, SEEK_END);
@@ -202,59 +214,40 @@ class Logger extends Singleton
      */
     protected function construct(...$args)
     {
-        add_action('rest_api_init', static function () {
-            self::register_log_route();
-        });
-
-        add_filter(
-            'wpct_setting_default',
-            static function ($default, $name) {
-                if ($name !== Forms_Bridge::slug() . '_general') {
-                    return $default;
-                }
-
-                return array_merge($default, ['debug' => self::is_active()]);
+        add_action(
+            'rest_api_init',
+            static function () {
+                self::register_log_route();
             },
-            5,
-            2
+            10,
+            0
         );
 
-        add_action('plugins_loaded', static function () {
-            $plugin_slug = Forms_Bridge::slug();
-            add_filter("option_{$plugin_slug}_general", static function (
-                $value
-            ) {
-                if (!is_array($value)) {
-                    return $value;
-                }
-
-                $value['debug'] = self::is_active();
-                return $value;
-            });
-        });
-
-        add_filter(
-            'wpct_validate_setting',
-            static function ($data, $setting) {
-                if (
-                    $setting->full_name() !==
-                    Forms_Bridge::slug() . '_general'
-                ) {
-                    return $data;
-                }
-
-                if (isset($data['debug']) && $data['debug'] === true) {
-                    self::activate();
-                } else {
-                    self::deactivate();
-                }
-
-                unset($data['debug']);
+        Settings_Store::ready(function ($store) {
+            $store::use_getter('general', static function ($data) {
+                $data['debug'] = self::is_active();
                 return $data;
-            },
-            9,
-            2
-        );
+            });
+
+            $store::use_setter(
+                'general',
+                static function ($data) {
+                    if (!isset($data['debug'])) {
+                        return $data;
+                    }
+
+                    if ($data['debug'] === true) {
+                        self::activate();
+                    } else {
+                        self::deactivate();
+                    }
+
+                    unset($data['debug']);
+                    return $data;
+                },
+                9
+            );
+        });
     }
 
     /**

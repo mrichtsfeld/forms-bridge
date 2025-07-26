@@ -6,41 +6,6 @@ if (!defined('ABSPATH')) {
 
 global $forms_bridge_iso2_countries;
 
-add_filter(
-    'forms_bridge_template_data',
-    function ($data, $template_name) {
-        if ($template_name === 'holded-service-quotations') {
-            $index = array_search(
-                'tags',
-                array_column($data['bridge']['custom_fields'], 'name')
-            );
-
-            if ($index !== false) {
-                $field = &$data['bridge']['custom_fields'][$index];
-
-                if (!empty($field['value'])) {
-                    $tags = array_filter(
-                        array_map('trim', explode(',', strval($field['value'])))
-                    );
-
-                    for ($i = 0; $i < count($tags); $i++) {
-                        $data['bridge']['custom_fields'][] = [
-                            'name' => "tags[{$i}]",
-                            'value' => $tags[$i],
-                        ];
-                    }
-                }
-
-                array_splice($data['bridge']['custom_fields'], $index, 1);
-            }
-        }
-
-        return $data;
-    },
-    10,
-    2
-);
-
 return [
     'title' => __('Service Quotations', 'forms-bridge'),
     'description' => __(
@@ -63,13 +28,20 @@ return [
             'name' => 'tags',
             'label' => __('Tags', 'forms-bridge'),
             'description' => __('Tags separated by commas', 'forms-bridge'),
-            'type' => 'string',
+            'type' => 'text',
         ],
         [
             'ref' => '#bridge/custom_fields[]',
             'name' => 'serviceId',
             'label' => __('Service', 'forms-bridge'),
-            'type' => 'string',
+            'type' => 'select',
+            'options' => [
+                'endpoint' => '/api/invoicing/v1/services',
+                'finger' => [
+                    'value' => '[].id',
+                    'label' => '[].name',
+                ],
+            ],
             'required' => true,
         ],
     ],
@@ -101,7 +73,7 @@ return [
                     'cast' => 'integer',
                 ],
                 [
-                    'from' => 'tags',
+                    'from' => '?tags',
                     'to' => 'quotation_tags',
                     'cast' => 'inherit',
                 ],
@@ -144,11 +116,6 @@ return [
             [
                 [
                     'from' => 'country',
-                    'to' => 'country',
-                    'cast' => 'null',
-                ],
-                [
-                    'from' => 'country_code',
                     'to' => 'countryCode',
                     'cast' => 'string',
                 ],
@@ -162,17 +129,13 @@ return [
             ],
             [
                 [
-                    'from' => 'quotation_tags',
+                    'from' => '?quotation_tags',
                     'to' => 'tags',
                     'cast' => 'inherit',
                 ],
             ],
         ],
-        'workflow' => [
-            'forms-bridge-iso2-country-code',
-            'holded-prefix-vatnumber',
-            'holded-contact-id',
-        ],
+        'workflow' => ['iso2-country-code', 'prefix-vatnumber', 'contact-id'],
     ],
     'form' => [
         'fields' => [
@@ -226,7 +189,7 @@ return [
             [
                 'label' => __('Country', 'forms-bridge'),
                 'name' => 'country',
-                'type' => 'options',
+                'type' => 'select',
                 'options' => array_map(function ($country_code) {
                     global $forms_bridge_iso2_countries;
                     return [

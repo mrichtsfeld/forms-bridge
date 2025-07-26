@@ -6,41 +6,6 @@ if (!defined('ABSPATH')) {
 
 global $forms_bridge_iso2_countries;
 
-add_filter(
-    'forms_bridge_template_data',
-    function ($data, $template_name) {
-        if ($template_name === 'holded-company-contacts') {
-            $index = array_search(
-                'tags',
-                array_column($data['bridge']['custom_fields'], 'name')
-            );
-
-            if ($index !== false) {
-                $field = &$data['bridge']['custom_fields'][$index];
-
-                if (!empty($field['value'])) {
-                    $tags = array_filter(
-                        array_map('trim', explode(',', strval($field['value'])))
-                    );
-
-                    for ($i = 0; $i < count($tags); $i++) {
-                        $data['bridge']['custom_fields'][] = [
-                            'name' => "tags[{$i}]",
-                            'value' => $tags[$i],
-                        ];
-                    }
-                }
-
-                array_splice($data['bridge']['custom_fields'], $index, 1);
-            }
-        }
-
-        return $data;
-    },
-    10,
-    2
-);
-
 return [
     'title' => __('Company Contacts', 'forms-bridge'),
     'description' => __(
@@ -62,7 +27,7 @@ return [
             'ref' => '#bridge/custom_fields[]',
             'name' => 'type',
             'label' => __('Contact type', 'forms-bridge'),
-            'type' => 'options',
+            'type' => 'select',
             'options' => [
                 [
                     'label' => __('Unspecified', 'forms-bridge'),
@@ -97,7 +62,7 @@ return [
             'name' => 'tags',
             'label' => __('Tags', 'forms-bridge'),
             'description' => __('Tags separated by commas', 'forms-bridge'),
-            'type' => 'string',
+            'type' => 'text',
         ],
     ],
     'bridge' => [
@@ -155,11 +120,6 @@ return [
             [
                 [
                     'from' => 'country',
-                    'to' => 'country',
-                    'cast' => 'null',
-                ],
-                [
-                    'from' => 'country_code',
                     'to' => 'countryCode',
                     'cast' => 'string',
                 ],
@@ -173,9 +133,9 @@ return [
             ],
         ],
         'workflow' => [
-            'holded-skip-if-contact-exists',
-            'forms-bridge-iso2-country-code',
-            'holded-prefix-vatnumber',
+            'skip-if-contact-exists',
+            'iso2-country-code',
+            'prefix-vatnumber',
         ],
     ],
     'form' => [
@@ -210,7 +170,7 @@ return [
             [
                 'label' => __('Country', 'forms-bridge'),
                 'name' => 'country',
-                'type' => 'options',
+                'type' => 'select',
                 'options' => array_map(function ($country_code) {
                     global $forms_bridge_iso2_countries;
                     return [

@@ -1,6 +1,7 @@
 import { useWorkflowStepper } from "../../providers/Workflow";
-import { useApiWorkflowJobs } from "../../providers/WorkflowJobs";
-import RemoveButton from "../RemoveButton";
+import { useJobs } from "../../hooks/useAddon";
+import FieldWrapper from "../FieldWrapper";
+import useResponsive from "../../hooks/useResponsive";
 
 const {
   __experimentalItemGroup: ItemGroup,
@@ -8,30 +9,30 @@ const {
   SelectControl,
   Button,
 } = wp.components;
-const { useMemo } = wp.element;
+const { useMemo, useCallback } = wp.element;
 const { __ } = wp.i18n;
 
-export default function WorkflowPipeline({ workflow, setWorkflow }) {
+export default function WorkflowPipeline({ workflow, setWorkflow, setEdit }) {
   const [step, setStep] = useWorkflowStepper();
-  const apiJobs = useApiWorkflowJobs();
+  const [jobs] = useJobs();
 
   const jobOptions = useMemo(
     () =>
-      [{ label: "", value: "" }].concat(
-        apiJobs.map((job) => ({
+      jobs
+        .map((job) => ({
           value: job.name,
           label: job.title,
         }))
-      ),
-    [apiJobs]
+        .sort((a, b) => (a.label > b.label ? 1 : -1)),
+    [jobs]
   );
 
   const workflowJobs = useMemo(() => {
     return workflow.map((name) => ({
       name,
-      title: apiJobs.find((job) => job.name === name)?.title || name,
+      title: jobs.find((job) => job.name === name)?.title || name,
     }));
-  }, [workflow, apiJobs]);
+  }, [workflow, jobs]);
 
   const steps = useMemo(
     () =>
@@ -65,29 +66,46 @@ export default function WorkflowPipeline({ workflow, setWorkflow }) {
     }, 100);
   };
 
-  const appendJob = (index) => {
-    const newWorkflow = workflow
-      .slice(0, index + 1)
-      .concat([apiJobs[0].name])
-      .concat(workflow.slice(index + 1, workflow.length));
+  const appendJob = useCallback(
+    (index) => {
+      const newWorkflow = workflow
+        .slice(0, index + 1)
+        .concat([jobOptions[0].value])
+        .concat(workflow.slice(index + 1, workflow.length));
 
-    setWorkflow(newWorkflow);
-  };
+      setWorkflow(newWorkflow);
+    },
+    [workflow, jobOptions]
+  );
 
-  const setJob = (jobName, index) => {
-    if (!jobName) return;
+  const setJob = useCallback(
+    (jobName, index) => {
+      if (!jobName) return;
 
-    const newWorkflow = workflow
-      .slice(0, index)
-      .concat([jobName])
-      .concat(workflow.slice(index + 1, workflow.length));
+      const newWorkflow = workflow
+        .slice(0, index)
+        .concat([jobName])
+        .concat(workflow.slice(index + 1, workflow.length));
 
-    setWorkflow(newWorkflow);
-  };
+      setWorkflow(newWorkflow);
+    },
+    [workflow]
+  );
 
   return (
-    <div style={{ flex: 1, overflowY: "auto" }}>
-      <ItemGroup size="large" isSeparated>
+    <div
+      style={{
+        flex: 1,
+        overflowY: "auto",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
+      <ItemGroup
+        size="large"
+        isSeparated
+        style={{ maxHeight: "calc(100% - 68px)", overflowY: "auto" }}
+      >
         {steps.map((job, i) => (
           <Item key={job.name + i}>
             <PipelineStep
@@ -102,11 +120,28 @@ export default function WorkflowPipeline({ workflow, setWorkflow }) {
           </Item>
         ))}
       </ItemGroup>
+      <div
+        style={{
+          padding: "1rem 16px",
+          marginTop: "auto",
+        }}
+      >
+        <Button
+          style={{ width: "100px", justifyContent: "center" }}
+          variant="primary"
+          onClick={() => setEdit()}
+          __next40pxDefaultSize
+        >
+          {__("New job", "forms-bridge")}
+        </Button>
+      </div>
     </div>
   );
 }
 
 function PipelineStep({ name, title, index, options, append, update, remove }) {
+  const isResponsive = useResponsive();
+
   const [step, setStep] = useWorkflowStepper();
 
   const isCurrent = step === index;
@@ -156,13 +191,15 @@ function PipelineStep({ name, title, index, options, append, update, remove }) {
       </div>
       <div style={{ flex: 1 }}>
         {(isFocus && (
-          <SelectControl
-            value={name}
-            onChange={(name) => update(name, index - 1)}
-            options={options.filter((opt) => (index <= 1 ? true : opt.value))}
-            __nextHasNoMarginBottom
-            __next40pxDefaultSize
-          />
+          <FieldWrapper min="150px" max="250px" isResponsive={isResponsive}>
+            <SelectControl
+              value={name}
+              onChange={(name) => update(name, index - 1)}
+              options={options}
+              __nextHasNoMarginBottom
+              __next40pxDefaultSize
+            />
+          </FieldWrapper>
         )) || (
           <p
             style={{
@@ -175,7 +212,7 @@ function PipelineStep({ name, title, index, options, append, update, remove }) {
               overflow: "hidden",
               textOverflow: "ellipsis",
               position: "relative",
-              maxWidth: "241px",
+              width: "clamp(150px, 15vw, 250px)",
             }}
             onClick={() => setStep(index)}
           >
@@ -208,21 +245,24 @@ function PipelineStep({ name, title, index, options, append, update, remove }) {
           <Button
             size="compact"
             variant="secondary"
-            disabled={!name}
+            disabled={!name || options.length <= 1}
             onClick={() => append(index - 1)}
             style={{ width: "32px" }}
+            __next40pxDefaultSize
           >
             +
           </Button>
-          <RemoveButton
+          <Button
             size="compact"
             variant="secondary"
             disabled={!name || name === "form"}
             onClick={() => remove(index - 1)}
             style={{ width: "32px" }}
+            isDestructive
+            __next40pxDefaultSize
           >
             -
-          </RemoveButton>
+          </Button>
         </div>
       )}
     </div>

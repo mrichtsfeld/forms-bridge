@@ -27,10 +27,6 @@ return [
         'endpoint' => 'sale.order',
         'custom_fields' => [
             [
-                'name' => 'lang',
-                'value' => '$locale',
-            ],
-            [
                 'name' => 'state',
                 'value' => 'sale',
             ],
@@ -394,16 +390,12 @@ return [
                     'cast' => 'integer',
                 ],
                 [
-                    'from' => 'product_ids',
+                    'from' => 'product_ids[]',
                     'to' => 'order_line[][2].product_id',
                     'cast' => 'integer',
                 ],
             ],
         ],
-        'workflow' => [
-            'odoo-contact',
-            'odoo-delivery-address',
-            'odoo-products-by-ref',
-        ],
+        'workflow' => ['contact', 'delivery-address', 'products-by-ref'],
     ],
 ];

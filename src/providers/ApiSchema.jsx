@@ -1,81 +1,67 @@
-import { useGeneral } from "./Settings";
-import useCurrentApi from "../hooks/useCurrentApi";
+import useTab from "../hooks/useTab";
+import { useBackends } from "../hooks/useHttp";
 
 const apiFetch = wp.apiFetch;
-const { createContext, useContext, useEffect, useRef, useState, useMemo } =
+const { createContext, useContext, useRef, useState, useMemo, useEffect } =
   wp.element;
 
 const ApiSchemaContext = createContext([]);
 
-export default function ApiSchemaProvider({ children, bridge, credentials }) {
-  const [{ backends }] = useGeneral();
-  const api = useCurrentApi();
+export default function ApiSchemaProvider({ children, bridge }) {
+  const [addon] = useTab();
+  const [backends] = useBackends();
 
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(false);
-  const [schema, setSchema] = useState(null);
-  const [invalid, invalidate] = useState(true);
-
-  const lastBridge = useRef(null);
-
-  useEffect(() => {
-    setError(false);
-
-    if (bridge.name !== "add") {
-      invalidate(
-        bridge.name !== lastBridge.current?.name ||
-          bridge.backend !== lastBridge.current?.backend ||
-          bridge.endpoint !== lastBridge.current?.endpoint ||
-          bridge.credential !== lastBridge.current?.credential
-      );
-    }
-
-    return () => {
-      if (bridge.name !== "add") {
-        lastBridge.current = bridge;
-      }
-    };
-  }, [bridge]);
-
-  const fetch = useRef((api, endpoint, backend, credential = {}) => {
-    if (!backend || !api) return;
-
-    setLoading(true);
-
-    apiFetch({
-      path: `forms-bridge/v1/${api}/schema`,
-      method: "POST",
-      data: { backend, credential, endpoint },
-    })
-      .then((schema) => {
-        setSchema(schema);
-        invalidate(false);
-      })
-      .catch((err) => {
-        setSchema(null);
-        setError(true);
-      })
-      .finally(() => setLoading(false));
-  }).current;
+  const schemas = useRef(new Map()).current;
+  const [, updates] = useState(0);
 
   const backend = useMemo(
-    () => backends.find(({ name }) => bridge.backend === name),
+    () => backends.find(({ name }) => bridge?.backend === name),
     [backends, bridge]
   );
 
-  const credential = useMemo(
-    () => credentials.find(({ name }) => bridge.credential === name),
-    [credentials, bridge]
+  const key = useMemo(
+    () =>
+      JSON.stringify({
+        endpoint: bridge?.endpoint,
+        backend,
+      }),
+    [bridge?.endpoint, backend]
   );
 
-  const value = useMemo(() => {
-    if (error) return null;
-    if (!loading && invalid) fetch(api, bridge.endpoint, backend, credential);
-    return schema;
-  }, [api, error, loading, invalid, schema, bridge, backend, credential]);
+  const addSchema = (key, schema) => {
+    schemas.set(key, schema);
+    updates((i) => i + 1);
+  };
 
+  const fetch = (key, endpoint, backend) => {
+    setLoading(true);
+
+    apiFetch({
+      path: `forms-bridge/v1/${addon}/backend/endpoint/schema`,
+      method: "POST",
+      data: { endpoint, backend },
+    })
+      .then((schema) => addSchema(key, schema))
+      .catch(() => addSchema(key, []))
+      .finally(() => setLoading(false));
+  };
+
+  const timeout = useRef();
+  useEffect(() => {
+    clearTimeout(timeout.current);
+
+    if (!backend || !bridge?.endpoint || loading || schemas.get(key)) return;
+
+    timeout.current = setTimeout(
+      () => fetch(key, bridge.endpoint, backend),
+      400
+    );
+  }, [key, bridge, backend]);
+
+  const schema = schemas.get(key);
   return (
-    <ApiSchemaContext.Provider value={value}>
+    <ApiSchemaContext.Provider value={schema}>
       {children}
     </ApiSchemaContext.Provider>
   );

@@ -4,423 +4,513 @@ namespace FORMS_BRIDGE;
 
 use Exception;
 use Error;
+use FBAPI;
+use WP_Error;
+use HTTP_BRIDGE\Settings_Store as Http_Store;
 
 if (!defined('ABSPATH')) {
     exit();
 }
 
 /**
- * Custom exception for fine grained error handling during template implementations.
- */
-class Form_Bridge_Template_Exception extends Exception
-{
-    /**
-     * Handles the error's string code.
-     *
-     * @var string.
-     */
-    private $string_code;
-
-    /**
-     * Recives a code as string and a message and store the string code
-     * as a custom attribute.
-     *
-     * @param string $string_code String code compatible with WP_Error codes.
-     * @param string $message Error message.
-     */
-    public function __construct($string_code, $message)
-    {
-        $this->string_code = $string_code;
-        parent::__construct($message);
-    }
-
-    /**
-     * String code getter.
-     *
-     * @return string
-     */
-    public function getStringCode()
-    {
-        return $this->string_code;
-    }
-}
-
-/**
- * Form Bridge template class. Handles the config data validation
+ * Form Bridge template class. Handles the data validation
  * and the use of template as form bridge creation strategy.
  */
 class Form_Bridge_Template
 {
+    public const post_type = 'fb-bridge-template';
+
     /**
-     * Handles the template api name.
+     * Handles the template id;
      *
      * @var string
      */
-    protected $api;
+    protected $id;
 
     /**
-     * Handles the template name.
+     * Handles the template addon name.
      *
      * @var string
      */
-    private $name;
+    protected $addon;
 
     /**
-     * Handles the template config data.
+     * Handles the template data.
      *
      * @var array
      */
-    private $config;
+    private $data;
 
     /**
      * Handles the common template data json schema. The schema is common for all
      * Form_Bridge_Templates.
      *
-     * @var array
+     * @param string $addon Addon name.
+     *
+     * @return array
      */
-    public static $schema = [
-        'title' => ['type' => 'string'],
-        'description' => ['type' => 'string'],
-        'integrations' => [
-            'type' => 'array',
-            'items' => ['type' => 'string'],
-            'uniqueItems' => true,
-        ],
-        'fields' => [
-            'type' => 'array',
-            'items' => [
-                'type' => 'object',
-                'properties' => [
-                    'ref' => [
-                        'type' => 'string',
-                        'pattern' => '#.+',
-                    ],
-                    'name' => [
-                        'type' => 'string',
-                        'minLength' => 1,
-                    ],
-                    'label' => [
-                        'type' => 'string',
-                        'minLength' => 1,
-                    ],
-                    'description' => ['type' => 'string'],
-                    'type' => [
-                        'type' => 'string',
-                        'enum' => ['string', 'number', 'options', 'boolean'],
-                    ],
-                    'required' => ['type' => 'boolean'],
-                    'value' => [
-                        'type' => [
-                            'integer',
-                            'number',
-                            'string',
-                            'array',
-                            'boolean',
-                        ],
-                    ],
-                    'default' => [
-                        'type' => [
-                            'integer',
-                            'number',
-                            'string',
-                            'array',
-                            'boolean',
-                        ],
-                    ],
-                    'options' => [
-                        'type' => 'array',
-                        'items' => [
-                            'type' => 'object',
-                            'properties' => [
-                                'label' => ['type' => 'string'],
-                                'value' => ['type' => 'string'],
-                            ],
-                            'required' => ['value', 'label'],
-                        ],
-                        'uniqueItems' => true,
-                    ],
-                    'enum' => [
-                        'type' => 'array',
-                        'items' => [
-                            'type' => ['integer', 'number', 'string'],
-                        ],
-                        'uniqueItems' => true,
-                    ],
-                    'min' => ['type' => 'integer'],
-                    'max' => ['type' => 'integer'],
-                    'multiple' => ['type' => 'boolean'],
-                ],
-                'required' => ['ref', 'name', 'label', 'type'],
-                'additionalProperties' => true,
-            ],
-        ],
-        'bridge' => [
+    public static function schema($addon = null)
+    {
+        $backend_schema = FBAPI::get_backend_schema();
+        $bridge_schema = FBAPI::get_bridge_schema($addon);
+        $credential_schema = FBAPI::get_credential_schema($addon);
+
+        $schema = [
+            '$schema' => 'http://json-schema.org/draft-04/schema#',
+            'title' => 'form-bridge-template',
             'type' => 'object',
             'properties' => [
-                'name' => ['type' => 'string'],
-                'form_id' => ['type' => 'string'],
-                'backend' => ['type' => 'string'],
-                'credential' => ['type' => 'string'],
-                'custom_fields' => [
-                    'type' => 'array',
-                    'items' => [
-                        'type' => 'object',
-                        'properties' => [
-                            'name' => ['type' => 'string'],
-                            'value' => ['type' => 'string'],
-                        ],
-                        'additionalProperties' => false,
-                        'required' => ['name', 'value'],
-                    ],
+                'name' => [
+                    'title' => _x(
+                        'Name',
+                        'Bridge template schema',
+                        'forms-bridge'
+                    ),
+                    'description' => __(
+                        'Internal and unique name of the template',
+                        'forms-bridge'
+                    ),
+                    'type' => 'string',
+                    'minLength' => 1,
                 ],
-                'mutations' => [
-                    'type' => 'array',
-                    'items' => [
-                        'type' => 'array',
-                        'items' => [
-                            'type' => 'object',
-                            'properties' => [
-                                'from' => ['type' => 'string'],
-                                'to' => ['type' => 'string'],
-                                'cast' => [
-                                    'type' => 'string',
-                                    'enum' => [
-                                        'boolean',
-                                        'string',
-                                        'integer',
-                                        'number',
-                                        'json',
-                                        'csv',
-                                        'concat',
-                                        'join',
-                                        'sum',
-                                        'count',
-                                        'inherit',
-                                        'copy',
-                                        'null',
-                                    ],
-                                ],
-                            ],
-                            'additionalProperties' => false,
-                            'required' => ['from', 'to', 'cast'],
-                        ],
-                    ],
+                'title' => [
+                    'title' => _x(
+                        'Title',
+                        'Bridge template schema',
+                        'forms-bridge'
+                    ),
+                    'description' => __(
+                        'Public title of the template',
+                        'forms-bridge'
+                    ),
+                    'type' => 'string',
+                    'minLength' => 1,
                 ],
-                'workflow' => [
+                'description' => [
+                    'title' => _x(
+                        'Description',
+                        'Bridge template schema',
+                        'forms-bridge'
+                    ),
+                    'description' => __(
+                        'Short description of the template purpose',
+                        'forms-bridge'
+                    ),
+                    'type' => 'string',
+                    'default' => '',
+                ],
+                'integrations' => [
+                    'title' => _x(
+                        'Integrations',
+                        'Bridge template schema',
+                        'forms-bridge'
+                    ),
+                    'description' => __(
+                        'Template\'s supported integrations',
+                        'forms-bridge'
+                    ),
                     'type' => 'array',
                     'items' => ['type' => 'string'],
+                    'uniqueItems' => true,
+                    'minItems' => 1,
                 ],
-            ],
-            'required' => [
-                'name',
-                'form_id',
-                'backend',
-                'custom_fields',
-                'mutations',
-            ],
-            'additionalProperties' => false,
-        ],
-        'backend' => [
-            'type' => 'object',
-            'properties' => [
-                'name' => ['type' => 'string'],
-                'base_url' => ['type' => 'string'],
-                'headers' => [
-                    'type' => 'array',
-                    'items' => [
-                        'type' => 'object',
-                        'properties' => [
-                            'name' => ['type' => 'string'],
-                            'value' => ['type' => 'string'],
-                        ],
-                        'required' => ['name', 'value'],
-                        'additionalProperties' => false,
-                    ],
-                ],
-            ],
-            'required' => ['name', 'base_url', 'headers'],
-            'additionalProperties' => false,
-        ],
-        'form' => [
-            'type' => 'object',
-            'properties' => [
-                'title' => ['type' => 'string'],
                 'fields' => [
+                    'title' => _x(
+                        'Fields',
+                        'Bridge template schema',
+                        'forms-bridge'
+                    ),
+                    'description' => __(
+                        'Template fields to be filled by the user',
+                        'forms-bridge'
+                    ),
                     'type' => 'array',
                     'items' => [
                         'type' => 'object',
                         'properties' => [
-                            'label' => ['type' => 'string'],
-                            'name' => ['type' => 'string'],
+                            'ref' => [
+                                'type' => 'string',
+                                'pattern' => '^#.+',
+                            ],
+                            'name' => [
+                                'type' => 'string',
+                                'minLength' => 1,
+                            ],
+                            'label' => [
+                                'type' => 'string',
+                                'minLength' => 1,
+                            ],
+                            'description' => ['type' => 'string'],
                             'type' => [
                                 'type' => 'string',
                                 'enum' => [
                                     'text',
-                                    'textarea',
                                     'number',
-                                    'url',
+                                    'select',
+                                    'boolean',
                                     'email',
-                                    'options',
-                                    'date',
-                                    'hidden',
+                                    'url',
                                 ],
                             ],
                             'required' => ['type' => 'boolean'],
-                            'options' => [
-                                'type' => 'array',
-                                'items' => [
-                                    'type' => 'object',
-                                    'properties' => [
-                                        'value' => [
-                                            'type' => [
-                                                'integer',
-                                                'number',
-                                                'string',
-                                                'boolean',
-                                            ],
-                                        ],
-                                        'label' => ['type' => 'string'],
-                                    ],
-                                    'required' => ['value', 'label'],
-                                ],
-                            ],
                             'value' => [
                                 'type' => [
                                     'integer',
                                     'number',
                                     'string',
-                                    // 'boolean',
-                                    // 'object',
                                     'array',
-                                    // 'null',
+                                    'boolean',
                                 ],
                             ],
-                            'is_file' => ['type' => 'boolean'],
-                            'is_multi' => ['type' => 'boolean'],
-                            'filetypes' => ['type' => 'string'],
-                            'min' => ['type' => 'number'],
-                            'max' => ['type' => 'number'],
-                            'step' => ['type' => 'number'],
-                            'format' => ['type' => 'string'],
+                            'default' => [
+                                'type' => [
+                                    'integer',
+                                    'number',
+                                    'string',
+                                    'array',
+                                    'boolean',
+                                ],
+                            ],
+                            'options' => [
+                                'anyOf' => [
+                                    [
+                                        'description' => __(
+                                            'List of field options',
+                                            'forms-bridge'
+                                        ),
+                                        'type' => 'array',
+                                        'items' => [
+                                            'type' => 'object',
+                                            'properties' => [
+                                                'label' => [
+                                                    'type' => 'string',
+                                                ],
+                                                'value' => [
+                                                    'type' => 'string',
+                                                ],
+                                            ],
+                                            'required' => ['value', 'label'],
+                                        ],
+                                        'uniqueItems' => true,
+                                    ],
+                                    [
+                                        'description' => __(
+                                            'How to get options from the addon API',
+                                            'forms-bridge'
+                                        ),
+                                        'type' => 'object',
+                                        'properties' => [
+                                            'endpoint' => [
+                                                'description' => __(
+                                                    'Endpoint to get values from',
+                                                    'forms-bridge'
+                                                ),
+                                                'type' => 'string',
+                                            ],
+                                            'finger' => [
+                                                'description' => __(
+                                                    'Fingers to get values from the endpoint response',
+                                                    'forms-bridge'
+                                                ),
+                                                'oneOf' => [
+                                                    [
+                                                        'type' => 'object',
+                                                        'properties' => [
+                                                            'value' => [
+                                                                'type' =>
+                                                                    'string',
+                                                            ],
+                                                            'label' => [
+                                                                'type' =>
+                                                                    'string',
+                                                            ],
+                                                        ],
+                                                        'required' => ['value'],
+                                                    ],
+                                                    [
+                                                        'type' => 'string',
+                                                    ],
+                                                ],
+                                            ],
+                                        ],
+                                        'required' => ['endpoint', 'finger'],
+                                    ],
+                                ],
+                            ],
+                            'enum' => [
+                                'type' => 'array',
+                                'items' => [
+                                    'type' => ['integer', 'number', 'string'],
+                                ],
+                                'uniqueItems' => true,
+                            ],
+                            'min' => ['type' => 'integer'],
+                            'max' => ['type' => 'integer'],
+                            'multiple' => ['type' => 'boolean'],
                         ],
-                        'required' => ['name', 'type'],
+                        'required' => ['ref', 'name', 'type'],
+                        'additionalProperties' => true,
                     ],
                 ],
+                'form' => [
+                    'title' => _x(
+                        'Form',
+                        'Bridge template schema',
+                        'forms-bridge'
+                    ),
+                    'description' => __(
+                        'Form title and fields settings',
+                        'forms-bridge'
+                    ),
+                    'type' => 'object',
+                    'properties' => [
+                        'title' => [
+                            'type' => 'string',
+                            'default' => '',
+                        ],
+                        'fields' => [
+                            'type' => 'array',
+                            'items' => [
+                                'type' => 'object',
+                                'properties' => [
+                                    'name' => [
+                                        'type' => 'string',
+                                        'minLength' => 1,
+                                    ],
+                                    'label' => ['type' => 'string'],
+                                    'type' => [
+                                        'type' => 'string',
+                                        'enum' => [
+                                            'text',
+                                            'textarea',
+                                            'number',
+                                            'url',
+                                            'email',
+                                            'select',
+                                            'date',
+                                            'hidden',
+                                            'file',
+                                        ],
+                                    ],
+                                    'required' => ['type' => 'boolean'],
+                                    'options' => [
+                                        'type' => 'array',
+                                        'items' => [
+                                            'type' => 'object',
+                                            'properties' => [
+                                                'value' => [
+                                                    'type' => [
+                                                        'integer',
+                                                        'number',
+                                                        'string',
+                                                        'boolean',
+                                                    ],
+                                                ],
+                                                'label' => [
+                                                    'type' => 'string',
+                                                ],
+                                            ],
+                                            'required' => ['value', 'label'],
+                                        ],
+                                    ],
+                                    'value' => [
+                                        'type' => [
+                                            'integer',
+                                            'number',
+                                            'string',
+                                            // 'boolean',
+                                            // 'object',
+                                            'array',
+                                            // 'null',
+                                        ],
+                                    ],
+                                    'is_file' => ['type' => 'boolean'],
+                                    'is_multi' => ['type' => 'boolean'],
+                                    'filetypes' => ['type' => 'string'],
+                                    'min' => ['type' => 'number'],
+                                    'max' => ['type' => 'number'],
+                                    'step' => ['type' => 'number'],
+                                    'format' => ['type' => 'string'],
+                                ],
+                                'required' => ['name', 'type'],
+                            ],
+                        ],
+                    ],
+                    'required' => ['title', 'fields'],
+                    'additionalProperties' => false,
+                ],
+                'bridge' => self::child_schema_to_template(
+                    $bridge_schema,
+                    _x('Bridge', 'Bridge template schema', 'forms-bridge')
+                ),
+                'backend' => self::child_schema_to_template(
+                    $backend_schema,
+                    _x('Backend', 'Bridge template schema', 'forms-bridge')
+                ),
+                'credential' => self::child_schema_to_template(
+                    $credential_schema,
+                    _x('Credential', 'Bridge template schema', 'forms-bridge')
+                ),
             ],
-            'required' => ['title', 'fields'],
             'additionalProperties' => false,
-        ],
-        'credential' => [
-            'type' => 'object',
-            'properties' => [
-                'name' => ['type' => 'string'],
+            'required' => [
+                'name',
+                'title',
+                'integrations',
+                'fields',
+                'form',
+                'backend',
+                'bridge',
             ],
-            'additionalProperties' => false,
-            'required' => ['name'],
-        ],
-    ];
+        ];
+
+        if (!$addon) {
+            return $schema;
+        }
+
+        return apply_filters('forms_bridge_template_schema', $schema, $addon);
+    }
+
+    private static function child_schema_to_template($schema, $title)
+    {
+        if (isset($schema['oneOf'])) {
+            $schema['oneOf'] = array_map(static function ($schema) use (
+                $title
+            ) {
+                $title = $schema['title'] ?? $title;
+                return self::child_schema_to_template($schema, $title);
+            }, $schema['oneOf']);
+            return $schema;
+        } elseif (isset($schema['anyOf'])) {
+            $schema['anyOf'] = array_map(static function ($schema) use (
+                $title
+            ) {
+                $title = $schema['title'] ?? $title;
+                return self::child_schema_to_template($schema, $title);
+            }, $schema['anyOf']);
+            return $schema;
+        }
+
+        foreach ($schema['properties'] as &$prop_schema) {
+            if ($prop_schema['type'] === 'string') {
+                $prop_schema['default'] = '';
+                unset($prop_schema['minLength']);
+                unset($prop_schema['pattern']);
+                unset($prop_schema['format']);
+            } elseif ($prop_schema['type'] === 'array') {
+                $prop_schema['default'] = [];
+                unset($prop_schema['minItems']);
+            }
+        }
+
+        if (!isset($schema['default'])) {
+            $schema['default'] = [];
+        }
+
+        $schema['title'] = $title;
+        return $schema;
+    }
 
     /**
-     * Template default config getter.
+     * Template default data getter.
+     *
+     * @param string $addon Template addon namespace.
+     * @param array $schema Template schema.
      *
      * @return array
      */
-    protected static function defaults()
+    protected static function defaults($addon = null, $schema = null)
     {
-        return [];
-    }
+        if (!is_array($schema)) {
+            $schema = static::schema($addon);
+        }
 
-    /**
-     * Validates input config against the template schema.
-     *
-     * @param array $config Input config.
-     *
-     * @return array|WP_Error Validated config.
-     */
-    private static function validate_config($config)
-    {
-        $schema = [
-            '$schema' => 'https://json-schema.org/draft/2020-12/schema',
-            'type' => 'object',
-            'additionalProperties' => false,
-            'properties' => static::extend_schema(self::$schema),
-            'required' => ['title', 'integrations', 'fields', 'form', 'bridge'],
-        ];
-
-        $config = self::with_defaults($config, $schema);
-        $config_or_error = forms_bridge_validate_with_schema($config, $schema);
-        return $config_or_error;
-    }
-
-    /**
-     * Apply defaults to the given config.
-     *
-     * @param array $config Input config.
-     * @param array $schema Template data schema.
-     *
-     * @return array Config fullfilled with defaults.
-     */
-    private static function with_defaults($config, $schema)
-    {
-        // merge template config with addon defaults
-        $config = forms_bridge_merge_object(
-            $config,
-            static::defaults(),
-            self::$schema
-        );
-
-        // merge template defaults with common defaults
-        $config = forms_bridge_merge_object(
-            $config,
+        return apply_filters(
+            'forms_bridge_template_defaults',
             [
-                'description' => '',
+                'integrations' => [],
                 'fields' => [
                     [
                         'ref' => '#form',
                         'name' => 'id',
                         'label' => __('Form ID', 'forms-bridge'),
-                        'type' => 'string',
+                        'type' => 'text',
                     ],
                     [
                         'ref' => '#form',
                         'name' => 'title',
                         'label' => __('Form title', 'forms-bridge'),
-                        'type' => 'string',
+                        'type' => 'text',
                         'required' => true,
                     ],
                     [
                         'ref' => '#backend',
                         'name' => 'name',
                         'label' => __('Name', 'forms-bridge'),
-                        'type' => 'string',
+                        'type' => 'text',
                         'required' => true,
                     ],
                     [
                         'ref' => '#backend',
                         'name' => 'base_url',
                         'label' => __('Base URL', 'forms-bridge'),
-                        'type' => 'string',
+                        'type' => 'url',
                         'required' => true,
+                        'default' => 'https://',
+                        'format' => 'uri',
                     ],
                     [
                         'ref' => '#bridge',
                         'name' => 'name',
                         'label' => __('Bridge name', 'forms-bridge'),
-                        'type' => 'string',
+                        'type' => 'text',
                         'required' => true,
+                        'minLength' => 1,
+                    ],
+                    [
+                        'ref' => '#bridge',
+                        'name' => 'endpoint',
+                        'label' => __('Endpoint', 'forms-bridge'),
+                        'type' => 'text',
+                        'required' => true,
+                        'default' => '',
+                    ],
+                    [
+                        'ref' => '#bridge',
+                        'name' => 'method',
+                        'label' => __('Method', 'forms-bridge'),
+                        'type' => 'options',
+                        'options' => [
+                            [
+                                'label' => 'GET',
+                                'value' => 'GET',
+                            ],
+                            [
+                                'label' => 'POST',
+                                'value' => 'POST',
+                            ],
+                            [
+                                'label' => 'PUT',
+                                'value' => 'PUT',
+                            ],
+                            [
+                                'label' => 'PATCH',
+                                'value' => 'PATCH',
+                            ],
+                            [
+                                'label' => 'DELETE',
+                                'value' => 'DELETE',
+                            ],
+                        ],
+                        'required' => true,
+                        'default' => 'POST',
                     ],
                 ],
                 'bridge' => [
-                    'name' => '',
-                    'form_id' => '',
-                    'backend' => '',
-                    'custom_fields' => [],
-                    'mutations' => [[]],
-                    'workflow' => [],
+                    'endpoint' => '',
+                    'method' => 'POST',
                 ],
                 'backend' => [
-                    'name' => '',
-                    'base_url' => '',
                     'headers' => [
                         [
                             'name' => 'Content-Type',
@@ -432,64 +522,63 @@ class Form_Bridge_Template
                     'title' => '',
                     'fields' => [],
                 ],
-                'credential' => [
-                    'name' => '',
-                ],
             ],
+            $addon,
             $schema
         );
+    }
 
-        if (!isset($config['integrations'])) {
-            $config = array_merge($config, [
-                'integrations' => array_filter(
-                    array_keys(Integration::integrations()),
-                    static function ($integration) {
-                        return $integration !== 'woo';
-                    }
-                ),
-            ]);
-        }
-
-        return $config;
+    private static function data_from_post($post)
+    {
+        return [
+            'name' => $post->post_name,
+            'title' => $post->post_title,
+            'description' => $post->post_excerpt,
+            'fields' =>
+                (array) (get_post_meta($post->ID, '_template-fields', true) ?:
+                []),
+            'form' =>
+                (array) (get_post_meta($post->ID, '_template-form', true) ?:
+                []),
+            'bridge' =>
+                (array) (get_post_meta($post->ID, '_template-bridge', true) ?:
+                []),
+            'backend' =>
+                (array) (get_post_meta($post->ID, '_template-backend', true) ?:
+                []),
+            'credential' =>
+                (array) (get_post_meta(
+                    $post->ID,
+                    '_template-credential',
+                    true
+                ) ?:
+                []),
+        ];
     }
 
     /**
-     * Store template attribute values, validates config data and binds the
+     * Store template attribute values, validates data and binds the
      * instance to custom forms bridge template hooks.
      *
      * @param string $name Template name.
-     * @param array $config Template config data.
+     * @param array $data Template data.
      */
-    public function __construct($name, $config)
+    public function __construct($data, $addon)
     {
-        $this->name = $this->api . '-' . $name;
-        $this->config = self::validate_config($config);
+        if ($data instanceof WP_Post) {
+            $data = self::data_from_post($data);
+        }
 
-        add_filter(
-            'forms_bridge_templates',
-            function ($templates, $api = null) {
-                if ($api && $api !== $this->api) {
-                    return $templates;
-                }
+        $this->addon = $addon;
+        $this->data = $this->validate($data);
 
-                if (!wp_is_numeric_array($templates)) {
-                    $templates = [];
-                }
-
-                if (is_wp_error($this->config)) {
-                    return $templates;
-                }
-
-                $templates[] = $this;
-                return $templates;
-            },
-            10,
-            2
-        );
+        if ($this->is_valid) {
+            $this->id = $this->addon . '-' . $data['name'];
+        }
     }
 
     /**
-     * Magic method to proxy private template attributes and config data.
+     * Magic method to proxy private template attributes and data.
      *
      * @param string $name Attribute name.
      *
@@ -498,54 +587,135 @@ class Form_Bridge_Template
     public function __get($name)
     {
         switch ($name) {
-            case 'api':
-                return $this->api;
-            case 'name':
-                return $this->name;
-            case 'config':
-                return $this->config;
+            case 'id':
+                return $this->id;
+            case 'addon':
+                return $this->addon;
+            case 'data':
+                return $this->data;
+            case 'is_valid':
+                return !is_wp_error($this->data) &&
+                    Addon::addon($this->addon) !== null;
             default:
-                return $this->config[$name] ?? null;
+                if (!$this->is_valid) {
+                    return;
+                }
+
+                return $this->data[$name] ?? null;
         }
     }
 
     /**
-     * Decorates the template config data for REST responses.
+     * Validates input data against the template schema.
      *
-     * @return array REST config data.
+     * @param array $data Input data.
+     *
+     * @return array|WP_Error Validated data.
      */
-    public function to_json()
+    private function validate($data)
     {
-        return [
+        $schema = static::schema($this->addon);
+        $defaults = static::defaults($this->addon, $schema);
+
+        if (empty($data['integrations'])) {
+            foreach (Integration::integrations() as $integration) {
+                if ($integration !== 'woo') {
+                    $data['integrations'][] = $integration::name;
+                }
+            }
+        }
+
+        $data = wpct_plugin_merge_object($data, $defaults, $schema);
+        return wpct_plugin_sanitize_with_schema($data, $schema);
+    }
+
+    /**
+     * Decorates the template data for REST responses.
+     *
+     * @return array REST data.
+     */
+    public function data()
+    {
+        if (!$this->is_valid) {
+            return;
+        }
+
+        return array_merge(
+            [
+                'id' => $this->id,
+                'addon' => $this->addon,
+            ],
+            $this->data
+        );
+    }
+
+    private function get_post_id()
+    {
+        $ids = get_posts([
+            'post_type' => self::post_type,
             'name' => $this->name,
-            'title' => $this->config['title'],
-            'description' => $this->config['description'] ?? '',
-            'fields' => array_values(
-                array_filter($this->config['fields'], function ($field) {
-                    return empty($field['value']);
-                })
-            ),
-            'bridge' => $this->config['bridge'],
-            'backend' => $this->config['backend'],
-            'form' => $this->config['form'],
-            'credential' => $this->config['credential'],
-        ];
+            'meta_key' => '_fb-addon',
+            'meta_value' => $this->addon,
+            'fields' => 'ids',
+            'update_post_meta_cache' => false,
+            'update_post_term_cache' => false,
+            'update_menu_item_cache' => false,
+        ]);
+
+        if (count($ids)) {
+            return $ids[0];
+        }
     }
 
-    /**
-     * Extends the common schema and adds custom properties.
-     *
-     * @param array $schema Common template data schema.
-     *
-     * @return array
-     */
-    protected static function extend_schema($schema)
+    public function save()
     {
-        return $schema;
+        if (!$this->is_valid) {
+            return $this->data;
+        }
+
+        $post_arr = [
+            'post_type' => self::post_type,
+            'post_name' => $this->name,
+            'post_title' => $this->title,
+            'post_excerpt' => $this->description,
+        ];
+
+        $post_id = $this->get_post_id();
+        if ($post_id) {
+            $post_arr['ID'] = $post_id;
+            $post_id = wp_update_post($post_arr, true);
+        } else {
+            $post_id = wp_insert_post($post_arr, true);
+        }
+
+        if (!is_wp_error($post_id)) {
+            update_post_meta($post_id, '_template-fields', $this->fields);
+            update_post_meta($post_id, '_template-form', $this->form);
+            update_post_meta($post_id, '_template-bridge', $this->bridge);
+            update_post_meta($post_id, '_template-backend', $this->backend);
+            update_post_meta(
+                $post_id,
+                '_template-credential',
+                $this->credential
+            );
+        }
+
+        return $post_id;
+    }
+
+    public function reset()
+    {
+        $post_id = $this->get_post_id();
+
+        if (!$post_id) {
+            return false;
+        }
+
+        return wp_delete_post($post_id, true) instanceof WP_Post;
     }
 
     /**
-     * Applies the input fields with the template's config data to
+     * Applies the input fields with the template's data to
      * create a form and bind it with a bridge.
      *
      * @param array $fields User input fields data.
@@ -553,11 +723,15 @@ class Form_Bridge_Template
      */
     public function use($fields, $integration)
     {
-        $template = $this->config;
-
-        if (is_wp_error($template)) {
-            return;
+        if (!$this->is_valid) {
+            return new WP_Error(
+                'invalid_template',
+                __('The target template is invalid', 'forms-bridge')
+            );
         }
+
+        $template = $this->data;
+        $schema = static::schema($this->addon);
 
         // Add constants to the user fields
         foreach ($template['fields'] as $field) {
@@ -566,21 +740,18 @@ class Form_Bridge_Template
             }
         }
 
-        $all_fields = forms_bridge_merge_collection(
+        $all_fields = wpct_plugin_merge_collection(
             $fields,
             $template['fields'],
-            static::$schema['fields']['items']
+            $schema['properties']['fields']['items']
         );
 
-        $requireds = array_filter($all_fields, function ($field) {
-            return ($field['required'] ?? false) && empty($field['value']);
+        $requireds = array_filter($all_fields, static function ($field) {
+            return ($field['required'] ?? false) && !isset($field['value']);
         });
 
-        if (
-            count($fields) > count($all_fields) ||
-            count($fields) < count($requireds)
-        ) {
-            throw new Form_Bridge_Template_Exception(
+        if (count($requireds) || count($fields) > count($all_fields)) {
+            return new WP_Error(
                 'invalid_fields',
                 __('Invalid template fields', 'forms-bridge')
             );
@@ -590,34 +761,17 @@ class Form_Bridge_Template
         foreach ($fields as $field) {
             $is_required = $field['required'] ?? false;
 
-            $field = forms_bridge_validate_with_schema($field, [
-                'type' => 'object',
-                'properties' => [
-                    'ref' => [
-                        'type' => 'string',
-                        'pattern' => '#.+',
-                    ],
-                    'name' => [
-                        'type' => 'string',
-                        'minLength' => 1,
-                    ],
-                    'value' => [
-                        'type' => [
-                            'number',
-                            'integer',
-                            'string',
-                            'boolean',
-                            'array',
-                            'object',
-                            'null',
-                        ],
-                    ],
-                ],
-                'required' => ['ref', 'name'],
-            ]);
+            $field_schema = $schema['properties']['fields']['items'];
+            $field_schema['required'] = ['ref', 'name'];
+
+            if ($is_required) {
+                $field_schema['required'][] = 'value';
+            }
+
+            $field = wpct_plugin_sanitize_with_schema($field, $field_schema);
 
             if (is_wp_error($field)) {
-                throw new Form_Bridge_Template_Exception(
+                return new WP_Error(
                     'invalid_field',
                     sprintf(
                         __(
@@ -630,18 +784,24 @@ class Form_Bridge_Template
                 );
             }
 
-            if (!isset($field['value']) && $is_required) {
-                throw new Form_Bridge_Template_Exception(
-                    'required_field',
-                    sprintf(
-                        __(
-                            /* translators: %s: Field name */
-                            'Field `%s` is required',
-                            'forms-bridge'
-                        ),
-                        $field['name']
-                    )
-                );
+            if (!isset($field['value'])) {
+                continue;
+            }
+
+            if (is_array($field['value']) && empty($field['type'])) {
+                continue;
+            }
+
+            if ($field['value'] === '') {
+                continue;
+            }
+
+            if ($field['type'] === 'boolean') {
+                if (!isset($field['value'][0])) {
+                    continue;
+                } else {
+                    $field['value'] = '1';
+                }
             }
 
             // Inherit form field structure if field ref points to form fields
@@ -651,44 +811,18 @@ class Form_Bridge_Template
                     array_column($template['form']['fields'], 'name')
                 );
 
-                if ($index === false) {
-                    throw new Form_Bridge_Template_Exception(
-                        'invalid_template',
-                        sprintf(
-                            __(
-                                /* translators: %s: Field name */
-                                'Template does not include form field `%s`',
-                                'forms-bridge'
-                            ),
-                            $field['name']
-                        )
-                    );
-                }
-
                 $form_field = $template['form']['fields'][$index];
                 $field['index'] = $index;
                 $field['value'] = array_merge($form_field, [
                     'value' => $field['value'],
                 ]);
-
-                if (
-                    $field['type'] === 'boolean' &&
-                    isset($field['value']['value']) &&
-                    is_array($field['value']['value'])
-                ) {
-                    $field['value']['value'] =
-                        ($field['value']['value'][0] ?? false) === '1';
-                }
-            }
-
-            // Format backend headers' values
-            if (
+            } elseif (
                 $field['ref'] === '#backend/headers[]' ||
                 $field['ref'] === '#bridge/custom_fields[]'
             ) {
                 $field['value'] = [
                     'name' => $field['name'],
-                    'value' => $field['value'],
+                    'value' => $field['value'] ?? null,
                 ];
             }
 
@@ -697,7 +831,7 @@ class Form_Bridge_Template
             foreach ($keys as $key) {
                 $clean_key = str_replace('[]', '', $key);
                 if (!isset($leaf[$clean_key])) {
-                    throw new Form_Bridge_Template_Exception(
+                    return new WP_Error(
                         'invalid_ref',
                         sprintf(
                             __(
@@ -724,16 +858,17 @@ class Form_Bridge_Template
             }
         }
 
-        $data['fields'] = $fields;
         $data = apply_filters(
             'forms_bridge_template_data',
             $data,
-            $this->name,
+            $this->id,
             $this
         );
 
-        if (empty($data) || is_wp_error($data)) {
-            throw new Form_Bridge_Template_Exception(
+        if (is_wp_error($data)) {
+            return $data;
+        } elseif (empty($data)) {
+            return new WP_Error(
                 'template_creation_error',
                 __('There is a problem with the template data', 'forms-bridge')
             );
@@ -741,9 +876,27 @@ class Form_Bridge_Template
 
         if ($integration === 'woo') {
             $data['form']['id'] = 1;
+        } elseif ($integration === 'wpforms') {
+            $mappers = [];
+            foreach ($data['form']['fields'] as &$field) {
+                if ($field['type'] !== 'file') {
+                    $mappers[] = [
+                        'from' => JSON_Finger::sanitize_key($field['label']),
+                        'to' => $field['name'],
+                        'cast' => 'inherit',
+                    ];
+                }
+
+                $field['name'] = $field['label'];
+            }
+
+            $data['bridge']['mutations'][0] = array_merge(
+                $mappers,
+                $data['bridge']['mutations'][0] ?? []
+            );
         }
 
-        $integration_instance = Integration::integrations()[$integration];
+        $integration_instance = Integration::integration($integration);
 
         try {
             $create_form = !$this->form_exists(
@@ -761,7 +914,7 @@ class Form_Bridge_Template
                 $form_id = $integration_instance->create_form($data['form']);
 
                 if (!$form_id) {
-                    throw new Form_Bridge_Template_Exception(
+                    return new WP_Error(
                         'form_creation_error',
                         __(
                             'Forms bridge can\'t create the form',
@@ -772,40 +925,17 @@ class Form_Bridge_Template
                 }
 
                 $data['form']['id'] = $form_id;
-                $data['bridge']['form_id'] = $integration . ':' . $form_id;
 
                 do_action(
                     'forms_bridge_template_form',
                     $data['form'],
-                    $this->name,
+                    $this->id,
                     $this
                 );
-            } else {
-                $data['bridge']['form_id'] =
-                    $integration . ':' . $data['form']['id'];
             }
 
-            $create_backend = !$this->backend_exists($data['backend']['name']);
-            if ($create_backend) {
-                $result = $this->create_backend($data['backend']);
-
-                if (!$result) {
-                    if ($create_form) {
-                        $integration_instance->remove_form($data['form']['id']);
-                    }
-
-                    throw new Form_Bridge_Template_Exception(
-                        'backend_creation_error',
-                        __(
-                            'Forms bridge can\'t create the backend',
-                            'forms-bridge',
-                            ['status' => 400, 'data' => $data['backend']]
-                        )
-                    );
-                }
-            }
-
-            $data['bridge']['backend'] = $data['backend']['name'];
+            $data['bridge']['form_id'] =
+                $integration . ':' . $data['form']['id'];
 
             $create_credential = false;
             if (!empty($data['credential']['name'])) {
@@ -827,7 +957,7 @@ class Form_Bridge_Template
                             $this->remove_backend($data['backend']['name']);
                         }
 
-                        throw new Form_Bridge_Template_Exception(
+                        return new WP_Error(
                             'credential_creation_error',
                             __(
                                 'Forms bridge can\'t create the credential',
@@ -838,25 +968,49 @@ class Form_Bridge_Template
                     }
                 }
 
-                $data['bridge']['credential'] = $data['credential']['name'];
+                $data['backend']['credential'] = $data['credential']['name'];
             }
+
+            $create_backend = !$this->backend_exists($data['backend']['name']);
+            if ($create_backend) {
+                $result = $this->create_backend($data['backend']);
+
+                if (!$result) {
+                    if ($create_form) {
+                        $integration_instance->remove_form($data['form']['id']);
+                    }
+
+                    return new WP_Error(
+                        'backend_creation_error',
+                        __(
+                            'Forms bridge can\'t create the backend',
+                            'forms-bridge',
+                            ['status' => 400, 'data' => $data['backend']]
+                        )
+                    );
+                }
+            }
+
+            $data['bridge']['backend'] = $data['backend']['name'];
 
             $bridge_created = $this->create_bridge($data['bridge']);
 
             if (!$bridge_created) {
                 if ($create_form) {
-                    $integration_instance->remove_form($data['form_id']);
-                }
-
-                if ($create_backend) {
-                    $this->remove_backend($data['backend']['name']);
+                    $integration_instance->remove_form(
+                        $data['bridge']['form_id']
+                    );
                 }
 
                 if ($create_credential) {
                     $this->remove_credential($data['credential']['name']);
                 }
 
-                throw new Form_Bridge_Template_Exception(
+                if ($create_backend) {
+                    $this->remove_backend($data['backend']['name']);
+                }
+
+                return new WP_Error(
                     'bridge_creation_error',
                     __(
                         'Forms bridge can\'t create the form bridge',
@@ -865,31 +1019,29 @@ class Form_Bridge_Template
                     )
                 );
             }
-        } catch (Form_Bridge_Template_Exception $e) {
-            throw $e;
         } catch (Error | Exception $e) {
             if (isset($create_form) && $create_form) {
                 $integration_instance->remove_form($data['form']['id']);
-            }
-
-            if (isset($create_backend) && $create_backend) {
-                $this->remove_backend($data['backend']['name']);
             }
 
             if (isset($create_credential) && $create_credential) {
                 $this->remove_credential($data['credential']['name']);
             }
 
+            if (isset($create_backend) && $create_backend) {
+                $this->remove_backend($data['backend']['name']);
+            }
+
             if (isset($bridge_created) && $bridge_created) {
                 $this->remove_bridge($data['bridge']['name']);
             }
 
-            throw new Form_Bridge_Template_Exception(
-                'internal_server_error',
-                $e->getMessage(),
-                ['status' => 500]
-            );
+            return new WP_Error('internal_server_error', $e->getMessage(), [
+                'status' => 500,
+            ]);
         }
+
+        return true;
     }
 
     /**
@@ -902,12 +1054,7 @@ class Form_Bridge_Template
      */
     private function form_exists($form_id, $integration)
     {
-        $form = apply_filters(
-            'forms_bridge_form',
-            null,
-            $form_id,
-            $integration
-        );
+        $form = FBAPI::get_form_by_id($form_id, $integration);
         return !empty($form['id']);
     }
 
@@ -920,8 +1067,7 @@ class Form_Bridge_Template
      */
     final protected function backend_exists($name)
     {
-        $backends =
-            \HTTP_BRIDGE\Settings_Store::setting('general')->backends ?: [];
+        $backends = Http_Store::setting('general')->backends ?: [];
         return array_search($name, array_column($backends, 'name')) !== false;
     }
 
@@ -934,7 +1080,7 @@ class Form_Bridge_Template
      */
     private function create_backend($data)
     {
-        $setting = \HTTP_BRIDGE\Settings_Store::setting('general');
+        $setting = Http_Store::setting('general');
         $backends = $setting->backends ?: [];
 
         do_action_ref_array('forms_bridge_before_template_backend', [
@@ -947,13 +1093,11 @@ class Form_Bridge_Template
         $setting->flush();
 
         $is_valid = $this->backend_exists($data['name']);
-
         if (!$is_valid) {
             return;
         }
 
-        do_action('forms_bridge_template_backend', $data, $this->name, $this);
-
+        do_action('forms_bridge_template_backend', $data, $this->id, $this);
         return true;
     }
 
@@ -964,7 +1108,7 @@ class Form_Bridge_Template
      */
     private function remove_backend($name)
     {
-        $setting = \HTTP_BRIDGE\Settings_Store::setting('general');
+        $setting = Http_Store::setting('general');
         $backends = $setting->backends ?: [];
 
         $setting->backends = array_filter($backends, static function (
@@ -984,7 +1128,7 @@ class Form_Bridge_Template
      */
     private function bridge_exists($name)
     {
-        $bridges = Forms_Bridge::setting($this->api)->bridges ?: [];
+        $bridges = Settings_Store::setting($this->addon)->bridges ?: [];
         return array_search($name, array_column($bridges, 'name')) !== false;
     }
 
@@ -1002,7 +1146,7 @@ class Form_Bridge_Template
             return;
         }
 
-        $setting = Forms_Bridge::setting($this->api);
+        $setting = Settings_Store::setting($this->addon);
         $bridges = $setting->bridges ?: [];
 
         do_action_ref_array('forms_bridge_before_template_bridge', [
@@ -1019,8 +1163,7 @@ class Form_Bridge_Template
             return;
         }
 
-        do_action('forms_bridge_template_bridge', $data, $this->name, $this);
-
+        do_action('forms_bridge_template_bridge', $data, $this->id, $this);
         return true;
     }
 
@@ -1031,7 +1174,7 @@ class Form_Bridge_Template
      */
     private function remove_bridge($name)
     {
-        $setting = Forms_Bridge::setting($this->api);
+        $setting = Settings_Store::setting($this->addon);
         $bridges = $setting->bridges ?: [];
 
         $setting->bridges = array_filter($bridges, static function (
@@ -1050,7 +1193,7 @@ class Form_Bridge_Template
      */
     private function credential_exists($name)
     {
-        $credentials = Forms_Bridge::setting($this->api)->credentials ?: [];
+        $credentials = Http_Store::setting('general')->credentials ?: [];
         return array_search($name, array_column($credentials, 'name')) !==
             false;
     }
@@ -1064,12 +1207,7 @@ class Form_Bridge_Template
      */
     private function create_credential($data)
     {
-        $name_conflict = $this->credential_exists($data['name']);
-        if ($name_conflict) {
-            return;
-        }
-
-        $setting = Forms_Bridge::setting($this->api);
+        $setting = Http_Store::setting('general');
         $credentials = $setting->credentials ?: [];
 
         if (!is_array($credentials)) {
@@ -1090,13 +1228,7 @@ class Form_Bridge_Template
             return;
         }
 
-        do_action(
-            'forms_bridge_template_credential',
-            $data,
-            $this->name,
-            $this
-        );
-
+        do_action('forms_bridge_template_credential', $data, $this->id, $this);
         return true;
     }
 
@@ -1107,7 +1239,7 @@ class Form_Bridge_Template
      */
     private function remove_credential($name)
     {
-        $setting = Forms_Bridge::setting($this->api);
+        $setting = Http_Store::setting('general');
         $credentials = $setting->credentials ?: [];
 
         $setting->credentials = array_filter($credentials, static function (

@@ -71,16 +71,17 @@ return [
         [
             'name' => 'name',
             'schema' => ['type' => 'string'],
+            'requires' => ['name'],
         ],
         [
             'name' => 'email',
             'schema' => ['type' => 'string'],
-            'forward' => true,
+            'requires' => ['email'],
         ],
         [
             'name' => 'vat',
             'schema' => ['type' => 'string'],
-            'forward' => true,
+            'requires' => ['vat'],
         ],
     ],
 ];

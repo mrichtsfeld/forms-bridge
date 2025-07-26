@@ -68,12 +68,12 @@ return [
         [
             'name' => 'vatnumber',
             'schema' => ['type' => 'string'],
-            'touch' => true,
+            'requires' => ['vatnumber'],
         ],
         [
             'name' => 'countryCode',
             'schema' => ['type' => 'string'],
-            'forward' => true,
+            'requires' => ['countryCode'],
         ],
     ],
 ];

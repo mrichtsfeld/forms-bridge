@@ -23,7 +23,9 @@ return [
 
 function forms_bridge_listmonk_skip_subscription($payload)
 {
-    if ($payload['listmonk'] === true) {
-        return $payload;
+    if ($payload['listmonk'] != true) {
+        return;
     }
+
+    return $payload;
 }

@@ -4,45 +4,6 @@ if (!defined('ABSPATH')) {
     exit();
 }
 
-add_filter(
-    'forms_bridge_template_data',
-    function ($data, $template_name) {
-        if ($template_name === 'odoo-crm-team-leads') {
-            $index = array_search(
-                'tag_ids',
-                array_column($data['bridge']['custom_fields'], 'name')
-            );
-
-            if ($index !== false) {
-                $field = $data['bridge']['custom_fields'][$index];
-                $tags = $field['value'] ?? [];
-
-                for ($i = 0; $i < count($tags); $i++) {
-                    $data['bridge']['custom_fields'][] = [
-                        'name' => "tag_ids[{$i}]",
-                        'value' => $tags[$i],
-                    ];
-
-                    $data['bridge']['mutations'][0][] = [
-                        'from' => "tag_ids[{$i}]",
-                        'to' => "tag_ids[{$i}]",
-                        'cast' => 'integer',
-                    ];
-                }
-
-                array_splice($data['bridge']['custom_fields'], $index, 1);
-                $data['bridge']['custom_fields'] = array_values(
-                    $data['bridge']['custom_fields']
-                );
-            }
-        }
-
-        return $data;
-    },
-    10,
-    2
-);
-
 return [
     'title' => __('CRM Team Leads', 'forms-bridge'),
     'description' => __(
@@ -68,14 +29,21 @@ return [
                 'Name of the owner team of the lead',
                 'forms-bridge'
             ),
-            'type' => 'string',
+            'type' => 'select',
+            'options' => [
+                'endpoint' => 'crm.team',
+                'finger' => [
+                    'value' => 'result[].id',
+                    'label' => 'result[].name',
+                ],
+            ],
             'required' => true,
         ],
         [
             'ref' => '#bridge/custom_fields[]',
             'name' => 'lead_name',
             'label' => __('Lead name', 'forms-bridge'),
-            'type' => 'string',
+            'type' => 'text',
             'required' => true,
             'default' => __('Web Lead', 'forms-bridge'),
         ],
@@ -90,9 +58,25 @@ return [
         ],
         [
             'ref' => '#bridge/custom_fields[]',
+            'name' => 'expected_revenue',
+            'label' => __('Expected revenue', 'forms-bridge'),
+            'type' => 'number',
+            'min' => 0,
+            'default' => 0,
+        ],
+        [
+            'ref' => '#bridge/custom_fields[]',
             'name' => 'tag_ids',
             'label' => __('Lead tags', 'forms-bridge'),
-            'type' => 'string',
+            'type' => 'select',
+            'options' => [
+                'endpoint' => 'crm.tag',
+                'finger' => [
+                    'value' => 'result[].id',
+                    'label' => 'result[].name',
+                ],
+            ],
+            'is_multi' => true,
         ],
     ],
     'bridge' => [
@@ -109,6 +93,16 @@ return [
                     'to' => 'name',
                     'cast' => 'string',
                 ],
+                [
+                    'from' => '?priority',
+                    'to' => 'priority',
+                    'cast' => 'string',
+                ],
+                [
+                    'from' => '?expected_revenue',
+                    'to' => 'expected_revenue',
+                    'cast' => 'number',
+                ],
             ],
             [
                 [
@@ -118,7 +112,7 @@ return [
                 ],
             ],
         ],
-        'workflow' => ['odoo-crm-contact'],
+        'workflow' => ['crm-contact'],
     ],
     'form' => [
         'fields' => [

@@ -6,41 +6,6 @@ if (!defined('ABSPATH')) {
 
 global $forms_bridge_iso2_countries;
 
-add_filter(
-    'forms_bridge_template_data',
-    function ($data, $template_name) {
-        if ($template_name === 'holded-appointments') {
-            $index = array_search(
-                'tags',
-                array_column($data['bridge']['custom_fields'], 'name')
-            );
-
-            if ($index !== false) {
-                $field = &$data['bridge']['custom_fields'][$index];
-
-                if (!empty($field['value'])) {
-                    $tags = array_filter(
-                        array_map('trim', explode(',', strval($field['value'])))
-                    );
-
-                    for ($i = 0; $i < count($tags); $i++) {
-                        $data['bridge']['custom_fields'][] = [
-                            'name' => "tags[{$i}]",
-                            'value' => $tags[$i],
-                        ];
-                    }
-                }
-
-                array_splice($data['bridge']['custom_fields'], $index, 1);
-            }
-        }
-
-        return $data;
-    },
-    10,
-    2
-);
-
 return [
     'title' => __('Appointments', 'forms-bridge'),
     'description' => __(
@@ -62,7 +27,7 @@ return [
             'ref' => '#bridge/custom_fields[]',
             'name' => 'event_name',
             'label' => __('Event name', 'forms-bridge'),
-            'type' => 'string',
+            'type' => 'text',
             'required' => true,
             'default' => 'Web appointment',
         ],
@@ -70,7 +35,7 @@ return [
             'ref' => '#bridge/custom_fields[]',
             'name' => 'kind',
             'label' => __('Event type', 'forms-bridge'),
-            'type' => 'options',
+            'type' => 'select',
             'options' => [
                 [
                     'value' => 'meeting',
@@ -104,7 +69,7 @@ return [
             'ref' => '#bridge/custom_fields[]',
             'name' => 'type',
             'label' => __('Contact type', 'forms-bridge'),
-            'type' => 'options',
+            'type' => 'select',
             'options' => [
                 [
                     'label' => __('Unspecified', 'forms-bridge'),
@@ -139,7 +104,7 @@ return [
             'name' => 'tags',
             'label' => __('Tags', 'forms-bridge'),
             'description' => __('Tags separated by commas', 'forms-bridge'),
-            'type' => 'string',
+            'type' => 'text',
         ],
     ],
     'bridge' => [
@@ -186,6 +151,11 @@ return [
                     'to' => 'billAddress.city',
                     'cast' => 'string',
                 ],
+                [
+                    'from' => '?tags',
+                    'to' => 'event_tags',
+                    'cast' => 'inherit',
+                ],
             ],
             [
                 [
@@ -220,14 +190,19 @@ return [
                     'to' => 'name',
                     'cast' => 'string',
                 ],
+                [
+                    'from' => '?event_tags',
+                    'to' => 'tags',
+                    'cast' => 'inherit',
+                ],
             ],
         ],
         'workflow' => [
-            'forms-bridge-date-fields-to-date',
-            'holded-appointment-dates',
-            'forms-bridge-iso2-country-code',
-            'holded-prefix-vatnumber',
-            'holded-contact-id',
+            'date-fields-to-date',
+            'appointment-dates',
+            'iso2-country-code',
+            'prefix-vatnumber',
+            'contact-id',
         ],
     ],
     'form' => [
@@ -257,9 +232,24 @@ return [
                 'required' => true,
             ],
             [
+                'label' => __('Address', 'forms-bridge'),
+                'name' => 'address',
+                'type' => 'text',
+            ],
+            [
+                'label' => __('Zip code', 'forms-bridge'),
+                'name' => 'postalCode',
+                'type' => 'text',
+            ],
+            [
+                'label' => __('City', 'forms-bridge'),
+                'name' => 'city',
+                'type' => 'text',
+            ],
+            [
                 'label' => __('Country', 'forms-bridge'),
                 'name' => 'country',
-                'type' => 'options',
+                'type' => 'select',
                 'options' => array_map(function ($country_code) {
                     global $forms_bridge_iso2_countries;
                     return [
@@ -278,7 +268,7 @@ return [
             [
                 'name' => 'hour',
                 'label' => __('Hour', 'forms-bridge'),
-                'type' => 'options',
+                'type' => 'select',
                 'required' => true,
                 'options' => [
                     [
@@ -382,7 +372,7 @@ return [
             [
                 'name' => 'minute',
                 'label' => __('Minute', 'forms-bridge'),
-                'type' => 'options',
+                'type' => 'select',
                 'required' => true,
                 'options' => [
                     ['label' => '00', 'value' => '00.0'],

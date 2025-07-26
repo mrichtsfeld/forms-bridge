@@ -4,27 +4,6 @@ if (!defined('ABSPATH')) {
     exit();
 }
 
-add_filter(
-    'forms_bridge_template_data',
-    function ($data, $template_name) {
-        if ($template_name === 'dolibarr-contacts') {
-            $index = array_search(
-                'no_email',
-                array_column($data['bridge']['custom_fields'], 'name')
-            );
-
-            if ($index !== false) {
-                $field = &$data['bridge']['custom_fields'][$index];
-                $field['value'] = $field['value'] ? '0' : '1';
-            }
-        }
-
-        return $data;
-    },
-    10,
-    2
-);
-
 return [
     'title' => __('Contacts', 'forms-bridge'),
     'description' => __(
@@ -90,6 +69,6 @@ return [
                 ],
             ],
         ],
-        'workflow' => ['dolibarr-skip-if-contact-exists'],
+        'workflow' => ['skip-if-contact-exists'],
     ],
 ];

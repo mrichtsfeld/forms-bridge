@@ -1,8 +1,9 @@
 // source
+import { useForms } from "../../providers/Forms";
 import MutationLayers from "./Layers";
 
 const { Button, Modal } = wp.components;
-const { useState, useMemo, useEffect, useRef } = wp.element;
+const { useState, useMemo, useEffect, useRef, useCallback } = wp.element;
 const { __ } = wp.i18n;
 
 const CSS = `.components-modal__frame.no-scrollable .components-modal__content {
@@ -12,8 +13,25 @@ const CSS = `.components-modal__frame.no-scrollable .components-modal__content {
   height: 100%;
 }`;
 
-export default function Mutations({ form, mappers, setMappers, includeFiles }) {
+export default function Mutations({
+  formId,
+  mappers,
+  setMappers,
+  includeFiles,
+  customFields,
+}) {
   const [open, setOpen] = useState(false);
+
+  const [state, setState] = useState(mappers);
+
+  useEffect(() => {
+    setState(mappers);
+  }, [mappers]);
+
+  const [forms] = useForms();
+  const form = useMemo(() => {
+    return forms.find((form) => form._id === formId);
+  }, [forms, formId]);
 
   const fields = useMemo(() => {
     if (!form) return [];
@@ -32,16 +50,29 @@ export default function Mutations({ form, mappers, setMappers, includeFiles }) {
         }
 
         return fields;
-      }, []);
-  }, [form]);
+      }, [])
+      .concat(
+        customFields.map(({ name }) => ({
+          name,
+          label: name,
+          schema: { type: "string" },
+        }))
+      );
+  }, [form, customFields]);
 
-  const handleSetMappers = (mappers) => {
-    mappers.forEach((mapper) => {
-      delete mapper.index;
+  const handleSetState = useRef((mappers) => {
+    const state = mappers.map(({ from, to, cast }) => {
+      return { from, to, cast };
     });
 
+    setState(state);
+  }).current;
+
+  const onClose = useCallback(() => {
+    const mappers = state.filter(({ from, to, cast }) => from && to && cast);
     setMappers(mappers);
-  };
+    setOpen(false);
+  }, [state]);
 
   const style = useRef(document.createElement("style"));
   useEffect(() => {
@@ -57,19 +88,16 @@ export default function Mutations({ form, mappers, setMappers, includeFiles }) {
     <>
       <Button
         disabled={!form}
-        variant={
-          form && mappers.filter((m) => m.from).length ? "primary" : "secondary"
-        }
+        variant="secondary"
         onClick={() => setOpen(true)}
-        style={{ width: "150px", justifyContent: "center" }}
         __next40pxDefaultSize
       >
-        {__("Mutations", "forms-bridge")}
+        {__("Mappers", "forms-bridge")} ({mappers.length})
       </Button>
       {open && (
         <Modal
           title={__("Mutation layers", "forms-bridge")}
-          onRequestClose={() => setOpen(false)}
+          onRequestClose={onClose}
           className="no-scrollable"
         >
           <div
@@ -85,8 +113,8 @@ export default function Mutations({ form, mappers, setMappers, includeFiles }) {
           >
             <MutationLayers
               fields={fields}
-              mappers={mappers.map((mapper, index) => ({ ...mapper, index }))}
-              setMappers={handleSetMappers}
+              mappers={state.map((mapper, index) => ({ ...mapper, index }))}
+              setMappers={handleSetState}
               done={() => setOpen(false)}
             />
           </div>

@@ -27,17 +27,11 @@ return [
     'bridge' => [
         'endpoint' => 'res.partner',
         'workflow' => [
-            'forms-bridge-iso2-country-code',
-            'odoo-vat-id',
-            'odoo-country-id',
-            'odoo-contact-company',
-            'odoo-skip-if-partner-exists',
-        ],
-        'custom_fields' => [
-            [
-                'name' => 'contact_lang',
-                'value' => '$locale',
-            ],
+            'iso2-country-code',
+            'vat-id',
+            'country-id',
+            'contact-company',
+            'skip-if-partner-exists',
         ],
         'mutations' => [
             [
@@ -47,14 +41,19 @@ return [
                     'cast' => 'string',
                 ],
             ],
+            [],
             [
                 [
-                    'from' => 'country',
-                    'to' => 'country',
-                    'cast' => 'null',
+                    'from' => 'email',
+                    'to' => 'contact_email',
+                    'cast' => 'copy',
+                ],
+                [
+                    'from' => 'phone',
+                    'to' => 'contact_phone',
+                    'cast' => 'copy',
                 ],
             ],
-            [],
             [],
             [
                 [
@@ -70,11 +69,6 @@ return [
                 [
                     'from' => 'contact_phone',
                     'to' => 'phone',
-                    'cast' => 'string',
-                ],
-                [
-                    'from' => 'contact_lang',
-                    'to' => 'lang',
                     'cast' => 'string',
                 ],
             ],
@@ -116,7 +110,7 @@ return [
             [
                 'label' => __('Country', 'forms-bridge'),
                 'name' => 'country',
-                'type' => 'options',
+                'type' => 'select',
                 'options' => array_map(function ($country_code) {
                     global $forms_bridge_iso2_countries;
                     return [
@@ -140,13 +134,13 @@ return [
             ],
             [
                 'label' => __('Your email', 'forms-bridge'),
-                'name' => 'contact_email',
+                'name' => 'email',
                 'type' => 'email',
                 'required' => true,
             ],
             [
                 'label' => __('Your phone', 'forms-bridge'),
-                'name' => 'contact_phone',
+                'name' => 'phone',
                 'type' => 'text',
             ],
         ],

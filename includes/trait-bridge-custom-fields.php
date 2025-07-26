@@ -2,6 +2,8 @@
 
 namespace FORMS_BRIDGE;
 
+use FBAPI;
+
 if (!defined('ABSPATH')) {
     exit();
 }
@@ -56,13 +58,21 @@ trait Form_Bridge_Custom_Fields
                 }
             },
             'locale' => static function () {
-                return get_locale();
+                return apply_filters(
+                    'wpct_i18n_current_language',
+                    get_locale(),
+                    'locale'
+                );
             },
             'language' => static function () {
                 include_once ABSPATH .
                     'wp-admin/includes/translation-install.php';
                 $translations = wp_get_available_translations();
-                $locale = get_locale();
+                $locale = apply_filters(
+                    'wpct_i18n_current_language',
+                    get_locale(),
+                    'locale'
+                );
                 return $translations[$locale]['native_name'] ?? $locale;
             },
             'datetime' => static function () {
@@ -97,14 +107,14 @@ trait Form_Bridge_Custom_Fields
                 return $user->user_email;
             },
             'submission_id' => static function () {
-                return apply_filters('forms_bridge_submission_id', null);
+                return FBAPI::get_submission_id();
             },
             'form_title' => static function () {
-                $form = apply_filters('forms_bridge_form', null);
+                $form = FBAPI::get_current_form();
                 return $form['title'] ?? null;
             },
             'form_id' => static function () {
-                $form = apply_filters('forms_bridge_form', null);
+                $form = FBAPI::get_current_form();
                 return $form['id'] ?? null;
             },
         ];

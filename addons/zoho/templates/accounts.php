@@ -24,7 +24,14 @@ return [
                 'Email of the owner user of the account',
                 'forms-bridge'
             ),
-            'type' => 'string',
+            'type' => 'select',
+            'options' => [
+                'endpoint' => '/crm/v7/users',
+                'finger' => [
+                    'value' => 'users[].id',
+                    'label' => 'users[].full_name',
+                ],
+            ],
         ],
         [
             'ref' => '#form',
@@ -107,7 +114,6 @@ return [
     ],
     'bridge' => [
         'endpoint' => '/crm/v7/Contacts/upsert',
-        'scope' => 'ZohoCRM.modules.ALL',
-        'workflow' => ['zoho-contact-account'],
+        'workflow' => ['contact-account'],
     ],
 ];

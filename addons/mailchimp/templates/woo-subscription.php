@@ -4,70 +4,6 @@ if (!defined('ABSPATH')) {
     exit();
 }
 
-add_filter(
-    'forms_bridge_template_data',
-    function ($data, $template_name) {
-        if ($template_name === 'mailchimp-woo-subscription') {
-            $index = array_search(
-                'datacenter',
-                array_column($data['backend']['headers'], 'name')
-            );
-
-            $dc = $data['backend']['headers'][$index]['value'];
-            $data['backend']['base_url'] = preg_replace(
-                '/\{dc\}/',
-                $dc,
-                $data['backend']['base_url']
-            );
-
-            array_splice($data['backend']['headers'], $index, 1);
-
-            $index = array_search(
-                'list_id',
-                array_column($data['bridge']['custom_fields'], 'name')
-            );
-
-            $list_id = $data['bridge']['custom_fields'][$index]['value'];
-            $data['bridge']['endpoint'] = preg_replace(
-                '/\{list_id\}/',
-                $list_id,
-                $data['bridge']['endpoint']
-            );
-
-            array_splice($data['bridge']['custom_fields'], $index, 1);
-
-            $index = array_search(
-                'tags',
-                array_column($data['bridge']['custom_fields'], 'name')
-            );
-
-            if ($index !== false) {
-                $field = &$data['bridge']['custom_fields'][$index];
-
-                $tags = array_filter(
-                    array_map('trim', explode(',', strval($field['value'])))
-                );
-                for ($i = 0; $i < count($tags); $i++) {
-                    $data['bridge']['custom_fields'][] = [
-                        'name' => "tags[{$i}]",
-                        'value' => $tags[$i],
-                    ];
-                }
-
-                array_splice($data['bridge']['custom_fields'], $index, 1);
-            }
-
-            $data['bridge']['custom_fields'] = array_values(
-                $data['bridge']['custom_fields']
-            );
-        }
-
-        return $data;
-    },
-    10,
-    2
-);
-
 return [
     'title' => __('Subscription', 'forms-bridge'),
     'description' => __(
@@ -88,16 +24,9 @@ return [
         ],
         [
             'ref' => '#bridge/custom_fields[]',
-            'name' => 'list_id',
-            'label' => __('Audience', 'forms-bridge'),
-            'type' => 'string',
-            'required' => true,
-        ],
-        [
-            'ref' => '#bridge/custom_fields[]',
             'name' => 'status',
             'label' => __('Subscription status', 'forms-bridge'),
-            'type' => 'options',
+            'type' => 'select',
             'options' => [
                 [
                     'label' => __('Subscribed', 'forms-bridge'),
@@ -131,7 +60,7 @@ return [
                 'Tag names separated by commas',
                 'forms-bridge'
             ),
-            'type' => 'string',
+            'type' => 'text',
         ],
     ],
     'bridge' => [

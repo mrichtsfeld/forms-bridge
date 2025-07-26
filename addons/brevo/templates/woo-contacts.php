@@ -4,44 +4,6 @@ if (!defined('ABSPATH')) {
     exit();
 }
 
-add_filter(
-    'forms_bridge_template_data',
-    function ($data, $template_name) {
-        if ($template_name === 'brevo-woo-contacts') {
-            $index = array_search(
-                'listIds',
-                array_column($data['bridge']['custom_fields'], 'name')
-            );
-
-            if ($index !== false) {
-                $field = $data['bridge']['custom_fields'][$index];
-
-                for ($i = 0; $i < count($field['value']); $i++) {
-                    $data['bridge']['custom_fields'][] = [
-                        'name' => "listIds[{$i}]",
-                        'value' => $field['value'][$i],
-                    ];
-
-                    $data['bridge']['mutations'][0][] = [
-                        'from' => "listIds[{$i}]",
-                        'to' => "listIds[{$i}]",
-                        'cast' => 'integer',
-                    ];
-                }
-
-                array_splice($data['bridge']['custom_fields'], $index, 1);
-                $data['bridge']['custom_fields'] = array_values(
-                    $data['bridge']['custom_fields']
-                );
-            }
-        }
-
-        return $data;
-    },
-    10,
-    2
-);
-
 return [
     'title' => __('Contacts', 'forms-bridge'),
     'description' => __(
@@ -64,7 +26,15 @@ return [
             'ref' => '#bridge/custom_fields[]',
             'name' => 'listIds',
             'label' => __('Segments', 'forms-bridge'),
-            'type' => 'string',
+            'type' => 'select',
+            'options' => [
+                'endpoint' => '/v3/contacts/lists',
+                'finger' => [
+                    'value' => 'lists[].id',
+                    'label' => 'lists[].name',
+                ],
+            ],
+            'is_multi' => true,
             'required' => true,
         ],
     ],
@@ -122,11 +92,6 @@ return [
                 [
                     'from' => 'discount_tax',
                     'to' => 'discount_tax',
-                    'cast' => 'null',
-                ],
-                [
-                    'from' => 'shipping_total',
-                    'to' => 'shipping_total',
                     'cast' => 'null',
                 ],
                 [

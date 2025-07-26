@@ -257,8 +257,12 @@ class JSON_Finger
     {
         $pointer = (string) $pointer;
 
-        if ($this->$pointer) {
-            return $this->$pointer;
+        if (!$pointer) {
+            return $this->data;
+        }
+
+        if (isset($this->data[$pointer])) {
+            return $this->data[$pointer];
         }
 
         if (strstr($pointer, '[]') !== false) {
@@ -297,11 +301,24 @@ class JSON_Finger
     {
         $flat = preg_match('/\[\]$/', $pointer);
 
-        $parts = array_filter(explode('[]', $pointer));
+        $parts = explode('[]', $pointer);
         $before = $parts[0];
-        $after = implode('[]', array_slice($parts, 1));
 
-        $items = $this->get($before);
+        $after = array_slice($parts, 1);
+        if (count($after) && !$after[count($after) - 1]) {
+            array_pop($after);
+        }
+        $after = implode('[]', $after);
+
+        if (!$before) {
+            if (!wp_is_numeric_array($this->data)) {
+                return [];
+            }
+
+            $items = $this->data;
+        } else {
+            $items = $this->get($before);
+        }
 
         if (empty($after) || !wp_is_numeric_array($items)) {
             return $items;
@@ -344,6 +361,17 @@ class JSON_Finger
 
         try {
             $keys = self::parse($pointer);
+            if (count($keys) === 1) {
+                if ($unset) {
+                    unset($data[$keys[0]]);
+                } else {
+                    $data[$keys[0]] = $value;
+                }
+
+                $this->data = $data;
+                return $data;
+            }
+
             $partial = &$data;
 
             for ($i = 0; $i < count($keys) - 1; $i++) {
@@ -368,7 +396,7 @@ class JSON_Finger
                 $partial = &$partial[$key];
             }
 
-            $key = $keys[$i];
+            $key = array_pop($keys);
             if ($unset) {
                 if (wp_is_numeric_array($partial)) {
                     array_splice($partial, $key, 1);
@@ -377,7 +405,7 @@ class JSON_Finger
                 }
 
                 for ($i = count($breadcrumb) - 1; $i >= 0; $i--) {
-                    $step = $breadcrumb[$i];
+                    $step = &$breadcrumb[$i];
                     $partial = &$step['partial'];
                     $key = $step['key'];
 
@@ -394,8 +422,9 @@ class JSON_Finger
             } else {
                 $partial[$key] = $value;
             }
-        } catch (Error) {
-            return $data;
+        } catch (Error $e) {
+            error_log($e->getMessage());
+            return $this->data;
         }
 
         $this->data = $data;
@@ -409,13 +438,24 @@ class JSON_Finger
      * @param array $values Array of values.
      * @param boolean $unset If true, unsets the attributes.
      *
-     * @return array Updated data.
+     * @return array
      */
     private function set_expanded($pointer, $values, $unset)
     {
         $parts = array_filter(explode('[]', $pointer));
         $before = $parts[0];
-        $after = implode('[]', array_slice($parts, 1));
+
+        $after = array_slice($parts, 1);
+        if (count($after) && !$after[count($after) - 1]) {
+            array_pop($after);
+        }
+        $after = implode('[]', $after);
+
+        if (!$before) {
+            if (!is_array($values) || (!$after && $unset)) {
+                return;
+            }
+        }
 
         if ($unset) {
             $values = $this->get($before);
@@ -492,6 +532,10 @@ class JSON_Finger
                 $parent = $this->get($pointer);
 
                 if (strstr($pointer, '[]') === false) {
+                    if ($key === INF && is_array($parent)) {
+                        return true;
+                    }
+
                     return isset($parent[$key]);
                 }
 

@@ -4,41 +4,6 @@ if (!defined('ABSPATH')) {
     exit();
 }
 
-add_filter(
-    'forms_bridge_template_data',
-    function ($data, $template_name) {
-        if ($template_name === 'zoho-company-leads') {
-            $index = array_search(
-                'Tag',
-                array_column($data['bridge']['custom_fields'], 'name')
-            );
-
-            if ($index !== false) {
-                $field = &$data['bridge']['custom_fields'][$index];
-
-                if (!empty($field['value'])) {
-                    $tags = array_filter(
-                        array_map('trim', explode(',', strval($field['value'])))
-                    );
-
-                    for ($i = 0; $i < count($tags); $i++) {
-                        $data['bridge']['custom_fields'][] = [
-                            'name' => "Tag[{$i}].name",
-                            'value' => $tags[$i],
-                        ];
-                    }
-                }
-
-                array_splice($data['bridge']['custom_fields'], $index, 1);
-            }
-        }
-
-        return $data;
-    },
-    10,
-    2
-);
-
 return [
     'title' => __('Company Leads', 'forms-bridge'),
     'description' => __(
@@ -59,7 +24,14 @@ return [
                 'Email of the owner user of the deal',
                 'forms-bridge'
             ),
-            'type' => 'string',
+            'type' => 'select',
+            'options' => [
+                'endpoint' => '/crm/v7/users',
+                'finger' => [
+                    'value' => 'users[].id',
+                    'label' => 'users[].full_name',
+                ],
+            ],
         ],
         [
             'ref' => '#bridge/custom_fields[]',
@@ -69,14 +41,14 @@ return [
                 'Label to identify your website sourced leads',
                 'forms-bridge'
             ),
-            'type' => 'string',
+            'type' => 'text',
             'default' => 'WordPress',
         ],
         [
             'ref' => '#bridge/custom_fields[]',
             'name' => 'Lead_Status',
             'label' => __('Lead status', 'forms-bridge'),
-            'type' => 'options',
+            'type' => 'select',
             'options' => [
                 [
                     'label' => __('Not Contacted', 'forms-bridge'),
@@ -121,7 +93,7 @@ return [
                 'Tag names separated by commas',
                 'forms-bridge'
             ),
-            'type' => 'string',
+            'type' => 'text',
         ],
         [
             'ref' => '#form',
@@ -200,6 +172,5 @@ return [
     ],
     'bridge' => [
         'endpoint' => '/crm/v7/Leads/upsert',
-        'scope' => 'ZohoCRM.modules.leads.CREATE',
     ],
 ];

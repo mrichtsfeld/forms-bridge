@@ -2,7 +2,8 @@
 
 namespace FORMS_BRIDGE;
 
-use WPCT_ABSTRACT\Settings_Store as Base_Settings_Store;
+use WPCT_PLUGIN\Settings_Store as Base_Settings_Store;
+use HTTP_BRIDGE\Settings_Store as Http_Store;
 
 if (!defined('ABSPATH')) {
     exit();
@@ -18,7 +19,7 @@ class Settings_Store extends Base_Settings_Store
      *
      * @var string REST Controller class name.
      */
-    protected static $rest_controller_class = '\FORMS_BRIDGE\REST_Settings_Controller';
+    protected const rest_controller_class = '\FORMS_BRIDGE\REST_Settings_Controller';
 
     /**
      * Inherits the parent constructor and sets up settings' validation callbacks.
@@ -27,86 +28,57 @@ class Settings_Store extends Base_Settings_Store
     {
         parent::construct(...$args);
 
-        $slug = Forms_Bridge::slug();
+        $admin_email = get_option('admin_email');
 
-        // Patch http bridge default settings to plugin settings
-        add_filter(
-            'wpct_setting_default',
-            static function ($default, $name) use ($slug) {
-                if ($name !== $slug . '_general') {
-                    return $default;
-                }
-
-                $backends = \HTTP_BRIDGE\Settings_Store::setting('general')
-                    ->backends;
-
-                return array_merge($default, ['backends' => $backends]);
-            },
-            10,
-            2
-        );
-
-        // Patch http bridge settings to plugin settings
-        add_filter(
-            "option_{$slug}_general",
-            static function ($value) {
-                if (!is_array($value)) {
-                    return $value;
-                }
-
-                $backends = \HTTP_BRIDGE\Settings_Store::setting('general')
-                    ->backends;
-
-                return array_merge($value, ['backends' => $backends]);
-            },
-            10,
-            1
-        );
-    }
-
-    /**
-     * Plugin's setting configuration.
-     */
-    public static function config()
-    {
-        return [
-            [
-                'general',
-                [
-                    'notification_receiver' => ['type' => 'string'],
-                ],
-                [
-                    'notification_receiver' => get_option('admin_email'),
+        self::register_setting([
+            'name' => 'general',
+            'properties' => [
+                'notification_receiver' => [
+                    'type' => 'string',
+                    'format' => 'email',
+                    'default' => $admin_email,
                 ],
             ],
-        ];
-    }
+            'required' => ['notification_receiver'],
+            'default' => [
+                'notification_receiver' => $admin_email,
+            ],
+        ]);
 
-    /**
-     * Validates setting data before database inserts.
-     *
-     * @param array $data Setting data.
-     * @param Setting $setting Setting instance.
-     *
-     * @return array Validated setting data.
-     */
-    protected static function validate_setting($data, $setting)
-    {
-        if ($setting->name() !== 'general') {
-            return $data;
-        }
+        self::register_setting([
+            'name' => 'http',
+            'properties' => [],
+            'default' => [],
+        ]);
 
-        $data['notification_receiver'] =
-            filter_var($data['notification_receiver'], FILTER_VALIDATE_EMAIL) ?:
-            get_option('admin_email');
+        self::ready(static function ($store) {
+            $store::use_getter('http', static function () {
+                $setting = Http_Store::setting('general');
+                return $setting->data();
+            });
 
-        $http = \HTTP_BRIDGE\Settings_Store::setting('general');
-        $http->backends = \HTTP_BRIDGE\Settings_Store::validate_backends(
-            $data['backends'] ?? []
-        );
+            $store::use_setter(
+                'http',
+                static function ($data) {
+                    if (
+                        !isset($data['backends']) ||
+                        !isset($data['credentials'])
+                    ) {
+                        return $data;
+                    }
 
-        unset($data['backends']);
+                    $setting = Http_Store::setting('general');
+                    $setting->update($data);
 
-        return $data;
+                    return [];
+                },
+                9
+            );
+
+            $store::use_cleaner('general', static function () {
+                $setting = Http_Store::setting('general');
+                $setting->update(['backends' => [], 'credentials' => []]);
+            });
+        });
     }
 }

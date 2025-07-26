@@ -1,3 +1,5 @@
+import { useError } from "../providers/Error";
+import useTab from "../hooks/useTab";
 import {
   fieldsToPayload,
   schemaToPayload,
@@ -6,14 +8,18 @@ import {
   checkType,
   payloadToSchema,
 } from "../lib/payload";
-import { useGeneral } from "./Settings";
-import { useWorkflowJobs } from "./WorkflowJobs";
+import { useForms } from "./Forms";
+import { useJobConfig } from "./Jobs";
+import diff from "../lib/diff";
+import { isset } from "../lib/utils";
 
-const { createContext, useContext, useState, useMemo } = wp.element;
+const apiFetch = wp.apiFetch;
+const { createContext, useContext, useState, useEffect, useMemo, useCallback } =
+  wp.element;
 const { __ } = wp.i18n;
 
 const WorkflowContext = createContext({
-  workflowJobs: [],
+  jobs: [],
   isLoading: false,
   step: 0,
   setStep: () => {},
@@ -23,11 +29,10 @@ const WorkflowContext = createContext({
 function applyJob(payload, job) {
   const exit = new Set();
   const mutated = new Set();
-  const touched = new Set();
   const enter = new Set();
   const missing = new Set();
 
-  if (!job) return [payload, { exit, mutated, touched, enter, missing }];
+  if (!job) return [payload, { exit, mutated, enter, missing }];
 
   job.input
     .filter((field) => field.required)
@@ -48,28 +53,32 @@ function applyJob(payload, job) {
   });
 
   if (Array.from(missing).length) {
-    return [payload, { missing, exit, enter, mutated, touched }];
+    return [payload, { missing, exit, enter, mutated }];
   }
 
   job.output.forEach((output) => {
+    const requires = Array.isArray(output.requires)
+      ? output.requires.filter((name) => !isset(payload, name))
+      : [];
+
+    if (requires.length) {
+      return;
+    }
+
     const input = job.input.find((field) => field.name === output.name);
-    const exists = Object.prototype.hasOwnProperty.call(payload, output.name);
+    const exists = isset(payload, output.name);
 
-    let addToPayload;
+    let addToPayload = false;
     if (input) {
-      if (!exists) {
-        if (!output.forward) {
-          addToPayload = true;
-          enter.add(output.name);
-
-          if (!checkType(input.schema, output.schema)) {
-            touched.add(output.name);
-            addToPayload = true;
-          }
-        }
-      } else if (output.touch) {
+      const typeCheck = checkType(input.schema, output.schema);
+      if (!typeCheck) {
+        mutated.add(output.name);
         addToPayload = true;
-        touched.add(output.name);
+      }
+
+      if (!exists) {
+        enter.add(output.name);
+        addToPayload = true;
       }
     } else {
       addToPayload = true;
@@ -82,7 +91,7 @@ function applyJob(payload, job) {
   });
 
   job.input.forEach((input) => {
-    const exists = Object.prototype.hasOwnProperty.call(payload, input.name);
+    const exists = isset(payload, input.name);
     const output = job.output.find((field) => field.name === input.name);
 
     if (!output && exists) {
@@ -91,64 +100,150 @@ function applyJob(payload, job) {
     }
   });
 
-  return [payload, { missing, enter, exit, mutated, touched }];
+  return [payload, { missing, enter, exit, mutated }];
 }
 
 export default function WorkflowProvider({
   children,
-  form,
-  backend,
-  customFields,
-  mutations,
-  workflow,
+  formId,
+  includeFiles,
+  customFields = [],
+  mutations = [],
+  workflow = [],
 }) {
+  // useEffect(() => {
+  //   console.log("formId");
+  // }, [formId]);
+
+  // useEffect(() => {
+  //   console.log("includeFiles");
+  // }, [includeFiles]);
+
+  // useEffect(() => {
+  //   console.log("customFields");
+  // }, [customFields]);
+
+  // useEffect(() => {
+  //   console.log("mutations");
+  // }, [mutations]);
+
+  // useEffect(() => {
+  //   console.log("workflow");
+  // }, [workflow]);
+
+  const [addon] = useTab();
+  const [error, setError] = useError();
+
+  const [jobOnEditor] = useJobConfig();
+
+  const [isLoading, setIsLoading] = useState(false);
   const [step, setStep] = useState(0);
+  const [jobs, setJobs] = useState([]);
 
-  const [jobs, isLoading] = useWorkflowJobs(workflow);
+  const [forms] = useForms();
+  const form = useMemo(
+    () => forms.find((form) => form._id === formId),
+    [forms, formId]
+  );
 
-  const [{ backends }] = useGeneral();
-  const includeFiles = useMemo(() => {
-    const headers =
-      backends.find(({ name }) => name === backend)?.headers || [];
-    const contentType = headers.find(
-      (header) => header.name === "Content-Type"
-    )?.value;
-    return contentType !== undefined && contentType !== "multipart/form-data";
-  }, [backends, backend]);
+  useEffect(() => {
+    if (jobs.length && (!workflow.length || !addon)) {
+      setJobs([]);
+      return;
+    }
 
-  const workflowJobs = useMemo(
-    () =>
-      [
+    if (error) {
+      return;
+    }
+
+    const newJobNames = workflow
+      .filter((jobName) => {
+        return jobs.find((job) => job.name === jobName) === undefined;
+      })
+      .reduce((jobNames, jobName) => {
+        if (!jobNames.includes(jobName)) {
+          jobNames.push(jobName);
+        }
+
+        return jobNames;
+      }, []);
+
+    if (newJobNames.length) {
+      fetchJobs(newJobNames).then((newJobs) => {
+        newJobs = jobs
+          .filter((job) => workflow.indexOf(job.name) !== -1)
+          .concat(newJobs)
+          .sort((a, b) => {
+            return workflow.indexOf(a.name) - workflow.indexOf(b.name);
+          });
+
+        setJobs(newJobs);
+      });
+    } else {
+      const newJobs = workflow.map((jobName) => {
+        return jobs.find((job) => job.name === jobName);
+      });
+
+      if (newJobs.length < jobs.length) {
+        setJobs(newJobs);
+      }
+    }
+  }, [addon, jobs, workflow]);
+
+  const fetchJobs = useCallback(
+    (workflow) => {
+      setIsLoading(true);
+
+      return apiFetch({
+        path: `forms-bridge/v1/${addon}/jobs/workflow`,
+        method: "POST",
+        data: { jobs: workflow },
+      })
+        .catch(() => {
+          setError(__("Loading workflow job error", "forms-bridge"));
+          return [];
+        })
+        .finally(() => setIsLoading(false));
+    },
+    [addon]
+  );
+
+  const workflowJobs = useMemo(() => {
+    const workflowJobs = workflow
+      .map((name) => jobs.find((j) => j.name === name))
+      .filter((j) => j)
+      .map((j) => ({ ...j }));
+
+    return [
+      {
+        name: "form-job",
+        title: __("Form submission", "forms-bridge"),
+        description: __(
+          "Form submission after mappers has been applied",
+          "forms-bridge"
+        ),
+        mappers: mutations[0] || [],
+        input: [],
+        output: [],
+      },
+    ]
+      .concat(
+        workflowJobs.map((job, i) => ({
+          ...job,
+          mappers: mutations[i + 1] || [],
+        }))
+      )
+      .concat([
         {
-          name: "form-job",
-          title: __("Form submission", "forms-bridge"),
-          description: __(
-            "Form submission after mappers has been applied",
-            "forms-bridge"
-          ),
-          mappers: mutations[0] || [],
+          name: "output-job",
+          title: __("Output payload", "forms-bridge"),
+          description: __("Workflow output payload", "forms-bridge"),
+          mappers: [],
           input: [],
           output: [],
         },
-      ]
-        .concat(
-          jobs.map((job, i) => ({
-            ...job,
-            mappers: mutations[i + 1] || [],
-          }))
-        )
-        .concat([
-          {
-            name: "output-job",
-            title: __("Output payload", "forms-bridge"),
-            description: __("Workflow output payload", "forms-bridge"),
-            mappers: [],
-            input: [],
-            output: [],
-          },
-        ]),
-    [mutations, jobs]
-  );
+      ]);
+  }, [workflow, mutations, jobs]);
 
   const formFields = useMemo(() => {
     if (!form) return [];
@@ -176,7 +271,7 @@ export default function WorkflowProvider({
           schema: { type: "string" },
         }))
       );
-  }, [form]);
+  }, [form, customFields]);
 
   const stage = useMemo(() => {
     let payload = fieldsToPayload(formFields);
@@ -200,9 +295,35 @@ export default function WorkflowProvider({
     return [fields, diff];
   }, [step, workflowJobs, formFields]);
 
+  useEffect(() => {
+    if (!jobOnEditor?.name) return;
+
+    const index = workflow.findIndex((name) => jobOnEditor.name === name);
+    if (index === -1) {
+      return;
+    }
+
+    const workflowJob = { ...workflowJobs[index + 1] };
+    delete workflowJob.mappers;
+
+    const changed = diff(jobOnEditor, workflowJob);
+    if (!changed) {
+      return;
+    }
+
+    fetchJobs([jobOnEditor.name]).then((newJobs) => {
+      newJobs = jobs
+        .slice(0, index)
+        .concat(newJobs)
+        .concat(jobs.slice(index + 1, jobs.lenght));
+
+      setJobs(newJobs);
+    });
+  }, [jobOnEditor, jobs, workflowJobs]);
+
   return (
     <WorkflowContext.Provider
-      value={{ workflowJobs, isLoading, step, setStep, stage }}
+      value={{ jobs, workflow: workflowJobs, isLoading, step, setStep, stage }}
     >
       {children}
     </WorkflowContext.Provider>
@@ -215,12 +336,20 @@ export function useWorkflowStage() {
 }
 
 export function useWorkflowStepper() {
-  const { step, setStep, workflowJobs = [] } = useContext(WorkflowContext);
-  return [step, setStep, workflowJobs.length - 1];
+  const { step, setStep, workflow = [] } = useContext(WorkflowContext);
+  return [step, setStep, workflow.length - 1];
+}
+
+export function useWorkflowJobs() {
+  const { jobs, isLoading } = useContext(WorkflowContext);
+
+  if (isLoading) return [];
+  return jobs;
 }
 
 export function useWorkflowJob() {
-  const { step, workflowJobs, isLoading } = useContext(WorkflowContext);
+  const { step, workflow, isLoading } = useContext(WorkflowContext);
+
   if (isLoading) return;
-  return workflowJobs[step];
+  return workflow?.[step];
 }
