@@ -130,6 +130,7 @@ export default function BridgeFields({ data, setData, schema, errors = {} }) {
         case "string":
           return (
             <StringField
+              key={field.name}
               error={errors[field.name]}
               label={field.label}
               value={data[field.name] || ""}
@@ -139,6 +140,7 @@ export default function BridgeFields({ data, setData, schema, errors = {} }) {
         case "select":
           return (
             <SelectField
+              key={field.name}
               error={errors[field.name]}
               label={field.label}
               value={data[field.name] || ""}

@@ -109,6 +109,7 @@ export default function CredentialFields({
         case "string":
           return (
             <StringField
+              key={field.name}
               label={field.label}
               value={data[field.name] || ""}
               setValue={(value) => setData({ ...data, [field.name]: value })}
@@ -119,6 +120,7 @@ export default function CredentialFields({
         case "select":
           return (
             <SelectField
+              key={field.name}
               label={field.label}
               value={data[field.name] || ""}
               setValue={(value) => setData({ ...data, [field.name]: value })}
