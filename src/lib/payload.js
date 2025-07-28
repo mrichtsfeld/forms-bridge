@@ -151,18 +151,6 @@ export function fieldsToPayload(fields) {
   return finger.data;
 }
 
-const implosions = new Set([
-  "and",
-  "or",
-  "xor",
-  "json",
-  "csv",
-  "concat",
-  "join",
-  "sum",
-  "count",
-]);
-
 export function castValue(value, mapper) {
   if (mapper.from.indexOf("[]") !== -1) {
     return castExpandedValue(value, mapper);

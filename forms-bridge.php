@@ -39,10 +39,6 @@ require_once 'common/class-plugin.php';
 require_once 'deps/http/http-bridge.php';
 require_once 'deps/i18n/wpct-i18n.php';
 
-// Traits
-require_once 'includes/trait-bridge-custom-fields.php';
-require_once 'includes/trait-bridge-mutations.php';
-
 // Classes
 require_once 'includes/class-api.php';
 require_once 'includes/class-json-finger.php';
