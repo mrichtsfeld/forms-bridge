@@ -63,7 +63,6 @@ export function mutateSchema(type, fromSchema) {
     newSchema.additionalProperties = false;
   }
 
-  console.log(newSchema);
   return newSchema;
 }
 

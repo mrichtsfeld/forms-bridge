@@ -100,7 +100,7 @@ export default function NewCredential({ add, schema: schemas }) {
         add(data);
       })
       .catch((err) => {
-        if (err.name === "SyntaxError") {
+        if (err?.name === "SyntaxError") {
           setError(__("JSON syntax error", "forms-bridge"));
         } else {
           setError(

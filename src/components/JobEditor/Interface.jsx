@@ -360,7 +360,7 @@ function ObjectSchemaEditor({ schema, setSchema }) {
       style={{
         marginLeft: "0.5rem",
         borderLeft: "1px dashed",
-        padding: "0.5rem 0 0.5rem 40px",
+        padding: "0.5rem 0 1rem 40px",
         background: "rgb(245, 245, 245)",
       }}
     >
@@ -460,7 +460,7 @@ function ArraySchemaEditor({ schema, setSchema }) {
       style={{
         marginLeft: "0.5rem",
         borderLeft: "1px dashed",
-        padding: "0.5rem 0 0.5rem 40px",
+        padding: "0.5rem 0 1rem 40px",
         background: "rgb(245, 245, 245)",
       }}
     >

@@ -90,7 +90,7 @@ export default function NewBridge({ add, schema, names }) {
         add(data);
       })
       .catch((err) => {
-        if (err.name === "SyntaxError") {
+        if (err?.name === "SyntaxError") {
           setError(__("JSON syntax error", "forms-bridge"));
         } else {
           setError(

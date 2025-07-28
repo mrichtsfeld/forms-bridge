@@ -42,6 +42,7 @@ export default function Addons() {
       <div style={{ display: "flex", flexWrap: "wrap", gap: "20px" }}>
         {sortedAddons.map(({ name, title, enabled, logo }) => (
           <button
+            key={name}
             tabIndex={0}
             style={{
               width: "200px",

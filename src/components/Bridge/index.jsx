@@ -267,7 +267,6 @@ export default function Bridge({ data, update, remove, schema, copy, names }) {
                 height: "40px",
                 justifyContent: "center",
               }}
-              __nextHasNoMarginBottom
               __next40pxDefaultSize
             >
               ping

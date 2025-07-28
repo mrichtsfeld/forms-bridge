@@ -78,18 +78,20 @@ function LogLines({ loading, error, logs }) {
     );
   }
 
-  return logs.map((line, i) => (
-    <p key={i} style={{ margin: 0, fontSize: "12px" }}>
-      <pre
-        style={{
-          width: "max-content",
-          paddingLeft: "1.5em",
-          paddingRight: "1em",
-          margin: 0,
-        }}
-      >
-        {line}
-      </pre>
-    </p>
-  ));
+  return (
+    <pre
+      style={{
+        width: "max-content",
+        paddingLeft: "1.5em",
+        paddingRight: "1em",
+        margin: 0,
+      }}
+    >
+      {logs.map((line, i) => (
+        <p key={i} style={{ margin: 0, fontSize: "12px" }}>
+          {line}
+        </p>
+      ))}
+    </pre>
+  );
 }

@@ -23,7 +23,7 @@ export default function DropdownSelect({
         }}
       >
         <label
-          for="bridge-tags-list"
+          htmlFor="bridge-tags-list"
           style={{
             position: "fixed",
             top: "0px",

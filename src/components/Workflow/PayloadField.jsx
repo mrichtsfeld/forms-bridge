@@ -120,7 +120,7 @@ function ObjectProperties({
         }}
       >
         {Object.keys(properties).map((prop) => (
-          <li>
+          <li key={prop}>
             <PayloadField
               name={prop}
               schema={properties[prop]}

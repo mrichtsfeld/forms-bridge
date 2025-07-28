@@ -101,7 +101,7 @@ export default function JobEditor({ close }) {
             style={{
               height: "calc(452px - 4rem)",
               overflowY: "auto",
-              paddingTop: "1rem",
+              padding: "1rem 5px 0",
             }}
           >
             <JobEditorContent
