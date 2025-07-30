@@ -5,9 +5,9 @@ if (!defined('ABSPATH')) {
 }
 
 return [
-    'title' => __('Subscription DOI', 'forms-bridge'),
+    'title' => __('Woo Orders', 'forms-bridge'),
     'description' => __(
-        'Subscription form template. The resulting bridge will subscribe woocommerce customers to a given email list with a double opt in check.',
+        'Sale order bridge template. The resulting bridge will synchronize WooCommerce with the Brevo eCommerce module.',
         'forms-bridge'
     ),
     'integrations' => ['woo'],
@@ -20,11 +20,11 @@ return [
         [
             'ref' => '#bridge',
             'name' => 'endpoint',
-            'value' => '/v3/contacts/doubleOptinConfirmation',
+            'value' => '/v3/orders/status',
         ],
         [
             'ref' => '#bridge/custom_fields[]',
-            'name' => 'includeListIds',
+            'name' => 'listIds',
             'label' => __('Segments', 'forms-bridge'),
             'type' => 'select',
             'options' => [
@@ -37,61 +37,34 @@ return [
             'is_multi' => true,
             'required' => true,
         ],
-        [
-            'ref' => '#bridge/custom_fields[]',
-            'name' => 'templateId',
-            'label' => __('Double opt-in template', 'forms-bridge'),
-            'type' => 'select',
-            'options' => [
-                'endpoint' => '/v3/smtp/templates',
-                'finger' => [
-                    'value' => 'templates[].id',
-                    'label' => 'templates[].name',
-                ],
-            ],
-            'required' => true,
-        ],
-        [
-            'ref' => '#bridge/custom_fields[]',
-            'name' => 'redirectionUrl',
-            'label' => __('Redirection URL', 'forms-bridge'),
-            'type' => 'text',
-            'description' => __(
-                'URL of the web page that user will be redirected to after clicking on the double opt in URL',
-                'forms-bridge'
-            ),
-            'required' => true,
-        ],
     ],
     'bridge' => [
         'method' => 'POST',
-        'endpoint' => '/v3/contacts/doubleOptinConfirmation',
+        'endpoint' => '/v3/orders/status',
         'custom_fields' => [
             [
                 'name' => 'attributes.LANGUAGE',
                 'value' => '$locale',
             ],
+            [
+                'name' => 'createdAt',
+                'value' => '$utc_date',
+            ],
+            [
+                'name' => 'updatedAt',
+                'value' => '$utc_date',
+            ],
         ],
         'mutations' => [
             [
                 [
-                    'from' => 'templateId',
-                    'to' => 'templateId',
-                    'cast' => 'integer',
-                ],
-                [
                     'from' => 'id',
-                    'to' => 'id',
-                    'cast' => 'null',
+                    'to' => 'order_id',
+                    'cast' => 'string',
                 ],
                 [
                     'from' => 'parent_id',
                     'to' => 'parent_id',
-                    'cast' => 'null',
-                ],
-                [
-                    'from' => 'status',
-                    'to' => 'status',
                     'cast' => 'null',
                 ],
                 [
@@ -102,16 +75,6 @@ return [
                 [
                     'from' => 'prices_include_tax',
                     'to' => 'prices_include_tax',
-                    'cast' => 'null',
-                ],
-                [
-                    'from' => 'date_created',
-                    'to' => 'date_created',
-                    'cast' => 'null',
-                ],
-                [
-                    'from' => 'date_modified',
-                    'to' => 'date_modified',
                     'cast' => 'null',
                 ],
                 [
@@ -146,8 +109,8 @@ return [
                 ],
                 [
                     'from' => 'total',
-                    'to' => 'total',
-                    'cast' => 'null',
+                    'to' => 'amount',
+                    'cast' => 'number',
                 ],
                 [
                     'from' => 'total_tax',
@@ -158,6 +121,11 @@ return [
                     'from' => 'customer_id',
                     'to' => 'ext_id',
                     'cast' => 'string',
+                ],
+                [
+                    'from' => 'ext_id',
+                    'to' => 'identifiers.ext_id',
+                    'cast' => 'copy',
                 ],
                 [
                     'from' => 'order_key',
@@ -290,16 +258,46 @@ return [
                     'cast' => 'null',
                 ],
                 [
-                    'from' => 'line_items',
-                    'to' => 'line_items',
-                    'cast' => 'null',
-                ],
-                [
                     'from' => 'currency',
                     'to' => 'currency',
                     'cast' => 'null',
                 ],
             ],
+            [
+                [
+                    'from' => 'linkedContactsIds',
+                    'to' => 'linkedContactsIds',
+                    'cast' => 'null',
+                ],
+            ],
+            [
+                [
+                    'from' => 'order_id',
+                    'to' => 'id',
+                    'cast' => 'string',
+                ],
+                [
+                    'from' => 'line_items[].product_id',
+                    'to' => 'products[].productId',
+                    'cast' => 'string',
+                ],
+                [
+                    'from' => 'line_items[].quantity',
+                    'to' => 'products[].quantity',
+                    'cast' => 'integer',
+                ],
+                [
+                    'from' => 'line_items[].product.price',
+                    'to' => 'products[].price',
+                    'cast' => 'number',
+                ],
+                [
+                    'from' => 'line_items',
+                    'to' => 'line_items',
+                    'cast' => 'null',
+                ],
+            ],
         ],
+        'workflow' => ['linked-contact', 'sync-woo-products'],
     ],
 ];

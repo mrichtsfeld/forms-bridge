@@ -72,8 +72,20 @@ const tagOptions = [
     value: "$datetime",
   },
   {
+    label: __("GMT Datetime", "forms-bridge"),
+    value: "$gmt_datetime",
+  },
+  {
     label: __("ISO Date", "forms-bridge"),
     value: "$iso_date",
+  },
+  {
+    label: __("ISO GMT Date", "forms-bridge"),
+    value: "$gmt_iso_date",
+  },
+  {
+    label: __("UTC Date", "forms-bridge"),
+    value: "$utc_date",
   },
   {
     label: __("Timestamp", "forms-bridge"),

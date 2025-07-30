@@ -751,6 +751,10 @@ class Form_Bridge
             'gmt_iso_date' => static function () {
                 return gmdate('c', time());
             },
+            'utc_date' => static function () {
+                $date = gmdate('c', time());
+                return preg_replace('/\+\d+\:\d+$/', 'Z', $date);
+            },
             'user_id' => static function () {
                 $user = wp_get_current_user();
                 return $user->ID;

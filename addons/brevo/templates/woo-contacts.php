@@ -126,8 +126,8 @@ return [
                 ],
                 [
                     'from' => 'customer_id',
-                    'to' => 'customer_id',
-                    'cast' => 'null',
+                    'to' => 'ext_id',
+                    'cast' => 'string',
                 ],
                 [
                     'from' => 'order_key',
