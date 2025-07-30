@@ -42,7 +42,7 @@ export default function Integrations({ loading }) {
   if (loading) {
     return (
       <PanelBody
-        title={__("Integrations", "forms-bridge")}
+        title={__("Form builders", "forms-bridge")}
         initialOpen={false}
       ></PanelBody>
     );

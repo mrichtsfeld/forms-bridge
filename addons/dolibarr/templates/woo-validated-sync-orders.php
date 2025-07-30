@@ -5,9 +5,9 @@ if (!defined('ABSPATH')) {
 }
 
 return [
-    'title' => __('Validated Orders', 'forms-bridge'),
+    'title' => __('Validated Orders + Sync', 'forms-bridge'),
     'description' => __(
-        'Product sale order bridge template. The resulting bridge will convert WooCommerce orders into validated sale orders linked to new third parties. To work properly, <b>the bridge needs that your WooCommerce product sku values matches with the dolibarr\'s product refs.</b>.',
+        'Product sale order bridge template. The resulting bridge will convert WooCommerce orders into validated sale orders linked to new third parties. <b>The template includes a job that synchronize products between WooCommerce and Dolibarr by product refs.</b>.',
         'forms-bridge'
     ),
     'integrations' => ['woo'],
@@ -319,23 +319,25 @@ return [
                 [
                     'from' => 'line_items[].quantity',
                     'to' => 'lines[].qty',
-                    'cast' => 'integer',
+                    'cast' => 'copy',
                 ],
                 [
                     'from' => 'line_items[].subtotal_tax.percentage',
                     'to' => 'lines[].tva_tx',
-                    'cast' => 'number',
+                    'cast' => 'copy',
                 ],
                 [
                     'from' => 'line_items[].product.price',
                     'to' => 'lines[].subprice',
-                    'cast' => 'number',
+                    'cast' => 'copy',
                 ],
                 [
                     'from' => 'line_items[].product.sku',
                     'to' => 'lines[].ref',
-                    'cast' => 'string',
+                    'cast' => 'copy',
                 ],
+            ],
+            [
                 [
                     'from' => 'line_items',
                     'to' => 'line_items',
@@ -420,6 +422,7 @@ return [
             ],
         ],
         'workflow' => [
+            'sync-products-by-ref',
             'contact-socid',
             'contact-id',
             'products-by-ref',

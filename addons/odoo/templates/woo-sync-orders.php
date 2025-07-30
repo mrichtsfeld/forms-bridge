@@ -5,9 +5,9 @@ if (!defined('ABSPATH')) {
 }
 
 return [
-    'title' => __('Validated Orders', 'forms-bridge'),
+    'title' => __('Sale Orders + Sync', 'forms-bridge'),
     'description' => __(
-        'Product sale order bridge template. The resulting bridge will convert WooCommerce orders into validated sale orders linked to new third parties. To work properly, <b>the bridge needs that your WooCommerce product sku values matches with the dolibarr\'s product refs.</b>.',
+        'Sale order bridge template. The resulting bridge will convert WooCommerce orders into product sale orders linked to new contacts. <b>The template includes a job that synchronize products between WooCommerce and Odoo by product refs.</b>',
         'forms-bridge'
     ),
     'integrations' => ['woo'],
@@ -20,63 +20,15 @@ return [
         [
             'ref' => '#bridge',
             'name' => 'endpoint',
-            'value' => '/api/index.php/orders',
-        ],
-        [
-            'ref' => '#bridge/custom_fields[]',
-            'name' => 'typent_id',
-            'label' => __('Thirdparty type', 'forms-bridge'),
-            'type' => 'select',
-            'options' => [
-                [
-                    'label' => __('Large company', 'forms-bridge'),
-                    'value' => '2',
-                ],
-                [
-                    'label' => __('Medium company', 'forms-bridge'),
-                    'value' => '3',
-                ],
-                [
-                    'label' => __('Small company', 'forms-bridge'),
-                    'value' => '4',
-                ],
-                [
-                    'label' => __('Governmental', 'forms-bridge'),
-                    'value' => '5',
-                ],
-                [
-                    'label' => __('Startup', 'forms-bridge'),
-                    'value' => '1',
-                ],
-                [
-                    'label' => __('Retailer', 'forms-bridge'),
-                    'value' => '7',
-                ],
-                [
-                    'label' => __('Private individual', 'forms-bridge'),
-                    'value' => '8',
-                ],
-                [
-                    'label' => __('Other', 'forms-bridge'),
-                    'value' => '100',
-                ],
-            ],
+            'value' => 'sale.order',
         ],
     ],
     'bridge' => [
-        'endpoint' => '/api/index.php/orders',
+        'endpoint' => 'sale.order',
         'custom_fields' => [
             [
-                'name' => 'status',
-                'value' => '1',
-            ],
-            [
-                'name' => 'client',
-                'value' => '1',
-            ],
-            [
-                'name' => 'date',
-                'value' => '$timestamp',
+                'name' => 'state',
+                'value' => 'sale',
             ],
         ],
         'mutations' => [
@@ -89,6 +41,11 @@ return [
                 [
                     'from' => 'parent_id',
                     'to' => 'parent_id',
+                    'cast' => 'null',
+                ],
+                [
+                    'from' => 'status',
+                    'to' => 'status',
                     'cast' => 'null',
                 ],
                 [
@@ -113,7 +70,7 @@ return [
                 ],
                 [
                     'from' => 'date_modified',
-                    'to' => 'date',
+                    'to' => 'date_modified',
                     'cast' => 'null',
                 ],
                 [
@@ -183,12 +140,17 @@ return [
                 ],
                 [
                     'from' => '?billing.address_1',
-                    'to' => 'address',
+                    'to' => 'street',
+                    'cast' => 'string',
+                ],
+                [
+                    'from' => '?billing.address_2',
+                    'to' => 'street2',
                     'cast' => 'string',
                 ],
                 [
                     'from' => '?billing.city',
-                    'to' => 'town',
+                    'to' => 'city',
                     'cast' => 'string',
                 ],
                 [
@@ -199,11 +161,6 @@ return [
                 [
                     'from' => '?billing.email',
                     'to' => 'email',
-                    'cast' => 'string',
-                ],
-                [
-                    'from' => '?billing.email',
-                    'to' => 'shipping.email',
                     'cast' => 'string',
                 ],
                 [
@@ -248,7 +205,7 @@ return [
                 ],
                 [
                     'from' => '?customer_note',
-                    'to' => 'customer_note',
+                    'to' => 'shipping.comment',
                     'cast' => 'string',
                 ],
                 [
@@ -317,25 +274,42 @@ return [
                     'cast' => 'null',
                 ],
                 [
-                    'from' => 'line_items[].quantity',
-                    'to' => 'lines[].qty',
+                    'from' => 'line_items[].product.name',
+                    'to' => 'order_line[][0]',
+                    'cast' => 'copy',
+                ],
+                [
+                    'from' => 'order_line[][0]',
+                    'to' => 'order_line[][0]',
                     'cast' => 'integer',
                 ],
                 [
-                    'from' => 'line_items[].subtotal_tax.percentage',
-                    'to' => 'lines[].tva_tx',
-                    'cast' => 'number',
+                    'from' => 'line_items[].product.name',
+                    'to' => 'order_line[][1]',
+                    'cast' => 'copy',
                 ],
                 [
-                    'from' => 'line_items[].product.price',
-                    'to' => 'lines[].subprice',
-                    'cast' => 'number',
+                    'from' => 'order_line[][1]',
+                    'to' => 'order_line[][1]',
+                    'cast' => 'integer',
+                ],
+                [
+                    'from' => 'line_items[].quantity',
+                    'to' => 'order_line[][2].product_uom_qty',
+                    'cast' => 'copy',
                 ],
                 [
                     'from' => 'line_items[].product.sku',
-                    'to' => 'lines[].ref',
-                    'cast' => 'string',
+                    'to' => 'order_line[][2].default_code',
+                    'cast' => 'copy',
                 ],
+                [
+                    'from' => 'line_items[].product.price',
+                    'to' => 'order_line[][2].price_unit',
+                    'cast' => 'copy',
+                ],
+            ],
+            [
                 [
                     'from' => 'line_items',
                     'to' => 'line_items',
@@ -344,33 +318,43 @@ return [
             ],
             [
                 [
-                    'from' => 'socid',
-                    'to' => 'order_socid',
+                    'from' => 'partner_id',
+                    'to' => 'order_partner_id',
                     'cast' => 'copy',
                 ],
                 [
                     'from' => '?shipping.first_name',
-                    'to' => 'firstname',
+                    'to' => 'name[0]',
                     'cast' => 'string',
                 ],
                 [
                     'from' => '?shipping.last_name',
-                    'to' => 'lastname',
+                    'to' => 'name[1]',
                     'cast' => 'string',
                 ],
                 [
-                    'from' => '?shipping.email',
-                    'to' => 'email',
-                    'cast' => 'string',
+                    'from' => 'name',
+                    'to' => 'name',
+                    'cast' => 'concat',
                 ],
                 [
                     'from' => '?shipping.phone',
-                    'to' => 'phone_perso',
+                    'to' => 'phone',
                     'cast' => 'string',
                 ],
                 [
                     'from' => '?shipping.address_1',
-                    'to' => 'address',
+                    'to' => 'street',
+                    'cast' => 'string',
+                ],
+                [
+                    'from' => '?shipping.address_2',
+                    'to' => 'street2',
+                    'cast' => 'string',
+                ],
+                [
+                    'from' => '?shipping.city',
+                    'to' => 'city',
                     'cast' => 'string',
                 ],
                 [
@@ -379,8 +363,8 @@ return [
                     'cast' => 'string',
                 ],
                 [
-                    'from' => '?shipping.city',
-                    'to' => 'town',
+                    'from' => '?shipping.comment',
+                    'to' => 'comment',
                     'cast' => 'string',
                 ],
                 [
@@ -391,39 +375,29 @@ return [
             ],
             [
                 [
-                    'from' => 'lines[].ref',
-                    'to' => 'product_refs',
+                    'from' => 'order_line[][2].default_code',
+                    'to' => 'internal_refs',
                     'cast' => 'inherit',
-                ],
-                [
-                    'from' => 'contact_ids',
-                    'to' => 'contact_ids',
-                    'cast' => 'null',
                 ],
             ],
             [
                 [
-                    'from' => '?customer_note',
-                    'to' => 'note_private',
-                    'cast' => 'string',
-                ],
-                [
-                    'from' => 'order_socid',
-                    'to' => 'socid',
+                    'from' => 'order_partner_id',
+                    'to' => 'partner_id',
                     'cast' => 'integer',
                 ],
                 [
-                    'from' => 'fk_products[]',
-                    'to' => 'lines[].fk_product',
+                    'from' => 'product_ids[]',
+                    'to' => 'order_line[][2].product_id',
                     'cast' => 'integer',
                 ],
             ],
         ],
         'workflow' => [
-            'contact-socid',
-            'contact-id',
+            'sync-products-by-ref',
+            'contact',
+            'delivery-address',
             'products-by-ref',
-            'validate-order',
         ],
     ],
 ];
