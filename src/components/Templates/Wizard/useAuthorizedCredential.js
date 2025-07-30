@@ -101,29 +101,23 @@ export default function useAuthorizedCredential({ data = {}, fields = [] }) {
         if (!success) throw "error";
 
         const form = document.createElement("form");
-        form.method = "POST";
-        // form.action = data.oauth_url;
-        form.action =
-          credential.oauth_url +
-          "/auth?" +
-          new URLSearchParams({
-            client_id: credential.client_id,
-            scope: credential.scope,
-            response_type: "code",
-            redirect_uri: restUrl("http-bridge/v1/oauth/redirect"),
-            access_type: "offline",
-            state: btoa(addon),
-          }).toString();
+        form.method = "GET";
+        form.action = credential.oauth_url + "/auth";
         form.target = "_blank";
 
-        // form.innerHTML = `
-        // <input name="client_id" value="${data.client_id}" />
-        // <input name="scope" value="${data.scope}" />
-        // <input name="response_type" value="code" />
-        // <input name="redirect_uri" value="${restUrl("http-bridge/v1/oauth/redirect")}" />
-        // <input name="access_type" value="offline" />
-        // <input name="state" value="${btoa(addon)}" />
-        // `;
+        let innerHTML = `
+        <input name="client_id" value="${credential.client_id}" />
+        <input name="response_type" value="code" />
+        <input name="redirect_uri" value="${restUrl("http-bridge/v1/oauth/redirect")}" />
+        <input name="access_type" value="offline" />
+        <input name="state" value="${btoa(addon)}" />
+        `;
+
+        if (credential.scope) {
+          innerHTML += `<input name="scope" value="${credential.scope}" />`;
+        }
+
+        form.innerHTML = innerHTML;
 
         form.style.visibility = "hidden";
         document.body.appendChild(form);

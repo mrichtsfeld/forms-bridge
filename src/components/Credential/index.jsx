@@ -2,18 +2,16 @@
 import RemoveButton from "../RemoveButton";
 import { useCredentials } from "../../hooks/useHttp";
 import CredentialFields, { INTERNALS } from "./Fields";
-import { downloadJson, isset, restUrl } from "../../lib/utils";
+import { downloadJson, isset } from "../../lib/utils";
 import { useLoading } from "../../providers/Loading";
-import { useError } from "../../providers/Error";
 import diff from "../../lib/diff";
 import useResponsive from "../../hooks/useResponsive";
 import CopyIcon from "../icons/Copy";
 import ArrowDownIcon from "../icons/ArrowDown";
-import { useFetchSettings } from "../../providers/Settings";
+import AuthorizeButton from "./AuthorizeButton";
 
 const { Button } = wp.components;
 const { useState, useEffect, useMemo, useRef, useCallback } = wp.element;
-const apiFetch = wp.apiFetch;
 const { __ } = wp.i18n;
 
 export default function Credential({
@@ -26,10 +24,7 @@ export default function Credential({
 }) {
   const isResponsive = useResponsive(780);
 
-  const [loading, setLoading] = useLoading();
-  const [error, setError] = useError();
-
-  const fetchSettings = useFetchSettings();
+  const [loading] = useLoading();
 
   const name = useRef(data.name);
   const [state, setState] = useState({ ...data });
@@ -128,69 +123,6 @@ export default function Credential({
     downloadJson(credentialData, credentialData.name + " credential config");
   };
 
-  const revoke = () => {
-    setLoading(true);
-
-    apiFetch({
-      path: "http-bridge/v1/oauth/revoke",
-      method: "POST",
-      data: { credential: data },
-    })
-      .then(() => fetchSettings())
-      .catch(() => setError(""))
-      .finally(() => setLoading(false));
-  };
-
-  const authorize = () => {
-    if (data.refresh_token) {
-      revoke();
-      return;
-    }
-
-    setLoading(true);
-
-    apiFetch({
-      path: "http-bridge/v1/oauth/grant",
-      method: "POST",
-      data: { credential: data },
-    })
-      .then(({ success }) => {
-        if (!success) throw "error";
-
-        const form = document.createElement("form");
-        form.method = "POST";
-        // form.action = data.oauth_url;
-        form.action =
-          data.oauth_url +
-          "/auth?" +
-          new URLSearchParams({
-            client_id: data.client_id,
-            scope: data.scope,
-            response_type: "code",
-            redirect_uri: restUrl("http-bridge/v1/oauth/redirect"),
-            access_type: "offline",
-            state: btoa(addon),
-          }).toString();
-        form.target = "_blank";
-
-        //     form.innerHTML = `
-        // <input name="client_id" value="${data.client_id}" />
-        // <input name="scope" value="${data.scope}" />
-        // <input name="response_type" value="code" />
-        // <input name="redirect_uri" value="${restUrl("http-bridge/v1/oauth/redirect")}" />
-        // <input name="access_type" value="offline" />
-        // <input name="state" value="${btoa(addon)}" />
-        // `;
-
-        form.style.visibility = "hidden";
-        document.body.appendChild(form);
-        form.submit();
-        document.body.removeChild(form);
-      })
-      .catch(() => setError(""))
-      .finally(() => setLoading(false));
-  };
-
   const authorizable = !!schema.properties.refresh_token;
 
   return (
@@ -268,24 +200,7 @@ export default function Credential({
           >
             <ArrowDownIcon width="12" height="20" color="gray" />
           </Button>
-          {(authorizable && (
-            <Button
-              onClick={authorize}
-              variant={data.refresh_token ? "secondary" : "primary"}
-              isDestructive={!!data.refresh_token}
-              disabled={loading || error}
-              style={{
-                justifyContent: "center",
-                marginLeft: "auto",
-              }}
-              __next40pxDefaultSize
-              __nextHasNoMarginBottom
-            >
-              {data.refresh_token
-                ? __("Revoke", "forms-bridge")
-                : __("Authorize", "forms-bridge")}
-            </Button>
-          )) ||
+          {(authorizable && <AuthorizeButton addon={addon} data={data} />) ||
             null}
         </div>
       </div>
