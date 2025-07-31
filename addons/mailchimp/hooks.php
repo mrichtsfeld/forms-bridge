@@ -30,7 +30,14 @@ add_filter(
                             'If needed, replace the datacenter param from the URL to match your account servers.',
                             'forms-bridge'
                         ),
-                        'default' => 'https://{dc}.api.mailchimp.com',
+                        'type' => 'select',
+                        'options' => array_map(function ($i) {
+                            return [
+                                'value' => "https://us{$i}.api.mailchimp.com",
+                                'label' => "us{$i}.api.mailchimp.com",
+                            ];
+                        }, array_keys(array_fill(1, 12, null))),
+                        'default' => 'https://us1.api.mailchimp.com',
                     ],
                     [
                         'ref' => '#credential',
