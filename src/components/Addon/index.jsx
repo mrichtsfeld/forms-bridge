@@ -2,9 +2,7 @@
 import JobsProvider from "../../providers/Jobs";
 import TemplatesProvider from "../../providers/Templates";
 import { useAddons } from "../../hooks/useGeneral";
-import useAddon from "../../hooks/useAddon";
 import Bridges from "../Bridges";
-import Credentials from "../Credentials";
 import Jobs from "../Jobs";
 import useTab from "../../hooks/useTab";
 import { useSchemas } from "../../providers/Schemas";
@@ -15,7 +13,6 @@ const { useEffect, useMemo } = wp.element;
 export default function Addon() {
   const [name] = useTab();
   const { bridge: bridgeSchema } = useSchemas() || {};
-  const [{ description }] = useAddon();
   const [addons] = useAddons();
 
   const logo = useMemo(() => {
@@ -40,7 +37,6 @@ export default function Addon() {
           <Bridges />
         </PanelRow>
         <Spacer paddingY="calc(8px)" />
-        {bridgeSchema?.properties.credential && <Credentials />}
         <Jobs />
       </JobsProvider>
     </TemplatesProvider>

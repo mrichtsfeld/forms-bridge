@@ -6,7 +6,7 @@ const { useEffect } = wp.element;
 const { __experimentalSpacer: Spacer } = wp.components;
 
 export default function HttpSetting() {
-  const [{ backends, credentials }, setHttp] = useHttp();
+  const [{ backends = [], credentials = [] }, setHttp] = useHttp();
 
   const update = (field) => {
     setHttp({
