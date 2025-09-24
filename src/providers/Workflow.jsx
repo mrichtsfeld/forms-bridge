@@ -111,26 +111,6 @@ export default function WorkflowProvider({
   mutations = [],
   workflow = [],
 }) {
-  // useEffect(() => {
-  //   console.log("formId");
-  // }, [formId]);
-
-  // useEffect(() => {
-  //   console.log("includeFiles");
-  // }, [includeFiles]);
-
-  // useEffect(() => {
-  //   console.log("customFields");
-  // }, [customFields]);
-
-  // useEffect(() => {
-  //   console.log("mutations");
-  // }, [mutations]);
-
-  // useEffect(() => {
-  //   console.log("workflow");
-  // }, [workflow]);
-
   const [addon] = useTab();
   const [error, setError] = useError();
 
@@ -271,7 +251,7 @@ export default function WorkflowProvider({
           schema: { type: "string" },
         }))
       );
-  }, [form, customFields]);
+  }, [form, customFields, includeFiles]);
 
   const stage = useMemo(() => {
     let payload = fieldsToPayload(formFields);
