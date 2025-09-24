@@ -14,14 +14,14 @@ return [
     ),
     'fields' => [
         [
-            'ref' => '#bridge',
-            'name' => 'endpoint',
-            'value' => '/api/campaign/{campaign_id}/subscription_request',
-        ],
-        [
             'ref' => '#form',
             'name' => 'title',
             'default' => __('Subscription Requests', 'forms-bridge'),
+        ],
+        [
+            'ref' => '#bridge',
+            'name' => 'endpoint',
+            'value' => '/api/campaign/{campaign_id}/subscription_request',
         ],
     ],
     'bridge' => [
@@ -62,6 +62,22 @@ return [
                 'type' => 'number',
                 'required' => true,
                 'min' => 1,
+            ],
+            [
+                'label' => __('Remuneration type', 'forms-bridge'),
+                'name' => 'remuneration_type',
+                'type' => 'select',
+                'required' => true,
+                'options' => [
+                    [
+                        'value' => 'cash',
+                        'label' => __('Cash', 'forms-bridge'),
+                    ],
+                    [
+                        'value' => 'wallet',
+                        'label' => __('Wallet', 'forms-bridge'),
+                    ],
+                ],
             ],
             [
                 'label' => __('First name', 'forms-bridge'),
