@@ -86,11 +86,13 @@ export default function Templates() {
     }
   });
 
+  if (!templates.length) return null;
+
   return (
     <>
       <Button
-        disabled={!!error || !templates.length || !integrations.length}
-        variant="secondary"
+        disabled={!!error || !integrations.length}
+        variant="primary"
         onClick={() => setIsOpen(true)}
         style={{
           width: "150px",

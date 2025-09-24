@@ -196,11 +196,30 @@ export default function NewBridge({ add, schema, names }) {
               paddingTop: "16px",
               display: "flex",
               gap: "0.5rem",
-              flexDirection: "column",
+              flexDirection: "row",
               borderTop: "1px solid",
             }}
           >
-            <Templates />
+            <div style={{ display: "flex", gap: "0.5rem" }}>
+              <Button variant="secondary" disabled __next40pxDefaultSize>
+                {__("Custom fields", "forms-bridge")} (0)
+              </Button>
+              <Button variant="secondary" disabled __next40pxDefaultSize>
+                {__("Mappers", "forms-bridge")} (0)
+              </Button>
+              <Button variant="secondary" disabled __next40pxDefaultSize>
+                {__("Workflow", "forms-bridge")} (0)
+              </Button>
+            </div>
+            <div
+              style={{
+                marginLeft: isResponsive ? 0 : "auto",
+                display: "flex",
+                alignItems: "center",
+              }}
+            >
+              <Templates />
+            </div>
           </div>
         </div>
       </div>
