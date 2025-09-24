@@ -44,6 +44,7 @@ return [
                     'cast' => 'integer',
                 ],
             ],
+            [],
             [
                 [
                     'from' => 'country',
