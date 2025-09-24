@@ -61,14 +61,12 @@ class Settings_Store extends Base_Settings_Store
                 'http',
                 static function ($data) {
                     if (
-                        !isset($data['backends']) ||
-                        !isset($data['credentials'])
+                        isset($data['backends']) &&
+                        isset($data['credentials'])
                     ) {
-                        return $data;
+                        $setting = Http_Store::setting('general');
+                        $setting->update($data);
                     }
-
-                    $setting = Http_Store::setting('general');
-                    $setting->update($data);
 
                     return [];
                 },
