@@ -168,7 +168,7 @@ class FBAPI
             [, $integration, $form_id] = $matches;
             $form_id = (int) $form_id;
         } elseif (empty($integration)) {
-            return;
+            return [];
         }
 
         $form_id = "{$integration}:{$form_id}";
