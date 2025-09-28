@@ -333,9 +333,7 @@ class Forms_Bridge extends Base_Plugin
                         ])
                     ) {
                         $attachments = self::stringify_attachments(
-                            $attachments,
-                            $bridge,
-                            $uploads
+                            $attachments
                         );
                         foreach ($attachments as $name => $value) {
                             $submission[$name] = $value;
@@ -350,7 +348,7 @@ class Forms_Bridge extends Base_Plugin
                 Logger::log('Submission payload with bridge custom fields');
                 Logger::log($payload);
 
-                $bridge->setup_conditional_mappers($form_data);
+                $bridge->prepare_mappers($form_data);
                 $payload = $bridge->apply_mutation($payload);
                 Logger::log('Submission payload after mutation');
                 Logger::log($payload);
@@ -490,22 +488,19 @@ class Forms_Bridge extends Base_Plugin
      */
     private static function attachments($uploads)
     {
-        return array_reduce(
-            array_keys($uploads),
-            function ($carry, $name) use ($uploads) {
-                if ($uploads[$name]['is_multi']) {
-                    for ($i = 1; $i <= count($uploads[$name]['path']); $i++) {
-                        $carry[$name . '_' . $i] =
-                            $uploads[$name]['path'][$i - 1];
-                    }
-                } else {
-                    $carry[$name] = $uploads[$name]['path'];
-                }
+        $attachments = [];
 
-                return $carry;
-            },
-            []
-        );
+        foreach ($uploads as $name => $upload) {
+            if ($upload['is_multi']) {
+                for ($i = 1; $i <= count($uploads[$name]['path']); $i++) {
+                    $attachments[$name . '_' . $i] = $upload['path'][$i - 1];
+                }
+            } else {
+                $attachments[$name] = $upload['path'];
+            }
+        }
+
+        return $attachments;
     }
 
     /**
@@ -517,55 +512,23 @@ class Forms_Bridge extends Base_Plugin
      *
      * @return array Array with base64 encoded file contents and file names.
      */
-    private static function stringify_attachments(
-        $attachments,
-        $bridge,
-        $uploads
-    ) {
+    private static function stringify_attachments($attachments)
+    {
         foreach ($attachments as $name => $path) {
             if (!is_file($path) || !is_readable($path)) {
                 continue;
             }
 
+            $suffix = '';
+            if (preg_match('/_\d+$/', $name, $matches)) {
+                $suffix = $matches[0];
+                $name = substr($name, 0, -strlen($suffix));
+            }
+
             $filename = basename($path);
             $content = file_get_contents($path);
-            $attachments[$name] = base64_encode($content);
-            $attachments[$name . '_filename'] = $filename;
-        }
-
-        $mutation = $bridge->mutations[0] ?? [];
-        foreach ($mutation as &$mapper) {
-            $mapper['from'] = '?' . $mapper['from'];
-        }
-
-        $attachments = $bridge->apply_mutation($attachments, $mutation);
-
-        foreach ($attachments as $field => $value) {
-            if (isset($uploads[$field])) {
-                continue;
-            }
-
-            if (strstr($field, '_filename')) {
-                $unique_field = preg_replace('/_\d+(?=_filename)/', '', $field);
-            } else {
-                $unique_field = preg_replace('/(?<=_)\d+$/', '', $field);
-            }
-
-            if ($unique_field === $field) {
-                continue;
-            }
-
-            $value = $attachments[$field];
-            unset($attachments[$field]);
-
-            $attachment = $bridge->apply_mutation(
-                [$unique_field => $value],
-                $mutation
-            );
-
-            if (!empty($attachment)) {
-                $attachments[$field] = $attachment[$unique_field];
-            }
+            $attachments[$name . $suffix] = base64_encode($content);
+            $attachments[$name . '_filename' . $suffix] = $filename;
         }
 
         return $attachments;

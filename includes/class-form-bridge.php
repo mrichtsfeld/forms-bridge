@@ -618,14 +618,18 @@ class Form_Bridge
         return $values;
     }
 
-    final public function setup_conditional_mappers($form)
+    final public function prepare_mappers($form)
     {
         foreach ($form['fields'] as $field) {
+            $is_file = $field['is_file'] ?? false;
             $is_conditional = $field['conditional'] ?? false;
+            $is_multi = $field['is_multi'] ?? false;
+
+            $schema = $field['schema'] ?? ['type' => 'file'];
 
             if (
-                $field['schema']['type'] === 'array' &&
-                ($field['schema']['additionalItems'] ?? true) === false
+                $schema['type'] === 'array' &&
+                ($schema['additionalItems'] ?? true) === false
             ) {
                 $min_items = $field['schema']['minItems'] ?? 0;
                 $max_items = $field['schema']['maxItems'] ?? 0;
@@ -634,7 +638,7 @@ class Form_Bridge
             }
 
             if ($is_conditional) {
-                $to = $field['name'];
+                $name = $field['name'];
 
                 for ($i = 0; $i < count($this->data['mutations']); $i++) {
                     $mutation = $this->data['mutations'][$i];
@@ -643,13 +647,50 @@ class Form_Bridge
                         $mapper = $this->data['mutations'][$i][$j];
 
                         $from = preg_replace('/\[\d*\]/', '', $mapper['from']);
-                        if ($from !== $to) {
+                        if (
+                            $from !== $name &&
+                            ($is_file && $from !== $name . '_filename')
+                        ) {
                             continue;
                         }
 
                         $this->data['mutations'][$i][$j]['from'] =
                             '?' . $mapper['from'];
-                        $to = preg_replace('/\[\d*\]/', '', $mapper['to']);
+
+                        $name = preg_replace('/\[\d*\]/', '', $mapper['to']);
+                    }
+                }
+            }
+
+            if ($is_file && $is_multi) {
+                $name = $field['name'];
+
+                $len = count($this->data['mutations'][0] ?? []);
+                for ($i = 0; $i < $len; $i++) {
+                    $mapper = $this->data['mutations'][0][$i];
+
+                    $from = preg_replace('/\[\d*\]/', '', $mapper['from']);
+                    $from = preg_replace('/^\?/', '', $mapper['from']);
+
+                    if ($from !== $name && $from !== $name . '_filename') {
+                        continue;
+                    }
+
+                    $this->data['mutations'][0][$i]['from'] =
+                        $mapper['from'] . '_1';
+                    $this->data['mutations'][0][$i]['to'] =
+                        $mapper['to'] . '_1';
+
+                    for ($j = 2; $j < 10; $j++) {
+                        $from =
+                            strstr($mapper['from'], '?') ?:
+                            '?' . $mapper['from'];
+
+                        $this->data['mutations'][0][] = [
+                            'from' => $from . '_' . $j,
+                            'to' => $mapper['to'] . '_' . $j,
+                            'cast' => $mapper['cast'],
+                        ];
                     }
                 }
             }
