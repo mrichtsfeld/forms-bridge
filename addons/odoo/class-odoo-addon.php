@@ -45,15 +45,12 @@ class Odoo_Addon extends Addon
      */
     public function ping($backend)
     {
-        $bridge = new Odoo_Form_Bridge(
-            [
-                'name' => '__odoo-' . time(),
-                'method' => 'search',
-                'endpoint' => 'res.users',
-                'backend' => $backend,
-            ],
-            self::name
-        );
+        $bridge = new Odoo_Form_Bridge([
+            'name' => '__odoo-' . time(),
+            'method' => 'search',
+            'endpoint' => 'res.users',
+            'backend' => $backend,
+        ]);
 
         $response = $bridge->submit();
         return !is_wp_error($response);
@@ -69,15 +66,12 @@ class Odoo_Addon extends Addon
      */
     public function fetch($endpoint, $backend)
     {
-        $bridge = new Odoo_Form_Bridge(
-            [
-                'name' => '__odoo-' . time(),
-                'method' => 'search_read',
-                'endpoint' => $endpoint,
-                'backend' => $backend,
-            ],
-            self::name
-        );
+        $bridge = new Odoo_Form_Bridge([
+            'name' => '__odoo-' . time(),
+            'method' => 'search_read',
+            'endpoint' => $endpoint,
+            'backend' => $backend,
+        ]);
 
         return $bridge->submit([], ['id', 'name']);
     }
@@ -93,15 +87,12 @@ class Odoo_Addon extends Addon
      */
     public function get_endpoint_schema($model, $backend)
     {
-        $bridge = new Odoo_Form_Bridge(
-            [
-                'name' => '__odoo-' . time(),
-                'method' => 'fields_get',
-                'endpoint' => $model,
-                'backend' => $backend,
-            ],
-            self::name
-        );
+        $bridge = new Odoo_Form_Bridge([
+            'name' => '__odoo-' . time(),
+            'method' => 'fields_get',
+            'endpoint' => $model,
+            'backend' => $backend,
+        ]);
 
         $response = $bridge->submit();
 

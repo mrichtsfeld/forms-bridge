@@ -13,6 +13,11 @@ if (!defined('ABSPATH')) {
  */
 class Google_Sheets_Form_Bridge extends Form_Bridge
 {
+    public function __construct($data)
+    {
+        parent::__construct($data, 'gsheets');
+    }
+
     private function value_range($values)
     {
         $range = rawurlencode($this->tab);

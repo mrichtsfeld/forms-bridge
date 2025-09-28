@@ -105,14 +105,11 @@ class Nextcloud_Addon extends Addon
      */
     public function get_endpoint_schema($filepath, $backend)
     {
-        $bridge = new Nextcloud_Form_Bridge(
-            [
-                'name' => '__nextcloud-' . time(),
-                'endpoint' => $filepath,
-                'backend' => $backend,
-            ],
-            self::name
-        );
+        $bridge = new Nextcloud_Form_Bridge([
+            'name' => '__nextcloud-' . time(),
+            'endpoint' => $filepath,
+            'backend' => $backend,
+        ]);
 
         $headers = $bridge->table_headers();
         if (is_wp_error($headers) || !$headers) {

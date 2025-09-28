@@ -13,6 +13,11 @@ if (!defined('ABSPATH')) {
  */
 class Listmonk_Form_Bridge extends Form_Bridge
 {
+    public function __construct($data)
+    {
+        parent::__construct($data, 'listmonk');
+    }
+
     /**
      * Performs an http request to backend's REST API.
      *

@@ -44,15 +44,12 @@ class Listmonk_Addon extends Addon
      */
     public function ping($backend)
     {
-        $bridge = new Listmonk_Form_Bridge(
-            [
-                'name' => '__listmonk-' . time(),
-                'endpoint' => '/api/lists',
-                'method' => 'GET',
-                'backend' => $backend,
-            ],
-            self::name
-        );
+        $bridge = new Listmonk_Form_Bridge([
+            'name' => '__listmonk-' . time(),
+            'endpoint' => '/api/lists',
+            'method' => 'GET',
+            'backend' => $backend,
+        ]);
 
         $response = $bridge->submit();
         return !is_wp_error($response);
@@ -68,15 +65,12 @@ class Listmonk_Addon extends Addon
      */
     public function fetch($endpoint, $backend)
     {
-        $bridge = new Listmonk_Form_Bridge(
-            [
-                'name' => '__listmonk-' . time(),
-                'method' => 'GET',
-                'endpoint' => $endpoint,
-                'backend' => $backend,
-            ],
-            self::name
-        );
+        $bridge = new Listmonk_Form_Bridge([
+            'name' => '__listmonk-' . time(),
+            'method' => 'GET',
+            'endpoint' => $endpoint,
+            'backend' => $backend,
+        ]);
 
         return $bridge->submit();
     }

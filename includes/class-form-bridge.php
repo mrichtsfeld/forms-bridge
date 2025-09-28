@@ -212,7 +212,7 @@ class Form_Bridge
     /**
      * Stores the form bridge's data as a private attribute.
      */
-    public function __construct($data, $addon)
+    public function __construct($data, $addon = 'rest')
     {
         $this->data = wpct_plugin_sanitize_with_schema(
             $data,

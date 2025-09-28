@@ -47,15 +47,12 @@ class Holded_Addon extends Addon
      */
     public function ping($backend)
     {
-        $bridge = new Holded_Form_Bridge(
-            [
-                'name' => '__holded-' . time(),
-                'endpoint' => '/api/invoicing/v1/contacts',
-                'method' => 'GET',
-                'backend' => $backend,
-            ],
-            self::name
-        );
+        $bridge = new Holded_Form_Bridge([
+            'name' => '__holded-' . time(),
+            'endpoint' => '/api/invoicing/v1/contacts',
+            'method' => 'GET',
+            'backend' => $backend,
+        ]);
 
         $response = $bridge->submit(['limit' => 1]);
         return !is_wp_error($response);
@@ -71,15 +68,12 @@ class Holded_Addon extends Addon
      */
     public function fetch($endpoint, $backend)
     {
-        $bridge = new Holded_Form_Bridge(
-            [
-                'name' => '__holded-' . time(),
-                'endpoint' => $endpoint,
-                'backend' => $backend,
-                'method' => 'GET',
-            ],
-            self::name
-        );
+        $bridge = new Holded_Form_Bridge([
+            'name' => '__holded-' . time(),
+            'endpoint' => $endpoint,
+            'backend' => $backend,
+            'method' => 'GET',
+        ]);
 
         return $bridge->submit();
     }

@@ -55,15 +55,12 @@ class Bigin_Addon extends Zoho_Addon
     public function ping($backend)
     {
         $bridge_class = static::bridge_class;
-        $bridge = new $bridge_class(
-            [
-                'name' => '__bigin-' . time(),
-                'backend' => $backend,
-                'endpoint' => '/bigin/v2/users',
-                'method' => 'GET',
-            ],
-            static::name
-        );
+        $bridge = new $bridge_class([
+            'name' => '__bigin-' . time(),
+            'backend' => $backend,
+            'endpoint' => '/bigin/v2/users',
+            'method' => 'GET',
+        ]);
 
         $backend = $bridge->backend;
         if (!$backend) {
@@ -120,15 +117,12 @@ class Bigin_Addon extends Zoho_Addon
         $module = $matches[2];
 
         $bridge_class = self::bridge_class;
-        $bridge = new $bridge_class(
-            [
-                'name' => '__bigin-' . time(),
-                'backend' => $backend,
-                'endpoint' => '/bigin/v2/settings/layouts',
-                'method' => 'GET',
-            ],
-            self::name
-        );
+        $bridge = new $bridge_class([
+            'name' => '__bigin-' . time(),
+            'backend' => $backend,
+            'endpoint' => '/bigin/v2/settings/layouts',
+            'method' => 'GET',
+        ]);
 
         $response = $bridge->submit(['module' => $module]);
 

@@ -156,6 +156,11 @@ class Odoo_Form_Bridge extends Form_Bridge
         return self::$session;
     }
 
+    public function __construct($data, $addon = null)
+    {
+        parent::__construct($data, 'odoo');
+    }
+
     /**
      * Submits submission to the backend.
      *

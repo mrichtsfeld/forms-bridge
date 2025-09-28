@@ -38,15 +38,12 @@ class Dolibarr_Addon extends Addon
 
     public function ping($backend)
     {
-        $bridge = new Dolibarr_Form_Bridge(
-            [
-                'name' => '__dolibarr-' . time(),
-                'endpoint' => '/api/index.php/status',
-                'method' => 'GET',
-                'backend' => $backend,
-            ],
-            'dolibarr'
-        );
+        $bridge = new Dolibarr_Form_Bridge([
+            'name' => '__dolibarr-' . time(),
+            'endpoint' => '/api/index.php/status',
+            'method' => 'GET',
+            'backend' => $backend,
+        ]);
 
         $response = $bridge->submit();
         if (is_wp_error($response)) {
@@ -67,15 +64,12 @@ class Dolibarr_Addon extends Addon
      */
     public function fetch($endpoint, $backend)
     {
-        $bridge = new Dolibarr_Form_Bridge(
-            [
-                'name' => '__dolibarr-' . time(),
-                'endpoint' => $endpoint,
-                'backend' => $backend,
-                'method' => 'GET',
-            ],
-            'dolibarr'
-        );
+        $bridge = new Dolibarr_Form_Bridge([
+            'name' => '__dolibarr-' . time(),
+            'endpoint' => $endpoint,
+            'backend' => $backend,
+            'method' => 'GET',
+        ]);
 
         return $bridge->submit();
     }
@@ -91,15 +85,12 @@ class Dolibarr_Addon extends Addon
      */
     public function get_endpoint_schema($endpoint, $backend)
     {
-        $bridge = new Dolibarr_Form_Bridge(
-            [
-                'name' => '__dolibarr-' . time(),
-                'endpoint' => $endpoint,
-                'backend' => $backend,
-                'method' => 'GET',
-            ],
-            'dolibarr'
-        );
+        $bridge = new Dolibarr_Form_Bridge([
+            'name' => '__dolibarr-' . time(),
+            'endpoint' => $endpoint,
+            'backend' => $backend,
+            'method' => 'GET',
+        ]);
 
         $response = $bridge->submit(['limit' => 1]);
 

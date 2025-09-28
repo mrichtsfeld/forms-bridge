@@ -64,16 +64,13 @@ class Google_Sheets_Addon extends Addon
      */
     public function ping($backend)
     {
-        $bridge = new Google_Sheets_Form_Bridge(
-            [
-                'name' => '__gsheets-' . time(),
-                'backend' => $backend,
-                'endpoint' => '/',
-                'method' => 'GET',
-                'tab' => 'foo',
-            ],
-            self::name
-        );
+        $bridge = new Google_Sheets_Form_Bridge([
+            'name' => '__gsheets-' . time(),
+            'backend' => $backend,
+            'endpoint' => '/',
+            'method' => 'GET',
+            'tab' => 'foo',
+        ]);
 
         $backend = $bridge->backend;
         if (!$backend) {

@@ -15,6 +15,11 @@ class Finan_Coop_Form_Bridge extends Form_Bridge
 {
     private static $request;
 
+    public function __construct($data)
+    {
+        parent::__construct($data, 'financoop');
+    }
+
     /**
      * Performs an http request to Odoo REST API.
      *

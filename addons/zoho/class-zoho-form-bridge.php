@@ -13,6 +13,11 @@ if (!defined('ABSPATH')) {
  */
 class Zoho_Form_Bridge extends Form_Bridge
 {
+    public function __construct($data)
+    {
+        parent::__construct($data, 'zoho');
+    }
+
     /**
      * Performs an http request to the Zoho API backend.
      *

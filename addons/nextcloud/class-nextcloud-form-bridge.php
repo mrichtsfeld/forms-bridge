@@ -13,6 +13,11 @@ if (!defined('ABSPATH')) {
  */
 class Nextcloud_Form_Bridge extends Form_Bridge
 {
+    public function __construct($data)
+    {
+        parent::__construct($data, 'nextcloud');
+    }
+
     private function filepath(&$touched = false)
     {
         $uploads = Forms_Bridge::upload_dir() . '/nextcloud';

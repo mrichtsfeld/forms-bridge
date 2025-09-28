@@ -11,6 +11,11 @@ if (!defined('ABSPATH')) {
  */
 class Brevo_Form_Bridge extends Form_Bridge
 {
+    public function __construct($data)
+    {
+        parent::__construct($data, 'brevo');
+    }
+
     /**
      * Performs an http request to backend's REST API.
      *

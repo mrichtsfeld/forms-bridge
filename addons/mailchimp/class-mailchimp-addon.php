@@ -44,15 +44,12 @@ class Mailchimp_Addon extends Addon
      */
     public function ping($backend)
     {
-        $bridge = new Mailchimp_Form_Bridge(
-            [
-                'name' => '__mailchimp-' . time(),
-                'endpoint' => '/3.0/lists',
-                'method' => 'GET',
-                'backend' => $backend,
-            ],
-            self::name
-        );
+        $bridge = new Mailchimp_Form_Bridge([
+            'name' => '__mailchimp-' . time(),
+            'endpoint' => '/3.0/lists',
+            'method' => 'GET',
+            'backend' => $backend,
+        ]);
 
         $response = $bridge->submit();
         return !is_wp_error($response);
@@ -68,15 +65,12 @@ class Mailchimp_Addon extends Addon
      */
     public function fetch($endpoint, $backend)
     {
-        $bridge = new Mailchimp_Form_Bridge(
-            [
-                'name' => '__mailchimp-' . time(),
-                'method' => 'GET',
-                'endpoint' => $endpoint,
-                'backend' => $backend,
-            ],
-            self::name
-        );
+        $bridge = new Mailchimp_Form_Bridge([
+            'name' => '__mailchimp-' . time(),
+            'method' => 'GET',
+            'endpoint' => $endpoint,
+            'backend' => $backend,
+        ]);
 
         return $bridge->submit();
     }
@@ -182,15 +176,12 @@ class Mailchimp_Addon extends Addon
                 $endpoint
             );
 
-            $bridge = new Mailchimp_Form_Bridge(
-                [
-                    'name' => '__mailchimp-' . time(),
-                    'endpoint' => $fields_endpoint,
-                    'method' => 'GET',
-                    'backend' => $backend,
-                ],
-                self::name
-            );
+            $bridge = new Mailchimp_Form_Bridge([
+                'name' => '__mailchimp-' . time(),
+                'endpoint' => $fields_endpoint,
+                'method' => 'GET',
+                'backend' => $backend,
+            ]);
 
             $response = $bridge->submit();
 

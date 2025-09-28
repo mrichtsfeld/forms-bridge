@@ -53,15 +53,12 @@ class Zoho_Addon extends Addon
     public function ping($backend)
     {
         $bridge_class = static::bridge_class;
-        $bridge = new $bridge_class(
-            [
-                'name' => '__zoho-' . time(),
-                'backend' => $backend,
-                'endpoint' => '/crm/v7/users',
-                'method' => 'GET',
-            ],
-            static::name
-        );
+        $bridge = new $bridge_class([
+            'name' => '__zoho-' . time(),
+            'backend' => $backend,
+            'endpoint' => '/crm/v7/users',
+            'method' => 'GET',
+        ]);
 
         $backend = $bridge->backend;
         if (!$backend) {
@@ -106,15 +103,12 @@ class Zoho_Addon extends Addon
     public function fetch($endpoint, $backend)
     {
         $bridge_class = static::bridge_class;
-        $bridge = new $bridge_class(
-            [
-                'name' => '__zoho-' . time(),
-                'backend' => $backend,
-                'endpoint' => $endpoint,
-                'method' => 'GET',
-            ],
-            static::name
-        );
+        $bridge = new $bridge_class([
+            'name' => '__zoho-' . time(),
+            'backend' => $backend,
+            'endpoint' => $endpoint,
+            'method' => 'GET',
+        ]);
 
         return $bridge->submit();
     }
@@ -142,15 +136,12 @@ class Zoho_Addon extends Addon
         $module = $matches[2];
 
         $bridge_class = static::bridge_class;
-        $bridge = new $bridge_class(
-            [
-                'name' => '__zoho-' . time(),
-                'backend' => $backend,
-                'endpoint' => '/crm/v7/settings/layouts',
-                'method' => 'GET',
-            ],
-            static::name
-        );
+        $bridge = new $bridge_class([
+            'name' => '__zoho-' . time(),
+            'backend' => $backend,
+            'endpoint' => '/crm/v7/settings/layouts',
+            'method' => 'GET',
+        ]);
 
         $response = $bridge->submit(['module' => $module]);
 

@@ -9,4 +9,10 @@ if (!defined('ABSPATH')) {
 /**
  * Form bridge implamentation for the REST API protocol.
  */
-class Holded_Form_Bridge extends Form_Bridge {}
+class Holded_Form_Bridge extends Form_Bridge
+{
+    public function __construct($data)
+    {
+        parent::__construct($data, 'holded');
+    }
+}

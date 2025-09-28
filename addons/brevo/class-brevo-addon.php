@@ -45,15 +45,12 @@ class Brevo_Addon extends Addon
      */
     public function ping($backend)
     {
-        $bridge = new Brevo_Form_Bridge(
-            [
-                'name' => '__brevo-' . time(),
-                'endpoint' => '/v3/contacts/lists',
-                'method' => 'GET',
-                'backend' => $backend,
-            ],
-            'brevo'
-        );
+        $bridge = new Brevo_Form_Bridge([
+            'name' => '__brevo-' . time(),
+            'endpoint' => '/v3/contacts/lists',
+            'method' => 'GET',
+            'backend' => $backend,
+        ]);
 
         $response = $bridge->submit(['limit' => 1]);
         return !is_wp_error($response);
@@ -69,15 +66,12 @@ class Brevo_Addon extends Addon
      */
     public function fetch($endpoint, $backend)
     {
-        $bridge = new Brevo_Form_Bridge(
-            [
-                'name' => '__brevo-' . time(),
-                'endpoint' => $endpoint,
-                'backend' => $backend,
-                'method' => 'GET',
-            ],
-            'brevo'
-        );
+        $bridge = new Brevo_Form_Bridge([
+            'name' => '__brevo-' . time(),
+            'endpoint' => $endpoint,
+            'backend' => $backend,
+            'method' => 'GET',
+        ]);
 
         return $bridge->submit();
     }
@@ -93,15 +87,12 @@ class Brevo_Addon extends Addon
      */
     public function get_endpoint_schema($endpoint, $backend)
     {
-        $bridge = new Brevo_Form_Bridge(
-            [
-                'name' => '__brevo-' . time(),
-                'endpoint' => $endpoint,
-                'backend' => $backend,
-                'method' => 'GET',
-            ],
-            'brevo'
-        );
+        $bridge = new Brevo_Form_Bridge([
+            'name' => '__brevo-' . time(),
+            'endpoint' => $endpoint,
+            'backend' => $backend,
+            'method' => 'GET',
+        ]);
 
         if (strstr($bridge->endpoint, 'contacts')) {
             $response = $bridge

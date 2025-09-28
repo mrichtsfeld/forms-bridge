@@ -45,15 +45,12 @@ class Finan_Coop_Addon extends Addon
      */
     public function ping($backend)
     {
-        $bridge = new Finan_Coop_Form_Bridge(
-            [
-                'name' => '__financoop-' . time(),
-                'endpoint' => '/api/campaign',
-                'method' => 'GET',
-                'backend' => $backend,
-            ],
-            'financoop'
-        );
+        $bridge = new Finan_Coop_Form_Bridge([
+            'name' => '__financoop-' . time(),
+            'endpoint' => '/api/campaign',
+            'method' => 'GET',
+            'backend' => $backend,
+        ]);
 
         $response = $bridge->submit();
         return !is_wp_error($response);
@@ -69,15 +66,12 @@ class Finan_Coop_Addon extends Addon
      */
     public function fetch($endpoint, $backend)
     {
-        $bridge = new Finan_Coop_Form_Bridge(
-            [
-                'name' => '__financoop-' . time(),
-                'endpoint' => $endpoint,
-                'backend' => $backend,
-                'method' => 'GET',
-            ],
-            'financoop'
-        );
+        $bridge = new Finan_Coop_Form_Bridge([
+            'name' => '__financoop-' . time(),
+            'endpoint' => $endpoint,
+            'backend' => $backend,
+            'method' => 'GET',
+        ]);
 
         return $bridge->submit();
     }
@@ -93,15 +87,12 @@ class Finan_Coop_Addon extends Addon
      */
     public function get_endpoint_schema($endpoint, $backend)
     {
-        $bridge = new Finan_Coop_Form_Bridge(
-            [
-                'name' => '__financoop-' . time(),
-                'endpoint' => $endpoint,
-                'backend' => $backend,
-                'method' => 'GET',
-            ],
-            'financoop'
-        );
+        $bridge = new Finan_Coop_Form_Bridge([
+            'name' => '__financoop-' . time(),
+            'endpoint' => $endpoint,
+            'backend' => $backend,
+            'method' => 'GET',
+        ]);
 
         if (
             !preg_match(

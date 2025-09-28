@@ -13,6 +13,11 @@ if (!defined('ABSPATH')) {
  */
 class Mailchimp_Form_Bridge extends Form_Bridge
 {
+    public function __construct($data)
+    {
+        parent::__construct($data, 'mailchimp');
+    }
+
     /**
      * Performs an http request to backend's REST API.
      *
