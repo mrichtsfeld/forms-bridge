@@ -83,10 +83,10 @@ class Zoho_Addon extends Addon
             return false;
         }
 
-        $region = $matches[1];
-        if (!preg_match('/' . $region . '$/', $credential->region)) {
-            return false;
-        }
+        // $region = $matches[1];
+        // if (!preg_match('/' . $region . '$/', $credential->region)) {
+        //     return false;
+        // }
 
         $response = $bridge->submit(['type' => 'CurrentUser']);
         return !is_wp_error($response);
