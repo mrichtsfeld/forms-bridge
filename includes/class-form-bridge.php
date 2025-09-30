@@ -648,16 +648,18 @@ class Form_Bridge
 
                         $from = preg_replace('/\[\d*\]/', '', $mapper['from']);
                         if (
-                            $from !== $name &&
-                            ($is_file ? $from !== $name . '_filename' : true)
+                            $from === $name ||
+                            ($is_file && $from === $name . '_filename')
                         ) {
-                            continue;
+                            $this->data['mutations'][$i][$j]['from'] =
+                                '?' . $mapper['from'];
+
+                            $name = preg_replace(
+                                '/\[\d*\]/',
+                                '',
+                                $mapper['to']
+                            );
                         }
-
-                        $this->data['mutations'][$i][$j]['from'] =
-                            '?' . $mapper['from'];
-
-                        $name = preg_replace('/\[\d*\]/', '', $mapper['to']);
                     }
                 }
             }
