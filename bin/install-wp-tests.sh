@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 
-if [ $# -lt 3 ]; then
+if [ $# == 1 ] && [ $1 == '--help' ]; then
 	echo "usage: $0 <db-name> <db-user> <db-pass> [db-host] [wp-version] [skip-database-creation]"
 	exit 1
 fi
 
-DB_NAME=$1
-DB_USER=$2
-DB_PASS=$3
+DB_NAME=${1-wpdb}
+DB_USER=${2-wpusr}
+DB_PASS=${3-wppwd}
 DB_HOST=${4-localhost}
 WP_VERSION=${5-latest}
 SKIP_DB_CREATE=${6-false}
@@ -169,7 +169,7 @@ install_db() {
 	if [ $(mysql --user="$DB_USER" --password="$DB_PASS"$EXTRA --execute='show databases;' | grep ^$DB_NAME$) ]
 	then
 		echo "Reinstalling will delete the existing test database ($DB_NAME)"
-		read -p 'Are you sure you want to proceed? [y/N]: ' DELETE_EXISTING_DB
+		# read -p 'Are you sure you want to proceed? [y/N]: ' DELETE_EXISTING_DB
 		recreate_db $DELETE_EXISTING_DB
 	else
 		create_db
