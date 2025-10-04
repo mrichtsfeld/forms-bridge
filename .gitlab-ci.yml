@@ -1,20 +1,5 @@
-workflow:
-  rules:
-    - if: $CI_COMMIT_BRANCH
-      changes:
-        - README.md
-        - .gitlab-ci.yml
-      when:
-        never
-        # Do no allow manually triggered pipelines to prevent duplicates!
-        # Instead rerun the pipeline created with the last push
-    - if: $CI_PIPELINE_SOURCE != "push"
-      when: never
-    # Only execute when a valid version tag like 1.0, 2.3-dev or similar is given
-    # Required is always one point like 1.0
-    - if: $CI_COMMIT_TAG =~ /^[0-9]+[.][0-9]+([.][0-9]+)?([-a-z])*$/
-
-stages: # List of stages for jobs, and their order of execution
+# List of stages for jobs, and their order of execution
+stages:
   - test
   - build
   - package
@@ -33,6 +18,11 @@ variables:
   GIT_SUBMODULE_STRATEGY: normal
   GIT_SUBMODULE_FORCE_HTTPS: "true"
 
+.release_job:
+  rules:
+    # Only execute when a valid version tag like 1.0, 2.3-dev or similar is given
+    - if: $CI_PIPELINE_SOURCE != "push" && $CI_COMMIT_TAG =~ /^[0-9]+[.][0-9]+([.][0-9]+)?([-a-z])*$/
+
 phpunit:
   stage: test
   image: codeccoop/wp-test
@@ -43,8 +33,14 @@ phpunit:
     - bin/install-wp-tests.sh
   script:
     - vendor/bin/phpunit -c phpunit.xml.dist
+  rules:
+    # Only execute when a valid version tag like 1.0, 2.3-dev or similar is given
+    - if: $CI_PIPELINE_SOURCE != "push" && $CI_COMMIT_TAG =~ /^[0-9]+[.][0-9]+([.][0-9]+)?([-a-z])*$/
+    # Run always on MR pointing to master
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_DEFAULT_BRANCH
 
 build:
+  extends: .release_job
   stage: build
   image: node:latest
   script:
@@ -56,6 +52,7 @@ build:
       - assets/plugin.bundle.js
 
 package:
+  extends: .release_job
   image: codeccoop/wp-cli:latest
   stage: package
   script:
@@ -75,6 +72,7 @@ package:
       - $ZIP
 
 upload:
+  extends: .release_job
   stage: upload
   image: curlimages/curl:latest
   script:
@@ -84,9 +82,10 @@ upload:
 release:
   # Caution, as of 2021-02-02 these assets links require a login, see:
   # https://gitlab.com/gitlab-org/gitlab/-/issues/299384
+  extends: .release_job
   stage: release
-  image: registry.gitlab.com/gitlab-org/release-cli:latest
+  image: gitlab/glab:latest
   script:
     - |
-      release-cli create --name "Release $CI_COMMIT_TAG" --tag-name $CI_COMMIT_TAG \
-        --assets-link "{\"name\":\"${ZIP}\",\"url\":\"${PACKAGE_REGISTRY_URL}\/${ZIP}\",\"link_type\":\"package\",\"filepath\":\"\/plugins\/bridges\/${ZIP}\"}"
+      glab release create $CI_COMMIT_TAG --name "Release $CI_COMMIT_TAG" \
+        --assets-link "[{\"name\":\"${ZIP}\",\"url\":\"${PACKAGE_REGISTRY_URL}\/${ZIP}\",\"link_type\":\"package\",\"direct_asset_path\":\"\/plugins\/bridges\/${ZIP}\"}]"
