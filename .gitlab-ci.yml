@@ -42,7 +42,7 @@ phpunit:
     - composer install
     - bin/install-wp-tests.sh
   script:
-    - vendor/bin/phpunit tests
+    - vendor/bin/phpunit -c phpunit.xml.dist
 
 build:
   stage: build
