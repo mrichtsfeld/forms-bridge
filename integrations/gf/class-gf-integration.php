@@ -393,6 +393,7 @@ class Integration extends BaseIntegration
                 'conditional' => $field->conditionalLogic['enabled'] ?? false,
                 'format' => $field->type === 'date' ? 'yyyy-mm-dd' : '',
                 'schema' => $this->field_value_schema($field),
+                '_type' => $field->type,
             ],
             $field,
             'gf'
@@ -553,14 +554,14 @@ class Integration extends BaseIntegration
         $has_total = array_search(
             'total',
             array_map(static function ($field) {
-                return $field['type'];
+                return $field['_type'];
             }, $form_data['fields'])
         );
 
         $has_quantity = array_search(
             'quantity',
             array_map(static function ($field) {
-                return $field['type'];
+                return $field['_type'];
             }, $form_data['fields'])
         );
 
@@ -581,7 +582,11 @@ class Integration extends BaseIntegration
 
                     $value = rgar($submission, (string) $input['id']);
                     if ($input_name && $value) {
-                        $value = $this->format_value($value, $field, $input);
+                        $value = $this->format_value(
+                            $value,
+                            $field['_type'],
+                            $input
+                        );
 
                         if ($value !== null) {
                             $values[] = $value;
@@ -589,11 +594,11 @@ class Integration extends BaseIntegration
                     }
                 }
 
-                if ($field['type'] === 'consent') {
+                if ($field['_type'] === 'consent') {
                     $data[$input_name] = boolval($values[0] ?? false);
-                } elseif ($field['type'] === 'name') {
+                } elseif ($field['_type'] === 'name') {
                     $data[$input_name] = implode(' ', $values);
-                } elseif ($field['type'] === 'product') {
+                } elseif ($field['_type'] === 'product') {
                     if ($has_total) {
                         $data[$input_name] = $values[0];
                     } else {
@@ -603,7 +608,7 @@ class Integration extends BaseIntegration
 
                         $data[$input_name] = implode('|', $values);
                     }
-                } elseif ($field['type'] === 'address') {
+                } elseif ($field['_type'] === 'address') {
                     $data[$input_name] = implode(', ', $values);
                 } else {
                     $data[$input_name] = $values;
@@ -619,7 +624,7 @@ class Integration extends BaseIntegration
                     $raw_value = rgar($submission, (string) $field['id']);
                     $data[$input_name] = $this->format_value(
                         $raw_value,
-                        $field
+                        $field['_type']
                     );
                 }
             }
@@ -632,15 +637,15 @@ class Integration extends BaseIntegration
      * Formats field values with noop fallback.
      *
      * @param mixed $value Field's value.
-     * @param GFField $field Field object instance.
+     * @param string $field_type GF field type.
      * @param array $input Field's input data.
      *
      * @return mixed Formatted value.
      */
-    private function format_value($value, $field, $input = null)
+    private function format_value($value, $field_type, $input = null)
     {
         try {
-            switch ($field['type']) {
+            switch ($field_type) {
                 case 'consent':
                     if (preg_match('/\.1$/', $input['id'])) {
                         return $value === '1';
