@@ -9,216 +9,211 @@ use FORMS_BRIDGE\Form_Bridge;
 /**
  * Field Mappers test case.
  */
-class MutationsTest extends WP_UnitTestCase
-{
-    private function payload()
-    {
-        return [
-            'firstname' => 'John',
-            'lastname' => 'Doe',
-            'age' => 38,
-            'choices' => [true, false, false],
-            'address' => 'Carrer de les Camèlies',
-            'city' => 'Barcelona',
-            'street' => 'Carrer de Balmes',
-            'state' => 'Barcelona',
-            'country' => 'Spain',
-            'T&S' => true,
-        ];
-    }
+class MutationsTest extends WP_UnitTestCase {
 
-    private function bridge($mutations = [])
-    {
-        $bridge = new Form_Bridge([
-            'name' => 'mutations-test',
-            'backend' => 'backend',
-            'mutations' => $mutations,
-        ]);
+	private function payload() {
+		return array(
+			'firstname' => 'John',
+			'lastname'  => 'Doe',
+			'age'       => 38,
+			'choices'   => array( true, false, false ),
+			'address'   => 'Carrer de les Camèlies',
+			'city'      => 'Barcelona',
+			'street'    => 'Carrer de Balmes',
+			'state'     => 'Barcelona',
+			'country'   => 'Spain',
+			'T&S'       => true,
+		);
+	}
 
-        if (!$bridge->is_valid) {
-            throw new Exception($bridge->data->get_error_message());
-        }
+	private function bridge( $mutations = array() ) {
+		$bridge = new Form_Bridge(
+			array(
+				'name'      => 'mutations-test',
+				'backend'   => 'backend',
+				'mutations' => $mutations,
+			)
+		);
 
-        return $bridge;
-    }
+		if ( ! $bridge->is_valid ) {
+			throw new Exception( $bridge->data->get_error_message() );
+		}
 
-    public function test_name_concat()
-    {
-        $payload = $this->payload();
+		return $bridge;
+	}
 
-        $mutations = [
-            [
-                [
-                    'from' => 'firstname',
-                    'to' => 'name[0]',
-                    'cast' => 'string',
-                ],
-                [
-                    'from' => 'lastname',
-                    'to' => 'name[1]',
-                    'cast' => 'string',
-                ],
-                [
-                    'from' => 'name',
-                    'to' => 'name',
-                    'cast' => 'concat',
-                ],
-            ],
-        ];
+	public function test_name_concat() {
+		$payload = $this->payload();
 
-        $bridge = $this->bridge($mutations);
-        $payload = $bridge->apply_mutation($payload);
+		$mutations = array(
+			array(
+				array(
+					'from' => 'firstname',
+					'to'   => 'name[0]',
+					'cast' => 'string',
+				),
+				array(
+					'from' => 'lastname',
+					'to'   => 'name[1]',
+					'cast' => 'string',
+				),
+				array(
+					'from' => 'name',
+					'to'   => 'name',
+					'cast' => 'concat',
+				),
+			),
+		);
 
-        $this->assertEquals('John Doe', $payload['name']);
-        $this->assertTrue(!isset($payload['firstname']));
-        $this->assertTrue(!isset($payload['lastname']));
-    }
+		$bridge  = $this->bridge( $mutations );
+		$payload = $bridge->apply_mutation( $payload );
 
-    public function test_json_ponter_mappers()
-    {
-        $payload = $this->payload();
+		$this->assertEquals( 'John Doe', $payload['name'] );
+		$this->assertTrue( ! isset( $payload['firstname'] ) );
+		$this->assertTrue( ! isset( $payload['lastname'] ) );
+	}
 
-        $mutations = [
-            [
-                [
-                    'from' => 'address',
-                    'to' => 'address.street',
-                    'cast' => 'string',
-                ],
-                [
-                    'from' => 'city',
-                    'to' => 'address.city',
-                    'cast' => 'string',
-                ],
-                [
-                    'from' => 'state',
-                    'to' => 'address.state',
-                    'cast' => 'string',
-                ],
-                [
-                    'from' => 'country',
-                    'to' => 'address.country',
-                    'cast' => 'string',
-                ],
-            ],
-        ];
+	public function test_json_ponter_mappers() {
+		$payload = $this->payload();
 
-        $bridge = $this->bridge($mutations);
-        $payload = $bridge->apply_mutation($payload);
+		$mutations = array(
+			array(
+				array(
+					'from' => 'address',
+					'to'   => 'address.street',
+					'cast' => 'string',
+				),
+				array(
+					'from' => 'city',
+					'to'   => 'address.city',
+					'cast' => 'string',
+				),
+				array(
+					'from' => 'state',
+					'to'   => 'address.state',
+					'cast' => 'string',
+				),
+				array(
+					'from' => 'country',
+					'to'   => 'address.country',
+					'cast' => 'string',
+				),
+			),
+		);
 
-        $this->assertTrue(is_array($payload['address']));
+		$bridge  = $this->bridge( $mutations );
+		$payload = $bridge->apply_mutation( $payload );
 
-        $this->assertTrue(isset($payload['address']['street']));
-        $this->assertEquals('Carrer de les Camèlies', $payload['address']['street']);
+		$this->assertTrue( is_array( $payload['address'] ) );
 
-        $this->assertTrue(isset($payload['address']['city']));
-        $this->assertEquals('Barcelona', $payload['address']['city']);
+		$this->assertTrue( isset( $payload['address']['street'] ) );
+		$this->assertEquals( 'Carrer de les Camèlies', $payload['address']['street'] );
 
-        $this->assertTrue(isset($payload['address']['state']));
-        $this->assertEquals('Barcelona', $payload['address']['state']);
+		$this->assertTrue( isset( $payload['address']['city'] ) );
+		$this->assertEquals( 'Barcelona', $payload['address']['city'] );
 
-        $this->assertTrue(isset($payload['address']['country']));
-        $this->assertEquals('Spain', $payload['address']['country']);
-    }
+		$this->assertTrue( isset( $payload['address']['state'] ) );
+		$this->assertEquals( 'Barcelona', $payload['address']['state'] );
 
-    public function test_logical_reducers()
-    {
-        $payload = $this->payload();
+		$this->assertTrue( isset( $payload['address']['country'] ) );
+		$this->assertEquals( 'Spain', $payload['address']['country'] );
+	}
 
-        $mutations = [
-            [
-                [
-                    'from' => 'choices',
-                    'to' => 'AND',
-                    'cast' => 'copy',
-                ],
-                [
-                    'from' => 'AND',
-                    'to' => 'AND',
-                    'cast' => 'and',
-                ],
-                [
-                    'from' => 'choices',
-                    'to' => 'OR',
-                    'cast' => 'copy',
-                ],
-                [
-                    'from' => 'OR',
-                    'to' => 'OR',
-                    'cast' => 'or',
-                ],
-                [
-                    'from' => 'choices',
-                    'to' => 'XOR',
-                    'cast' => 'xor',
-                ],
-            ],
-        ];
+	public function test_logical_reducers() {
+		$payload = $this->payload();
 
-        $bridge = $this->bridge($mutations);
-        $payload = $bridge->apply_mutation($payload);
+		$mutations = array(
+			array(
+				array(
+					'from' => 'choices',
+					'to'   => 'AND',
+					'cast' => 'copy',
+				),
+				array(
+					'from' => 'AND',
+					'to'   => 'AND',
+					'cast' => 'and',
+				),
+				array(
+					'from' => 'choices',
+					'to'   => 'OR',
+					'cast' => 'copy',
+				),
+				array(
+					'from' => 'OR',
+					'to'   => 'OR',
+					'cast' => 'or',
+				),
+				array(
+					'from' => 'choices',
+					'to'   => 'XOR',
+					'cast' => 'xor',
+				),
+			),
+		);
 
-        $this->assertFalse($payload['AND']);
-        $this->assertTrue($payload['OR']);
-        $this->assertTrue($payload['XOR']);
-    }
+		$bridge  = $this->bridge( $mutations );
+		$payload = $bridge->apply_mutation( $payload );
 
-    public function test_conditional_mappers()
-    {
-        $payload = $this->payload();
+		$this->assertFalse( $payload['AND'] );
+		$this->assertTrue( $payload['OR'] );
+		$this->assertTrue( $payload['XOR'] );
+	}
 
-        $mutations = [
-            [
-                [
-                    'from' => '?foo',
-                    'to' => 'bar',
-                    'cast' => 'integer',
-                ],
-                [
-                    'from' => 'a',
-                    'to' => 'b',
-                    'cast' => 'integer',
-                ],
-            ],
-        ];
+	public function test_conditional_mappers() {
+		$payload = $this->payload();
 
-        $bridge = $this->bridge($mutations);
-        $payload = $bridge->apply_mutation($payload);
+		$mutations = array(
+			array(
+				array(
+					'from' => '?foo',
+					'to'   => 'bar',
+					'cast' => 'integer',
+				),
+				array(
+					'from' => 'a',
+					'to'   => 'b',
+					'cast' => 'integer',
+				),
+			),
+		);
 
-        $this->assertTrue(!isset($payload['foo']));
-        $this->assertTrue(!isset($payload['bar']));
-        $this->assertEquals(0, $payload['b']);
-    }
+		$bridge  = $this->bridge( $mutations );
+		$payload = $bridge->apply_mutation( $payload );
 
-    public function test_expanded_cast()
-    {
-        $payload = $this->payload();
+		$this->assertTrue( ! isset( $payload['foo'] ) );
+		$this->assertTrue( ! isset( $payload['bar'] ) );
+		$this->assertEquals( 0, $payload['b'] );
+	}
 
-        $mutations = [
-            [
-                [
-                    'from' => 'choices[]',
-                    'to' => 'choices',
-                    'cast' => 'integer',
-                ],
-                [
-                    'from' => 'choices',
-                    'to' => 'score',
-                    'cast' => 'copy',
-                ],
-                [
-                    'from' => 'score',
-                    'to' => 'score',
-                    'cast' => 'sum',
-                ],
-            ],
-        ];
+	public function test_expanded_cast() {
+		$payload = $this->payload();
 
-        $bridge = $this->bridge($mutations);
-        $payload = $bridge->apply_mutation($payload);
+		$mutations = array(
+			array(
+				array(
+					'from' => 'choices[]',
+					'to'   => 'choices',
+					'cast' => 'integer',
+				),
+				array(
+					'from' => 'choices',
+					'to'   => 'score',
+					'cast' => 'copy',
+				),
+				array(
+					'from' => 'score',
+					'to'   => 'score',
+					'cast' => 'sum',
+				),
+			),
+		);
 
-        $this->assertEquals(1, $payload['choices'][0]);
-        $this->assertEquals(0, $payload['choices'][1]);
-        $this->assertEquals(1, $payload['score']);
-    }
+		$bridge  = $this->bridge( $mutations );
+		$payload = $bridge->apply_mutation( $payload );
+
+		$this->assertEquals( 1, $payload['choices'][0] );
+		$this->assertEquals( 0, $payload['choices'][1] );
+		$this->assertEquals( 1, $payload['score'] );
+	}
 }

@@ -4,68 +4,72 @@ namespace FORMS_BRIDGE;
 
 use WP_Error;
 
-if (!defined('ABSPATH')) {
-    exit();
+if ( ! defined( 'ABSPATH' ) ) {
+	exit();
 }
 
 /**
  * Form bridge implamentation for the REST API protocol.
  */
-class Listmonk_Form_Bridge extends Form_Bridge
-{
-    public function __construct($data)
-    {
-        parent::__construct($data, 'listmonk');
-    }
+class Listmonk_Form_Bridge extends Form_Bridge {
 
-    /**
-     * Performs an http request to backend's REST API.
-     *
-     * @param array $payload Payload data.
-     * @param array $attachments Submission's attached files.
-     *
-     * @return array|WP_Error
-     */
-    public function submit($payload = [], $attachments = [])
-    {
-        $response = parent::submit($payload, $attachments);
+	public function __construct( $data ) {
+		parent::__construct( $data, 'listmonk' );
+	}
 
-        if (is_wp_error($response)) {
-            $error_response = $response->get_error_data()['response'] ?? null;
+	/**
+	 * Performs an http request to backend's REST API.
+	 *
+	 * @param array $payload Payload data.
+	 * @param array $attachments Submission's attached files.
+	 *
+	 * @return array|WP_Error
+	 */
+	public function submit( $payload = array(), $attachments = array() ) {
+		$response = parent::submit( $payload, $attachments );
 
-            $code = $error_response['response']['code'] ?? null;
-            if ($code !== 409) {
-                return $response;
-            }
+		if ( is_wp_error( $response ) ) {
+			$error_response = $response->get_error_data()['response'] ?? null;
 
-            if (
-                !isset($payload['email']) ||
-                $this->endpoint !== '/api/subscribers'
-            ) {
-                return $response;
-            }
+			$code = $error_response['response']['code'] ?? null;
+			if ( $code !== 409 ) {
+				return $response;
+			}
 
-            $get_response = $this->patch([
-                'name' => 'listmonk-get-subscriber-by-email',
-                'method' => 'GET',
-            ])->submit([
-                'per_page' => '1',
-                'query' => "subscribers.email = '{$payload['email']}'",
-            ]);
+			if (
+				! isset( $payload['email'] ) ||
+				$this->endpoint !== '/api/subscribers'
+			) {
+				return $response;
+			}
 
-            if (is_wp_error($get_response)) {
-                return $response;
-            }
+			$get_response = $this->patch(
+				array(
+					'name'   => 'listmonk-get-subscriber-by-email',
+					'method' => 'GET',
+				)
+			)->submit(
+				array(
+					'per_page' => '1',
+					'query'    => "subscribers.email = '{$payload['email']}'",
+				)
+			);
 
-            $subscriber_id = $get_response['data']['data']['results'][0]['id'];
+			if ( is_wp_error( $get_response ) ) {
+				return $response;
+			}
 
-            return $this->patch([
-                'name' => 'listmonk-update-subscriber',
-                'method' => 'PUT',
-                'endpoint' => $this->endpoint . '/' . $subscriber_id,
-            ])->submit($payload);
-        }
+			$subscriber_id = $get_response['data']['data']['results'][0]['id'];
 
-        return $response;
-    }
+			return $this->patch(
+				array(
+					'name'     => 'listmonk-update-subscriber',
+					'method'   => 'PUT',
+					'endpoint' => $this->endpoint . '/' . $subscriber_id,
+				)
+			)->submit( $payload );
+		}
+
+		return $response;
+	}
 }

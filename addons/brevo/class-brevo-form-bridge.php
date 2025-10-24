@@ -2,70 +2,72 @@
 
 namespace FORMS_BRIDGE;
 
-if (!defined('ABSPATH')) {
-    exit();
+if ( ! defined( 'ABSPATH' ) ) {
+	exit();
 }
 
 /**
  * Form bridge implamentation for the REST API protocol.
  */
-class Brevo_Form_Bridge extends Form_Bridge
-{
-    public function __construct($data)
-    {
-        parent::__construct($data, 'brevo');
-    }
+class Brevo_Form_Bridge extends Form_Bridge {
 
-    /**
-     * Performs an http request to backend's REST API.
-     *
-     * @param array $payload Payload data.
-     * @param array $attachments Submission's attached files.
-     *
-     * @return array|WP_Error
-     */
-    public function submit($payload = [], $attachments = [])
-    {
-        $response = parent::submit($payload, $attachments);
+	public function __construct( $data ) {
+		parent::__construct( $data, 'brevo' );
+	}
 
-        if (is_wp_error($response)) {
-            $error_response = $response->get_error_data()['response'];
-            if (
-                $error_response['response']['code'] !== 425 &&
-                $error_response['response']['code'] !== 400
-            ) {
-                return $response;
-            }
+	/**
+	 * Performs an http request to backend's REST API.
+	 *
+	 * @param array $payload Payload data.
+	 * @param array $attachments Submission's attached files.
+	 *
+	 * @return array|WP_Error
+	 */
+	public function submit( $payload = array(), $attachments = array() ) {
+		$response = parent::submit( $payload, $attachments );
 
-            $data = json_decode($error_response['body'], true);
-            if ($data['code'] !== 'duplicate_parameter') {
-                return $response;
-            }
+		if ( is_wp_error( $response ) ) {
+			$error_response = $response->get_error_data()['response'];
+			if (
+				$error_response['response']['code'] !== 425 &&
+				$error_response['response']['code'] !== 400
+			) {
+				return $response;
+			}
 
-            if (
-                !isset($payload['email']) ||
-                strstr($this->endpoint, '/v3/contacts') === false
-            ) {
-                return $response;
-            }
+			$data = json_decode( $error_response['body'], true );
+			if ( $data['code'] !== 'duplicate_parameter' ) {
+				return $response;
+			}
 
-            $update_response = $this->patch([
-                'name' => 'brevo-update-contact-by-email',
-                'endpoint' => "/v3/contacts/{$payload['email']}?identifierType=email_id",
-                'method' => 'PUT',
-            ])->submit($payload);
+			if (
+				! isset( $payload['email'] ) ||
+				strstr( $this->endpoint, '/v3/contacts' ) === false
+			) {
+				return $response;
+			}
 
-            if (is_wp_error($update_response)) {
-                return $update_response;
-            }
+			$update_response = $this->patch(
+				array(
+					'name'     => 'brevo-update-contact-by-email',
+					'endpoint' => "/v3/contacts/{$payload['email']}?identifierType=email_id",
+					'method'   => 'PUT',
+				)
+			)->submit( $payload );
 
-            return $this->patch([
-                'name' => 'brevo-search-contact-by-email',
-                'endpoint' => "/v3/contacts/{$payload['email']}",
-                'method' => 'GET',
-            ])->submit(['identifierType' => 'email_id']);
-        }
+			if ( is_wp_error( $update_response ) ) {
+				return $update_response;
+			}
 
-        return $response;
-    }
+			return $this->patch(
+				array(
+					'name'     => 'brevo-search-contact-by-email',
+					'endpoint' => "/v3/contacts/{$payload['email']}",
+					'method'   => 'GET',
+				)
+			)->submit( array( 'identifierType' => 'email_id' ) );
+		}
+
+		return $response;
+	}
 }

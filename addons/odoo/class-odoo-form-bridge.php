@@ -5,253 +5,249 @@ namespace FORMS_BRIDGE;
 use HTTP_BRIDGE\Http_Client;
 use WP_Error;
 
-if (!defined('ABSPATH')) {
-    exit();
+if ( ! defined( 'ABSPATH' ) ) {
+	exit();
 }
 
 /**
  * Form bridge implementation for the Odoo JSON-RPC api.
  */
-class Odoo_Form_Bridge extends Form_Bridge
-{
-    /**
-     * Handles the Odoo JSON-RPC well known endpoint.
-     *
-     * @var string
-     */
-    private const endpoint = '/jsonrpc';
+class Odoo_Form_Bridge extends Form_Bridge {
 
-    /**
-     * Handles active RPC session data.
-     *
-     * @var array Tuple with session and user ids.
-     */
-    private static $session;
+	/**
+	 * Handles the Odoo JSON-RPC well known endpoint.
+	 *
+	 * @var string
+	 */
+	private const endpoint = '/jsonrpc';
 
-    private static $request;
+	/**
+	 * Handles active RPC session data.
+	 *
+	 * @var array Tuple with session and user ids.
+	 */
+	private static $session;
 
-    /**
-     * RPC payload decorator.
-     *
-     * @param int $session_id RPC session ID.
-     * @param string $service RPC service name.
-     * @param string $method RPC method name.
-     * @param array $args RPC request arguments.
-     * @param array $more_args RPC additional arguments.
-     *
-     * @return array JSON-RPC conformant payload.
-     */
-    public static function rpc_payload(
-        $session_id,
-        $service,
-        $method,
-        $args,
-        $more_args = []
-    ) {
-        if (!empty($more_args)) {
-            $args[] = $more_args;
-        }
+	private static $request;
 
-        return [
-            'jsonrpc' => '2.0',
-            'method' => 'call',
-            'id' => $session_id,
-            'params' => [
-                'service' => $service,
-                'method' => $method,
-                'args' => $args,
-            ],
-        ];
-    }
+	/**
+	 * RPC payload decorator.
+	 *
+	 * @param int    $session_id RPC session ID.
+	 * @param string $service RPC service name.
+	 * @param string $method RPC method name.
+	 * @param array  $args RPC request arguments.
+	 * @param array  $more_args RPC additional arguments.
+	 *
+	 * @return array JSON-RPC conformant payload.
+	 */
+	public static function rpc_payload(
+		$session_id,
+		$service,
+		$method,
+		$args,
+		$more_args = array()
+	) {
+		if ( ! empty( $more_args ) ) {
+			$args[] = $more_args;
+		}
 
-    /**
-     * Handle RPC responses and catch errors on the application layer.
-     *
-     * @param array $response Request response.
-     * @param boolean $is_single Should the result be an entity or an array.
-     *
-     * @return mixed|WP_Error Request result.
-     */
-    public static function rpc_response($res)
-    {
-        if (is_wp_error($res)) {
-            return $res;
-        }
+		return array(
+			'jsonrpc' => '2.0',
+			'method'  => 'call',
+			'id'      => $session_id,
+			'params'  => array(
+				'service' => $service,
+				'method'  => $method,
+				'args'    => $args,
+			),
+		);
+	}
 
-        if (empty($res['data'])) {
-            $content_type =
-                Http_Client::get_content_type($res['headers']) ?? 'undefined';
+	/**
+	 * Handle RPC responses and catch errors on the application layer.
+	 *
+	 * @param array   $response Request response.
+	 * @param boolean $is_single Should the result be an entity or an array.
+	 *
+	 * @return mixed|WP_Error Request result.
+	 */
+	public static function rpc_response( $res ) {
+		if ( is_wp_error( $res ) ) {
+			return $res;
+		}
 
-            return new WP_Error(
-                'unkown_content_type',
-                /* translators: %s: Content-Type header value */
-                sprintf(
-                    __('Unkown HTTP response content type %s', 'forms-bridge'),
-                    sanitize_text_field($content_type)
-                ),
-                $res
-            );
-        }
+		if ( empty( $res['data'] ) ) {
+			$content_type =
+				Http_Client::get_content_type( $res['headers'] ) ?? 'undefined';
 
-        if (isset($res['data']['error'])) {
-            $error = new WP_Error(
-                'response_code_' . $res['data']['error']['code'],
-                $res['data']['error']['message'],
-                $res['data']['error']['data']
-            );
+			return new WP_Error(
+				'unkown_content_type',
+				/* translators: %s: Content-Type header value */
+				sprintf(
+					__( 'Unkown HTTP response content type %s', 'forms-bridge' ),
+					sanitize_text_field( $content_type )
+				),
+				$res
+			);
+		}
 
-            $error_data = ['response' => $res];
-            if (self::$request) {
-                $error_data['request'] = self::$request;
-            }
+		if ( isset( $res['data']['error'] ) ) {
+			$error = new WP_Error(
+				'response_code_' . $res['data']['error']['code'],
+				$res['data']['error']['message'],
+				$res['data']['error']['data']
+			);
 
-            $error->add_data($error_data);
-            return $error;
-        }
+			$error_data = array( 'response' => $res );
+			if ( self::$request ) {
+				$error_data['request'] = self::$request;
+			}
 
-        $data = $res['data'];
+			$error->add_data( $error_data );
+			return $error;
+		}
 
-        if (empty($data['result'])) {
-            $error = new WP_Error('not_found');
+		$data = $res['data'];
 
-            $error_data = ['response' => $res];
-            if (self::$request) {
-                $error_data['request'] = self::$request;
-            }
+		if ( empty( $data['result'] ) ) {
+			$error = new WP_Error( 'not_found' );
 
-            $error->add_data($error_data);
-            return $error;
-        }
+			$error_data = array( 'response' => $res );
+			if ( self::$request ) {
+				$error_data['request'] = self::$request;
+			}
 
-        return $data['result'];
-    }
+			$error->add_data( $error_data );
+			return $error;
+		}
 
-    /**
-     * JSON RPC login request.
-     *
-     * @param [string, string, string] $login
-     * @param Backend $backend
-     *
-     * @return array|WP_Error Tuple with RPC session id and user id.
-     */
-    private static function rpc_login($login, $backend)
-    {
-        if (self::$session) {
-            return self::$session;
-        }
+		return $data['result'];
+	}
 
-        $session_id = 'forms-bridge-' . time();
+	/**
+	 * JSON RPC login request.
+	 *
+	 * @param [string, string, string] $login
+	 * @param Backend                  $backend
+	 *
+	 * @return array|WP_Error Tuple with RPC session id and user id.
+	 */
+	private static function rpc_login( $login, $backend ) {
+		if ( self::$session ) {
+			return self::$session;
+		}
 
-        $payload = self::rpc_payload($session_id, 'common', 'login', $login);
+		$session_id = 'forms-bridge-' . time();
 
-        $response = $backend->post(self::endpoint, $payload);
+		$payload = self::rpc_payload( $session_id, 'common', 'login', $login );
 
-        $user_id = self::rpc_response($response);
+		$response = $backend->post( self::endpoint, $payload );
 
-        if (is_wp_error($user_id)) {
-            return $user_id;
-        }
+		$user_id = self::rpc_response( $response );
 
-        self::$session = [$session_id, $user_id];
-        return self::$session;
-    }
+		if ( is_wp_error( $user_id ) ) {
+			return $user_id;
+		}
 
-    public function __construct($data, $addon = null)
-    {
-        parent::__construct($data, 'odoo');
-    }
+		self::$session = array( $session_id, $user_id );
+		return self::$session;
+	}
 
-    /**
-     * Submits submission to the backend.
-     *
-     * @param array $payload Submission data.
-     * @param array|null $more_args Additional RPC call params.
-     *
-     * @return array|WP_Error Http
-     */
-    public function submit($payload = [], $more_args = [])
-    {
-        if (!$this->is_valid) {
-            return new WP_Error('invalid_bridge');
-        }
+	public function __construct( $data, $addon = null ) {
+		parent::__construct( $data, 'odoo' );
+	}
 
-        $backend = $this->backend();
+	/**
+	 * Submits submission to the backend.
+	 *
+	 * @param array      $payload Submission data.
+	 * @param array|null $more_args Additional RPC call params.
+	 *
+	 * @return array|WP_Error Http
+	 */
+	public function submit( $payload = array(), $more_args = array() ) {
+		if ( ! $this->is_valid ) {
+			return new WP_Error( 'invalid_bridge' );
+		}
 
-        if (!$backend) {
-            return new WP_Error(
-                'invalid_backend',
-                'The bridge does not have a valid backend'
-            );
-        }
+		$backend = $this->backend();
 
-        $credential = $backend->credential;
-        if (!$credential) {
-            return new WP_Error(
-                'invalid_credential',
-                'The bridge does not have a valid credential'
-            );
-        }
+		if ( ! $backend ) {
+			return new WP_Error(
+				'invalid_backend',
+				'The bridge does not have a valid backend'
+			);
+		}
 
-        add_filter(
-            'http_bridge_request',
-            static function ($request) {
-                self::$request = $request;
-                return $request;
-            },
-            10,
-            1
-        );
+		$credential = $backend->credential;
+		if ( ! $credential ) {
+			return new WP_Error(
+				'invalid_credential',
+				'The bridge does not have a valid credential'
+			);
+		}
 
-        $backend_name = $backend->name;
+		add_filter(
+			'http_bridge_request',
+			static function ( $request ) {
+				self::$request = $request;
+				return $request;
+			},
+			10,
+			1
+		);
 
-        add_filter(
-            'http_bridge_backend_headers',
-            static function ($headers, $backend) use ($backend_name) {
-                if ($backend->name !== $backend_name) {
-                    return $headers;
-                }
+		$backend_name = $backend->name;
 
-                $locale = get_locale();
-                if (!$locale) {
-                    return $headers;
-                }
+		add_filter(
+			'http_bridge_backend_headers',
+			static function ( $headers, $backend ) use ( $backend_name ) {
+				if ( $backend->name !== $backend_name ) {
+					return $headers;
+				}
 
-                if ('ca' === $locale) {
-                    $locale = 'ca_ES';
-                }
+				$locale = get_locale();
+				if ( ! $locale ) {
+					return $headers;
+				}
 
-                $headers['Accept-Language'] = $locale;
-                return $headers;
-            },
-            20,
-            2
-        );
+				if ( 'ca' === $locale ) {
+					$locale = 'ca_ES';
+				}
 
-        $login = $credential->authorization();
-        $session = self::rpc_login($login, $backend);
+				$headers['Accept-Language'] = $locale;
+				return $headers;
+			},
+			20,
+			2
+		);
 
-        if (is_wp_error($session)) {
-            return $session;
-        }
+		$login   = $credential->authorization();
+		$session = self::rpc_login( $login, $backend );
 
-        [$sid, $uid] = $session;
-        $login[1] = $uid;
+		if ( is_wp_error( $session ) ) {
+			return $session;
+		}
 
-        $payload = self::rpc_payload(
-            $sid,
-            'object',
-            'execute',
-            array_merge($login, [$this->endpoint, $this->method, $payload]),
-            $more_args
-        );
+		[$sid, $uid] = $session;
+		$login[1]    = $uid;
 
-        $response = $backend->post(self::endpoint, $payload);
+		$payload = self::rpc_payload(
+			$sid,
+			'object',
+			'execute',
+			array_merge( $login, array( $this->endpoint, $this->method, $payload ) ),
+			$more_args
+		);
 
-        $result = self::rpc_response($response);
-        if (is_wp_error($result)) {
-            return $result;
-        }
+		$response = $backend->post( self::endpoint, $payload );
 
-        return $response;
-    }
+		$result = self::rpc_response( $response );
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
+
+		return $response;
+	}
 }

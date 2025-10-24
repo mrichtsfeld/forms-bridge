@@ -8,540 +8,533 @@ use FORMS_BRIDGE\Integration as BaseIntegration;
 use WPCF7_ContactForm;
 use WPCF7_Submission;
 
-if (!defined('ABSPATH')) {
-    exit();
+if ( ! defined( 'ABSPATH' ) ) {
+	exit();
 }
 
 /**
  * ContactForm7 integration.
  */
-class Integration extends BaseIntegration
-{
-    public const name = 'wpcf7';
+class Integration extends BaseIntegration {
 
-    public const title = 'Contact Form 7';
+	public const name = 'wpcf7';
 
-    /**
-     * Binds form submit hook to the do_submission routine.
-     */
-    protected function init()
-    {
-        add_filter(
-            'wpcf7_submit',
-            function ($form, $result) {
-                if (
-                    in_array(
-                        $result['status'],
-                        ['validation_failed', 'acceptance_missing', 'spam'],
-                        true
-                    )
-                ) {
-                    return;
-                }
+	public const title = 'Contact Form 7';
 
-                Forms_Bridge::do_submission();
-            },
-            10,
-            2
-        );
-    }
+	/**
+	 * Binds form submit hook to the do_submission routine.
+	 */
+	protected function init() {
+		add_filter(
+			'wpcf7_submit',
+			function ( $form, $result ) {
+				if (
+					in_array(
+						$result['status'],
+						array( 'validation_failed', 'acceptance_missing', 'spam' ),
+						true
+					)
+				) {
+					return;
+				}
 
-    /**
-     * Retrives the current contact form's data.
-     *
-     * @return array $form_data Form data array representation.
-     */
-    public function form()
-    {
-        $form = WPCF7_ContactForm::get_current();
-        if (!$form) {
-            return null;
-        }
+				Forms_Bridge::do_submission();
+			},
+			10,
+			2
+		);
+	}
 
-        return $this->serialize_form($form);
-    }
+	/**
+	 * Retrives the current contact form's data.
+	 *
+	 * @return array $form_data Form data array representation.
+	 */
+	public function form() {
+		$form = WPCF7_ContactForm::get_current();
+		if ( ! $form ) {
+			return null;
+		}
 
-    /**
-     * Retrives a contact form's data by ID.
-     *
-     * @param int $form_id Form ID.
-     * @return array $form_data Form data.
-     */
-    public function get_form_by_id($form_id)
-    {
-        $form = WPCF7_ContactForm::get_instance($form_id);
-        if (!$form) {
-            return null;
-        }
+		return $this->serialize_form( $form );
+	}
 
-        return $this->serialize_form($form);
-    }
+	/**
+	 * Retrives a contact form's data by ID.
+	 *
+	 * @param int $form_id Form ID.
+	 * @return array $form_data Form data.
+	 */
+	public function get_form_by_id( $form_id ) {
+		$form = WPCF7_ContactForm::get_instance( $form_id );
+		if ( ! $form ) {
+			return null;
+		}
 
-    /**
-     * Retrives available constact forms as form data.
-     *
-     * @return array $forms Collection of form data.
-     */
-    public function forms()
-    {
-        $forms = WPCF7_ContactForm::find(['post_status', 'publish']);
-        return array_map(function ($form) {
-            return $this->serialize_form($form);
-        }, $forms);
-    }
+		return $this->serialize_form( $form );
+	}
 
-    /**
-     * Creates a form from the given template fields.
-     *
-     * @param array $data Form template data.
-     *
-     * @return int|null ID of the new form.
-     *
-     * @todo Fix form email attribute.
-     */
-    public function create_form($data)
-    {
-        if (empty($data['title']) || empty($data['fields'])) {
-            return;
-        }
+	/**
+	 * Retrives available constact forms as form data.
+	 *
+	 * @return array $forms Collection of form data.
+	 */
+	public function forms() {
+		$forms = WPCF7_ContactForm::find( array( 'post_status', 'publish' ) );
+		return array_map(
+			function ( $form ) {
+				return $this->serialize_form( $form );
+			},
+			$forms
+		);
+	}
 
-        $form = $this->fields_to_form($data['fields']);
-        $email = $this->form_email($data['title'], $data['fields']);
+	/**
+	 * Creates a form from the given template fields.
+	 *
+	 * @param array $data Form template data.
+	 *
+	 * @return int|null ID of the new form.
+	 *
+	 * @todo Fix form email attribute.
+	 */
+	public function create_form( $data ) {
+		if ( empty( $data['title'] ) || empty( $data['fields'] ) ) {
+			return;
+		}
 
-        $contact_form = wpcf7_save_contact_form([
-            'title' => $data['title'],
-            'locale' => apply_filters(
-                'wpct_i18n_current_language',
-                null,
-                'locale'
-            ),
-            'form' => $form,
-            'mail' => $email,
-        ]);
+		$form  = $this->fields_to_form( $data['fields'] );
+		$email = $this->form_email( $data['title'], $data['fields'] );
 
-        if (!$contact_form) {
-            return;
-        }
+		$contact_form = wpcf7_save_contact_form(
+			array(
+				'title'  => $data['title'],
+				'locale' => apply_filters(
+					'wpct_i18n_current_language',
+					null,
+					'locale'
+				),
+				'form'   => $form,
+				'mail'   => $email,
+			)
+		);
 
-        return $contact_form->id();
-    }
+		if ( ! $contact_form ) {
+			return;
+		}
 
-    /**
-     * Removes a form by ID.
-     *
-     * @param integer $form_id Form ID.
-     *
-     * @return boolean Removal result.
-     */
-    public function remove_form($form_id)
-    {
-        $result = wp_delete_post($form_id);
-        return !!$result;
-    }
+		return $contact_form->id();
+	}
 
-    public function submission_id()
-    {
-        $submission = $this->submission(true);
-        if ($submission) {
-            return $submission->get_posted_data_hash();
-        }
-    }
+	/**
+	 * Removes a form by ID.
+	 *
+	 * @param integer $form_id Form ID.
+	 *
+	 * @return boolean Removal result.
+	 */
+	public function remove_form( $form_id ) {
+		$result = wp_delete_post( $form_id );
+		return (bool) $result;
+	}
 
-    /**
-     * Retrives the current submission data.
-     *
-     * @param boolean $raw Control if the submission is serialized before exit.
-     *
-     * @return WPCF7_Submission|array Submission data.
-     */
-    public function submission($raw = false)
-    {
-        $submission = WPCF7_Submission::get_instance();
+	public function submission_id() {
+		$submission = $this->submission( true );
+		if ( $submission ) {
+			return $submission->get_posted_data_hash();
+		}
+	}
 
-        if (!$submission) {
-            return null;
-        } elseif ($raw) {
-            return $submission;
-        }
+	/**
+	 * Retrives the current submission data.
+	 *
+	 * @param boolean $raw Control if the submission is serialized before exit.
+	 *
+	 * @return WPCF7_Submission|array Submission data.
+	 */
+	public function submission( $raw = false ) {
+		$submission = WPCF7_Submission::get_instance();
 
-        $form = $this->form();
-        return $this->serialize_submission($submission, $form);
-    }
+		if ( ! $submission ) {
+			return null;
+		} elseif ( $raw ) {
+			return $submission;
+		}
 
-    /**
-     * Retrives the current submission uploaded files.
-     *
-     * @return array Uploaded files data.
-     */
-    public function uploads()
-    {
-        $submission = WPCF7_Submission::get_instance();
-        if (!$submission) {
-            return null;
-        }
+		$form = $this->form();
+		return $this->serialize_submission( $submission, $form );
+	}
 
-        return $this->submission_uploads($submission);
-    }
+	/**
+	 * Retrives the current submission uploaded files.
+	 *
+	 * @return array Uploaded files data.
+	 */
+	public function uploads() {
+		$submission = WPCF7_Submission::get_instance();
+		if ( ! $submission ) {
+			return null;
+		}
 
-    /**
-     * Serializes a contact form instance as array data.
-     *
-     * @param WPCF7_ContactForm $form Form instance.
-     *
-     * @return array.
-     */
-    public function serialize_form($form)
-    {
-        $form_id = (int) $form->id();
-        $fields = array_filter(
-            array_map(function ($field) {
-                return $this->serialize_field($field);
-            }, $form->scan_form_tags())
-        );
+		return $this->submission_uploads( $submission );
+	}
 
-        return apply_filters(
-            'forms_bridge_form_data',
-            [
-                '_id' => 'wpcf7:' . $form_id,
-                'id' => $form_id,
-                'title' => $form->title(),
-                'bridges' => FBAPI::get_form_bridges($form_id, 'wpcf7'),
-                'fields' => array_values($fields),
-            ],
-            $form,
-            'wpcf7'
-        );
-    }
+	/**
+	 * Serializes a contact form instance as array data.
+	 *
+	 * @param WPCF7_ContactForm $form Form instance.
+	 *
+	 * @return array.
+	 */
+	public function serialize_form( $form ) {
+		$form_id = (int) $form->id();
+		$fields  = array_filter(
+			array_map(
+				function ( $field ) {
+					return $this->serialize_field( $field );
+				},
+				$form->scan_form_tags()
+			)
+		);
 
-    /**
-     * Serializes a form tags as array data.
-     *
-     * @param WPCF7_FormTag $field Form tag instance.
-     * @param array $form_data Form data.
-     *
-     * @return array.
-     */
-    private function serialize_field($field)
-    {
-        if (in_array($field->basetype, ['response', 'submit', 'quiz'])) {
-            return;
-        }
+		return apply_filters(
+			'forms_bridge_form_data',
+			array(
+				'_id'     => 'wpcf7:' . $form_id,
+				'id'      => $form_id,
+				'title'   => $form->title(),
+				'bridges' => FBAPI::get_form_bridges( $form_id, 'wpcf7' ),
+				'fields'  => array_values( $fields ),
+			),
+			$form,
+			'wpcf7'
+		);
+	}
 
-        $type = $field->basetype;
-        if ($type === 'conditional') {
-            $type = $field->get_option('type')[0];
-        } elseif ($type === 'hidden') {
-            $type = 'text';
-        }
+	/**
+	 * Serializes a form tags as array data.
+	 *
+	 * @param WPCF7_FormTag $field Form tag instance.
+	 * @param array         $form_data Form data.
+	 *
+	 * @return array.
+	 */
+	private function serialize_field( $field ) {
+		if ( in_array( $field->basetype, array( 'response', 'submit', 'quiz' ) ) ) {
+			return;
+		}
 
-        $options = [];
-        if (is_array($field->values)) {
-            $values = $field->pipes->collect_afters();
-            for ($i = 0; $i < sizeof($field->raw_values); $i++) {
-                $options[] = [
-                    'value' => $values[$i],
-                    'label' => $field->labels[$i],
-                ];
-            }
-        }
+		$type = $field->basetype;
+		if ( $type === 'conditional' ) {
+			$type = $field->get_option( 'type' )[0];
+		} elseif ( $type === 'hidden' ) {
+			$type = 'text';
+		}
 
-        $format = $type === 'date' ? 'yyyy-mm-dd' : '';
+		$options = array();
+		if ( is_array( $field->values ) ) {
+			$values = $field->pipes->collect_afters();
+			for ( $i = 0; $i < sizeof( $field->raw_values ); $i++ ) {
+				$options[] = array(
+					'value' => $values[ $i ],
+					'label' => $field->labels[ $i ],
+				);
+			}
+		}
 
-        return apply_filters(
-            'forms_bridge_form_field_data',
-            [
-                'id' => $field->get_id_option(),
-                'type' => $type,
-                'name' => $field->raw_name,
-                'label' => $field->name,
-                'required' => $field->is_required(),
-                'options' => $options,
-                'is_file' => $type === 'file',
-                'is_multi' => $this->is_multi_field($field),
-                'conditional' =>
-                    $field->basetype === 'conditional' ||
-                    $field->basetype === 'fileconditional',
-                'format' => $format,
-                'schema' => $this->field_value_schema($field),
-                '_type' => $field->basetype,
-            ],
-            $field,
-            'wpcf7'
-        );
-    }
+		$format = $type === 'date' ? 'yyyy-mm-dd' : '';
 
-    /**
-     * Checks if a filed is multi value field.
-     *
-     * @param WPCF7_FormTag Target tag instance.
-     *
-     * @return boolean
-     */
-    private function is_multi_field($tag)
-    {
-        $type = str_replace('*', '', $tag->type);
+		return apply_filters(
+			'forms_bridge_form_field_data',
+			array(
+				'id'          => $field->get_id_option(),
+				'type'        => $type,
+				'name'        => $field->raw_name,
+				'label'       => $field->name,
+				'required'    => $field->is_required(),
+				'options'     => $options,
+				'is_file'     => $type === 'file',
+				'is_multi'    => $this->is_multi_field( $field ),
+				'conditional' =>
+					$field->basetype === 'conditional' ||
+					$field->basetype === 'fileconditional',
+				'format'      => $format,
+				'schema'      => $this->field_value_schema( $field ),
+				'_type'       => $field->basetype,
+			),
+			$field,
+			'wpcf7'
+		);
+	}
 
-        if ($type === 'checkbox') {
-            return !$tag->has_option('exclusive');
-        }
+	/**
+	 * Checks if a filed is multi value field.
+	 *
+	 * @param WPCF7_FormTag Target tag instance.
+	 *
+	 * @return boolean
+	 */
+	private function is_multi_field( $tag ) {
+		$type = str_replace( '*', '', $tag->type );
 
-        if ($type === 'select') {
-            return $tag->has_option('multiple');
-        }
+		if ( $type === 'checkbox' ) {
+			return ! $tag->has_option( 'exclusive' );
+		}
 
-        return false;
-    }
+		if ( $type === 'select' ) {
+			return $tag->has_option( 'multiple' );
+		}
 
-    /**
-     * Gets the field value JSON schema.
-     *
-     * @param WPCF7_FormTag $tag Tag instance.
-     *
-     * @return array JSON schema of the value of the field.
-     */
-    private function field_value_schema($tag)
-    {
-        $type = str_replace('*', '', $tag->type);
+		return false;
+	}
 
-        switch ($type) {
-            case 'text':
-            case 'textarea':
-            case 'date':
-            case 'email':
-            case 'url':
-            case 'quiz':
-            case 'radio':
-            case 'iban':
-            case 'vat':
-                return ['type' => 'string'];
-            case 'select':
-                if ($tag->has_option('multiple')) {
-                    $items = [];
-                    for ($i = 0; $i < count($tag->values); $i++) {
-                        $items[] = ['type' => 'string'];
-                    }
+	/**
+	 * Gets the field value JSON schema.
+	 *
+	 * @param WPCF7_FormTag $tag Tag instance.
+	 *
+	 * @return array JSON schema of the value of the field.
+	 */
+	private function field_value_schema( $tag ) {
+		$type = str_replace( '*', '', $tag->type );
 
-                    return [
-                        'type' => 'array',
-                        'items' => $items,
-                        'additionalItems' => false,
-                        'minItems' => $tag->is_required() ? 1 : 0,
-                        'maxItems' => count($tag->values),
-                    ];
-                }
+		switch ( $type ) {
+			case 'text':
+			case 'textarea':
+			case 'date':
+			case 'email':
+			case 'url':
+			case 'quiz':
+			case 'radio':
+			case 'iban':
+			case 'vat':
+				return array( 'type' => 'string' );
+			case 'select':
+				if ( $tag->has_option( 'multiple' ) ) {
+					$items = array();
+					for ( $i = 0; $i < count( $tag->values ); $i++ ) {
+						$items[] = array( 'type' => 'string' );
+					}
 
-                return ['type' => 'string'];
-            case 'checkbox':
-                if ($tag->has_option('exclusive')) {
-                    return ['type' => 'string'];
-                }
+					return array(
+						'type'            => 'array',
+						'items'           => $items,
+						'additionalItems' => false,
+						'minItems'        => $tag->is_required() ? 1 : 0,
+						'maxItems'        => count( $tag->values ),
+					);
+				}
 
-                $items = [];
-                for ($i = 0; $i < count($tag->values); $i++) {
-                    $items[] = ['type' => 'string'];
-                }
+				return array( 'type' => 'string' );
+			case 'checkbox':
+				if ( $tag->has_option( 'exclusive' ) ) {
+					return array( 'type' => 'string' );
+				}
 
-                return [
-                    'type' => 'array',
-                    'items' => $items,
-                    'additionalItems' => false,
-                    'minItems' => $tag->is_required() ? 1 : 0,
-                    'maxItems' => count($tag->values),
-                ];
-            case 'file':
-            case 'files':
-                return;
-            case 'acceptance':
-                return ['type' => 'boolean'];
-            case 'number':
-                return ['type' => 'number'];
-            default:
-                return ['type' => 'string'];
-        }
-    }
+				$items = array();
+				for ( $i = 0; $i < count( $tag->values ); $i++ ) {
+					$items[] = array( 'type' => 'string' );
+				}
 
-    /**
-     * Serializes the form's submission data.
-     *
-     * @param WPCF7_Submission $submission Submission instance.
-     * @param array $form Form data.
-     *
-     * @return array Submission data.
-     */
-    public function serialize_submission($submission, $form_data)
-    {
-        $data = $submission->get_posted_data();
+				return array(
+					'type'            => 'array',
+					'items'           => $items,
+					'additionalItems' => false,
+					'minItems'        => $tag->is_required() ? 1 : 0,
+					'maxItems'        => count( $tag->values ),
+				);
+			case 'file':
+			case 'files':
+				return;
+			case 'acceptance':
+				return array( 'type' => 'boolean' );
+			case 'number':
+				return array( 'type' => 'number' );
+			default:
+				return array( 'type' => 'string' );
+		}
+	}
 
-        foreach ($data as $key => $val) {
-            $i = array_search($key, array_column($form_data['fields'], 'name'));
-            $field = $form_data['fields'][$i];
+	/**
+	 * Serializes the form's submission data.
+	 *
+	 * @param WPCF7_Submission $submission Submission instance.
+	 * @param array            $form Form data.
+	 *
+	 * @return array Submission data.
+	 */
+	public function serialize_submission( $submission, $form_data ) {
+		$data = $submission->get_posted_data();
 
-            if ($field['_type'] === 'hidden') {
-                $number_val = (float) $val;
-                if (strval($number_val) === $val) {
-                    $data[$key] = $number_val;
-                } else {
-                    $data[$key] = $val;
-                }
-            } elseif ($field['_type'] === 'number') {
-                $data[$key] = (float) $val;
-            } elseif (is_array($val) && !$field['is_multi']) {
-                $data[$key] = $val[0];
-            } elseif ($field['_type'] === 'file') {
-                unset($data[$key]);
-            }
-        }
+		foreach ( $data as $key => $val ) {
+			$i     = array_search( $key, array_column( $form_data['fields'], 'name' ) );
+			$field = $form_data['fields'][ $i ];
 
-        return $data;
-    }
+			if ( $field['_type'] === 'hidden' ) {
+				$number_val = (float) $val;
+				if ( strval( $number_val ) === $val ) {
+					$data[ $key ] = $number_val;
+				} else {
+					$data[ $key ] = $val;
+				}
+			} elseif ( $field['_type'] === 'number' ) {
+				$data[ $key ] = (float) $val;
+			} elseif ( is_array( $val ) && ! $field['is_multi'] ) {
+				$data[ $key ] = $val[0];
+			} elseif ( $field['_type'] === 'file' ) {
+				unset( $data[ $key ] );
+			}
+		}
 
-    /**
-     * Gets submission uploaded files.
-     *
-     * @param WPCF7_Submission $submission Submission instance.
-     *
-     * @return array Uploaded files data.
-     */
-    protected function submission_uploads($submission)
-    {
-        $uploads = [];
-        $uploads = $submission->uploaded_files();
-        foreach ($uploads as $file_name => $paths) {
-            if (!empty($paths)) {
-                $is_multi = sizeof($paths) > 1;
-                $uploads[$file_name] = [
-                    'path' => $is_multi ? $paths : $paths[0],
-                    'is_multi' => $is_multi,
-                ];
-            }
-        }
+		return $data;
+	}
 
-        return $uploads;
-    }
+	/**
+	 * Gets submission uploaded files.
+	 *
+	 * @param WPCF7_Submission $submission Submission instance.
+	 *
+	 * @return array Uploaded files data.
+	 */
+	protected function submission_uploads( $submission ) {
+		$uploads = array();
+		$uploads = $submission->uploaded_files();
+		foreach ( $uploads as $file_name => $paths ) {
+			if ( ! empty( $paths ) ) {
+				$is_multi              = sizeof( $paths ) > 1;
+				$uploads[ $file_name ] = array(
+					'path'     => $is_multi ? $paths : $paths[0],
+					'is_multi' => $is_multi,
+				);
+			}
+		}
 
-    /**
-     * Gets form fields from a template and return a contact form content string.
-     *
-     * @param array $fields.
-     *
-     * @return string Form content.
-     */
-    private function fields_to_form($fields)
-    {
-        $form = '';
-        foreach ($fields as $field) {
-            if ($field['type'] == 'hidden') {
-                if (isset($field['value'])) {
-                    if (is_bool($field['value'])) {
-                        $field['value'] = $field['value'] ? '1' : '0';
-                    }
+		return $uploads;
+	}
 
-                    $form .= $this->field_to_tag($field) . "\n\n";
-                }
-            } else {
-                $form .= "<label> {$field['label']}\n";
-                $form .= '  ' . $this->field_to_tag($field) . " </label>\n\n";
-            }
-        }
+	/**
+	 * Gets form fields from a template and return a contact form content string.
+	 *
+	 * @param array $fields.
+	 *
+	 * @return string Form content.
+	 */
+	private function fields_to_form( $fields ) {
+		$form = '';
+		foreach ( $fields as $field ) {
+			if ( $field['type'] == 'hidden' ) {
+				if ( isset( $field['value'] ) ) {
+					if ( is_bool( $field['value'] ) ) {
+						$field['value'] = $field['value'] ? '1' : '0';
+					}
 
-        $form .= sprintf('[submit "%s"]', __('Submit', 'forms-bridge'));
-        return $form;
-    }
+					$form .= $this->field_to_tag( $field ) . "\n\n";
+				}
+			} else {
+				$form .= "<label> {$field['label']}\n";
+				$form .= '  ' . $this->field_to_tag( $field ) . " </label>\n\n";
+			}
+		}
 
-    /**
-     * Gets a field template data and returns a form tag string.
-     *
-     * @param array $field.
-     *
-     * @return string.
-     */
-    private function field_to_tag($field)
-    {
-        if (isset($field['value'])) {
-            $type = 'hidden';
-        } else {
-            $type = sanitize_text_field($field['type']);
+		$form .= sprintf( '[submit "%s"]', __( 'Submit', 'forms-bridge' ) );
+		return $form;
+	}
 
-            if (($field['required'] ?? false) && $type !== 'hidden') {
-                $type .= '*';
-            }
-        }
+	/**
+	 * Gets a field template data and returns a form tag string.
+	 *
+	 * @param array $field.
+	 *
+	 * @return string.
+	 */
+	private function field_to_tag( $field ) {
+		if ( isset( $field['value'] ) ) {
+			$type = 'hidden';
+		} else {
+			$type = sanitize_text_field( $field['type'] );
 
-        $name = sanitize_text_field($field['name']);
-        $tag = "[{$type} {$name} ";
+			if ( ( $field['required'] ?? false ) && $type !== 'hidden' ) {
+				$type .= '*';
+			}
+		}
 
-        foreach ($field as $key => $val) {
-            if (
-                !in_array($key, ['name', 'type', 'value', 'required', 'label'])
-            ) {
-                $key = sanitize_text_field($key);
-                $val = sanitize_text_field($val);
-                $tag .= "{$key}:{$val} ";
-            }
-        }
+		$name = sanitize_text_field( $field['name'] );
+		$tag  = "[{$type} {$name} ";
 
-        $value = null;
+		foreach ( $field as $key => $val ) {
+			if (
+				! in_array( $key, array( 'name', 'type', 'value', 'required', 'label' ) )
+			) {
+				$key  = sanitize_text_field( $key );
+				$val  = sanitize_text_field( $val );
+				$tag .= "{$key}:{$val} ";
+			}
+		}
 
-        if ($type === 'select' || $type === 'select*') {
-            $options = array_map(function ($opt) {
-                return $opt['label'] . '|' . $opt['value'];
-            }, $field['options'] ?? []);
+		$value = null;
 
-            $value = implode('" "', $options);
-        } elseif (!empty($field['value'])) {
-            $value = sanitize_text_field((string) $field['value']);
-        }
+		if ( $type === 'select' || $type === 'select*' ) {
+			$options = array_map(
+				function ( $opt ) {
+					return $opt['label'] . '|' . $opt['value'];
+				},
+				$field['options'] ?? array()
+			);
 
-        if ($value) {
-            $tag .= "\"{$value}\"";
-        }
+			$value = implode( '" "', $options );
+		} elseif ( ! empty( $field['value'] ) ) {
+			$value = sanitize_text_field( (string) $field['value'] );
+		}
 
-        return $tag . ']';
-    }
+		if ( $value ) {
+			$tag .= "\"{$value}\"";
+		}
 
-    private function form_email($title, $fields)
-    {
-        $site_url = get_option('siteurl');
-        $host = wp_parse_url($site_url)['host'] ?? 'example.coop';
+		return $tag . ']';
+	}
 
-        $email_index = array_search('email', array_column($fields, 'type'));
-        if ($email_index) {
-            $replay_to = 'Replay-To: [' . $fields[$email_index]['name'] . ']';
-        } else {
-            $replay_to = '';
-        }
+	private function form_email( $title, $fields ) {
+		$site_url = get_option( 'siteurl' );
+		$host     = wp_parse_url( $site_url )['host'] ?? 'example.coop';
 
-        $body = __(
-            "This are the responses to the contact form:\n\n",
-            'forms-bridge'
-        );
+		$email_index = array_search( 'email', array_column( $fields, 'type' ) );
+		if ( $email_index ) {
+			$replay_to = 'Replay-To: [' . $fields[ $email_index ]['name'] . ']';
+		} else {
+			$replay_to = '';
+		}
 
-        foreach ($fields as $field) {
-            $label = $field['label'] ?? $field['name'];
-            $body .= ' * ' . esc_html($label) . ': [' . $field['name'] . "]\n";
-        }
+		$body = __(
+			"This are the responses to the contact form:\n\n",
+			'forms-bridge'
+		);
 
-        $notice = sprintf(
-            /* translators: 1: blog name, 2: blog URL */
-            __(
-                'This is a notification that a contact form was submitted on your website (%1$s %2$s).',
-                'forms-bridge'
-            ),
-            '[_site_title]',
-            '[_site_url]'
-        );
+		foreach ( $fields as $field ) {
+			$label = $field['label'] ?? $field['name'];
+			$body .= ' * ' . esc_html( $label ) . ': [' . $field['name'] . "]\n";
+		}
 
-        $body .= "\n---\n{$notice}";
+		$notice = sprintf(
+			/* translators: 1: blog name, 2: blog URL */
+			__(
+				'This is a notification that a contact form was submitted on your website (%1$s %2$s).',
+				'forms-bridge'
+			),
+			'[_site_title]',
+			'[_site_url]'
+		);
 
-        return [
-            'recipient' => '[_site_admin_email]',
-            'sender' => "[_site_title] <admin@{$host}>",
-            'subject' => "[_site_title] \"{$title}\"",
-            'additional_headers' => $replay_to,
-            'body' => $body,
-            'attachments' => '',
-        ];
-    }
+		$body .= "\n---\n{$notice}";
+
+		return array(
+			'recipient'          => '[_site_admin_email]',
+			'sender'             => "[_site_title] <admin@{$host}>",
+			'subject'            => "[_site_title] \"{$title}\"",
+			'additional_headers' => $replay_to,
+			'body'               => $body,
+			'attachments'        => '',
+		);
+	}
 }
 
 Integration::setup();

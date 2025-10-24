@@ -4,81 +4,79 @@ namespace FORMS_BRIDGE;
 
 use WP_Error;
 
-if (!defined('ABSPATH')) {
-    exit();
+if ( ! defined( 'ABSPATH' ) ) {
+	exit();
 }
 
 /**
  * Form bridge implamentation for the Zoho API protocol.
  */
-class Zoho_Form_Bridge extends Form_Bridge
-{
-    public function __construct($data)
-    {
-        parent::__construct($data, 'zoho');
-    }
+class Zoho_Form_Bridge extends Form_Bridge {
 
-    /**
-     * Performs an http request to the Zoho API backend.
-     *
-     * @param array $payload Payload data.
-     * @param array $attachments Submission's attached files.
-     *
-     * @return array|WP_Error Http request response.
-     */
-    public function submit($payload = [], $attachments = [])
-    {
-        if (!$this->is_valid) {
-            return new WP_Error('invalid_bridge');
-        }
+	public function __construct( $data ) {
+		parent::__construct( $data, 'zoho' );
+	}
 
-        $method = $this->method;
-        if ($method === 'POST' || $method === 'PUT') {
-            $payload = wp_is_numeric_array($payload) ? $payload : [$payload];
-            $payload = ['data' => $payload];
-        }
+	/**
+	 * Performs an http request to the Zoho API backend.
+	 *
+	 * @param array $payload Payload data.
+	 * @param array $attachments Submission's attached files.
+	 *
+	 * @return array|WP_Error Http request response.
+	 */
+	public function submit( $payload = array(), $attachments = array() ) {
+		if ( ! $this->is_valid ) {
+			return new WP_Error( 'invalid_bridge' );
+		}
 
-        add_filter(
-            'http_bridge_backend_headers',
-            function ($headers, $backend) {
-                if ($backend->name === $this->data['backend']) {
-                    if (isset($headers['Authorization'])) {
-                        $headers['Authorization'] = str_replace(
-                            'Bearer',
-                            'Zoho-oauthtoken',
-                            $headers['Authorization']
-                        );
-                    }
-                }
+		$method = $this->method;
+		if ( $method === 'POST' || $method === 'PUT' ) {
+			$payload = wp_is_numeric_array( $payload ) ? $payload : array( $payload );
+			$payload = array( 'data' => $payload );
+		}
 
-                return $headers;
-            },
-            9,
-            2
-        );
+		add_filter(
+			'http_bridge_backend_headers',
+			function ( $headers, $backend ) {
+				if ( $backend->name === $this->data['backend'] ) {
+					if ( isset( $headers['Authorization'] ) ) {
+						$headers['Authorization'] = str_replace(
+							'Bearer',
+							'Zoho-oauthtoken',
+							$headers['Authorization']
+						);
+					}
+				}
 
-        $response = $this->backend()->$method(
-            $this->endpoint,
-            $payload,
-            [],
-            $attachments
-        );
+				return $headers;
+			},
+			9,
+			2
+		);
 
-        if (is_wp_error($response)) {
-            $data = json_decode(
-                $response->get_error_data()['response']['body'],
-                true
-            );
+		$response = $this->backend()->$method(
+			$this->endpoint,
+			$payload,
+			array(),
+			$attachments
+		);
 
-            $code = $data['data'][0]['code'] ?? null;
-            if ($code !== 'DUPLICATE_DATA') {
-                return $response;
-            }
+		if ( is_wp_error( $response ) ) {
+			$data = json_decode(
+				$response->get_error_data()['response']['body'],
+				true
+			);
 
-            $response = $response->get_error_data()['response'];
-            $response['data'] = json_decode($response['body'], true);
-        }
+			$code = $data['data'][0]['code'] ?? null;
+			if ( $code !== 'DUPLICATE_DATA' ) {
+				return $response;
+			}
 
-        return $response;
-    }
+			$response         = $response->get_error_data()['response'];
+			$response['data'] = json_decode( $response['body'], true );
+		}
+
+		return $response;
+	}
 }

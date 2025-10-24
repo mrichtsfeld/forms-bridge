@@ -4,117 +4,115 @@ namespace FORMS_BRIDGE;
 
 use WP_Error;
 
-if (!defined('ABSPATH')) {
-    exit();
+if ( ! defined( 'ABSPATH' ) ) {
+	exit();
 }
 
 /**
  * Form bridge implamentation for the FinanCoop REST API.
  */
-class Finan_Coop_Form_Bridge extends Form_Bridge
-{
-    private static $request;
+class Finan_Coop_Form_Bridge extends Form_Bridge {
 
-    public function __construct($data)
-    {
-        parent::__construct($data, 'financoop');
-    }
+	private static $request;
 
-    /**
-     * Performs an http request to Odoo REST API.
-     *
-     * @param array $payload Payload data.
-     * @param array $attachments Submission's attached files.
-     *
-     * @return array|WP_Error
-     */
-    public function submit($payload = [], $attachments = [])
-    {
-        if (isset($payload['lang']) && $payload['lang'] === 'ca') {
-            $payload['lang'] = 'ca_ES';
-        }
+	public function __construct( $data ) {
+		parent::__construct( $data, 'financoop' );
+	}
 
-        if (!empty($payload)) {
-            $payload = [
-                'jsonrpc' => '2.0',
-                'params' => $payload,
-            ];
-        }
+	/**
+	 * Performs an http request to Odoo REST API.
+	 *
+	 * @param array $payload Payload data.
+	 * @param array $attachments Submission's attached files.
+	 *
+	 * @return array|WP_Error
+	 */
+	public function submit( $payload = array(), $attachments = array() ) {
+		if ( isset( $payload['lang'] ) && $payload['lang'] === 'ca' ) {
+			$payload['lang'] = 'ca_ES';
+		}
 
-        add_filter(
-            'http_bridge_backend_headers',
-            function ($headers, $backend) {
-                if ($backend->name === $this->data['backend']) {
-                    $credential = $backend->credential;
-                    if (!$credential) {
-                        return $headers;
-                    }
+		if ( ! empty( $payload ) ) {
+			$payload = array(
+				'jsonrpc' => '2.0',
+				'params'  => $payload,
+			);
+		}
 
-                    [
-                        $database,
-                        $username,
-                        $password,
-                    ] = $credential->authorization();
-                    $headers['X-Odoo-Db'] = $database;
-                    $headers['X-Odoo-Username'] = $username;
-                    $headers['X-Odoo-Api-Key'] = $password;
-                }
+		add_filter(
+			'http_bridge_backend_headers',
+			function ( $headers, $backend ) {
+				if ( $backend->name === $this->data['backend'] ) {
+					$credential = $backend->credential;
+					if ( ! $credential ) {
+						return $headers;
+					}
 
-                return $headers;
-            },
-            10,
-            2
-        );
+					[
+						$database,
+						$username,
+						$password,
+					]                           = $credential->authorization();
+					$headers['X-Odoo-Db']       = $database;
+					$headers['X-Odoo-Username'] = $username;
+					$headers['X-Odoo-Api-Key']  = $password;
+				}
 
-        add_filter(
-            'http_bridge_request',
-            static function ($request) {
-                self::$request = $request;
-                return $request;
-            },
-            10,
-            1
-        );
+				return $headers;
+			},
+			10,
+			2
+		);
 
-        $response = parent::submit($payload);
+		add_filter(
+			'http_bridge_request',
+			static function ( $request ) {
+				self::$request = $request;
+				return $request;
+			},
+			10,
+			1
+		);
 
-        if (is_wp_error($response)) {
-            return $response;
-        }
+		$response = parent::submit( $payload );
 
-        if (isset($response['data']['error'])) {
-            $error = new WP_Error(
-                'response_code_' . $response['data']['error']['code'],
-                $response['data']['error']['message'],
-                $response['data']['error']['data']
-            );
+		if ( is_wp_error( $response ) ) {
+			return $response;
+		}
 
-            $error_data = ['response' => $response];
-            if (self::$request) {
-                $error_data['request'] = self::$request;
-            }
+		if ( isset( $response['data']['error'] ) ) {
+			$error = new WP_Error(
+				'response_code_' . $response['data']['error']['code'],
+				$response['data']['error']['message'],
+				$response['data']['error']['data']
+			);
 
-            $error->add_data($error_data);
-            return $error;
-        }
+			$error_data = array( 'response' => $response );
+			if ( self::$request ) {
+				$error_data['request'] = self::$request;
+			}
 
-        if (isset($response['data']['result']['error'])) {
-            $error = new WP_Error(
-                'response_code_' . $response['data']['result']['status'],
-                $response['data']['result']['error'],
-                $response['data']['result']['details']
-            );
+			$error->add_data( $error_data );
+			return $error;
+		}
 
-            $error_data = ['response' => $response];
-            if (self::$request) {
-                $error_data['request'] = self::$request;
-            }
+		if ( isset( $response['data']['result']['error'] ) ) {
+			$error = new WP_Error(
+				'response_code_' . $response['data']['result']['status'],
+				$response['data']['result']['error'],
+				$response['data']['result']['details']
+			);
 
-            $error->add_data($error_data);
-            return $error;
-        }
+			$error_data = array( 'response' => $response );
+			if ( self::$request ) {
+				$error_data['request'] = self::$request;
+			}
 
-        $response['data'] = $response['data']['data'] ?? [];
-        return $response;
-    }
+			$error->add_data( $error_data );
+			return $error;
+		}
+
+		$response['data'] = $response['data']['data'] ?? array();
+		return $response;
+	}
 }

@@ -2,8 +2,8 @@
 
 namespace FORMS_BRIDGE;
 
-if (!defined('ABSPATH')) {
-    exit();
+if ( ! defined( 'ABSPATH' ) ) {
+	exit();
 }
 
 require_once 'class-mailchimp-form-bridge.php';
@@ -12,195 +12,198 @@ require_once 'hooks.php';
 /**
  * Mapchimp Addon class.
  */
-class Mailchimp_Addon extends Addon
-{
-    /**
-     * Handles the addon's title.
-     *
-     * @var string
-     */
-    public const title = 'Mailchimp';
+class Mailchimp_Addon extends Addon {
 
-    /**
-     * Handles the addon's name.
-     *
-     * @var string
-     */
-    public const name = 'mailchimp';
+	/**
+	 * Handles the addon's title.
+	 *
+	 * @var string
+	 */
+	public const title = 'Mailchimp';
 
-    /**
-     * Handles the addom's custom bridge class.
-     *
-     * @var string
-     */
-    public const bridge_class = '\FORMS_BRIDGE\Mailchimp_Form_Bridge';
+	/**
+	 * Handles the addon's name.
+	 *
+	 * @var string
+	 */
+	public const name = 'mailchimp';
 
-    /**
-     * Performs a request against the backend to check the connexion status.
-     *
-     * @param string $backend Target backend name.
-     *
-     * @return boolean
-     */
-    public function ping($backend)
-    {
-        $bridge = new Mailchimp_Form_Bridge([
-            'name' => '__mailchimp-' . time(),
-            'endpoint' => '/3.0/lists',
-            'method' => 'GET',
-            'backend' => $backend,
-        ]);
+	/**
+	 * Handles the addom's custom bridge class.
+	 *
+	 * @var string
+	 */
+	public const bridge_class = '\FORMS_BRIDGE\Mailchimp_Form_Bridge';
 
-        $response = $bridge->submit();
-        return !is_wp_error($response);
-    }
+	/**
+	 * Performs a request against the backend to check the connexion status.
+	 *
+	 * @param string $backend Target backend name.
+	 *
+	 * @return boolean
+	 */
+	public function ping( $backend ) {
+		$bridge = new Mailchimp_Form_Bridge(
+			array(
+				'name'     => '__mailchimp-' . time(),
+				'endpoint' => '/3.0/lists',
+				'method'   => 'GET',
+				'backend'  => $backend,
+			)
+		);
 
-    /**
-     * Performs a GET request against the backend endpoint and retrive the response data.
-     *
-     * @param string $endpoint API endpoint.
-     * @param string $backend Backend name.
-     *
-     * @return array|WP_Error
-     */
-    public function fetch($endpoint, $backend)
-    {
-        $bridge = new Mailchimp_Form_Bridge([
-            'name' => '__mailchimp-' . time(),
-            'method' => 'GET',
-            'endpoint' => $endpoint,
-            'backend' => $backend,
-        ]);
+		$response = $bridge->submit();
+		return ! is_wp_error( $response );
+	}
 
-        return $bridge->submit();
-    }
+	/**
+	 * Performs a GET request against the backend endpoint and retrive the response data.
+	 *
+	 * @param string $endpoint API endpoint.
+	 * @param string $backend Backend name.
+	 *
+	 * @return array|WP_Error
+	 */
+	public function fetch( $endpoint, $backend ) {
+		$bridge = new Mailchimp_Form_Bridge(
+			array(
+				'name'     => '__mailchimp-' . time(),
+				'method'   => 'GET',
+				'endpoint' => $endpoint,
+				'backend'  => $backend,
+			)
+		);
 
-    /**
-     * Performs an introspection of the backend endpoint and returns API fields
-     * and accepted content type.
-     *
-     * @param string $endpoint API endpoint.
-     * @param string $backend Backend name.
-     *
-     * @return array
-     */
-    public function get_endpoint_schema($endpoint, $backend)
-    {
-        if (strstr($endpoint, '/lists/') !== false) {
-            $fields = [
-                [
-                    'name' => 'email_address',
-                    'schema' => ['type' => 'string'],
-                    'required' => true,
-                ],
-                [
-                    'name' => 'status',
-                    'schema' => ['type' => 'string'],
-                    'required' => true,
-                ],
-                [
-                    'name' => 'email_type',
-                    'schema' => ['type' => 'string'],
-                ],
-                [
-                    'name' => 'interests',
-                    'schema' => [
-                        'type' => 'object',
-                        'properties' => [],
-                    ],
-                ],
-                [
-                    'name' => 'language',
-                    'schema' => ['type' => 'string'],
-                ],
-                [
-                    'name' => 'vip',
-                    'schema' => ['type' => 'boolean'],
-                ],
-                [
-                    'name' => 'location',
-                    'schema' => [
-                        'type' => 'object',
-                        'properties' => [
-                            'latitude' => ['type' => 'number'],
-                            'longitude' => ['type' => 'number'],
-                        ],
-                    ],
-                ],
-                [
-                    'name' => 'marketing_permissions',
-                    'schema' => [
-                        'type' => 'array',
-                        'items' => [
-                            'type' => 'object',
-                            'properties' => [
-                                'marketing_permission_id' => [
-                                    'type' => 'string',
-                                ],
-                                'enabled' => ['type' => 'boolean'],
-                            ],
-                        ],
-                    ],
-                ],
-                [
-                    'name' => 'ip_signup',
-                    'schema' => ['type' => 'string'],
-                ],
-                [
-                    'name' => 'ip_opt',
-                    'schema' => ['type' => 'string'],
-                ],
-                [
-                    'name' => 'timestamp_opt',
-                    'schema' => ['type' => 'string'],
-                ],
-                [
-                    'name' => 'tags',
-                    'schema' => [
-                        'type' => 'array',
-                        'items' => ['type' => 'string'],
-                    ],
-                ],
-                [
-                    'name' => 'merge_fields',
-                    'schema' => [
-                        'type' => 'object',
-                        'properties' => [],
-                    ],
-                ],
-            ];
+		return $bridge->submit();
+	}
 
-            $fields_endpoint = str_replace(
-                '/members',
-                '/merge-fields',
-                $endpoint
-            );
+	/**
+	 * Performs an introspection of the backend endpoint and returns API fields
+	 * and accepted content type.
+	 *
+	 * @param string $endpoint API endpoint.
+	 * @param string $backend Backend name.
+	 *
+	 * @return array
+	 */
+	public function get_endpoint_schema( $endpoint, $backend ) {
+		if ( strstr( $endpoint, '/lists/' ) !== false ) {
+			$fields = array(
+				array(
+					'name'     => 'email_address',
+					'schema'   => array( 'type' => 'string' ),
+					'required' => true,
+				),
+				array(
+					'name'     => 'status',
+					'schema'   => array( 'type' => 'string' ),
+					'required' => true,
+				),
+				array(
+					'name'   => 'email_type',
+					'schema' => array( 'type' => 'string' ),
+				),
+				array(
+					'name'   => 'interests',
+					'schema' => array(
+						'type'       => 'object',
+						'properties' => array(),
+					),
+				),
+				array(
+					'name'   => 'language',
+					'schema' => array( 'type' => 'string' ),
+				),
+				array(
+					'name'   => 'vip',
+					'schema' => array( 'type' => 'boolean' ),
+				),
+				array(
+					'name'   => 'location',
+					'schema' => array(
+						'type'       => 'object',
+						'properties' => array(
+							'latitude'  => array( 'type' => 'number' ),
+							'longitude' => array( 'type' => 'number' ),
+						),
+					),
+				),
+				array(
+					'name'   => 'marketing_permissions',
+					'schema' => array(
+						'type'  => 'array',
+						'items' => array(
+							'type'       => 'object',
+							'properties' => array(
+								'marketing_permission_id' => array(
+									'type' => 'string',
+								),
+								'enabled'                 => array( 'type' => 'boolean' ),
+							),
+						),
+					),
+				),
+				array(
+					'name'   => 'ip_signup',
+					'schema' => array( 'type' => 'string' ),
+				),
+				array(
+					'name'   => 'ip_opt',
+					'schema' => array( 'type' => 'string' ),
+				),
+				array(
+					'name'   => 'timestamp_opt',
+					'schema' => array( 'type' => 'string' ),
+				),
+				array(
+					'name'   => 'tags',
+					'schema' => array(
+						'type'  => 'array',
+						'items' => array( 'type' => 'string' ),
+					),
+				),
+				array(
+					'name'   => 'merge_fields',
+					'schema' => array(
+						'type'       => 'object',
+						'properties' => array(),
+					),
+				),
+			);
 
-            $bridge = new Mailchimp_Form_Bridge([
-                'name' => '__mailchimp-' . time(),
-                'endpoint' => $fields_endpoint,
-                'method' => 'GET',
-                'backend' => $backend,
-            ]);
+			$fields_endpoint = str_replace(
+				'/members',
+				'/merge-fields',
+				$endpoint
+			);
 
-            $response = $bridge->submit();
+			$bridge = new Mailchimp_Form_Bridge(
+				array(
+					'name'     => '__mailchimp-' . time(),
+					'endpoint' => $fields_endpoint,
+					'method'   => 'GET',
+					'backend'  => $backend,
+				)
+			);
 
-            if (is_wp_error($response)) {
-                return [];
-            }
+			$response = $bridge->submit();
 
-            foreach ($response['data']['merge_fields'] as $field) {
-                $fields[] = [
-                    'name' => 'merge_fields.' . $field['tag'],
-                    'schema' => ['type' => 'string'],
-                ];
-            }
+			if ( is_wp_error( $response ) ) {
+				return array();
+			}
 
-            return $fields;
-        }
+			foreach ( $response['data']['merge_fields'] as $field ) {
+				$fields[] = array(
+					'name'   => 'merge_fields.' . $field['tag'],
+					'schema' => array( 'type' => 'string' ),
+				);
+			}
 
-        return [];
-    }
+			return $fields;
+		}
+
+		return array();
+	}
 }
 
 Mailchimp_Addon::setup();

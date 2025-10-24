@@ -2,8 +2,8 @@
 
 namespace FORMS_BRIDGE;
 
-if (!defined('ABSPATH')) {
-    exit();
+if ( ! defined( 'ABSPATH' ) ) {
+	exit();
 }
 
 require_once 'class-brevo-form-bridge.php';
@@ -13,301 +13,308 @@ require_once 'api.php';
 /**
  * REST API Addon class.
  */
-class Brevo_Addon extends Addon
-{
-    /**
-     * Handles the addon's title.
-     *
-     * @var string
-     */
-    public const title = 'Brevo';
+class Brevo_Addon extends Addon {
 
-    /**
-     * Handles the addon's name.
-     *
-     * @var string
-     */
-    public const name = 'brevo';
+	/**
+	 * Handles the addon's title.
+	 *
+	 * @var string
+	 */
+	public const title = 'Brevo';
 
-    /**
-     * Handles the addom's custom bridge class.
-     *
-     * @var string
-     */
-    public const bridge_class = '\FORMS_BRIDGE\Brevo_Form_Bridge';
+	/**
+	 * Handles the addon's name.
+	 *
+	 * @var string
+	 */
+	public const name = 'brevo';
 
-    /**
-     * Performs a request against the backend to check the connexion status.
-     *
-     * @param string $backend Backend name.
-     *
-     * @return boolean
-     */
-    public function ping($backend)
-    {
-        $bridge = new Brevo_Form_Bridge([
-            'name' => '__brevo-' . time(),
-            'endpoint' => '/v3/contacts/lists',
-            'method' => 'GET',
-            'backend' => $backend,
-        ]);
+	/**
+	 * Handles the addom's custom bridge class.
+	 *
+	 * @var string
+	 */
+	public const bridge_class = '\FORMS_BRIDGE\Brevo_Form_Bridge';
 
-        $response = $bridge->submit(['limit' => 1]);
-        return !is_wp_error($response);
-    }
+	/**
+	 * Performs a request against the backend to check the connexion status.
+	 *
+	 * @param string $backend Backend name.
+	 *
+	 * @return boolean
+	 */
+	public function ping( $backend ) {
+		$bridge = new Brevo_Form_Bridge(
+			array(
+				'name'     => '__brevo-' . time(),
+				'endpoint' => '/v3/contacts/lists',
+				'method'   => 'GET',
+				'backend'  => $backend,
+			)
+		);
 
-    /**
-     * Performs a GET request against the backend endpoint and retrive the response data.
-     *
-     * @param string $endpoint API endpoint.
-     * @param string $backend Backend name.
-     *
-     * @return array|WP_Error
-     */
-    public function fetch($endpoint, $backend)
-    {
-        $bridge = new Brevo_Form_Bridge([
-            'name' => '__brevo-' . time(),
-            'endpoint' => $endpoint,
-            'backend' => $backend,
-            'method' => 'GET',
-        ]);
+		$response = $bridge->submit( array( 'limit' => 1 ) );
+		return ! is_wp_error( $response );
+	}
 
-        return $bridge->submit();
-    }
+	/**
+	 * Performs a GET request against the backend endpoint and retrive the response data.
+	 *
+	 * @param string $endpoint API endpoint.
+	 * @param string $backend Backend name.
+	 *
+	 * @return array|WP_Error
+	 */
+	public function fetch( $endpoint, $backend ) {
+		$bridge = new Brevo_Form_Bridge(
+			array(
+				'name'     => '__brevo-' . time(),
+				'endpoint' => $endpoint,
+				'backend'  => $backend,
+				'method'   => 'GET',
+			)
+		);
 
-    /**
-     * Performs an introspection of the backend endpoint and returns API fields
-     * and accepted content type.
-     *
-     * @param string $endpoint API endpoint.
-     * @param string $backend Backend name.
-     *
-     * @return array
-     */
-    public function get_endpoint_schema($endpoint, $backend)
-    {
-        $bridge = new Brevo_Form_Bridge([
-            'name' => '__brevo-' . time(),
-            'endpoint' => $endpoint,
-            'backend' => $backend,
-            'method' => 'GET',
-        ]);
+		return $bridge->submit();
+	}
 
-        if (strstr($bridge->endpoint, 'contacts')) {
-            $response = $bridge
-                ->patch([
-                    'name' => 'brevo-contacts-attributes',
-                    'endpoint' => '/v3/contacts/attributes',
-                    'method' => 'GET',
-                ])
-                ->submit();
+	/**
+	 * Performs an introspection of the backend endpoint and returns API fields
+	 * and accepted content type.
+	 *
+	 * @param string $endpoint API endpoint.
+	 * @param string $backend Backend name.
+	 *
+	 * @return array
+	 */
+	public function get_endpoint_schema( $endpoint, $backend ) {
+		$bridge = new Brevo_Form_Bridge(
+			array(
+				'name'     => '__brevo-' . time(),
+				'endpoint' => $endpoint,
+				'backend'  => $backend,
+				'method'   => 'GET',
+			)
+		);
 
-            if (is_wp_error($response)) {
-                return [];
-            }
+		if ( strstr( $bridge->endpoint, 'contacts' ) ) {
+			$response = $bridge
+				->patch(
+					array(
+						'name'     => 'brevo-contacts-attributes',
+						'endpoint' => '/v3/contacts/attributes',
+						'method'   => 'GET',
+					)
+				)
+				->submit();
 
-            if ($bridge->endpoint === '/v3/contacts/doubleOptinConfirmation') {
-                $fields = [
-                    [
-                        'name' => 'email',
-                        'schema' => ['type' => 'string'],
-                        'required' => true,
-                    ],
-                    [
-                        'name' => 'includeListIds',
-                        'schema' => [
-                            'type' => 'array',
-                            'items' => ['type' => 'integer'],
-                        ],
-                        'required' => true,
-                    ],
-                    [
-                        'name' => 'excludeListIds',
-                        'schema' => [
-                            'type' => 'array',
-                            'items' => ['type' => 'integer'],
-                        ],
-                    ],
-                    [
-                        'name' => 'templateId',
-                        'schema' => ['type' => 'integer'],
-                        'required' => true,
-                    ],
-                    [
-                        'name' => 'redirectionUrl',
-                        'schema' => ['type' => 'string'],
-                        'required' => true,
-                    ],
-                    [
-                        'name' => 'attributes',
-                        'schema' => [
-                            'type' => 'object',
-                            'properties' => [],
-                        ],
-                    ],
-                ];
-            } else {
-                $fields = [
-                    [
-                        'name' => 'email',
-                        'schema' => ['type' => 'string'],
-                        'required' => true,
-                    ],
-                    [
-                        'name' => 'ext_id',
-                        'schema' => ['type' => 'string'],
-                    ],
-                    [
-                        'name' => 'emailBlacklisted',
-                        'schema' => ['type' => 'boolean'],
-                    ],
-                    [
-                        'name' => 'smsBlacklisted',
-                        'schema' => ['type' => 'boolean'],
-                    ],
-                    [
-                        'name' => 'listIds',
-                        'schema' => [
-                            'type' => 'array',
-                            'items' => ['type' => 'integer'],
-                        ],
-                    ],
-                    [
-                        'name' => 'updateEnabled',
-                        'schema' => ['type' => 'boolean'],
-                    ],
-                    [
-                        'name' => 'smtpBlacklistSender',
-                        'schema' => ['type' => 'boolean'],
-                    ],
-                    [
-                        'name' => 'attributes',
-                        'schema' => [
-                            'type' => 'object',
-                            'properties' => [],
-                        ],
-                    ],
-                ];
-            }
+			if ( is_wp_error( $response ) ) {
+				return array();
+			}
 
-            foreach ($response['data']['attributes'] as $attribute) {
-                $fields[] = [
-                    'name' => 'attributes.' . $attribute['name'],
-                    'schema' => ['type' => 'string'],
-                ];
-            }
+			if ( $bridge->endpoint === '/v3/contacts/doubleOptinConfirmation' ) {
+				$fields = array(
+					array(
+						'name'     => 'email',
+						'schema'   => array( 'type' => 'string' ),
+						'required' => true,
+					),
+					array(
+						'name'     => 'includeListIds',
+						'schema'   => array(
+							'type'  => 'array',
+							'items' => array( 'type' => 'integer' ),
+						),
+						'required' => true,
+					),
+					array(
+						'name'   => 'excludeListIds',
+						'schema' => array(
+							'type'  => 'array',
+							'items' => array( 'type' => 'integer' ),
+						),
+					),
+					array(
+						'name'     => 'templateId',
+						'schema'   => array( 'type' => 'integer' ),
+						'required' => true,
+					),
+					array(
+						'name'     => 'redirectionUrl',
+						'schema'   => array( 'type' => 'string' ),
+						'required' => true,
+					),
+					array(
+						'name'   => 'attributes',
+						'schema' => array(
+							'type'       => 'object',
+							'properties' => array(),
+						),
+					),
+				);
+			} else {
+				$fields = array(
+					array(
+						'name'     => 'email',
+						'schema'   => array( 'type' => 'string' ),
+						'required' => true,
+					),
+					array(
+						'name'   => 'ext_id',
+						'schema' => array( 'type' => 'string' ),
+					),
+					array(
+						'name'   => 'emailBlacklisted',
+						'schema' => array( 'type' => 'boolean' ),
+					),
+					array(
+						'name'   => 'smsBlacklisted',
+						'schema' => array( 'type' => 'boolean' ),
+					),
+					array(
+						'name'   => 'listIds',
+						'schema' => array(
+							'type'  => 'array',
+							'items' => array( 'type' => 'integer' ),
+						),
+					),
+					array(
+						'name'   => 'updateEnabled',
+						'schema' => array( 'type' => 'boolean' ),
+					),
+					array(
+						'name'   => 'smtpBlacklistSender',
+						'schema' => array( 'type' => 'boolean' ),
+					),
+					array(
+						'name'   => 'attributes',
+						'schema' => array(
+							'type'       => 'object',
+							'properties' => array(),
+						),
+					),
+				);
+			}
 
-            return $fields;
-        } else {
-            if (!preg_match('/\/([a-z]+)$/', $bridge->endpoint, $matches)) {
-                return [];
-            }
+			foreach ( $response['data']['attributes'] as $attribute ) {
+				$fields[] = array(
+					'name'   => 'attributes.' . $attribute['name'],
+					'schema' => array( 'type' => 'string' ),
+				);
+			}
 
-            $module = $matches[1];
-            $response = $bridge
-                ->patch([
-                    'name' => "brevo-{$module}-attributes",
-                    'endpoint' => "/v3/crm/attributes/{$module}",
-                    'method' => 'GET',
-                ])
-                ->submit();
+			return $fields;
+		} else {
+			if ( ! preg_match( '/\/([a-z]+)$/', $bridge->endpoint, $matches ) ) {
+				return array();
+			}
 
-            if (is_wp_error($response)) {
-                return [];
-            }
+			$module   = $matches[1];
+			$response = $bridge
+				->patch(
+					array(
+						'name'     => "brevo-{$module}-attributes",
+						'endpoint' => "/v3/crm/attributes/{$module}",
+						'method'   => 'GET',
+					)
+				)
+				->submit();
 
-            if ($module === 'companies') {
-                $fields = [
-                    [
-                        'name' => 'name',
-                        'schema' => ['type' => 'string'],
-                        'required' => true,
-                    ],
-                    [
-                        'name' => 'countryCode',
-                        'schema' => ['type' => 'integer'],
-                    ],
-                    [
-                        'name' => 'linkedContactsIds',
-                        'schema' => [
-                            'type' => 'array',
-                            'items' => ['type' => 'integer'],
-                        ],
-                    ],
-                    [
-                        'name' => 'linkedDealsIds',
-                        'schema' => [
-                            'type' => 'array',
-                            'items' => ['type' => 'integer'],
-                        ],
-                    ],
-                    [
-                        'name' => 'attributes',
-                        'schema' => [
-                            'type' => 'object',
-                            'properties' => [],
-                        ],
-                    ],
-                ];
-            } elseif ($module === 'deals') {
-                $fields = [
-                    [
-                        'name' => 'name',
-                        'schema' => ['type' => 'string'],
-                        'required' => true,
-                    ],
-                    [
-                        'name' => 'linkedDealsIds',
-                        'schema' => [
-                            'type' => 'array',
-                            'items' => ['type' => 'integer'],
-                        ],
-                    ],
-                    [
-                        'name' => 'linkedCompaniesIds',
-                        'schema' => [
-                            'type' => 'array',
-                            'items' => ['type' => 'integer'],
-                        ],
-                    ],
-                    [
-                        'name' => 'attributes',
-                        'schema' => [
-                            'type' => 'object',
-                            'properties' => [],
-                        ],
-                    ],
-                ];
-            }
+			if ( is_wp_error( $response ) ) {
+				return array();
+			}
 
-            foreach ($response['data'] as $attribute) {
-                switch ($attribute['attributeTypeName']) {
-                    case 'number':
-                        $type = 'number';
-                        break;
-                    case 'text':
-                        $type = 'string';
-                        break;
-                    case 'user':
-                        $type = 'email';
-                        break;
-                    case 'date':
-                        $type = 'date';
-                        break;
-                    default:
-                        $type = 'string';
-                }
+			if ( $module === 'companies' ) {
+				$fields = array(
+					array(
+						'name'     => 'name',
+						'schema'   => array( 'type' => 'string' ),
+						'required' => true,
+					),
+					array(
+						'name'   => 'countryCode',
+						'schema' => array( 'type' => 'integer' ),
+					),
+					array(
+						'name'   => 'linkedContactsIds',
+						'schema' => array(
+							'type'  => 'array',
+							'items' => array( 'type' => 'integer' ),
+						),
+					),
+					array(
+						'name'   => 'linkedDealsIds',
+						'schema' => array(
+							'type'  => 'array',
+							'items' => array( 'type' => 'integer' ),
+						),
+					),
+					array(
+						'name'   => 'attributes',
+						'schema' => array(
+							'type'       => 'object',
+							'properties' => array(),
+						),
+					),
+				);
+			} elseif ( $module === 'deals' ) {
+				$fields = array(
+					array(
+						'name'     => 'name',
+						'schema'   => array( 'type' => 'string' ),
+						'required' => true,
+					),
+					array(
+						'name'   => 'linkedDealsIds',
+						'schema' => array(
+							'type'  => 'array',
+							'items' => array( 'type' => 'integer' ),
+						),
+					),
+					array(
+						'name'   => 'linkedCompaniesIds',
+						'schema' => array(
+							'type'  => 'array',
+							'items' => array( 'type' => 'integer' ),
+						),
+					),
+					array(
+						'name'   => 'attributes',
+						'schema' => array(
+							'type'       => 'object',
+							'properties' => array(),
+						),
+					),
+				);
+			}
 
-                $fields[] = [
-                    'name' => 'attributes.' . $attribute['internalName'],
-                    'schema' => ['type' => $type],
-                ];
-            }
+			foreach ( $response['data'] as $attribute ) {
+				switch ( $attribute['attributeTypeName'] ) {
+					case 'number':
+						$type = 'number';
+						break;
+					case 'text':
+						$type = 'string';
+						break;
+					case 'user':
+						$type = 'email';
+						break;
+					case 'date':
+						$type = 'date';
+						break;
+					default:
+						$type = 'string';
+				}
 
-            return $fields;
-        }
-    }
+				$fields[] = array(
+					'name'   => 'attributes.' . $attribute['internalName'],
+					'schema' => array( 'type' => $type ),
+				);
+			}
+
+			return $fields;
+		}
+	}
 }
 
 Brevo_Addon::setup();

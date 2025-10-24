@@ -4,104 +4,106 @@ namespace FORMS_BRIDGE;
 
 use TypeError;
 
-if (!defined('ABSPATH')) {
-    exit();
+if ( ! defined( 'ABSPATH' ) ) {
+	exit();
 }
 
 /**
  * Form bridge implamentation for the Mailchimp API.
  */
-class Mailchimp_Form_Bridge extends Form_Bridge
-{
-    public function __construct($data)
-    {
-        parent::__construct($data, 'mailchimp');
-    }
+class Mailchimp_Form_Bridge extends Form_Bridge {
 
-    /**
-     * Performs an http request to backend's REST API.
-     *
-     * @param array $payload Payload data.
-     * @param array $attachments Submission's attached files.
-     *
-     * @return array|WP_Error
-     */
-    public function submit($payload = [], $attachments = [])
-    {
-        $response = parent::submit($payload, $attachments);
+	public function __construct( $data ) {
+		parent::__construct( $data, 'mailchimp' );
+	}
 
-        if (is_wp_error($response)) {
-            $error_response = $response->get_error_data()['response'] ?? null;
+	/**
+	 * Performs an http request to backend's REST API.
+	 *
+	 * @param array $payload Payload data.
+	 * @param array $attachments Submission's attached files.
+	 *
+	 * @return array|WP_Error
+	 */
+	public function submit( $payload = array(), $attachments = array() ) {
+		$response = parent::submit( $payload, $attachments );
 
-            $code = $error_response['response']['code'] ?? null;
-            if ($code !== 400) {
-                return $response;
-            }
+		if ( is_wp_error( $response ) ) {
+			$error_response = $response->get_error_data()['response'] ?? null;
 
-            try {
-                $body = json_decode($error_response['body'] ?? '', true);
-                $title = $body['title'] ?? null;
-            } catch (TypeError) {
-                return $response;
-            }
+			$code = $error_response['response']['code'] ?? null;
+			if ( $code !== 400 ) {
+				return $response;
+			}
 
-            if ($title === 'Member Exists') {
-                if (
-                    !preg_match(
-                        '/(?<=lists\/).+(?=\/members)/',
-                        $this->endpoint,
-                        $matches
-                    )
-                ) {
-                    return $response;
-                }
+			try {
+				$body  = json_decode( $error_response['body'] ?? '', true );
+				$title = $body['title'] ?? null;
+			} catch ( TypeError ) {
+				return $response;
+			}
 
-                $list_id = $matches[0];
+			if ( $title === 'Member Exists' ) {
+				if (
+					! preg_match(
+						'/(?<=lists\/).+(?=\/members)/',
+						$this->endpoint,
+						$matches
+					)
+				) {
+					return $response;
+				}
 
-                $search_response = $this->patch([
-                    'name' => 'mailchimp-search-member',
-                    'method' => 'GET',
-                    'endpoint' => '/3.0/search-members',
-                ])->submit([
-                    'fiels' => 'exact_matches.members.id',
-                    'list_id' => $list_id,
-                    'query' => $payload['email_address'],
-                ]);
+				$list_id = $matches[0];
 
-                if (is_wp_error($search_response)) {
-                    return $response;
-                }
+				$search_response = $this->patch(
+					array(
+						'name'     => 'mailchimp-search-member',
+						'method'   => 'GET',
+						'endpoint' => '/3.0/search-members',
+					)
+				)->submit(
+					array(
+						'fiels'   => 'exact_matches.members.id',
+						'list_id' => $list_id,
+						'query'   => $payload['email_address'],
+					)
+				);
 
-                $member_id =
-                    $search_response['data']['exact_matches']['members'][0][
-                        'id'
-                    ] ?? null;
+				if ( is_wp_error( $search_response ) ) {
+					return $response;
+				}
 
-                if (!$member_id) {
-                    return $response;
-                }
+				$member_id =
+					$search_response['data']['exact_matches']['members'][0]['id'] ?? null;
 
-                $update_endpoint = "/3.0/lists/{$list_id}/members/{$member_id}";
-                if (
-                    strstr($this->endpoint, 'skip_merge_validation') !== false
-                ) {
-                    $update_endpoint .= '?skip_merge_validation=true';
-                }
+				if ( ! $member_id ) {
+					return $response;
+				}
 
-                $update_response = $this->patch([
-                    'name' => 'mailchimp-update-subscription',
-                    'method' => 'PUT',
-                    'endpoint' => $update_endpoint,
-                ])->submit($payload);
+				$update_endpoint = "/3.0/lists/{$list_id}/members/{$member_id}";
+				if (
+					strstr( $this->endpoint, 'skip_merge_validation' ) !== false
+				) {
+					$update_endpoint .= '?skip_merge_validation=true';
+				}
 
-                if (is_wp_error($update_response)) {
-                    return $response;
-                }
+				$update_response = $this->patch(
+					array(
+						'name'     => 'mailchimp-update-subscription',
+						'method'   => 'PUT',
+						'endpoint' => $update_endpoint,
+					)
+				)->submit( $payload );
 
-                return $update_response;
-            }
-        }
+				if ( is_wp_error( $update_response ) ) {
+					return $response;
+				}
 
-        return $response;
-    }
+				return $update_response;
+			}
+		}
+
+		return $response;
+	}
 }

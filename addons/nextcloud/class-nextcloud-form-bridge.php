@@ -4,299 +4,288 @@ namespace FORMS_BRIDGE;
 
 use WP_Error;
 
-if (!defined('ABSPATH')) {
-    exit();
+if ( ! defined( 'ABSPATH' ) ) {
+	exit();
 }
 
 /**
  * Form bridge implementation for the Nextcloud JSON-RPC api.
  */
-class Nextcloud_Form_Bridge extends Form_Bridge
-{
-    public function __construct($data)
-    {
-        parent::__construct($data, 'nextcloud');
-    }
+class Nextcloud_Form_Bridge extends Form_Bridge {
 
-    private function filepath(&$touched = false)
-    {
-        $uploads = Forms_Bridge::upload_dir() . '/nextcloud';
+	public function __construct( $data ) {
+		parent::__construct( $data, 'nextcloud' );
+	}
 
-        if (!is_dir($uploads)) {
-            if (!mkdir($uploads, 755)) {
-                return;
-            }
-        }
+	private function filepath( &$touched = false ) {
+		$uploads = Forms_Bridge::upload_dir() . '/nextcloud';
 
-        $endpoint = preg_replace('/^\/+/', '', $this->data['endpoint']);
-        $name = str_replace('/', '-', $endpoint);
-        $filepath = $uploads . '/' . $name;
+		if ( ! is_dir( $uploads ) ) {
+			if ( ! mkdir( $uploads, 755 ) ) {
+				return;
+			}
+		}
 
-        if (!is_file($filepath)) {
-            $touched = true;
-            $result = touch($filepath);
+		$endpoint = preg_replace( '/^\/+/', '', $this->data['endpoint'] );
+		$name     = str_replace( '/', '-', $endpoint );
+		$filepath = $uploads . '/' . $name;
 
-            if (!$result) {
-                return new WP_Error('file_permission_error');
-            }
-        }
+		if ( ! is_file( $filepath ) ) {
+			$touched = true;
+			$result  = touch( $filepath );
 
-        return $filepath;
-    }
+			if ( ! $result ) {
+				return new WP_Error( 'file_permission_error' );
+			}
+		}
 
-    public function table_headers()
-    {
-        $filepath = $this->filepath();
+		return $filepath;
+	}
 
-        if (is_wp_error($filepath)) {
-            return $filepath;
-        }
+	public function table_headers() {
+		$filepath = $this->filepath();
 
-        $stream = fopen($filepath, 'r');
-        $line = fgets($stream);
-        fclose($stream);
+		if ( is_wp_error( $filepath ) ) {
+			return $filepath;
+		}
 
-        if ($line === false) {
-            return;
-        }
+		$stream = fopen( $filepath, 'r' );
+		$line   = fgets( $stream );
+		fclose( $stream );
 
-        return $this->decode_row($line);
-    }
+		if ( $line === false ) {
+			return;
+		}
 
-    private function get_dav_modified_date($backend)
-    {
-        $response = $backend->head($this->endpoint);
+		return $this->decode_row( $line );
+	}
 
-        if (is_wp_error($response)) {
-            $error_data = $response->get_error_data();
+	private function get_dav_modified_date( $backend ) {
+		$response = $backend->head( $this->endpoint );
 
-            $code = $error_data['response']['response']['code'] ?? null;
-            if ($code !== 404) {
-                return $response;
-            }
+		if ( is_wp_error( $response ) ) {
+			$error_data = $response->get_error_data();
 
-            return;
-        }
+			$code = $error_data['response']['response']['code'] ?? null;
+			if ( $code !== 404 ) {
+				return $response;
+			}
 
-        $last_modified = $response['headers']['last-modified'] ?? null;
-        if (!$last_modified) {
-            return;
-        }
+			return;
+		}
 
-        return strtotime($last_modified);
-    }
+		$last_modified = $response['headers']['last-modified'] ?? null;
+		if ( ! $last_modified ) {
+			return;
+		}
 
-    private function payload_to_headers($payload)
-    {
-        return $this->encode_row(array_keys($payload));
-    }
+		return strtotime( $last_modified );
+	}
 
-    private function payload_to_row($payload)
-    {
-        $headers = $this->table_headers();
-        if (!is_array($headers)) {
-            $headers = array_keys($payload);
-        }
+	private function payload_to_headers( $payload ) {
+		return $this->encode_row( array_keys( $payload ) );
+	}
 
-        $row = [];
-        foreach ($headers as $header) {
-            $row[] = $payload[$header] ?? '';
-        }
+	private function payload_to_row( $payload ) {
+		$headers = $this->table_headers();
+		if ( ! is_array( $headers ) ) {
+			$headers = array_keys( $payload );
+		}
 
-        return $this->encode_row($row);
-    }
+		$row = array();
+		foreach ( $headers as $header ) {
+			$row[] = $payload[ $header ] ?? '';
+		}
 
-    private function encode_row($row)
-    {
-        return implode(
-            ',',
-            array_map(
-                fn($value) => json_encode(
-                    $value,
-                    JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
-                ),
-                $row
-            )
-        );
-    }
+		return $this->encode_row( $row );
+	}
 
-    private function decode_row($row)
-    {
-        $row = preg_replace('/\n+/', '', $row);
-        return array_map(function ($value) {
-            if ($decoded = json_decode($value)) {
-                return $decoded;
-            }
+	private function encode_row( $row ) {
+		return implode(
+			',',
+			array_map(
+				fn( $value ) => json_encode(
+					$value,
+					JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
+				),
+				$row
+			)
+		);
+	}
 
-            return $value;
-        }, explode(',', $row));
-    }
+	private function decode_row( $row ) {
+		$row = preg_replace( '/\n+/', '', $row );
+		return array_map(
+			function ( $value ) {
+				if ( $decoded = json_decode( $value ) ) {
+					return $decoded;
+				}
 
-    private function add_row($payload)
-    {
-        $row = $this->payload_to_row($payload);
+				return $value;
+			},
+			explode( ',', $row )
+		);
+	}
 
-        $filepath = $this->filepath();
-        $sock = fopen($filepath, 'r');
-        $cursor = -1;
-        fseek($sock, $cursor, SEEK_END);
-        $char = fgetc($sock);
-        fclose($sock);
+	private function add_row( $payload ) {
+		$row = $this->payload_to_row( $payload );
 
-        if ($char !== "\n" && $char !== "\r") {
-            $row = "\n" . $row;
-        }
+		$filepath = $this->filepath();
+		$sock     = fopen( $filepath, 'r' );
+		$cursor   = -1;
+		fseek( $sock, $cursor, SEEK_END );
+		$char = fgetc( $sock );
+		fclose( $sock );
 
-        file_put_contents($filepath, $row, FILE_APPEND);
-    }
+		if ( $char !== "\n" && $char !== "\r" ) {
+			$row = "\n" . $row;
+		}
 
-    /**
-     * Submits submission to the backend.
-     *
-     * @param array $payload Submission data.
-     * @param array $attachments Submission attachments.
-     *
-     * @return array|WP_Error Http
-     */
-    public function submit($payload = [], $attachments = [])
-    {
-        if (!$this->is_valid) {
-            return new WP_Error('invalid_bridge');
-        }
+		file_put_contents( $filepath, $row, FILE_APPEND );
+	}
 
-        $backend = $this->backend;
+	/**
+	 * Submits submission to the backend.
+	 *
+	 * @param array $payload Submission data.
+	 * @param array $attachments Submission attachments.
+	 *
+	 * @return array|WP_Error Http
+	 */
+	public function submit( $payload = array(), $attachments = array() ) {
+		if ( ! $this->is_valid ) {
+			return new WP_Error( 'invalid_bridge' );
+		}
 
-        if (!$backend) {
-            return new WP_Error('invalid_bridge');
-        }
+		$backend = $this->backend;
 
-        $payload = self::flatten_payload($payload);
+		if ( ! $backend ) {
+			return new WP_Error( 'invalid_bridge' );
+		}
 
-        add_filter(
-            'http_bridge_backend_url',
-            function ($url, $backend) {
-                if ($backend->name === $this->data['backend']) {
-                    $credential = $backend->credential;
-                    if (!$credential) {
-                        return;
-                    }
+		$payload = self::flatten_payload( $payload );
 
-                    $user = $credential->client_id;
-                    [$pre] = explode($this->endpoint, $url);
-                    $url =
-                        preg_replace('/\/+$/', '', $pre) .
-                        "/remote.php/dav/files/{$user}/" .
-                        preg_replace('/^\/+/', '', $this->endpoint);
-                }
+		add_filter(
+			'http_bridge_backend_url',
+			function ( $url, $backend ) {
+				if ( $backend->name === $this->data['backend'] ) {
+					$credential = $backend->credential;
+					if ( ! $credential ) {
+						return;
+					}
 
-                return $url;
-            },
-            10,
-            2
-        );
+					$user  = $credential->client_id;
+					[$pre] = explode( $this->endpoint, $url );
+					$url   =
+						preg_replace( '/\/+$/', '', $pre ) .
+						"/remote.php/dav/files/{$user}/" .
+						preg_replace( '/^\/+/', '', $this->endpoint );
+				}
 
-        $filepath = $this->filepath($touched);
+				return $url;
+			},
+			10,
+			2
+		);
 
-        if (is_wp_error($filepath)) {
-            return $filepath;
-        }
+		$filepath = $this->filepath( $touched );
 
-        $dav_modified = $this->get_dav_modified_date($backend);
-        if (is_wp_error($dav_modified)) {
-            return $dav_modified;
-        }
+		if ( is_wp_error( $filepath ) ) {
+			return $filepath;
+		}
 
-        if (!$dav_modified) {
-            $headers = $this->payload_to_headers($payload);
-            $row = $this->payload_to_row($payload);
-            $csv = implode("\n", [$headers, $row]);
+		$dav_modified = $this->get_dav_modified_date( $backend );
+		if ( is_wp_error( $dav_modified ) ) {
+			return $dav_modified;
+		}
 
-            file_put_contents($filepath, $csv);
-            $response = parent::submit($csv);
-        } else {
-            if ($touched) {
-                $headers = $this->payload_to_headers($payload);
-                $row = $this->payload_to_row($payload);
-                $csv = implode("\n", [$headers, $row]);
+		if ( ! $dav_modified ) {
+			$headers = $this->payload_to_headers( $payload );
+			$row     = $this->payload_to_row( $payload );
+			$csv     = implode( "\n", array( $headers, $row ) );
 
-                file_put_contents($filepath, $csv);
-                $response = parent::submit($csv);
-            } else {
-                $local_modified = filemtime($filepath);
+			file_put_contents( $filepath, $csv );
+			$response = parent::submit( $csv );
+		} elseif ( $touched ) {
+				$headers = $this->payload_to_headers( $payload );
+				$row     = $this->payload_to_row( $payload );
+				$csv     = implode( "\n", array( $headers, $row ) );
 
-                if ($dav_modified > $local_modified) {
-                    $response = $backend->get(
-                        $this->endpoint,
-                        [],
-                        [],
-                        [
-                            'stream' => true,
-                            'filename' => $filepath,
-                        ]
-                    );
+				file_put_contents( $filepath, $csv );
+				$response = parent::submit( $csv );
+		} else {
+			$local_modified = filemtime( $filepath );
 
-                    if (is_wp_error($response)) {
-                        return $response;
-                    }
-                }
+			if ( $dav_modified > $local_modified ) {
+				$response = $backend->get(
+					$this->endpoint,
+					array(),
+					array(),
+					array(
+						'stream'   => true,
+						'filename' => $filepath,
+					)
+				);
 
-                $this->add_row($payload);
+				if ( is_wp_error( $response ) ) {
+					return $response;
+				}
+			}
 
-                $csv = file_get_contents($filepath);
-                $response = parent::submit($csv);
-            }
-        }
+			$this->add_row( $payload );
 
-        if (is_wp_error($response)) {
-            return $response;
-        }
+			$csv      = file_get_contents( $filepath );
+			$response = parent::submit( $csv );
+		}
 
-        touch($filepath, time());
-        return $response;
-    }
+		if ( is_wp_error( $response ) ) {
+			return $response;
+		}
 
-    /**
-     * Sheets are flat, if payload has nested arrays, flattens it and concatenate its keys
-     * as field names.
-     *
-     * @param array $payload Submission payload.
-     * @param string $path Prefix to prepend to the field name.
-     *
-     * @return array Flattened payload.
-     */
-    private static function flatten_payload($payload, $path = '')
-    {
-        $flat = [];
-        foreach ($payload as $field => $value) {
-            $key = $path . $field;
-            $value = self::flatten_value($value, $key);
+		touch( $filepath, time() );
+		return $response;
+	}
 
-            if (!is_array($value)) {
-                $flat[$key] = $value;
-            } else {
-                foreach ($value as $_key => $_val) {
-                    $flat[$_key] = $_val;
-                }
-            }
-        }
+	/**
+	 * Sheets are flat, if payload has nested arrays, flattens it and concatenate its keys
+	 * as field names.
+	 *
+	 * @param array  $payload Submission payload.
+	 * @param string $path Prefix to prepend to the field name.
+	 *
+	 * @return array Flattened payload.
+	 */
+	private static function flatten_payload( $payload, $path = '' ) {
+		$flat = array();
+		foreach ( $payload as $field => $value ) {
+			$key   = $path . $field;
+			$value = self::flatten_value( $value, $key );
 
-        return $flat;
-    }
+			if ( ! is_array( $value ) ) {
+				$flat[ $key ] = $value;
+			} else {
+				foreach ( $value as $_key => $_val ) {
+					$flat[ $_key ] = $_val;
+				}
+			}
+		}
 
-    private static function flatten_value($value, $path = '')
-    {
-        if (!is_array($value)) {
-            return $value;
-        }
+		return $flat;
+	}
 
-        if (wp_is_numeric_array($value)) {
-            $simple_items = array_filter($value, fn($item) => !is_array($item));
+	private static function flatten_value( $value, $path = '' ) {
+		if ( ! is_array( $value ) ) {
+			return $value;
+		}
 
-            if (count($simple_items) === count($value)) {
-                return implode(',', $value);
-            }
-        }
+		if ( wp_is_numeric_array( $value ) ) {
+			$simple_items = array_filter( $value, fn( $item ) => ! is_array( $item ) );
 
-        return self::flatten_payload($value, $path . '.');
-    }
+			if ( count( $simple_items ) === count( $value ) ) {
+				return implode( ',', $value );
+			}
+		}
+
+		return self::flatten_payload( $value, $path . '.' );
+	}
 }

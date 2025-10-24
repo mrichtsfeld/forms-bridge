@@ -2,8 +2,8 @@
 
 namespace FORMS_BRIDGE;
 
-if (!defined('ABSPATH')) {
-    exit();
+if ( ! defined( 'ABSPATH' ) ) {
+	exit();
 }
 
 require_once 'class-zoho-form-bridge.php';
@@ -13,165 +13,168 @@ require_once 'api.php';
 /**
  * Zoho Addon class.
  */
-class Zoho_Addon extends Addon
-{
-    /**
-     * Handles the addon's title.
-     *
-     * @var string
-     */
-    public const title = 'Zoho';
+class Zoho_Addon extends Addon {
 
-    /**
-     * Handles the addon's name.
-     *
-     * @var string
-     */
-    public const name = 'zoho';
+	/**
+	 * Handles the addon's title.
+	 *
+	 * @var string
+	 */
+	public const title = 'Zoho';
 
-    /**
-     * Handles the zoho oauth service name.
-     *
-     * @var string
-     */
-    protected const zoho_oauth_service = 'ZohoCRM';
+	/**
+	 * Handles the addon's name.
+	 *
+	 * @var string
+	 */
+	public const name = 'zoho';
 
-    /**
-     * Handles the addon's custom bridge class.
-     *
-     * @var string
-     */
-    public const bridge_class = '\FORMS_BRIDGE\Zoho_Form_Bridge';
+	/**
+	 * Handles the zoho oauth service name.
+	 *
+	 * @var string
+	 */
+	protected const zoho_oauth_service = 'ZohoCRM';
 
-    /**
-     * Performs a request against the backend to check the connexion status.
-     *
-     * @param string $backend Backend name.
-     *
-     * @return boolean
-     */
-    public function ping($backend)
-    {
-        $bridge_class = static::bridge_class;
-        $bridge = new $bridge_class([
-            'name' => '__zoho-' . time(),
-            'backend' => $backend,
-            'endpoint' => '/crm/v7/users',
-            'method' => 'GET',
-        ]);
+	/**
+	 * Handles the addon's custom bridge class.
+	 *
+	 * @var string
+	 */
+	public const bridge_class = '\FORMS_BRIDGE\Zoho_Form_Bridge';
 
-        $backend = $bridge->backend;
-        if (!$backend) {
-            return false;
-        }
+	/**
+	 * Performs a request against the backend to check the connexion status.
+	 *
+	 * @param string $backend Backend name.
+	 *
+	 * @return boolean
+	 */
+	public function ping( $backend ) {
+		$bridge_class = static::bridge_class;
+		$bridge       = new $bridge_class(
+			array(
+				'name'     => '__zoho-' . time(),
+				'backend'  => $backend,
+				'endpoint' => '/crm/v7/users',
+				'method'   => 'GET',
+			)
+		);
 
-        $credential = $backend->credential;
-        if (!$credential) {
-            return false;
-        }
+		$backend = $bridge->backend;
+		if ( ! $backend ) {
+			return false;
+		}
 
-        $parsed = wp_parse_url($backend->base_url);
-        $host = $parsed['host'] ?? '';
+		$credential = $backend->credential;
+		if ( ! $credential ) {
+			return false;
+		}
 
-        if (
-            !preg_match(
-                '/www\.zohoapis\.(\w{2,3}(\.\w{2})?)$/',
-                $host,
-                $matches
-            )
-        ) {
-            return false;
-        }
+		$parsed = wp_parse_url( $backend->base_url );
+		$host   = $parsed['host'] ?? '';
 
-        // $region = $matches[1];
-        // if (!preg_match('/' . $region . '$/', $credential->region)) {
-        //     return false;
-        // }
+		if (
+			! preg_match(
+				'/www\.zohoapis\.(\w{2,3}(\.\w{2})?)$/',
+				$host,
+				$matches
+			)
+		) {
+			return false;
+		}
 
-        $response = $bridge->submit(['type' => 'CurrentUser']);
-        return !is_wp_error($response);
-    }
+		// $region = $matches[1];
+		// if (!preg_match('/' . $region . '$/', $credential->region)) {
+		// return false;
+		// }
 
-    /**
-     * Performs a GET request against the backend endpoint and retrive the response data.
-     *
-     * @param string $endpoint API endpoint.
-     * @param string $backend Backend name.
-     *
-     * @return array|WP_Error
-     */
-    public function fetch($endpoint, $backend)
-    {
-        $bridge_class = static::bridge_class;
-        $bridge = new $bridge_class([
-            'name' => '__zoho-' . time(),
-            'backend' => $backend,
-            'endpoint' => $endpoint,
-            'method' => 'GET',
-        ]);
+		$response = $bridge->submit( array( 'type' => 'CurrentUser' ) );
+		return ! is_wp_error( $response );
+	}
 
-        return $bridge->submit();
-    }
+	/**
+	 * Performs a GET request against the backend endpoint and retrive the response data.
+	 *
+	 * @param string $endpoint API endpoint.
+	 * @param string $backend Backend name.
+	 *
+	 * @return array|WP_Error
+	 */
+	public function fetch( $endpoint, $backend ) {
+		$bridge_class = static::bridge_class;
+		$bridge       = new $bridge_class(
+			array(
+				'name'     => '__zoho-' . time(),
+				'backend'  => $backend,
+				'endpoint' => $endpoint,
+				'method'   => 'GET',
+			)
+		);
 
-    /**
-     * Performs an introspection of the backend endpoint and returns API fields.
-     *
-     * @param string $endpoint API endpoint.
-     * @param string $backend Backend name.
-     *
-     * @return array List of fields and content type of the endpoint.
-     */
-    public function get_endpoint_schema($endpoint, $backend)
-    {
-        if (
-            !preg_match(
-                '/\/(([A-Z][a-z]+(_[A-Z][a-z])?)(?:\/upsert)?$)/',
-                $endpoint,
-                $matches
-            )
-        ) {
-            return [];
-        }
+		return $bridge->submit();
+	}
 
-        $module = $matches[2];
+	/**
+	 * Performs an introspection of the backend endpoint and returns API fields.
+	 *
+	 * @param string $endpoint API endpoint.
+	 * @param string $backend Backend name.
+	 *
+	 * @return array List of fields and content type of the endpoint.
+	 */
+	public function get_endpoint_schema( $endpoint, $backend ) {
+		if (
+			! preg_match(
+				'/\/(([A-Z][a-z]+(_[A-Z][a-z])?)(?:\/upsert)?$)/',
+				$endpoint,
+				$matches
+			)
+		) {
+			return array();
+		}
 
-        $bridge_class = static::bridge_class;
-        $bridge = new $bridge_class([
-            'name' => '__zoho-' . time(),
-            'backend' => $backend,
-            'endpoint' => '/crm/v7/settings/layouts',
-            'method' => 'GET',
-        ]);
+		$module = $matches[2];
 
-        $response = $bridge->submit(['module' => $module]);
+		$bridge_class = static::bridge_class;
+		$bridge       = new $bridge_class(
+			array(
+				'name'     => '__zoho-' . time(),
+				'backend'  => $backend,
+				'endpoint' => '/crm/v7/settings/layouts',
+				'method'   => 'GET',
+			)
+		);
 
-        if (is_wp_error($response)) {
-            return [];
-        }
+		$response = $bridge->submit( array( 'module' => $module ) );
 
-        $fields = [];
-        foreach ($response['data']['layouts'] as $layout) {
-            foreach ($layout['sections'] as $section) {
-                foreach ($section['fields'] as $field) {
-                    $type = $field['json_type'];
-                    if ($type === 'jsonobject') {
-                        $type = 'object';
-                    } elseif ($type === 'jsonarray') {
-                        $type = 'array';
-                    } elseif ($type === 'double') {
-                        $type = 'number';
-                    }
+		if ( is_wp_error( $response ) ) {
+			return array();
+		}
 
-                    $fields[] = [
-                        'name' => $field['api_name'],
-                        'schema' => ['type' => $type],
-                    ];
-                }
-            }
-        }
+		$fields = array();
+		foreach ( $response['data']['layouts'] as $layout ) {
+			foreach ( $layout['sections'] as $section ) {
+				foreach ( $section['fields'] as $field ) {
+					$type = $field['json_type'];
+					if ( $type === 'jsonobject' ) {
+						$type = 'object';
+					} elseif ( $type === 'jsonarray' ) {
+						$type = 'array';
+					} elseif ( $type === 'double' ) {
+						$type = 'number';
+					}
 
-        return $fields;
-    }
+					$fields[] = array(
+						'name'   => $field['api_name'],
+						'schema' => array( 'type' => $type ),
+					);
+				}
+			}
+		}
+
+		return $fields;
+	}
 }
 
 Zoho_Addon::setup();

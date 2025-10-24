@@ -1,147 +1,146 @@
 <?php
 
-if (!defined('ABSPATH')) {
-    exit();
+if ( ! defined( 'ABSPATH' ) ) {
+	exit();
 }
 
-function forms_bridge_crm_meeting_participant($payload, $bridge)
-{
-    $lead = forms_bridge_zoho_crm_create_lead($payload, $bridge);
+function forms_bridge_crm_meeting_participant( $payload, $bridge ) {
+	$lead = forms_bridge_zoho_crm_create_lead( $payload, $bridge );
 
-    if (is_wp_error($lead)) {
-        return $lead;
-    }
+	if ( is_wp_error( $lead ) ) {
+		return $lead;
+	}
 
-    $payload['Participants'][] = [
-        'type' => 'lead',
-        'participant' => $lead['id'],
-    ];
+	$payload['Participants'][] = array(
+		'type'        => 'lead',
+		'participant' => $lead['id'],
+	);
 
-    return $payload;
+	return $payload;
 }
 
-return [
-    'title' => __('CRM meeting participant', 'forms-bridge'),
-    'description' => __(
-        'Search for a lead or creates a new one and sets its ID as meeting participant',
-        'forms-bridge'
-    ),
-    'method' => 'forms_bridge_crm_meeting_participant',
-    'input' => [
-        [
-            'name' => 'Last_Name',
-            'schema' => ['type' => 'string'],
-            'required' => true,
-        ],
-        [
-            'name' => 'First_Name',
-            'schema' => ['type' => 'string'],
-        ],
-        [
-            'name' => 'Full_Name',
-            'schema' => ['type' => 'string'],
-        ],
-        [
-            'name' => 'Designation',
-            'schema' => ['type' => 'string'],
-        ],
-        [
-            'name' => 'Email',
-            'schema' => ['type' => 'string'],
-        ],
-        [
-            'name' => 'Secondary_Email',
-            'schema' => ['type' => 'string'],
-        ],
-        [
-            'name' => 'Phone',
-            'schema' => ['type' => 'string'],
-        ],
-        [
-            'name' => 'Mobile',
-            'schema' => ['type' => 'string'],
-        ],
-        [
-            'name' => 'Fax',
-            'schema' => ['type' => 'string'],
-        ],
-        [
-            'name' => 'Website',
-            'schema' => ['type' => 'string'],
-        ],
-        [
-            'name' => 'Lead_Source',
-            'schema' => ['type' => 'string'],
-        ],
-        [
-            'name' => 'Lead_Status',
-            'schema' => ['type' => 'string'],
-        ],
-        [
-            'name' => 'Description',
-            'schema' => ['type' => 'string'],
-        ],
-        [
-            'name' => 'Company',
-            'schema' => ['type' => 'string'],
-        ],
-        [
-            'name' => 'No_of_Employees',
-            'schema' => ['type' => 'string'],
-        ],
-        [
-            'name' => 'Industry',
-            'schema' => ['type' => 'string'],
-        ],
-        [
-            'name' => 'Annual_Revenue',
-            'schema' => ['type' => 'string'],
-        ],
-        [
-            'name' => 'Street',
-            'schema' => ['type' => 'string'],
-        ],
-        [
-            'name' => 'City',
-            'schema' => ['type' => 'string'],
-        ],
-        [
-            'name' => 'State',
-            'schema' => ['type' => 'string'],
-        ],
-        [
-            'name' => 'Zip_Code',
-            'schema' => ['type' => 'string'],
-        ],
-        [
-            'name' => 'Tag',
-            'schema' => [
-                'type' => 'array',
-                'items' => [
-                    'type' => 'object',
-                    'properties' => [
-                        'name' => ['type' => 'string'],
-                    ],
-                    'additionalProperties' => false,
-                    'required' => ['name'],
-                ],
-            ],
-        ],
-    ],
-    'output' => [
-        [
-            'name' => 'Participants',
-            'schema' => [
-                'type' => 'array',
-                'items' => [
-                    'type' => 'object',
-                    'properties' => [
-                        'type' => ['type' => 'string'],
-                        'participant' => ['type' => 'string'],
-                    ],
-                ],
-                'additionalItems' => true,
-            ],
-        ],
-    ],
-];
+return array(
+	'title'       => __( 'CRM meeting participant', 'forms-bridge' ),
+	'description' => __(
+		'Search for a lead or creates a new one and sets its ID as meeting participant',
+		'forms-bridge'
+	),
+	'method'      => 'forms_bridge_crm_meeting_participant',
+	'input'       => array(
+		array(
+			'name'     => 'Last_Name',
+			'schema'   => array( 'type' => 'string' ),
+			'required' => true,
+		),
+		array(
+			'name'   => 'First_Name',
+			'schema' => array( 'type' => 'string' ),
+		),
+		array(
+			'name'   => 'Full_Name',
+			'schema' => array( 'type' => 'string' ),
+		),
+		array(
+			'name'   => 'Designation',
+			'schema' => array( 'type' => 'string' ),
+		),
+		array(
+			'name'   => 'Email',
+			'schema' => array( 'type' => 'string' ),
+		),
+		array(
+			'name'   => 'Secondary_Email',
+			'schema' => array( 'type' => 'string' ),
+		),
+		array(
+			'name'   => 'Phone',
+			'schema' => array( 'type' => 'string' ),
+		),
+		array(
+			'name'   => 'Mobile',
+			'schema' => array( 'type' => 'string' ),
+		),
+		array(
+			'name'   => 'Fax',
+			'schema' => array( 'type' => 'string' ),
+		),
+		array(
+			'name'   => 'Website',
+			'schema' => array( 'type' => 'string' ),
+		),
+		array(
+			'name'   => 'Lead_Source',
+			'schema' => array( 'type' => 'string' ),
+		),
+		array(
+			'name'   => 'Lead_Status',
+			'schema' => array( 'type' => 'string' ),
+		),
+		array(
+			'name'   => 'Description',
+			'schema' => array( 'type' => 'string' ),
+		),
+		array(
+			'name'   => 'Company',
+			'schema' => array( 'type' => 'string' ),
+		),
+		array(
+			'name'   => 'No_of_Employees',
+			'schema' => array( 'type' => 'string' ),
+		),
+		array(
+			'name'   => 'Industry',
+			'schema' => array( 'type' => 'string' ),
+		),
+		array(
+			'name'   => 'Annual_Revenue',
+			'schema' => array( 'type' => 'string' ),
+		),
+		array(
+			'name'   => 'Street',
+			'schema' => array( 'type' => 'string' ),
+		),
+		array(
+			'name'   => 'City',
+			'schema' => array( 'type' => 'string' ),
+		),
+		array(
+			'name'   => 'State',
+			'schema' => array( 'type' => 'string' ),
+		),
+		array(
+			'name'   => 'Zip_Code',
+			'schema' => array( 'type' => 'string' ),
+		),
+		array(
+			'name'   => 'Tag',
+			'schema' => array(
+				'type'  => 'array',
+				'items' => array(
+					'type'                 => 'object',
+					'properties'           => array(
+						'name' => array( 'type' => 'string' ),
+					),
+					'additionalProperties' => false,
+					'required'             => array( 'name' ),
+				),
+			),
+		),
+	),
+	'output'      => array(
+		array(
+			'name'   => 'Participants',
+			'schema' => array(
+				'type'            => 'array',
+				'items'           => array(
+					'type'       => 'object',
+					'properties' => array(
+						'type'        => array( 'type' => 'string' ),
+						'participant' => array( 'type' => 'string' ),
+					),
+				),
+				'additionalItems' => true,
+			),
+		),
+	),
+);
