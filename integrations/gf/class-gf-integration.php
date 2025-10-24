@@ -286,7 +286,10 @@ class Integration extends BaseIntegration
 
         $options = array_map(
             function ($opt) {
-                return ['value' => $opt['value'], 'label' => $opt['text']];
+                return [
+                    'value' => $opt['value'],
+                    'label' => $opt['text'],
+                ];
             },
             $field->choices ?: []
         );
@@ -368,9 +371,11 @@ class Integration extends BaseIntegration
             case 'date':
                 $type = 'date';
                 break;
+            case 'textarea':
+                $type = $field->type;
+                break;
             case 'address':
             case 'product':
-            case 'textarea':
             case 'name':
             case 'shipping':
             default:
@@ -429,11 +434,11 @@ class Integration extends BaseIntegration
         }
 
         // if (isset($field->choiceLimit)) {
-        //     if ($field->choiceLimit === 'unlimited') {
-        //         return true;
-        //     } elseif ($field->choiceLimit === 'exactly' && $field->choiceLimitNumber > 1) {
-        //         return true;
-        //     }
+        // if ($field->choiceLimit === 'unlimited') {
+        // return true;
+        // } elseif ($field->choiceLimit === 'exactly' && $field->choiceLimitNumber > 1) {
+        // return true;
+        // }
         // }
 
         if (in_array($field->inputType, ['list', 'checkbox'])) {
@@ -636,9 +641,9 @@ class Integration extends BaseIntegration
     /**
      * Formats field values with noop fallback.
      *
-     * @param mixed $value Field's value.
+     * @param mixed  $value Field's value.
      * @param string $field_type GF field type.
-     * @param array $input Field's input data.
+     * @param array  $input Field's input data.
      *
      * @return mixed Formatted value.
      */
@@ -814,10 +819,10 @@ class Integration extends BaseIntegration
     /**
      * Returns a default field array data. Used as template for the field creation methods.
      *
-     * @param string $type Field type.
-     * @param int $id Field id.
-     * @param string $name Input name.
-     * @param string $label Field label.
+     * @param string  $type Field type.
+     * @param int     $id Field id.
+     * @param string  $name Input name.
+     * @param string  $label Field label.
      * @param boolean $required Is field required.
      *
      * @return array
@@ -872,9 +877,9 @@ class Integration extends BaseIntegration
     /**
      * Returns a valid email field data.
      *
-     * @param int $id Field id.
-     * @param string $name Input name.
-     * @param string $label Field label.
+     * @param int     $id Field id.
+     * @param string  $name Input name.
+     * @param string  $label Field label.
      * @param boolean $required Is field required.
      *
      * @return array
@@ -896,9 +901,9 @@ class Integration extends BaseIntegration
     /**
      * Returns a valid textarea field data.
      *
-     * @param int $id Field id.
-     * @param string $name Input name.
-     * @param string $label Field label.
+     * @param int     $id Field id.
+     * @param string  $name Input name.
+     * @param string  $label Field label.
      * @param boolean $required Is field required.
      *
      * @return array
@@ -912,11 +917,11 @@ class Integration extends BaseIntegration
      * Returns a valid multi select field data, as a select field if is single, as
      * a checkbox field if is multiple.
      *
-     * @param int $id Field id.
-     * @param string $name Input name.
-     * @param string $label Field label.
+     * @param int     $id Field id.
+     * @param string  $name Input name.
+     * @param string  $label Field label.
      * @param boolean $required Is field required.
-     * @param array $options Options data.
+     * @param array   $options Options data.
      * @param boolean $is_multi Is field multi value
      *
      * @return array
@@ -977,12 +982,12 @@ class Integration extends BaseIntegration
     /**
      * Returns a valid file-upload field data.
      *
-     * @param int $id Field id.
-     * @param string $name Input name.
-     * @param string $label Field label.
+     * @param int     $id Field id.
+     * @param string  $name Input name.
+     * @param string  $label Field label.
      * @param boolean $required Is field required.
      * @param boolean $is_mulit Is field multi value?
-     * @param string $filetypes String with allowed file extensions separated by commas.
+     * @param string  $filetypes String with allowed file extensions separated by commas.
      *
      * @return array
      */
@@ -1006,11 +1011,11 @@ class Integration extends BaseIntegration
     /**
      * Returns a valid hidden field data.
      *
-     * @param int $id Field id.
-     * @param string $name Input name.
-     * @param string $label Field label (unused).
+     * @param int     $id Field id.
+     * @param string  $name Input name.
+     * @param string  $label Field label (unused).
      * @param boolean $required Is field required (unused).
-     * @param string $value Field's default value.
+     * @param string  $value Field's default value.
      *
      * @return array
      */
@@ -1028,9 +1033,9 @@ class Integration extends BaseIntegration
     /**
      * Returns a valid hidden field data.
      *
-     * @param int $id Field id.
-     * @param string $name Input name.
-     * @param string $label Field label.
+     * @param int     $id Field id.
+     * @param string  $name Input name.
+     * @param string  $label Field label.
      * @param boolean $required Is field required.
      *
      * @return array
@@ -1043,9 +1048,9 @@ class Integration extends BaseIntegration
     /**
      * Returns a valid hidden field data.
      *
-     * @param int $id Field id.
-     * @param string $name Input name.
-     * @param string $label Field label.
+     * @param int     $id Field id.
+     * @param string  $name Input name.
+     * @param string  $label Field label.
      * @param boolean $required Is field required.
      *
      * @return array
@@ -1063,9 +1068,9 @@ class Integration extends BaseIntegration
     /**
      * Returns a valid date field data.
      *
-     * @param int $id Field id.
-     * @param string $name Input name.
-     * @param string $label Field label.
+     * @param int     $id Field id.
+     * @param string  $name Input name.
+     * @param string  $label Field label.
      * @param boolean $required Is field required.
      *
      * @return array
@@ -1086,9 +1091,9 @@ class Integration extends BaseIntegration
     /**
      * Returns a valid hidden field data.
      *
-     * @param int $id Field id.
-     * @param string $name Input name.
-     * @param string $label Field label.
+     * @param int     $id Field id.
+     * @param string  $name Input name.
+     * @param string  $label Field label.
      * @param boolean $required Is field required.
      *
      * @return array

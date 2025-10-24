@@ -233,7 +233,7 @@ class Integration extends BaseIntegration
      * Serializes a form field model instance as array data.
      *
      * @param NF_Database_Models_Field $field Form field model instance.
-     * @param array $form_settings Form settings data.
+     * @param array                    $form_settings Form settings data.
      *
      * @return array
      */
@@ -267,7 +267,7 @@ class Integration extends BaseIntegration
     /**
      * Serializes field settings as field data array.
      *
-     * @param int $id Field id.
+     * @param int   $id Field id.
      * @param array $settings Field settings data.
      * @param array $form_settings Form settings data.
      *
@@ -343,6 +343,9 @@ class Integration extends BaseIntegration
             case 'file_upload':
                 $type = 'file';
                 break;
+            case 'textarea':
+                $type = 'textarea';
+                break;
             case 'textbox':
             case 'lastname':
             case 'firstname':
@@ -351,7 +354,6 @@ class Integration extends BaseIntegration
             case 'city':
             case 'spam':
             case 'phone':
-            case 'textarea':
             default:
                 $type = 'text';
                 break;
@@ -548,7 +550,7 @@ class Integration extends BaseIntegration
                     );
 
                     $fieldset[$row_index] = $row;
-                    $i++;
+                    ++$i;
                 }
 
                 $data[$field_data['name']] = $fieldset;
@@ -575,7 +577,7 @@ class Integration extends BaseIntegration
      * Formats field values based on its type.
      *
      * @param string $type Field type.
-     * @param mixed $value Raw field value.
+     * @param mixed  $value Raw field value.
      *
      * @return mixed Formated value.
      */
@@ -619,7 +621,7 @@ class Integration extends BaseIntegration
      * Gets submission uploaded files.
      *
      * @param WPCF7_Submission $submission Submission instance.
-     * @param array $form_data Form data.
+     * @param array            $form_data Form data.
      *
      * @return array Uploaded files data.
      *

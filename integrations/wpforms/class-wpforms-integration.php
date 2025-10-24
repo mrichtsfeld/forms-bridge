@@ -149,7 +149,7 @@ class Integration extends BaseIntegration
             );
 
         if ($title_exists) {
-            # $form_title = $form_title . ' (ID #' . $form_id . ')';
+            // $form_title = $form_title . ' (ID #' . $form_id . ')';
             remove_action('post_updated', 'wp_save_post_revision');
             wp_update_post([
                 'ID' => $form_id,
@@ -335,10 +335,8 @@ class Integration extends BaseIntegration
                     return in_array($field['id'], $children);
                 })
             );
-        } else {
-            if (in_array($field['id'], $fields_in_repeater)) {
-                return;
-            }
+        } elseif (in_array($field['id'], $fields_in_repeater)) {
+            return;
         }
 
         $format = $field['date_format'] ?? '';
@@ -378,9 +376,11 @@ class Integration extends BaseIntegration
             case 'date-time':
                 $type = 'date';
                 break;
+            case 'textarea':
+                $type = 'textarea';
+                break;
             case 'name':
             case 'text':
-            case 'textarea':
             case 'password':
             case 'payment-total':
             case 'payment-single':
@@ -696,7 +696,7 @@ class Integration extends BaseIntegration
      * Gets submission uploaded files.
      *
      * @param object $submission Submission data.
-     * @param array $form_data Form data.
+     * @param array  $form_data Form data.
      *
      * @return array Uploaded files data.
      */
@@ -845,9 +845,9 @@ class Integration extends BaseIntegration
     /**
      * Returns a default field array data. Used as template for the field creation methods.
      *
-     * @param string $type Field type.
-     * @param int $id Field id.
-     * @param string $label Field label.
+     * @param string  $type Field type.
+     * @param int     $id Field id.
+     * @param string  $label Field label.
      * @param boolean $required Is field required.
      *
      * @return array
@@ -869,8 +869,8 @@ class Integration extends BaseIntegration
     /**
      * Returns a valid text field data.
      *
-     * @param int $id Field id.
-     * @param string $name Field name (label).
+     * @param int     $id Field id.
+     * @param string  $name Field name (label).
      * @param boolean $required Is field required.
      *
      * @return array
@@ -889,10 +889,10 @@ class Integration extends BaseIntegration
     /**
      * Returns a valid number field data.
      *
-     * @param int $id Field id.
-     * @param string $name Field name (label).
+     * @param int     $id Field id.
+     * @param string  $name Field name (label).
      * @param boolean $required Is field required.
-     * @param array $constraints Field constraints.
+     * @param array   $constraints Field constraints.
      *
      * @return array
      */
@@ -907,8 +907,8 @@ class Integration extends BaseIntegration
     /**
      * Returns a valid text field data.
      *
-     * @param int $id Field id.
-     * @param string $name Field name (label).
+     * @param int     $id Field id.
+     * @param string  $name Field name (label).
      * @param boolean $required Is field required.
      *
      * @return array
@@ -928,8 +928,8 @@ class Integration extends BaseIntegration
     /**
      * Returns a valid textarea field data.
      *
-     * @param int $id Field id.
-     * @param string $name Field name (label).
+     * @param int     $id Field id.
+     * @param string  $name Field name (label).
      * @param boolean $required Is field required.
      *
      * @return array
@@ -949,9 +949,9 @@ class Integration extends BaseIntegration
      * Returns a valid multi select field data, as a select field if is single, as
      * a checkbox field if is multiple.
      *
-     * @param int $id Field id.
-     * @param string $name Field name (label).
-     * @param boolean $required Is field required.
+     * @param int                          $id Field id.
+     * @param string                       $name Field name (label).
+     * @param boolean                      $required Is field required.
      * @param array Options data.
      * @param boolean Is field multi value.
      *
@@ -997,10 +997,10 @@ class Integration extends BaseIntegration
     /**
      * Returns a valid hidden field data.
      *
-     * @param int $id Field id.
-     * @param string $name Field name (label).
+     * @param int     $id Field id.
+     * @param string  $name Field name (label).
      * @param boolean $required Is field required.
-     * @param string $value Field's default value.
+     * @param string  $value Field's default value.
      *
      * @return array
      */
@@ -1025,10 +1025,10 @@ class Integration extends BaseIntegration
     /**
      * Returns a valid file-upload field data.
      *
-     * @param int $id Field id.
-     * @param string $name Field name (label).
+     * @param int     $id Field id.
+     * @param string  $name Field name (label).
      * @param boolean $required Is field required.
-     * @param string $filetypes String with allowed file extensions separated by commas.
+     * @param string  $filetypes String with allowed file extensions separated by commas.
      *
      * @return array
      */
