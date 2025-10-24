@@ -15,10 +15,14 @@ function validateForm(form, schema, fields, integration) {
     return false;
   }
 
-  let isValid = schema.fields.reduce((isValid, { name, type }) => {
+  let isValid = schema.fields.reduce((isValid, { name, label, type }) => {
     if (!isValid) return isValid;
 
-    const pair = form.fields.find((field) => name === field.name);
+    const pair =
+      form.fields.find((field) => name === field.name) ||
+      (integration === "wpforms" &&
+        form.fields.find((field) => label === field.name));
+
     if (!pair) return false;
 
     return isValid && pair.type === type;
