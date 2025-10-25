@@ -97,6 +97,14 @@ Browse the plugin's documentation on [formsbridge.codeccoop.org](https://formsbr
 9. Debug console
 
 == Changelog ==
+= 4.0.6 =
+* fix: field serialization based on field type
+* feat: add accpet-language http header on odoo's rpc api calls
+* feat: new odoo job position and helpdesk ticket templates
+* feat: new odoo workflow jobs
+* feat: include textarea to the standard field types
+= 4.0.5 =
+* fix: prepare mappers loop introduced in 4.0.4
 
 = 4.0.4 =
 * feat: add remuneration_type form field on financoop subscription request template
