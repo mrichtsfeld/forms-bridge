@@ -17,9 +17,9 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 class Integration extends BaseIntegration {
 
-	public const name = 'wpcf7';
+	const NAME = 'wpcf7';
 
-	public const title = 'Contact Form 7';
+	const TITLE = 'Contact Form 7';
 
 	/**
 	 * Binds form submit hook to the do_submission routine.

@@ -16,14 +16,14 @@ class Rest_Addon extends Addon {
 	 *
 	 * @var string
 	 */
-	public const title = 'REST API';
+	const TITLE = 'REST API';
 
 	/**
 	 * Handles the addon's name.
 	 *
 	 * @var string
 	 */
-	public const name = 'rest';
+	const NAME = 'rest';
 }
 
 Rest_Addon::setup();

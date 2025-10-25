@@ -17,9 +17,9 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 class Integration extends BaseIntegration {
 
-	public const name = 'ninja';
+	const NAME = 'ninja';
 
-	public const title = 'Ninja Forms';
+	const TITLE = 'Ninja Forms';
 
 	/**
 	 * Handles the current submission data.

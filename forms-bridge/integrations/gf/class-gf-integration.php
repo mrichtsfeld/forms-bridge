@@ -21,9 +21,9 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 class Integration extends BaseIntegration {
 
-	public const name = 'gf';
+	const NAME = 'gf';
 
-	public const title = 'Gravity Forms';
+	const TITLE = 'Gravity Forms';
 
 	/**
 	 * Binds after submission hook to the do_submission routine.

@@ -20,28 +20,21 @@ class Zoho_Addon extends Addon {
 	 *
 	 * @var string
 	 */
-	public const title = 'Zoho';
+	const TITLE = 'Zoho';
 
 	/**
 	 * Handles the addon's name.
 	 *
 	 * @var string
 	 */
-	public const name = 'zoho';
-
-	/**
-	 * Handles the zoho oauth service name.
-	 *
-	 * @var string
-	 */
-	protected const zoho_oauth_service = 'ZohoCRM';
+	const NAME = 'zoho';
 
 	/**
 	 * Handles the addon's custom bridge class.
 	 *
 	 * @var string
 	 */
-	public const bridge_class = '\FORMS_BRIDGE\Zoho_Form_Bridge';
+	const BRIDGE = '\FORMS_BRIDGE\Zoho_Form_Bridge';
 
 	/**
 	 * Performs a request against the backend to check the connexion status.
@@ -51,7 +44,7 @@ class Zoho_Addon extends Addon {
 	 * @return boolean
 	 */
 	public function ping( $backend ) {
-		$bridge_class = static::bridge_class;
+		$bridge_class = static::BRIDGE;
 		$bridge       = new $bridge_class(
 			array(
 				'name'     => '__zoho-' . time(),
@@ -102,7 +95,7 @@ class Zoho_Addon extends Addon {
 	 * @return array|WP_Error
 	 */
 	public function fetch( $endpoint, $backend ) {
-		$bridge_class = static::bridge_class;
+		$bridge_class = static::BRIDGE;
 		$bridge       = new $bridge_class(
 			array(
 				'name'     => '__zoho-' . time(),
@@ -136,7 +129,7 @@ class Zoho_Addon extends Addon {
 
 		$module = $matches[2];
 
-		$bridge_class = static::bridge_class;
+		$bridge_class = static::BRIDGE;
 		$bridge       = new $bridge_class(
 			array(
 				'name'     => '__zoho-' . time(),

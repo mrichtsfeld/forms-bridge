@@ -13,6 +13,8 @@
 		<testsuite name="default">
 			<directory prefix="test-" suffix=".php">./tests/</directory>
 			<exclude>./tests/test-sample.php</exclude>
+			<directory prefix="test-" suffix=".php">./forms-bridge/http/tests/</directory>
+			<exclude>./forms-bridge/http/tests/test-sample.php</exclude>
 		</testsuite>
 	</testsuites>
 </phpunit>

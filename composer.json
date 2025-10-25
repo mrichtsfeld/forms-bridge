@@ -2,7 +2,8 @@
   "name": "codeccoop/forms-bridge",
   "scripts": {
     "test": "vendor/bin/phpunit -c phpunit.xml.dist",
-    "lint": "vendor/bin/phpcs"
+    "lint": "vendor/bin/phpcs",
+    "format": "vendor/bin/phpcbf"
   },
   "require-dev": {
     "yoast/phpunit-polyfills": "^4.0",

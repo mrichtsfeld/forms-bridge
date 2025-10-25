@@ -1,9 +1,6 @@
 [submodule "forms-bridge/plugin"]
-	path = forms-bridge/plugin
+	path = forms-bridge/deps/plugin
 	url = https://gitlab.com/codeccoop/wp/plugins/wpct-plugin.git
 [submodule "forms-bridge/deps/http"]
 	path = forms-bridge/deps/http
 	url = https://gitlab.com/codeccoop/wp/plugins/http-bridge.git
-[submodule "forms-bridge/deps/i18n"]
-	path = forms-bridge/deps/i18n
-	url = https://gitlab.com/codeccoop/wp/plugins/wpct-i18n.git

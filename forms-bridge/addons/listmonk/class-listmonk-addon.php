@@ -19,21 +19,21 @@ class Listmonk_Addon extends Addon {
 	 *
 	 * @var string
 	 */
-	public const title = 'Listmonk';
+	const TITLE = 'Listmonk';
 
 	/**
 	 * Handles the addon's name.
 	 *
 	 * @var string
 	 */
-	public const name = 'listmonk';
+	const NAME = 'listmonk';
 
 	/**
 	 * Handles the addom's custom bridge class.
 	 *
 	 * @var string
 	 */
-	public const bridge_class = '\FORMS_BRIDGE\Listmonk_Form_Bridge';
+	const BRIDGE = '\FORMS_BRIDGE\Listmonk_Form_Bridge';
 
 	/**
 	 * Performs a request against the backend to check the connexion status.
@@ -87,7 +87,7 @@ class Listmonk_Addon extends Addon {
 	 * @return array
 	 */
 	public function get_endpoint_schema( $endpoint, $backend ) {
-		if ( $endpoint === '/api/subscribers' ) {
+		if ( '/api/subscribers' === $endpoint ) {
 			return array(
 				array(
 					'name'     => 'email',

@@ -20,21 +20,21 @@ class Odoo_Addon extends Addon {
 	 *
 	 * @var string
 	 */
-	public const title = 'Odoo';
+	const TITLE = 'Odoo';
 
 	/**
 	 * Handles the addon's name.
 	 *
 	 * @var string
 	 */
-	public const name = 'odoo';
+	const NAME = 'odoo';
 
 	/**
 	 * Handles the addom's custom bridge class.
 	 *
 	 * @var string
 	 */
-	public const bridge_class = '\FORMS_BRIDGE\Odoo_Form_Bridge';
+	const BRIDGE = '\FORMS_BRIDGE\Odoo_Form_Bridge';
 
 	/**
 	 * Performs a request against the backend to check the connexion status.
@@ -109,9 +109,9 @@ class Odoo_Addon extends Addon {
 				continue;
 			}
 
-			if ( $spec['type'] === 'char' || $spec['type'] === 'html' ) {
+			if ( 'char' === $spec['type'] || 'html' === $spec['type'] ) {
 				$schema = array( 'type' => 'string' );
-			} elseif ( $spec['type'] === 'float' ) {
+			} elseif ( 'float' === $spec['type'] ) {
 				$schema = array( 'type' => 'number' );
 			} elseif (
 				in_array(

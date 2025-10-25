@@ -20,21 +20,21 @@ class Finan_Coop_Addon extends Addon {
 	 *
 	 * @var string
 	 */
-	public const title = 'FinanCoop';
+	const TITLE = 'FinanCoop';
 
 	/**
 	 * Handles the addon's name.
 	 *
 	 * @var string
 	 */
-	public const name = 'financoop';
+	const NAME = 'financoop';
 
 	/**
 	 * Handles the addom's custom bridge class.
 	 *
 	 * @var string
 	 */
-	public const bridge_class = '\FORMS_BRIDGE\Finan_Coop_Form_Bridge';
+	const BRIDGE = '\FORMS_BRIDGE\Finan_Coop_Form_Bridge';
 
 	/**
 	 * Performs a request against the backend to check the connexion status.
@@ -167,7 +167,6 @@ class Finan_Coop_Addon extends Addon {
 					),
 					$common_schema
 				);
-				break;
 			case 'donation_request':
 				return array_merge(
 					array(
@@ -182,7 +181,6 @@ class Finan_Coop_Addon extends Addon {
 					),
 					$common_schema
 				);
-				break;
 			case 'loan_request':
 				return array_merge(
 					array(
@@ -193,7 +191,6 @@ class Finan_Coop_Addon extends Addon {
 					),
 					$common_schema
 				);
-				break;
 		}
 	}
 }

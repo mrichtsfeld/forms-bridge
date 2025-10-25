@@ -31,7 +31,7 @@ class Zoho_Form_Bridge extends Form_Bridge {
 		}
 
 		$method = $this->method;
-		if ( $method === 'POST' || $method === 'PUT' ) {
+		if ( 'POST' === $method || 'PUT' === $method ) {
 			$payload = wp_is_numeric_array( $payload ) ? $payload : array( $payload );
 			$payload = array( 'data' => $payload );
 		}
@@ -69,7 +69,7 @@ class Zoho_Form_Bridge extends Form_Bridge {
 			);
 
 			$code = $data['data'][0]['code'] ?? null;
-			if ( $code !== 'DUPLICATE_DATA' ) {
+			if ( 'DUPLICATE_DATA' !== $code ) {
 				return $response;
 			}
 

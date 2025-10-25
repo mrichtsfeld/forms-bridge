@@ -11,13 +11,6 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 class Bigin_Form_Bridge extends Zoho_Form_Bridge {
 
-	/**
-	 * Handles the zoho oauth service name.
-	 *
-	 * @var string
-	 */
-	protected const zoho_oauth_service = 'ZohoBigin';
-
 	public function __construct( $data ) {
 		parent::__construct( $data, 'bigin' );
 	}

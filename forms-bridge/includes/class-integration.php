@@ -18,11 +18,11 @@ class Integration extends Singleton {
 	 *
 	 * @var string registry
 	 */
-	private const registry = 'forms_bridge_integrations';
+	private const REGISTRY = 'forms_bridge_integrations';
 
-	public const title = '';
+	const TITLE = '';
 
-	public const name = '';
+	const NAME = '';
 
 	/**
 	 * Handles available integrations state.
@@ -67,7 +67,7 @@ class Integration extends Singleton {
 	 * @return array Integration registry state.
 	 */
 	private static function registry() {
-		$state            = get_option( self::registry, array() ) ?: array();
+		$state            = get_option( self::REGISTRY, array() ) ?: array();
 		$integrations_dir = FORMS_BRIDGE_INTEGRATIONS_DIR;
 		$integrations     = array_diff( scandir( $integrations_dir ), array( '.', '..' ) );
 
@@ -114,7 +114,7 @@ class Integration extends Singleton {
 			$registry[ $name ] = (bool) $enabled;
 		}
 
-		update_option( self::registry, $registry );
+		update_option( self::REGISTRY, $registry );
 	}
 
 	/**
@@ -166,7 +166,7 @@ class Integration extends Singleton {
 						foreach ( self::$integrations as $name => $integration ) {
 							$integrations[ $name ] = array(
 								'name'    => $name,
-								'title'   => $integration::title,
+								'title'   => $integration::TITLE,
 								'enabled' => $registry[ $name ] ?? false,
 							);
 						}
@@ -223,7 +223,7 @@ class Integration extends Singleton {
 				}
 
 				$woomode =
-					count( $integrations ) === 1 && $integrations[0] === 'woo';
+					1 === count( $integrations ) && 'woo' === $integrations[0];
 
 				$filtered_templates = array();
 				foreach ( $templates as $template ) {
@@ -252,16 +252,36 @@ class Integration extends Singleton {
 		);
 	}
 
+	/**
+	 * Alias to the singleton get_instance method.
+	 *
+	 * @param mixed[] ...$args Constructor arguments.
+	 *
+	 * @return Integration
+	 */
 	public static function setup( ...$args ) {
 		return static::get_instance( ...$args );
 	}
 
+	/**
+	 * Handles the integration enabled state as a boolean value.
+	 *
+	 * @var boolean
+	 */
 	public $enabled = false;
 
+	/**
+	 * Integration constructor.
+	 *
+	 * @param mixed[] ...$args Array of constructor arguments.
+	 */
 	protected function construct( ...$args ) {
-		self::$integrations[ static::name ] = $this;
+		self::$integrations[ static::NAME ] = $this;
 	}
 
+	/**
+	 * Binds the integration to the WP hooks system.
+	 */
 	public function load() {
 		add_action(
 			'init',
@@ -278,7 +298,7 @@ class Integration extends Singleton {
 					$forms = array();
 				}
 
-				if ( $integration && $integration !== static::name ) {
+				if ( $integration && static::NAME !== $integration ) {
 					return $forms;
 				}
 
@@ -289,7 +309,7 @@ class Integration extends Singleton {
 			2
 		);
 
-		// Gets form data by context or by ID
+		// Gets form data by context or by ID.
 		add_filter(
 			'forms_bridge_form',
 			function ( $form, $form_id = null, $integration = null ) {
@@ -306,7 +326,7 @@ class Integration extends Singleton {
 					}
 				}
 
-				if ( $integration && $integration !== static::name ) {
+				if ( $integration && static::NAME !== $integration ) {
 					return $form;
 				}
 
@@ -320,7 +340,7 @@ class Integration extends Singleton {
 			3
 		);
 
-		// Gets current submission data
+		// Gets current submission data.
 		add_filter(
 			'forms_bridge_submission',
 			function ( $submission, $raw = false ) {
@@ -339,7 +359,7 @@ class Integration extends Singleton {
 			1
 		);
 
-		// Gets curent submission uploads
+		// Gets curent submission uploads.
 		add_filter(
 			'forms_bridge_uploads',
 			function ( $uploads ) {
@@ -360,19 +380,21 @@ class Integration extends Singleton {
 	/**
 	 * Retrives the current form.
 	 *
-	 * @return array Form data.
+	 * @return array|null Form data.
 	 */
 	public function form() {
-		return;
+		return null;
 	}
 
 	/**
 	 * Retrives form by ID.
 	 *
-	 * @return array Form data.
+	 * @param string $form_id Form ID. It could be prefixed or not.
+	 *
+	 * @return arra|nully Form data.
 	 */
 	public function get_form_by_id( $form_id ) {
-		return;
+		return null;
 	}
 
 	/**
@@ -392,7 +414,7 @@ class Integration extends Singleton {
 	 * @return int|null ID of the new form.
 	 */
 	public function create_form( $data ) {
-		return;
+		return null;
 	}
 
 	/**
@@ -406,8 +428,13 @@ class Integration extends Singleton {
 		return false;
 	}
 
+	/**
+	 * Retrives the current submission ID.
+	 *
+	 * @return string|null
+	 */
 	public function submission_id() {
-		return;
+		return null;
 	}
 
 	/**
@@ -418,7 +445,7 @@ class Integration extends Singleton {
 	 * @return array|null Submission data.
 	 */
 	public function submission( $raw ) {
-		return;
+		return null;
 	}
 
 	/**
@@ -427,6 +454,6 @@ class Integration extends Singleton {
 	 * @return array|null Collection of uploaded files.
 	 */
 	public function uploads() {
-		return;
+		return null;
 	}
 }

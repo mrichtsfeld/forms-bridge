@@ -7,7 +7,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 add_filter(
 	'forms_bridge_template_defaults',
 	function ( $defaults, $addon, $schema ) {
-		if ( $addon !== 'zoho' ) {
+		if ( 'zoho' !== $addon ) {
 			return $defaults;
 		}
 
@@ -201,10 +201,11 @@ add_filter(
 
 		$index = array_search(
 			'Tag',
-			array_column( $data['bridge']['custom_fields'], 'name' )
+			array_column( $data['bridge']['custom_fields'], 'name' ),
+			true
 		);
 
-		if ( $index !== false ) {
+		if ( false !== $index ) {
 			$field = &$data['bridge']['custom_fields'][ $index ];
 
 			if ( ! empty( $field['value'] ) ) {
@@ -212,7 +213,8 @@ add_filter(
 					array_map( 'trim', explode( ',', strval( $field['value'] ) ) )
 				);
 
-				for ( $i = 0; $i < count( $tags ); $i++ ) {
+				$l = count( $tags );
+				for ( $i = 0; $i < $l; $i++ ) {
 					$data['bridge']['custom_fields'][] = array(
 						'name'  => "Tag[{$i}].name",
 						'value' => $tags[ $i ],
@@ -225,10 +227,11 @@ add_filter(
 
 		$index = array_search(
 			'All_day',
-			array_column( $data['bridge']['custom_fields'], 'name' )
+			array_column( $data['bridge']['custom_fields'], 'name' ),
+			true
 		);
 
-		if ( $index !== false ) {
+		if ( false !== $index ) {
 			$data['form']['fields'] = array_filter(
 				$data['form']['fields'],
 				function ( $field ) {
@@ -247,10 +250,11 @@ add_filter(
 
 			$index = array_search(
 				'duration',
-				array_column( $data['bridge']['custom_fields'], 'name' )
+				array_column( $data['bridge']['custom_fields'], 'name' ),
+				true
 			);
 
-			if ( $index !== false ) {
+			if ( false !== $index ) {
 				array_splice( $data['bridge']['custom_fields'], $index, 1 );
 			}
 		}

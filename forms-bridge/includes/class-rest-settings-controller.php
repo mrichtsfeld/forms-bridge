@@ -21,8 +21,6 @@ class REST_Settings_Controller extends Base_Controller {
 
 	/**
 	 * Inherits the parent initialized and register the post types route
-	 *
-	 * @param string $group Plugin settings group name.
 	 */
 	protected static function init() {
 		parent::init();
@@ -56,7 +54,7 @@ class REST_Settings_Controller extends Base_Controller {
 				continue;
 			}
 
-			$addon = $addon::name;
+			$addon = $addon::NAME;
 			register_rest_route(
 				'forms-bridge/v1',
 				"/{$addon}/schemas",
@@ -92,7 +90,7 @@ class REST_Settings_Controller extends Base_Controller {
 				continue;
 			}
 
-			$addon = $addon::name;
+			$addon = $addon::NAME;
 
 			$schema = Form_Bridge_Template::schema( $addon );
 			$args   = array();
@@ -208,7 +206,7 @@ class REST_Settings_Controller extends Base_Controller {
 				continue;
 			}
 
-			$addon = $addon::name;
+			$addon = $addon::NAME;
 
 			$schema = Job::schema();
 			$args   = array();
@@ -299,7 +297,7 @@ class REST_Settings_Controller extends Base_Controller {
 				continue;
 			}
 
-			$addon = $addon::name;
+			$addon = $addon::NAME;
 
 			// $schema = Form_Bridge_Template::schema($addon);
 			// $args = [];
@@ -384,7 +382,7 @@ class REST_Settings_Controller extends Base_Controller {
 	 * Callback for GET requests to the job endpoint.
 	 *
 	 * @param string          $addon Addon name.
-	 * @param WP_REST_Request $request.
+	 * @param WP_REST_Request $request Current REST request instance.
 	 *
 	 * @return array|WP_Error
 	 */
@@ -434,7 +432,7 @@ class REST_Settings_Controller extends Base_Controller {
 	 * Callback for POST requests to the jobs endpoint.
 	 *
 	 * @param string          $addon Addon name.
-	 * @param WP_REST_Request $request.
+	 * @param WP_REST_Request $request Current REST request instance.
 	 *
 	 * @return array|WP_Error Jobs data.
 	 */
@@ -457,7 +455,7 @@ class REST_Settings_Controller extends Base_Controller {
 	 * Callback for GET requests to the templates endpoint.
 	 *
 	 * @param string          $addon Addon name.
-	 * @param WP_REST_Request $request.
+	 * @param WP_REST_Request $request Current REST request instance.
 	 *
 	 * @return array|WP_Error Template data.
 	 */
@@ -510,8 +508,8 @@ class REST_Settings_Controller extends Base_Controller {
 	/**
 	 * Callback for POST requests to the templates endpoint.
 	 *
-	 * @param string                        $addon Name of the owner addon of the template.
-	 * @param REST_Request Request instance.
+	 * @param string       $addon Name of the owner addon of the template.
+	 * @param REST_Request $request CUrrent REST request instance.
 	 *
 	 * @return array|WP_Error Template use result.
 	 */
@@ -525,7 +523,7 @@ class REST_Settings_Controller extends Base_Controller {
 			return self::not_found();
 		}
 
-		if ( ! in_array( $integration, $template->integrations ) ) {
+		if ( ! in_array( $integration, $template->integrations, true ) ) {
 			return self::bad_request();
 		}
 
@@ -535,7 +533,7 @@ class REST_Settings_Controller extends Base_Controller {
 			return $result;
 		}
 
-		return array( 'success' => $result === true );
+		return array( 'success' => true === $result );
 	}
 
 	private static function get_template_options( $addon, $request ) {
@@ -562,7 +560,8 @@ class REST_Settings_Controller extends Base_Controller {
 		$field_options = array();
 		$fields        = $template->fields;
 		foreach ( $fields as $field ) {
-			if ( $endpoint = $field['options']['endpoint'] ?? null ) {
+			$endpoint = $field['options']['endpoint'] ?? null;
+			if ( $endpoint ) {
 				if ( is_string( $field['options']['finger'] ) ) {
 					$finger = array(
 						'value' => $field['options']['finger'],
@@ -619,7 +618,8 @@ class REST_Settings_Controller extends Base_Controller {
 					wp_is_numeric_array( $labels ) &&
 					count( $labels ) === count( $values )
 				) {
-					for ( $i = 0; $i < count( $labels ); $i++ ) {
+					$l = count( $labels );
+					for ( $i = 0; $i < $l; $i++ ) {
 						$options[ $i ]['label'] = $labels[ $i ];
 					}
 				}

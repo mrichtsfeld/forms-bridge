@@ -22,28 +22,21 @@ class Bigin_Addon extends Zoho_Addon {
 	 *
 	 * @var string
 	 */
-	public const title = 'Bigin';
+	const TITLE = 'Bigin';
 
 	/**
 	 * Handles the addon's name.
 	 *
 	 * @var string
 	 */
-	public const name = 'bigin';
-
-	/**
-	 * Handles the zoho oauth service name.
-	 *
-	 * @var string
-	 */
-	protected const zoho_oauth_service = 'ZohoBigin';
+	const NAME = 'bigin';
 
 	/**
 	 * Handles the addon's custom bridge class.
 	 *
 	 * @var string
 	 */
-	public const bridge_class = '\FORMS_BRIDGE\Bigin_Form_Bridge';
+	const BRIDGE = '\FORMS_BRIDGE\Bigin_Form_Bridge';
 
 	/**
 	 * Performs a request against the backend to check the connexion status.

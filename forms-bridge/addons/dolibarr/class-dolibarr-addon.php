@@ -20,21 +20,21 @@ class Dolibarr_Addon extends Addon {
 	 *
 	 * @var string
 	 */
-	public const title = 'Dolibarr';
+	const TITLE = 'Dolibarr';
 
 	/**
 	 * Handles the addon's name.
 	 *
 	 * @var string
 	 */
-	public const name = 'dolibarr';
+	const NAME = 'dolibarr';
 
 	/**
 	 * Handles the addom's custom bridge class.
 	 *
 	 * @var string
 	 */
-	public const bridge_class = '\FORMS_BRIDGE\Dolibarr_Form_Bridge';
+	const BRIDGE = '\FORMS_BRIDGE\Dolibarr_Form_Bridge';
 
 	public function ping( $backend ) {
 		$bridge = new Dolibarr_Form_Bridge(
@@ -52,7 +52,7 @@ class Dolibarr_Addon extends Addon {
 		}
 
 		$code = $response['data']['success']['code'] ?? null;
-		return $code === 200;
+		return 200 === $code;
 	}
 
 	/**

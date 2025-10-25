@@ -18,7 +18,7 @@ class Logger extends Singleton {
 	/**
 	 * Handles the log file name.
 	 */
-	private const log_file = 'debug.log';
+	private const FILE = 'debug.log';
 
 	/**
 	 * Error level constant.
@@ -55,11 +55,13 @@ class Logger extends Singleton {
 			}
 		}
 
-		return $dir . '/' . self::log_file;
+		return $dir . '/' . self::FILE;
 	}
 
 	/**
 	 * Gets the log file contents.
+	 *
+	 * @param integer $lines Amount of lines to read.
 	 *
 	 * @return string Logs.
 	 */
@@ -79,7 +81,7 @@ class Logger extends Singleton {
 		$cursor = -1;
 		fseek( $socket, $cursor, SEEK_END );
 
-		if ( fread( $socket, 1 ) != "\n" ) {
+		if ( "\n" !== fread( $socket, 1 ) ) {
 			--$lines;
 		}
 
@@ -91,7 +93,8 @@ class Logger extends Singleton {
 
 			fseek( $socket, -$seek, SEEK_CUR );
 
-			$output = ( $chunk = fread( $socket, $seek ) ) . $output;
+			$chunk  = fread( $socket, $seek );
+			$output = $chunk . $output;
 
 			fseek( $socket, -mb_strlen( $chunk, '8bit' ), SEEK_CUR );
 
@@ -194,6 +197,8 @@ class Logger extends Singleton {
 
 	/**
 	 * Logger singleton constructor. Binds the logger to wp and custom hooks
+	 *
+	 * @param mixed[] ...$args Array of constructor arguments.
 	 */
 	protected function construct( ...$args ) {
 		add_action(
@@ -222,7 +227,7 @@ class Logger extends Singleton {
 							return $data;
 						}
 
-						if ( $data['debug'] === true ) {
+						if ( true === $data['debug'] ) {
 							self::activate();
 						} else {
 							self::deactivate();
@@ -247,7 +252,7 @@ class Logger extends Singleton {
 			array(
 				'methods'             => WP_REST_Server::READABLE,
 				'callback'            => static function () {
-					$lines = isset( $_GET['lines'] ) ? (int) $_GET['lines'] : 500;
+					$lines = isset( $_GET['lines'] ) ? intval( $_GET['lines'] ) : 500;
 					$logs  = self::logs( $lines );
 
 					if ( empty( $logs ) ) {

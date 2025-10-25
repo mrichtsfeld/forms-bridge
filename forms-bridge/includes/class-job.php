@@ -14,17 +14,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Noop function definition as a placeholder for job data defaults.
- *
- * @param array Job payload.
- *
- * @return array
- */
-function forms_bridge_job_noop_method( $payload ) {
-	return $payload;
-}
-
-/**
  * Job class
  */
 class Job {
@@ -34,7 +23,7 @@ class Job {
 	 *
 	 * @var string
 	 */
-	public const post_type = 'fb-job';
+	const TYPE = 'fb-job';
 
 	/**
 	 * Handles the job addon space.
@@ -65,6 +54,17 @@ class Job {
 	 * @var Job|null
 	 */
 	private $next = null;
+
+	/**
+	 * Noop function definition as a placeholder for job data defaults.
+	 *
+	 * @param array $payload Job payload.
+	 *
+	 * @return array
+	 */
+	public static function noop( $payload ) {
+		return $payload;
+	}
 
 	/**
 	 * Job's schema public getter.
@@ -314,7 +314,7 @@ class Job {
 		while ( true ) {
 			--$i;
 
-			if ( $snippet[ $i ] === '}' || $i <= 0 ) {
+			if ( '}' === $snippet[ $i ] || $i <= 0 ) {
 				break;
 			}
 		}
@@ -433,21 +433,22 @@ class Job {
 	/**
 	 * Gets the payload from the previous workflow stage and runs the job against it.
 	 *
-	 * @param array                                        $payload Payload data.
-	 * @param Form_Bridge Workflow's bridge owner instance.
-	 * @param array                                        $mutations Bridge's mutations.
+	 * @param array       $payload Payload data.
+	 * @param Form_Bridge $bridge Workflow's bridge owner instance.
+	 * @param array       $mutations Bridge's mutations.
 	 *
 	 * @return array|null Payload after job.
 	 */
 	public function run( $payload, $bridge, $mutations = null ) {
 		$original = $payload;
 
-		if ( $mutations === null ) {
+		if ( null === $mutations ) {
 			$mutations = array_slice( $bridge->mutations, 1 );
 		}
 
 		if ( $this->missing_requireds( $payload ) ) {
-			if ( $next_job = $this->next ) {
+			$next_job = $this->next;
+			if ( $next_job ) {
 				$mutations = array_slice( $mutations, 1 );
 				$payload   = $next_job->run( $payload, $bridge, $mutations );
 			}
@@ -471,7 +472,8 @@ class Job {
 		$mutation = array_shift( $mutations ) ?: array();
 		$payload  = $bridge->apply_mutation( $payload, $mutation );
 
-		if ( $next_job = $this->next ) {
+		$next_job = $this->next;
+		if ( $next_job ) {
 			$payload = $next_job->run( $payload, $bridge, $mutations );
 		}
 
@@ -500,7 +502,7 @@ class Job {
 	private function get_post_id() {
 		$ids = get_posts(
 			array(
-				'post_type'              => self::post_type,
+				'post_type'              => self::TYPE,
 				'name'                   => $this->name,
 				'meta_key'               => '_fb-addon',
 				'meta_value'             => $this->addon,
@@ -522,7 +524,7 @@ class Job {
 		}
 
 		$post_arr = array(
-			'post_type'    => self::post_type,
+			'post_type'    => self::TYPE,
 			'post_name'    => $this->name,
 			'post_title'   => $this->title,
 			'post_excerpt' => $this->description,
@@ -579,7 +581,7 @@ class Job {
 		} elseif ( isset( $data['method'] ) && function_exists( $data['method'] ) ) {
 				$data['snippet'] = self::reflect_method( $data['method'] );
 		} else {
-			$data['method']  = '\FORMS_BRIDGE\forms_bridge_job_noop_method';
+			$data['method']  = array( '\FORMS_BRIDGE\Job', 'noop' );
 			$data['snippet'] = '';
 		}
 

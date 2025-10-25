@@ -21,21 +21,21 @@ class Google_Sheets_Addon extends Addon {
 	 *
 	 * @var string
 	 */
-	public const title = 'Google Sheets';
+	const TITLE = 'Google Sheets';
 
 	/**
 	 * Handles the addon's name.
 	 *
 	 * @var string
 	 */
-	public const name = 'gsheets';
+	const NAME = 'gsheets';
 
 	/**
 	 * Handles the addom's custom bridge class.
 	 *
 	 * @var string
 	 */
-	public const bridge_class = '\FORMS_BRIDGE\Google_Sheets_Form_Bridge';
+	const BRIDGE = '\FORMS_BRIDGE\Google_Sheets_Form_Bridge';
 
 	public function load() {
 		parent::load();
@@ -143,7 +143,7 @@ class Google_Sheets_Addon extends Addon {
 	 * @return array List of fields and content type of the endpoint.
 	 */
 	public function get_endpoint_schema( $endpoint, $backend ) {
-		$bridges = FBAPI::get_addon_bridges( self::name );
+		$bridges = FBAPI::get_addon_bridges( self::NAME );
 		foreach ( $bridges as $candidate ) {
 			$data = $candidate->data();
 			if ( ! $data ) {

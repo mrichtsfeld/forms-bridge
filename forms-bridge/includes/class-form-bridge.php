@@ -17,7 +17,10 @@ class Form_Bridge {
 	/**
 	 * Bridge data common schema.
 	 *
-	 * @var array
+	 * @param string|null $addon Forwarded to the 'forms_bridge_bridge_schema' filter
+	 *                           to allow addon schema updates.
+	 *
+	 * @return array Bridge json schema.
 	 */
 	public static function schema( $addon = null ) {
 		$schema = array(
@@ -98,7 +101,6 @@ class Form_Bridge {
 						'type'  => 'array',
 						'items' => array(
 							'type'                 => 'object',
-							'additionalProperties' => false,
 							'properties'           => array(
 								'from' => array(
 									'type'              => 'string',
@@ -193,16 +195,21 @@ class Form_Bridge {
 	}
 
 	/**
-	 * Handles the form bridge's settings data.
+	 * Handles the form bridge setting data.
 	 *
 	 * @var array
 	 */
 	protected $data;
 
+	/**
+	 * Handles the form bridge identifier string.
+	 *
+	 * @var string
+	 */
 	protected $id;
 
 	/**
-	 * Handles form bridge's addon slug.
+	 * Handles form bridge addon slug.
 	 *
 	 * @var string
 	 */
@@ -210,6 +217,9 @@ class Form_Bridge {
 
 	/**
 	 * Stores the form bridge's data as a private attribute.
+	 *
+	 * @param array  $data Bridge data.
+	 * @param string $addon Bridge addon.
 	 */
 	public function __construct( $data, $addon = 'rest' ) {
 		$this->data  = wpct_plugin_sanitize_with_schema(
@@ -402,7 +412,8 @@ class Form_Bridge {
 	/**
 	 * Apply cast mappers to data.
 	 *
-	 * @param array $data Array of data.
+	 * @param array      $data Array of data.
+	 * @param array|null $mutation Array of mappers.
 	 *
 	 * @return array Data modified by the bridge's mappers.
 	 */
@@ -413,7 +424,7 @@ class Form_Bridge {
 
 		$finger = new JSON_Finger( $data );
 
-		if ( $mutation === null ) {
+		if ( null === $mutation ) {
 			$mutation = $this->mutations[0] ?? array();
 		}
 
@@ -437,9 +448,9 @@ class Form_Bridge {
 				$value = $finger->get( $mapper['from'] );
 			}
 
-			$unset = $mapper['cast'] === 'null';
+			$unset = 'null' === $mapper['cast'];
 
-			if ( $mapper['cast'] !== 'copy' ) {
+			if ( 'copy' !== $mapper['cast'] ) {
 				$unset =
 					$unset ||
 					preg_replace( '/^\?/', '', $mapper['from'] ) !==
@@ -450,7 +461,7 @@ class Form_Bridge {
 				$finger->unset( $mapper['from'] );
 			}
 
-			if ( $mapper['cast'] !== 'null' ) {
+			if ( 'null' !== $mapper['cast'] ) {
 				$finger->set( $mapper['to'], $this->cast( $value, $mapper ) );
 			}
 		}
@@ -462,7 +473,7 @@ class Form_Bridge {
 	 * Casts value to the given type.
 	 *
 	 * @param mixed  $value Original value.
-	 * @param string $type Target type to cast value.
+	 * @param string $mapper Source mapper.
 	 *
 	 * @return mixed
 	 */
@@ -602,7 +613,8 @@ class Form_Bridge {
 		$before = $parts[0];
 		$after  = implode( '[]', array_slice( $parts, 1 ) );
 
-		for ( $i = 0; $i < count( $values ); $i++ ) {
+		$l = count( $values );
+		for ( $i = 0; $i < $l; $i++ ) {
 			$pointer      = "{$before}[{$i}]{$after}";
 			$values[ $i ] = $this->cast(
 				$values[ $i ],
@@ -754,11 +766,8 @@ class Form_Bridge {
 				include_once ABSPATH .
 					'wp-admin/includes/translation-install.php';
 				$translations = wp_get_available_translations();
-				$locale       = apply_filters(
-					'wpct_i18n_current_language',
-					get_locale(),
-					'locale'
-				);
+				$locale       = get_locale();
+
 				return $translations[ $locale ]['native_name'] ?? $locale;
 			},
 			'datetime'         => static function () {
@@ -899,7 +908,7 @@ class Form_Bridge {
 
 		$index = array_search( $this->name, array_column( $bridges, 'name' ) );
 
-		if ( $index === false ) {
+		if ( false === $index ) {
 			return false;
 		}
 

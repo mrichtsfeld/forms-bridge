@@ -6,7 +6,6 @@ use Exception;
 use Error;
 use FBAPI;
 use WP_Error;
-use HTTP_BRIDGE\Settings_Store as Http_Store;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit();
@@ -618,8 +617,8 @@ class Form_Bridge_Template {
 
 		if ( empty( $data['integrations'] ) ) {
 			foreach ( Integration::integrations() as $integration ) {
-				if ( $integration::name !== 'woo' ) {
-					$data['integrations'][] = $integration::name;
+				if ( 'woo' !== $integration::NAME ) {
+					$data['integrations'][] = $integration::NAME;
 				}
 			}
 		}
@@ -1086,7 +1085,7 @@ class Form_Bridge_Template {
 	 * @return boolean
 	 */
 	final protected function backend_exists( $name ) {
-		$backends = Http_Store::setting( 'general' )->backends ?: array();
+		$backends = Settings_Store::setting( 'http' )->backends ?: array();
 		return array_search( $name, array_column( $backends, 'name' ) ) !== false;
 	}
 
@@ -1098,7 +1097,7 @@ class Form_Bridge_Template {
 	 * @return boolean Creation result.
 	 */
 	private function create_backend( $data ) {
-		$setting  = Http_Store::setting( 'general' );
+		$setting  = Settings_Store::setting( 'http' );
 		$backends = $setting->backends ?: array();
 
 		do_action_ref_array(
@@ -1128,7 +1127,7 @@ class Form_Bridge_Template {
 	 * @param string $name Backend name.
 	 */
 	private function remove_backend( $name ) {
-		$setting  = Http_Store::setting( 'general' );
+		$setting  = Settings_Store::setting( 'http' );
 		$backends = $setting->backends ?: array();
 
 		$setting->backends = array_filter(
@@ -1218,7 +1217,7 @@ class Form_Bridge_Template {
 	 * @return boolean
 	 */
 	private function credential_exists( $name ) {
-		$credentials = Http_Store::setting( 'general' )->credentials ?: array();
+		$credentials = Settings_Store::setting( 'http' )->credentials ?: array();
 		return array_search( $name, array_column( $credentials, 'name' ) ) !==
 			false;
 	}
@@ -1231,7 +1230,7 @@ class Form_Bridge_Template {
 	 * @return boolean Creation result.
 	 */
 	private function create_credential( $data ) {
-		$setting     = Http_Store::setting( 'general' );
+		$setting     = Settings_Store::setting( 'http' );
 		$credentials = $setting->credentials ?: array();
 
 		if ( ! is_array( $credentials ) ) {
@@ -1265,7 +1264,7 @@ class Form_Bridge_Template {
 	 * @param string $name Credential name.
 	 */
 	private function remove_credential( $name ) {
-		$setting     = Http_Store::setting( 'general' );
+		$setting     = Settings_Store::setting( 'http' );
 		$credentials = $setting->credentials ?: array();
 
 		$setting->credentials = array_filter(

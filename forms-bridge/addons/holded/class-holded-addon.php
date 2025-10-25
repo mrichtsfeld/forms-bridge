@@ -22,21 +22,21 @@ class Holded_Addon extends Addon {
 	 *
 	 * @var string
 	 */
-	public const title = 'Holded';
+	const TITLE = 'Holded';
 
 	/**
 	 * Handles the addon's name.
 	 *
 	 * @var string
 	 */
-	public const name = 'holded';
+	const NAME = 'holded';
 
 	/**
 	 * Handles the addom's custom bridge class.
 	 *
 	 * @var string
 	 */
-	public const bridge_class = '\FORMS_BRIDGE\Holded_Form_Bridge';
+	const BRIDGE = '\FORMS_BRIDGE\Holded_Form_Bridge';
 
 	/**
 	 * Performs a request against the backend to check the connexion status.
@@ -96,7 +96,7 @@ class Holded_Addon extends Addon {
 		}
 
 		$api_base = $chunks[0];
-		if ( $api_base !== 'api' ) {
+		if ( 'api' !== $api_base ) {
 			array_unshift( $chunks, 'api' );
 		}
 
@@ -111,9 +111,10 @@ class Holded_Addon extends Addon {
 					'projects',
 					'team',
 					'accounting',
-				)
+				),
+				true
 			) ||
-			$version !== 'v1'
+			'v1' !== $version
 		) {
 			return array();
 		}
@@ -131,7 +132,7 @@ class Holded_Addon extends Addon {
 		}
 
 		$path = '/' . $resource;
-		if ( $resource === 'documents' ) {
+		if ( 'documents' === $resource ) {
 			$path .= '/{docType}';
 		}
 

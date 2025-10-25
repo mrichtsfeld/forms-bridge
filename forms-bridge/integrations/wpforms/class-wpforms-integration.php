@@ -18,9 +18,9 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 class Integration extends BaseIntegration {
 
-	public const name = 'wpforms';
+	const NAME = 'wpforms';
 
-	public const title = 'WP Forms';
+	const TITLE = 'WP Forms';
 
 	/**
 	 * Handles the current submission data.

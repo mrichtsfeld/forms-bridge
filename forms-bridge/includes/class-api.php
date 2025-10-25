@@ -144,7 +144,8 @@ class FBAPI {
 	/**
 	 * Gets the collection of available bridges filtered by form ID.
 	 *
-	 * @param string $form_id Form ID.
+	 * @param string      $form_id Form ID.
+	 * @param string|null $integration Integration slug, required if form_id is not prefixed.
 	 *
 	 * @return Form_Bridge[]
 	 */
@@ -195,7 +196,7 @@ class FBAPI {
 			return false;
 		}
 
-		$bridge_class = $addon::bridge_class;
+		$bridge_class = $addon::BRIDGE;
 		$bridge       = new $bridge_class( $data );
 
 		if ( ! $bridge->is_valid ) {
@@ -226,7 +227,7 @@ class FBAPI {
 	/**
 	 * Gets the bridge schema for a given addon.
 	 *
-	 * @param string $name Addon name.
+	 * @param string $addon Addon name.
 	 *
 	 * @return array|null
 	 */
@@ -237,7 +238,7 @@ class FBAPI {
 			return;
 		}
 
-		return Form_Bridge::schema( $addon::name );
+		return Form_Bridge::schema( $addon::NAME );
 	}
 
 	/**
@@ -437,7 +438,7 @@ class FBAPI {
 	/**
 	 * Inserts or updates the backend data on the database.
 	 *
-	 * @param array Backend data.
+	 * @param array $data Backend data.
 	 *
 	 * @return boolean
 	 */

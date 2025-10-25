@@ -3,7 +3,6 @@
 namespace FORMS_BRIDGE;
 
 use Error;
-use HTTP_BRIDGE\Settings_Store as Http_Store;
 use TypeError;
 use WPCT_PLUGIN\Singleton;
 use FBAPI;
@@ -30,28 +29,28 @@ class Addon extends Singleton {
 	 *
 	 * @var string
 	 */
-	private const registry = 'forms_bridge_addons';
+	private const REGISTRY = 'forms_bridge_addons';
 
 	/**
 	 * Handles addon public name.
 	 *
 	 * @var string
 	 */
-	public const title = '';
+	const TITLE = '';
 
 	/**
 	 * Handles addon's API name.
 	 *
 	 * @var string
 	 */
-	public const name = '';
+	const NAME = '';
 
 	/**
 	 * Handles addon's custom bridge class name.
 	 *
 	 * @var string
 	 */
-	public const bridge_class = '\FORMS_BRIDGE\Form_Bridge';
+	const BRIDGE = '\FORMS_BRIDGE\Form_Bridge';
 
 	/**
 	 * Addon's default config getter.
@@ -59,7 +58,7 @@ class Addon extends Singleton {
 	 * @return array
 	 */
 	public static function schema() {
-		$bridge_schema = FBAPI::get_bridge_schema( static::name );
+		$bridge_schema = FBAPI::get_bridge_schema( static::NAME );
 
 		return array(
 			'type'       => 'object',
@@ -86,13 +85,15 @@ class Addon extends Singleton {
 	 */
 	protected static function defaults() {
 		return array(
-			'title'   => static::title,
+			'title'   => static::TITLE,
 			'bridges' => array(),
 		);
 	}
 
 	/**
 	 * Public singleton initializer.
+	 *
+	 * @param mixed[] ...$args Array of class constructor arguments.
 	 */
 	final public static function setup( ...$args ) {
 		return static::get_instance( ...$args );
@@ -104,7 +105,7 @@ class Addon extends Singleton {
 	 * @return array Addons registry state.
 	 */
 	private static function registry() {
-		$state      = get_option( self::registry, array( 'rest' => true ) ) ?: array();
+		$state      = get_option( self::REGISTRY, array( 'rest' => true ) ) ?: array();
 		$addons_dir = FORMS_BRIDGE_ADDONS_DIR;
 		$addons     = array_diff( scandir( $addons_dir ), array( '.', '..' ) );
 
@@ -127,7 +128,7 @@ class Addon extends Singleton {
 	/**
 	 * Updates the addons' registry state.
 	 *
-	 * @param array $value Plugin's general setting data.
+	 * @param array<string, boolean> $addons Addons registry state.
 	 */
 	private static function update_registry( $addons = array() ) {
 		$registry = self::registry();
@@ -139,7 +140,7 @@ class Addon extends Singleton {
 			$registry[ $addon ] = (bool) $enabled;
 		}
 
-		update_option( self::registry, $registry );
+		update_option( self::REGISTRY, $registry );
 	}
 
 	final public static function addons() {
@@ -156,7 +157,7 @@ class Addon extends Singleton {
 	/**
 	 * Addon instances getter.
 	 *
-	 * @var string $name Addon name.
+	 * @param string $name Addon name.
 	 *
 	 * @return Addon|null
 	 */
@@ -189,7 +190,7 @@ class Addon extends Singleton {
 							$logo_path =
 							FORMS_BRIDGE_ADDONS_DIR .
 							'/' .
-							$addon::name .
+							$addon::NAME .
 							'/assets/logo.png';
 
 							if ( is_file( $logo_path ) && is_readable( $logo_path ) ) {
@@ -200,7 +201,7 @@ class Addon extends Singleton {
 
 							$addons[ $name ] = array(
 								'name'    => $name,
-								'title'   => $addon::title,
+								'title'   => $addon::TITLE,
 								'enabled' => $registry[ $name ] ?? false,
 								'logo'    => $logo,
 							);
@@ -266,7 +267,7 @@ class Addon extends Singleton {
 		$uniques   = array();
 		$sanitized = array();
 
-		$schema = FBAPI::get_bridge_schema( static::name );
+		$schema = FBAPI::get_bridge_schema( static::NAME );
 		foreach ( $bridges as $bridge ) {
 			$bridge['name'] = trim( $bridge['name'] );
 			if ( in_array( $bridge['name'], $uniques, true ) ) {
@@ -292,7 +293,7 @@ class Addon extends Singleton {
 	 * @return array
 	 */
 	protected static function sanitize_bridge( $bridge, $schema ) {
-		$backends = Http_Store::setting( 'general' )->backends ?: array();
+		$backends = Settings_Store::setting( 'http' )->backends ?: array();
 
 		foreach ( $backends as $candidate ) {
 			if ( $candidate['name'] === $bridge['backend'] ) {
@@ -306,7 +307,7 @@ class Addon extends Singleton {
 		}
 
 		static $forms;
-		if ( $forms === null ) {
+		if ( null === $forms ) {
 			$forms = FBAPI::get_forms();
 		}
 
@@ -327,7 +328,8 @@ class Addon extends Singleton {
 			count( $bridge['workflow'] ) + 1
 		);
 
-		for ( $i = 0; $i <= count( $bridge['workflow'] ); $i++ ) {
+		$l = count( $bridge['workflow'] );
+		for ( $i = 0; $i <= $l; $i++ ) {
 			$bridge['mutations'][ $i ] = $bridge['mutations'][ $i ] ?? array();
 		}
 
@@ -338,6 +340,7 @@ class Addon extends Singleton {
 			$bridge['endpoint'];
 
 		$bridge['enabled'] = boolval( $bridge['enabled'] ?? true );
+
 		return $bridge;
 	}
 
@@ -346,9 +349,11 @@ class Addon extends Singleton {
 	/**
 	 * Private class constructor. Add addons scripts as dependency to the
 	 * plugin's scripts and setup settings hooks.
+	 *
+	 * @param mixed[] ...$args Array of class constructor arguments.
 	 */
 	protected function construct( ...$args ) {
-		if ( empty( static::name ) || empty( static::title ) ) {
+		if ( empty( static::NAME ) || empty( static::TITLE ) ) {
 			Logger::log( 'Skip invalid addon registration', Logger::DEBUG );
 			Logger::log(
 				'Addon name and title const are required',
@@ -357,7 +362,7 @@ class Addon extends Singleton {
 			return;
 		}
 
-		self::$addons[ static::name ] = $this;
+		self::$addons[ static::NAME ] = $this;
 	}
 
 	public function load() {
@@ -377,7 +382,7 @@ class Addon extends Singleton {
 					$templates = array();
 				}
 
-				if ( $addon && $addon !== static::name ) {
+				if ( $addon && static::NAME !== $addon ) {
 					return $templates;
 				}
 
@@ -398,7 +403,7 @@ class Addon extends Singleton {
 					$jobs = array();
 				}
 
-				if ( $addon && $addon !== static::name ) {
+				if ( $addon && static::NAME !== $addon ) {
 					return $jobs;
 				}
 
@@ -419,7 +424,7 @@ class Addon extends Singleton {
 					$bridges = array();
 				}
 
-				if ( $addon && $addon !== static::name ) {
+				if ( $addon && static::NAME !== $addon ) {
 					return $bridges;
 				}
 
@@ -429,8 +434,8 @@ class Addon extends Singleton {
 				}
 
 				foreach ( $setting->bridges ?: array() as $bridge_data ) {
-					$bridge_class = static::bridge_class;
-					$bridges[]    = new $bridge_class( $bridge_data, static::name );
+					$bridge_class = static::BRIDGE;
+					$bridges[]    = new $bridge_class( $bridge_data, static::NAME );
 				}
 
 				return $bridges;
@@ -442,7 +447,7 @@ class Addon extends Singleton {
 		Settings_Store::register_setting(
 			static function ( $settings ) {
 				$schema            = static::schema();
-				$schema['name']    = static::name;
+				$schema['name']    = static::NAME;
 				$schema['default'] = static::defaults();
 
 				$settings[] = $schema;
@@ -453,10 +458,10 @@ class Addon extends Singleton {
 		Settings_Store::ready(
 			static function ( $store ) {
 				$store::use_getter(
-					static::name,
+					static::NAME,
 					static function ( $data ) {
-						$templates = FBAPI::get_addon_templates( static::name );
-						$jobs      = FBAPI::get_addon_jobs( static::name );
+						$templates = FBAPI::get_addon_templates( static::NAME );
+						$jobs      = FBAPI::get_addon_jobs( static::NAME );
 
 						return array_merge(
 							$data,
@@ -486,7 +491,7 @@ class Addon extends Singleton {
 				);
 
 				$store::use_setter(
-					static::name,
+					static::NAME,
 					static function ( $data ) {
 						if ( ! is_array( $data ) ) {
 							return $data;
@@ -511,7 +516,7 @@ class Addon extends Singleton {
 	 * @return string
 	 */
 	final protected static function setting_name() {
-		return 'forms-bridge_' . static::name;
+		return 'forms-bridge_' . static::NAME;
 	}
 
 	/**
@@ -520,7 +525,7 @@ class Addon extends Singleton {
 	 * @return Setting|null Setting instance.
 	 */
 	final protected static function setting() {
-		return Forms_Bridge::setting( static::name );
+		return Forms_Bridge::setting( static::NAME );
 	}
 
 	/**
@@ -531,7 +536,7 @@ class Addon extends Singleton {
 	 * @return boolean|WP_Error
 	 */
 	public function ping( $backend ) {
-		return true;
+		return false;
 	}
 
 	/**
@@ -575,7 +580,7 @@ class Addon extends Singleton {
 	}
 
 	private static function autoload_posts( $post_type, $addon ) {
-		if ( ! in_array( $post_type, array( 'fb-bridge-template', 'fb-job' ) ) ) {
+		if ( ! in_array( $post_type, array( 'fb-bridge-template', 'fb-job' ), true ) ) {
 			return array();
 		}
 
@@ -593,7 +598,8 @@ class Addon extends Singleton {
 	 * Autoload config files from a given addon's directory. Used to load
 	 * template and job config files.
 	 *
-	 * @param string $dir Path of the target directory.
+	 * @param string   $dir Path of the target directory.
+	 * @param string[] $extensions Allowed file extensions.
 	 *
 	 * @return array Array with data from files.
 	 */
@@ -629,16 +635,16 @@ class Addon extends Singleton {
 			}
 
 			$data = null;
-			if ( $ext === 'php' ) {
+			if ( 'php' === $ext ) {
 				$data = include_once $file_path;
-			} elseif ( $ext === 'json' ) {
+			} elseif ( 'json' === $ext ) {
 				try {
 					$content = file_get_contents( $file_path );
 					$data    = json_decode( $content, true, JSON_THROW_ON_ERROR );
 				} catch ( TypeError ) {
-					// pass
+					// pass.
 				} catch ( Error ) {
-					// pass
+					// pass.
 				}
 			}
 
@@ -656,7 +662,7 @@ class Addon extends Singleton {
 	 * Loads addon's bridge data.
 	 */
 	private static function load_data() {
-		$dir = FORMS_BRIDGE_ADDONS_DIR . '/' . static::name . '/data';
+		$dir = FORMS_BRIDGE_ADDONS_DIR . '/' . static::NAME . '/data';
 		self::autoload_dir( $dir );
 	}
 
@@ -666,7 +672,7 @@ class Addon extends Singleton {
 	 * @return Form_Bridge_Template[].
 	 */
 	private static function load_templates() {
-		$dir = FORMS_BRIDGE_ADDONS_DIR . '/' . static::name . '/templates';
+		$dir = FORMS_BRIDGE_ADDONS_DIR . '/' . static::NAME . '/templates';
 
 		$directories = apply_filters(
 			'forms_bridge_template_directories',
@@ -675,9 +681,9 @@ class Addon extends Singleton {
 				Forms_Bridge::path() . 'includes/templates',
 				get_stylesheet_directory() .
 				'/forms-bridge/templates/' .
-				static::name,
+				static::NAME,
 			),
-			static::name
+			static::NAME
 		);
 
 		$templates = array();
@@ -693,7 +699,7 @@ class Addon extends Singleton {
 		}
 
 		foreach (
-			self::autoload_posts( 'fb-bridge-template', static::name )
+			self::autoload_posts( 'fb-bridge-template', static::NAME )
 			as $template_post
 		) {
 			$template[ $template->post_name ] = $template_post;
@@ -704,7 +710,7 @@ class Addon extends Singleton {
 		$templates = apply_filters(
 			'forms_bridge_load_templates',
 			$templates,
-			static::name
+			static::NAME
 		);
 
 		$loaded = array();
@@ -721,7 +727,7 @@ class Addon extends Singleton {
 				);
 			}
 
-			$template = new Form_Bridge_Template( $template, static::name );
+			$template = new Form_Bridge_Template( $template, static::NAME );
 
 			if ( $template->is_valid ) {
 				$loaded[] = $template;
@@ -737,7 +743,7 @@ class Addon extends Singleton {
 	 * @return Job[]
 	 */
 	private static function load_jobs() {
-		$dir = FORMS_BRIDGE_ADDONS_DIR . '/' . static::name . '/jobs';
+		$dir = FORMS_BRIDGE_ADDONS_DIR . '/' . static::NAME . '/jobs';
 
 		$directories = apply_filters(
 			'forms_bridge_job_directories',
@@ -746,9 +752,9 @@ class Addon extends Singleton {
 				Forms_Bridge::path() . 'includes/jobs',
 				get_stylesheet_directory() .
 				'/forms-bridge/jobs/' .
-				static::name,
+				static::NAME,
 			),
-			static::name
+			static::NAME
 		);
 
 		$jobs = array();
@@ -763,13 +769,13 @@ class Addon extends Singleton {
 			}
 		}
 
-		foreach ( self::autoload_posts( 'fb-job', static::name ) as $job_post ) {
+		foreach ( self::autoload_posts( 'fb-job', static::NAME ) as $job_post ) {
 			$jobs[ $job_post->post_name ] = $job_post;
 		}
 
 		$jobs = array_values( $jobs );
 
-		$jobs = apply_filters( 'forms_bridge_load_jobs', $jobs, static::name );
+		$jobs = apply_filters( 'forms_bridge_load_jobs', $jobs, static::NAME );
 
 		$loaded = array();
 		foreach ( $jobs as $job ) {
@@ -777,7 +783,7 @@ class Addon extends Singleton {
 				$job = array_merge( $job['data'], array( 'name' => $job['name'] ) );
 			}
 
-			$job = new Job( $job, static::name );
+			$job = new Job( $job, static::NAME );
 
 			if ( $job->is_valid ) {
 				$loaded[] = $job;

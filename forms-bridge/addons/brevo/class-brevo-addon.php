@@ -20,21 +20,21 @@ class Brevo_Addon extends Addon {
 	 *
 	 * @var string
 	 */
-	public const title = 'Brevo';
+	const TITLE = 'Brevo';
 
 	/**
 	 * Handles the addon's name.
 	 *
 	 * @var string
 	 */
-	public const name = 'brevo';
+	const NAME = 'brevo';
 
 	/**
 	 * Handles the addom's custom bridge class.
 	 *
 	 * @var string
 	 */
-	public const bridge_class = '\FORMS_BRIDGE\Brevo_Form_Bridge';
+	const BRIDGE = '\FORMS_BRIDGE\Brevo_Form_Bridge';
 
 	/**
 	 * Performs a request against the backend to check the connexion status.

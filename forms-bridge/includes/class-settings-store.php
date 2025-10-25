@@ -3,7 +3,6 @@
 namespace FORMS_BRIDGE;
 
 use WPCT_PLUGIN\Settings_Store as Base_Settings_Store;
-use HTTP_BRIDGE\Settings_Store as Http_Store;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit();
@@ -19,10 +18,12 @@ class Settings_Store extends Base_Settings_Store {
 	 *
 	 * @var string REST Controller class name.
 	 */
-	protected const rest_controller_class = '\FORMS_BRIDGE\REST_Settings_Controller';
+	const REST_CONTROLLER = '\FORMS_BRIDGE\REST_Settings_Controller';
 
 	/**
 	 * Inherits the parent constructor and sets up settings' validation callbacks.
+	 *
+	 * @param mixed[] ...$args Array of constructor arguments.
 	 */
 	protected function construct( ...$args ) {
 		parent::construct( ...$args );
@@ -44,55 +45,6 @@ class Settings_Store extends Base_Settings_Store {
 					'notification_receiver' => $admin_email,
 				),
 			)
-		);
-
-		self::register_setting(
-			array(
-				'name'       => 'http',
-				'properties' => array(),
-				'default'    => array(),
-			)
-		);
-
-		self::ready(
-			static function ( $store ) {
-				$store::use_getter(
-					'http',
-					static function () {
-						$setting = Http_Store::setting( 'general' );
-						return $setting->data();
-					}
-				);
-
-				$store::use_setter(
-					'http',
-					static function ( $data ) {
-						if (
-						isset( $data['backends'] ) &&
-						isset( $data['credentials'] )
-						) {
-							$setting = Http_Store::setting( 'general' );
-							$setting->update( $data );
-						}
-
-						return array();
-					},
-					9
-				);
-
-				$store::use_cleaner(
-					'general',
-					static function () {
-						$setting = Http_Store::setting( 'general' );
-						$setting->update(
-							array(
-								'backends'    => array(),
-								'credentials' => array(),
-							)
-						);
-					}
-				);
-			}
 		);
 	}
 }

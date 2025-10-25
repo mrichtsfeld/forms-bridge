@@ -21,21 +21,21 @@ class Nextcloud_Addon extends Addon {
 	 *
 	 * @var string
 	 */
-	public const title = 'Nextcloud';
+	const TITLE = 'Nextcloud';
 
 	/**
 	 * Handles the addon's name.
 	 *
 	 * @var string
 	 */
-	public const name = 'nextcloud';
+	const NAME = 'nextcloud';
 
 	/**
 	 * Handles the addom's custom bridge class.
 	 *
 	 * @var string
 	 */
-	public const bridge_class = '\FORMS_BRIDGE\Nextcloud_Form_Bridge';
+	const BRIDGE = '\FORMS_BRIDGE\Nextcloud_Form_Bridge';
 
 	public function load() {
 		parent::load();

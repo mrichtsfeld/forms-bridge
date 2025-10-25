@@ -12,9 +12,9 @@ use WC_Customer;
 
 class Integration extends BaseIntegration {
 
-	public const name = 'woo';
+	const NAME = 'woo';
 
-	public const title = 'WooCommerce';
+	const TITLE = 'WooCommerce';
 
 	/**
 	 * The integration will store order's bridged result as a custom field. This const handles the custom field name.
