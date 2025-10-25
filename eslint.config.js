@@ -18,12 +18,15 @@ const languageOptions = {
 
 module.exports = defineConfig([
   {
+    ignores: ["vendor/", "node_modules/", "*.config.js", "composer.*", "package*.json"],
+  },
+  {
     settings: {
       react: {
         version: "18",
       }
     },
-    files: ["src/**/*.js", "src/**/*.jsx"],
+    files: ["forms-bridge/src/**/*.js", "forms-bridge/src/**/*.jsx"],
     plugins: { js, react },
     extends: [
       "js/recommended",
@@ -37,5 +40,5 @@ module.exports = defineConfig([
       "react/jsx-no-target-blank": 0,
     }
   },
-  eslintConfigPrettier
+  eslintConfigPrettier,
 ]);

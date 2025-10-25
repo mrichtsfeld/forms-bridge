@@ -13,8 +13,18 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 class Finan_Coop_Form_Bridge extends Form_Bridge {
 
+	/**
+	 * Handles the current bridge request.
+	 *
+	 * @var array|null
+	 */
 	private static $request;
 
+	/**
+	 * Bridge constructor.
+	 *
+	 * @param array $data Bridge data.
+	 */
 	public function __construct( $data ) {
 		parent::__construct( $data, 'financoop' );
 	}
@@ -28,7 +38,7 @@ class Finan_Coop_Form_Bridge extends Form_Bridge {
 	 * @return array|WP_Error
 	 */
 	public function submit( $payload = array(), $attachments = array() ) {
-		if ( isset( $payload['lang'] ) && $payload['lang'] === 'ca' ) {
+		if ( isset( $payload['lang'] ) && 'ca' === $payload['lang'] ) {
 			$payload['lang'] = 'ca_ES';
 		}
 
@@ -97,6 +107,7 @@ class Finan_Coop_Form_Bridge extends Form_Bridge {
 		}
 
 		if ( isset( $response['data']['result']['error'] ) ) {
+			/* TODO: Gestionar els errors RPC (status is not a key) */
 			$error = new WP_Error(
 				'response_code_' . $response['data']['result']['status'],
 				$response['data']['result']['error'],

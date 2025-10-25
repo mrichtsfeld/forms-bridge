@@ -13,6 +13,8 @@
  * Version:             4.0.6
  * Requires PHP:        8.0
  * Requires at least:   6.7
+ *
+ * @package forms-bridge
  */
 
 namespace FORMS_BRIDGE;
@@ -32,14 +34,14 @@ define( 'FORMS_BRIDGE_DIR', __DIR__ );
 define( 'FORMS_BRIDGE_INTEGRATIONS_DIR', FORMS_BRIDGE_DIR . '/integrations' );
 define( 'FORMS_BRIDGE_ADDONS_DIR', FORMS_BRIDGE_DIR . '/addons' );
 
-// Commons
+/* Commons */
 require_once __DIR__ . '/common/class-plugin.php';
 
-// Deps
+/* Deps */
 require_once __DIR__ . '/deps/http/http-bridge.php';
 require_once __DIR__ . '/deps/i18n/wpct-i18n.php';
 
-// Classes
+/* Classes */
 require_once __DIR__ . '/includes/class-api.php';
 require_once __DIR__ . '/includes/class-json-finger.php';
 require_once __DIR__ . '/includes/class-rest-settings-controller.php';
@@ -52,7 +54,7 @@ require_once __DIR__ . '/includes/class-job.php';
 require_once __DIR__ . '/includes/class-integration.php';
 require_once __DIR__ . '/includes/class-addon.php';
 
-// Post types
+/* Post types */
 require_once __DIR__ . '/post_types/job.php';
 require_once __DIR__ . '/post_types/bridge-template.php';
 
@@ -66,21 +68,21 @@ class Forms_Bridge extends Base_Plugin {
 	 *
 	 * @var string
 	 */
-	private const db_version = 'forms-bridge-version';
+	const DB_VERSION = 'forms-bridge-version';
 
 	/**
 	 * Handles plugin settings class name.
 	 *
 	 * @var string
 	 */
-	protected const store_class = '\FORMS_BRIDGE\Settings_Store';
+	const STORE_CLASS = '\FORMS_BRIDGE\Settings_Store';
 
 	/**
 	 * Handle plugin menu class name.
 	 *
 	 * @var string
 	 */
-	protected const menu_class = '\FORMS_BRIDGE\Menu';
+	protected const MENU_CLASS = '\FORMS_BRIDGE\Menu';
 
 	/**
 	 * Handles the current bridge instance. Available only during form submissions.
@@ -91,6 +93,8 @@ class Forms_Bridge extends Base_Plugin {
 
 	/**
 	 * Initializes integrations, addons and setup plugin hooks.
+	 *
+	 * @param mixed[] ...$args Constructor arguments.
 	 */
 	protected function construct( ...$args ) {
 		parent::construct( ...$args );
@@ -110,7 +114,7 @@ class Forms_Bridge extends Base_Plugin {
 		add_filter(
 			'plugin_action_links',
 			static function ( $links, $file ) {
-				if ( $file !== 'forms-bridge/forms-bridge.php' ) {
+				if ( 'forms-bridge/forms-bridge.php' !== $file ) {
 					return $links;
 				}
 
@@ -143,7 +147,7 @@ class Forms_Bridge extends Base_Plugin {
 		add_action(
 			'in_plugin_update_message-forms-bridge/forms-bridge.php',
 			function ( $plugin_data, $response ) {
-				if ( $response->slug !== 'forms-bridge' ) {
+				if ( 'forms-bridge' !== $response->slug ) {
 					return;
 				}
 
@@ -158,7 +162,7 @@ class Forms_Bridge extends Base_Plugin {
 				}
 
 				$new_version = $matches[1];
-				$db_version  = get_option( self::db_version, '1.0.0' );
+				$db_version  = get_option( self::DB_VERSION, '1.0.0' );
 
 				if ( ! preg_match( '/^(\d+)\.\d+\.\d+$/', $db_version, $matches ) ) {
 					return;
@@ -169,9 +173,11 @@ class Forms_Bridge extends Base_Plugin {
 				if ( $new_version > $from_version ) {
 					echo '<br /><b>' .
 						'&nbsp' .
-						__(
-							'This is a major release and while tested thoroughly you might experience conflicts or lost data. We recommend you back up your data before updating and check your configuration after updating.',
-							'forms-bridge'
+						esc_html(
+							__(
+								'This is a major release and while tested thoroughly you might experience conflicts or lost data. We recommend you back up your data before updating and check your configuration after updating.',
+								'forms-bridge'
+							),
 						) .
 						'</b>';
 				}
@@ -186,9 +192,9 @@ class Forms_Bridge extends Base_Plugin {
 	 * if it doesn't exists.
 	 */
 	public static function activate() {
-		$version = get_option( self::db_version );
+		$version = get_option( self::DB_VERSION );
 		if ( $version === false ) {
-			update_option( self::db_version, self::version(), true );
+			update_option( self::DB_VERSION, self::version(), true );
 		}
 	}
 
@@ -197,7 +203,7 @@ class Forms_Bridge extends Base_Plugin {
 	 * and, if it is, performs db migrations.
 	 */
 	protected static function init() {
-		$db_version = get_option( self::db_version );
+		$db_version = get_option( self::DB_VERSION );
 		if ( $db_version !== self::version() && empty( WP_TEST_DOMAIN ) ) {
 			self::do_migrations();
 		}
@@ -258,16 +264,25 @@ class Forms_Bridge extends Base_Plugin {
 			'highlight-js',
 			'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/highlight.min.js',
 			array(),
-			'11.11.1'
+			'11.11.1',
+			true,
 		);
 	}
 
+		/**
+		 * Public access to the current bridge reference.
+		 *
+		 * @return Form_Bridge|null
+		 */
 	public static function current_bridge() {
 		return self::$current_bridge;
 	}
 
 	/**
 	 * Proceed with the submission sub-routine.
+	 *
+	 * @throws Error     In case email error notification fails.
+	 * @throws Exception In case email error notification fails.
 	 */
 	public static function do_submission() {
 		$form_data = FBAPI::get_current_form();
@@ -369,7 +384,8 @@ class Forms_Bridge extends Base_Plugin {
 					Logger::log( $payload );
 				}
 
-				if ( $job = $bridge->workflow ) {
+								$job = $bridge->workflow;
+				if ( $job ) {
 					$payload = $job->run( $payload, $bridge );
 
 					if ( empty( $payload ) ) {
@@ -417,7 +433,8 @@ class Forms_Bridge extends Base_Plugin {
 
 				$response = $bridge->submit( $payload, $attachments );
 
-				if ( $error = is_wp_error( $response ) ? $response : null ) {
+								$error = is_wp_error( $response ) ? $response : null;
+				if ( $error ) {
 					do_action(
 						'forms_bridge_on_failure',
 						$bridge,
@@ -439,7 +456,7 @@ class Forms_Bridge extends Base_Plugin {
 				}
 			} catch ( Error | Exception $e ) {
 				$message = $e->getMessage();
-				if ( $message === 'notification_error' ) {
+				if ( 'notification_error' === $message ) {
 					throw $e;
 				}
 
@@ -474,7 +491,7 @@ class Forms_Bridge extends Base_Plugin {
 	 */
 	private static function prune_empties( $submission_data ) {
 		foreach ( $submission_data as $key => $val ) {
-			if ( $val === '' || $val === null ) {
+			if ( '' === $val || null === $val ) {
 				unset( $submission_data[ $key ] );
 			}
 		}
@@ -494,7 +511,8 @@ class Forms_Bridge extends Base_Plugin {
 
 		foreach ( $uploads as $name => $upload ) {
 			if ( $upload['is_multi'] ) {
-				for ( $i = 1; $i <= count( $uploads[ $name ]['path'] ); $i++ ) {
+								$len = count( $uploads[ $name ]['path'] );
+				for ( $i = 1; $i <= $len; $i++ ) {
 					$attachments[ $name . '_' . $i ] = $upload['path'][ $i - 1 ];
 				}
 			} else {
@@ -542,6 +560,8 @@ class Forms_Bridge extends Base_Plugin {
 	 * @param WP_Error    $error Error instance.
 	 * @param array       $payload Submission data.
 	 * @param array       $attachments Submission attachments.
+	 *
+	 * @throws Exception  When email notification fails.
 	 */
 	private static function notify_error(
 		$bridge,
@@ -570,8 +590,8 @@ class Forms_Bridge extends Base_Plugin {
 		}
 
 		$form_data = $bridge->form;
-		$payload   = json_encode( $payload, JSON_PRETTY_PRINT );
-		$error     = json_encode(
+		$payload   = wp_json_encode( $payload, JSON_PRETTY_PRINT );
+		$error     = wp_json_encode(
 			array(
 				'error'   => $error->get_error_message(),
 				'context' => $error->get_error_data(),
@@ -606,7 +626,7 @@ class Forms_Bridge extends Base_Plugin {
 	 * Apply db migrations on plugin upgrades.
 	 */
 	private static function do_migrations() {
-		$from = get_option( self::db_version, '1.0.0' );
+		$from = get_option( self::DB_VERSION, '1.0.0' );
 
 		if ( ! preg_match( '/^\d+\.\d+\.\d+$/', $from ) ) {
 			Logger::log( 'Invalid db plugin version', Logger::ERROR );
@@ -648,14 +668,19 @@ class Forms_Bridge extends Base_Plugin {
 			include $migrations_path . '/' . $migration;
 		}
 
-		update_option( self::db_version, $to );
+		update_option( self::DB_VERSION, $to );
 	}
 
+		/**
+		 * Gets the path to the plugin namespaced upload directory.
+		 *
+		 * @return string
+		 */
 	public static function upload_dir() {
 		$dir = wp_upload_dir()['basedir'] . '/forms-bridge';
 
 		if ( ! is_dir( $dir ) ) {
-			if ( ! mkdir( $dir, 755 ) ) {
+			if ( ! wp_mkdir_p( $dir ) ) {
 				return;
 			}
 		}
@@ -664,5 +689,5 @@ class Forms_Bridge extends Base_Plugin {
 	}
 }
 
-// Start the plugin
+/* Start the plugin */
 Forms_Bridge::setup();

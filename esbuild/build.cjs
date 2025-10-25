@@ -2,11 +2,11 @@ const esbuild = require("esbuild");
 
 (async () => {
   await esbuild.build({
-    entryPoints: ["src/index.jsx"],
+    entryPoints: ["forms-bridge/src/index.jsx"],
     bundle: true,
     sourcemap: true,
     minify: true,
-    outfile: "assets/plugin.bundle.js",
+    outfile: "forms-bridge/assets/plugin.bundle.js",
     loader: { ".png": "base64" },
     plugins: [
       {

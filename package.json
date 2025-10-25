@@ -1,7 +1,6 @@
 {
   "name": "forms-bridge",
   "version": "4.0.5",
-  "main": "Gruntfile.js",
   "author": "Còdec",
   "license": "GPL-2.0-or-later",
   "scripts": {

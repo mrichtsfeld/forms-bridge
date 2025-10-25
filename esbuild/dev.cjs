@@ -2,10 +2,10 @@ const esbuild = require("esbuild");
 
 (async () => {
   const ctx = await esbuild.context({
-    entryPoints: ["src/index.jsx"],
+    entryPoints: ["forms-bridge/src/index.jsx"],
     bundle: true,
     sourcemap: true,
-    outfile: "assets/plugin.bundle.js",
+    outfile: "forms-bridge/assets/plugin.bundle.js",
     loader: { ".png": "base64" },
     plugins: [
       {
