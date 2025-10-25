@@ -35,7 +35,7 @@ define( 'FORMS_BRIDGE_INTEGRATIONS_DIR', FORMS_BRIDGE_DIR . '/integrations' );
 define( 'FORMS_BRIDGE_ADDONS_DIR', FORMS_BRIDGE_DIR . '/addons' );
 
 /* Commons */
-require_once __DIR__ . '/common/class-plugin.php';
+require_once __DIR__ . '/plugin/class-plugin.php';
 
 /* Deps */
 require_once __DIR__ . '/deps/http/http-bridge.php';
