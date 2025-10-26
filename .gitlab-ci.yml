@@ -31,9 +31,7 @@ phpunit:
     - sleep 10
     - composer install
     - bin/install-wp-tests.sh
-    - echo $PWD/forms-bridge
-    - ls -la && ls -la .. && ls -la /
-    - ln -s $PWD/forms-bridge /tmp/wordpress/wp-content/plugins/forms-bridge
+    - cp -rf forms-bridge /tmp/wordpress/wp-content/plugins/forms-bridge
   script:
     - vendor/bin/phpunit -c phpunit.xml.dist
   rules:
