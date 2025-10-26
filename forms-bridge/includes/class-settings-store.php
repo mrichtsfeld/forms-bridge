@@ -3,6 +3,7 @@
 namespace FORMS_BRIDGE;
 
 use WPCT_PLUGIN\Settings_Store as Base_Settings_Store;
+use HTTP_BRIDGE\Http_Setting;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit();
@@ -46,5 +47,7 @@ class Settings_Store extends Base_Settings_Store {
 				),
 			)
 		);
+
+		Http_Setting::register( $this );
 	}
 }
