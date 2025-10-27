@@ -34,7 +34,7 @@ phpunit:
     - "# Wait mariadb to start for 3 seconds"
     - sleep 3
     - "# Install wordpress test suite"
-    - bin/install-wp-tests.sh
+    - bin/install-wp-tests.sh 2>&1 >/dev/null
     - echo 'Run tests! 🚀'
     - echo
   script:
