@@ -27,15 +27,10 @@ phpunit:
   stage: test
   image: codeccoop/wp-test
   before_script:
-    - "# Start mariadbd"
     - nohup docker-entrypoint.sh mariadbd 2>&1 >/dev/null &
-    - "# Install composer dependencies"
     - composer -q install
-    - "# Wait mariadb to start for 3 seconds"
     - sleep 3
-    - "# Install wordpress test suite"
     - bin/install-wp-tests.sh 2>&1 >/dev/null
-    - "# Run tests! 🚀"
   script:
     - vendor/bin/phpunit -c phpunit.xml.dist
   rules:
