@@ -1,13 +1,13 @@
 <?php
 /**
- * Class BridgeTest
+ * Class ConditionalMappersTest
  *
  * @package forms-bridge-tests
  */
 
 use FORMS_BRIDGE\Form_Bridge;
 
-class BridgeTest extends WP_UnitTestCase {
+class ConditionalMappersTest extends WP_UnitTestCase {
 	private function payload() {
 		return array(
 			'name'         => 'John Doe',
@@ -22,22 +22,14 @@ class BridgeTest extends WP_UnitTestCase {
 	}
 
 	private function form_data() {
-		return include './data/shipping-forms.php';
+		return include __DIR__ . '/data/shipping-form.php';
 	}
 
 	private function bridge() {
 		return new Form_Bridge(
 			array(
-				'name'    => 'bridge-tests',
-				'backend' => 'backend',
-			)
-		);
-	}
-
-	public function test_prepare_mappers() {
-		$payload = $this->payload();
-		$bridge  = $this->bridge()->patch(
-			array(
+				'name'      => 'bridge-tests',
+				'backend'   => 'backend',
 				'mutations' => array(
 					array(
 						array(
@@ -59,8 +51,12 @@ class BridgeTest extends WP_UnitTestCase {
 				),
 			)
 		);
+	}
 
-		$form_data = include __DIR__ . '/data/shipping-forms.php';
+	public function test_prepare_conditional_mappers() {
+		$bridge = $this->bridge();
+
+		$form_data = $this->form_data();
 		$bridge->prepare_mappers( $form_data );
 
 		$mutation = $bridge->mutations[0];
@@ -69,7 +65,18 @@ class BridgeTest extends WP_UnitTestCase {
 		$this->assertEquals( '?zip', $mutation[1]['from'] );
 		$this->assertEquals( '?city', $mutation[2]['from'] );
 
-		$result = $bridge->apply_mutation( $payload, $mutation );
+		return $bridge;
+	}
+
+	public function test_apply_conditional_mappers() {
+		$bridge = $this->bridge();
+
+		$form_data = $this->form_data();
+		$bridge->prepare_mappers( $form_data );
+
+		$payload = $this->payload();
+
+		$result = $bridge->apply_mutation( $payload );
 
 		$this->assertTrue( isset( $result['shipping']['street'] ) );
 		$this->assertTrue( isset( $result['shipping']['zip'] ) );
@@ -79,7 +86,7 @@ class BridgeTest extends WP_UnitTestCase {
 		unset( $payload['zip'] );
 		unset( $payload['city'] );
 
-		$result = $bridge->apply_mutation( $payload, $mutation );
+		$result = $bridge->apply_mutation( $payload );
 
 		$this->assertTrue( ! isset( $result['shipping'] ) );
 	}

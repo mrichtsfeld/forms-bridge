@@ -1,7 +1,7 @@
 <?php
 
 return array(
-	'title'  => 'Test Checkout Form',
+	'title'  => 'Test Shipping Form',
 	'fields' => array(
 		array(
 			'name'     => 'name',
