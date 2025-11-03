@@ -1,5 +1,6 @@
 <?php
 
+use FORMS_BRIDGE\Settings_Store;
 use FORMS_BRIDGE\Forms_Bridge;
 use FORMS_BRIDGE\Addon;
 use FORMS_BRIDGE\Form_Bridge;
@@ -449,7 +450,23 @@ class FBAPI {
 			return false;
 		}
 
-		return $backend->save();
+		$setting = Settings_Store::setting( 'http' );
+		if ( ! $setting ) {
+			return false;
+		}
+
+		$backends = $setting->backends ?: array();
+
+		$index = array_search( $backend->name, array_column( $backends, 'name' ), true );
+
+		if ( false === $index ) {
+			$backends[] = $data;
+		} else {
+			$backends[ $index ] = $data;
+		}
+
+		$setting->backends = $backends;
+		return true;
 	}
 
 	/**
@@ -466,7 +483,27 @@ class FBAPI {
 			return false;
 		}
 
-		return $backend->remove();
+		if ( ! $backend->is_valid ) {
+			return false;
+		}
+
+		$setting = Settings_Store::setting( 'http' );
+		if ( ! $setting ) {
+			return false;
+		}
+
+		$backends = $setting->backends ?: array();
+
+		$index = array_search( $backend->name, array_column( $backends, 'name' ), true );
+
+		if ( false === $index ) {
+			return false;
+		}
+
+		array_splice( $backends, $index );
+		$setting->backends = $backends;
+
+		return true;
 	}
 
 	/**
@@ -518,7 +555,23 @@ class FBAPI {
 			return false;
 		}
 
-		return $credential->save();
+		$setting = Settings_Store::setting( 'http' );
+		if ( ! $setting ) {
+			return false;
+		}
+
+		$credentials = $setting->credentials ?: array();
+
+		$index = array_search( $credential->name, array_column( $credentials, 'name' ), true );
+
+		if ( false === $index ) {
+			$credentials[] = $data;
+		} else {
+			$credentials[ $index ] = $data;
+		}
+
+		$setting->credentials = $credentials;
+		return true;
 	}
 
 	/**
@@ -535,7 +588,27 @@ class FBAPI {
 			return false;
 		}
 
-		return $credential->delete();
+		if ( ! $credential->is_valid ) {
+			return false;
+		}
+
+		$setting = Settings_Store::setting( 'http' );
+		if ( ! $setting ) {
+			return false;
+		}
+
+		$credentials = $setting->credentials ?: array();
+
+		$index = array_search( $credential->name, array_column( $credentials, 'name' ), true );
+
+		if ( false === $index ) {
+			return false;
+		}
+
+		array_splice( $credentials, $index );
+		$setting->credentials = $credentials;
+
+		return true;
 	}
 
 	/**

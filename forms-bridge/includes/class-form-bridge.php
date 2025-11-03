@@ -883,9 +883,9 @@ class Form_Bridge {
 
 		$bridges = $setting->bridges ?: array();
 
-		$index = array_search( $this->name, array_column( $bridges, 'name' ) );
+		$index = array_search( $this->name, array_column( $bridges, 'name' ), true );
 
-		if ( $index === false ) {
+		if ( false === $index ) {
 			$bridges[] = $this->data;
 		} else {
 			$bridges[ $index ] = $this->data;
@@ -908,7 +908,7 @@ class Form_Bridge {
 
 		$bridges = $setting->bridges ?: array();
 
-		$index = array_search( $this->name, array_column( $bridges, 'name' ) );
+		$index = array_search( $this->name, array_column( $bridges, 'name' ), true );
 
 		if ( false === $index ) {
 			return false;
