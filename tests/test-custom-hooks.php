@@ -5,7 +5,6 @@
  * @package forms-bridge-tests
  */
 
-use FORMS_BRIDGE\Addon;
 use FORMS_BRIDGE\Form_Bridge;
 
 /**
@@ -19,20 +18,47 @@ class CustomHooksTest extends WP_UnitTestCase {
 	 */
 	private static $request;
 
-	public static function set_up_before_class() {
-		add_filter(
-			'forms_bridge_forms',
-			function () {
-				return array(
-					array(
-						'_id'    => 'gf:1',
-						'id'     => '1',
-						'title'  => 'test-form',
-						'fields' => array(),
-					),
-				);
-			},
+	public static function forms_provider() {
+		return array(
+			array(
+				'_id'    => 'gf:1',
+				'id'     => '1',
+				'title'  => 'test-form',
+				'fields' => array(),
+			),
 		);
+	}
+
+	/**
+	 * HTTP requests interceptor. Prevent test to access the network and store the request arguments
+	 * on the static $request attribute.
+	 *
+	 * @param mixed  $pre Initial pre hook value.
+	 * @param array  $args Request arguments.
+	 * @param string $url Request URL.
+	 *
+	 * @return array
+	 */
+	public function pre_http_request( $pre, $args, $url ) {
+		self::$request = array(
+			'args' => $args,
+			'url'  => $url,
+		);
+
+		return array(
+			'response'      => array(
+				'code'    => 200,
+				'message' => 'Success',
+			),
+			'headers'       => array( 'Content-Type' => 'application/json' ),
+			'cookies'       => array(),
+			'body'          => '{"success":true}',
+			'http_response' => null,
+		);
+	}
+
+	public static function set_up_before_class() {
+		add_filter( 'forms_bridge_forms', array( self::class, 'forms_provider' ), 10, 0 );
 
 		$result = FBAPI::save_credential(
 			array(
@@ -97,28 +123,18 @@ class CustomHooksTest extends WP_UnitTestCase {
 	}
 
 	public function set_up() {
-		add_filter(
-			'pre_http_request',
-			static function ( $pre, $args, $url ) {
-				self::$request = array(
-					'args' => $args,
-					'url'  => $url,
-				);
+		add_filter( 'pre_http_request', array( $this, 'pre_http_request' ), 10, 3 );
+	}
 
-				return array(
-					'response'      => array(
-						'code'    => 200,
-						'message' => 'Success',
-					),
-					'headers'       => array( 'Content-Type' => 'application/json' ),
-					'cookies'       => array(),
-					'body'          => '{"success":true}',
-					'http_response' => null,
-				);
-			},
-			99,
-			3
-		);
+	public static function tear_down_after_class() {
+		remove_filter( 'forms_bridge_forms', array( self::class, 'forms_provider' ), 10, 0 );
+		FBAPI::delete_backend( 'test-backend' );
+		FBAPI::delete_bridge( 'test-bridge', 'rest' );
+		FBAPI::delete_credential( 'test-credential' );
+	}
+
+	public function tear_down() {
+		remove_filter( 'pre_http_request', array( $this, 'pre_http_request' ), 10, 3 );
 	}
 
 	public function test_backends() {
