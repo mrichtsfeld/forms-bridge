@@ -455,15 +455,19 @@ class JSON_Finger {
 		$after = implode( '[]', $after );
 
 		$from = $this->get( $before );
+
 		if ( $unset ) {
 			$values = $from;
 		}
 
-		if ( ! wp_is_numeric_array( $from ) ) {
-			return $this->data;
+		$is_numeric_array = wp_is_numeric_array( $values );
+
+		if ( ! wp_is_numeric_array( $from ) && $is_numeric_array ) {
+			$from = array();
+			$this->set( $before, $from );
 		}
 
-		if ( ! wp_is_numeric_array( $values ) && ! $unset ) {
+		if ( ! $is_numeric_array && ! $unset ) {
 			$value  = $values;
 			$values = array();
 
