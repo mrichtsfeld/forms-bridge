@@ -1,6 +1,12 @@
 #!/bin/bash
 
-docker run --rm -v .:/forms-bridge -w /forms-bridge --name forms-bridge-tests codeccoop/wp-test sh -c "
+docker run --rm \
+	-v .:/forms-bridge \
+	-w /forms-bridge \
+	--add-host=host.docker.internal:host-gateway \
+	--name forms-bridge-tests \
+	codeccoop/wp-test \
+	sh -c "
 nohup docker-entrypoint.sh mariadbd >/dev/null 2>&1 &
 echo -n 'Install composer dependencies: '
 composer -q install

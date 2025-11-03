@@ -6,6 +6,7 @@
  */
 
 use FORMS_BRIDGE\Addon;
+use FORMS_BRIDGE\Form_Bridge;
 
 /**
  * Custom hooks test case.
@@ -72,7 +73,10 @@ class CustomHooksTest extends WP_UnitTestCase {
 				'endpoint'      => '/api/endpoint',
 				'method'        => 'POST',
 				'custom_fields' => array(
-					'a' => 'b',
+					array(
+						'name'  => 'a',
+						'value' => 'b',
+					),
 				),
 				'mutations'     => array(
 					array(
@@ -90,7 +94,9 @@ class CustomHooksTest extends WP_UnitTestCase {
 		if ( ! $result ) {
 			throw new Exception( 'Can not create the bridge' );
 		}
+	}
 
+	public function set_up() {
 		add_filter(
 			'pre_http_request',
 			static function ( $pre, $args, $url ) {
@@ -98,8 +104,6 @@ class CustomHooksTest extends WP_UnitTestCase {
 					'args' => $args,
 					'url'  => $url,
 				);
-
-				var_dump( 'Intercept HTTP request' );
 
 				return array(
 					'response'      => array(
@@ -112,12 +116,17 @@ class CustomHooksTest extends WP_UnitTestCase {
 					'http_response' => null,
 				);
 			},
-			5,
+			99,
 			3
 		);
 	}
 
 	public function test_backends() {
+		/**
+		 * Array of available bridges.
+		 *
+		 * @var HTTP_BRIDGE\Backend[] $backends
+		 */
 		$backends = apply_filters( 'http_bridge_backends', array() );
 
 		$this->assertEquals( count( $backends ), 1 );
@@ -137,6 +146,11 @@ class CustomHooksTest extends WP_UnitTestCase {
 	}
 
 	public function test_bridges() {
+		/**
+		 * Array of available bridges.
+		 *
+		 * @var Form_Bridge[] $bridges
+		 */
 		$bridges = apply_filters( 'forms_bridge_bridges', array() );
 
 		$this->assertEquals( count( $bridges ), 1 );
@@ -146,15 +160,17 @@ class CustomHooksTest extends WP_UnitTestCase {
 		$this->assertSame( $bridge->backend->name, 'test-backend' );
 		$this->assertSame( $bridge->endpoint, '/api/endpoint' );
 
-		$response = $bridge->submit( array( 'foo' => 'bar' ) );
-		var_dump( $response );
-		// $this->assertTrue( $response['data']['success'] );
-		//
-		// $this->assertSame( self::$request['url'], 'https://example.coop/api/endpoint' );
-		// $this->assertTrue( isset( self::$request['args']['headers']['Authorization'] ) );
-		//
-		// $body = json_decode( self::$request['args']['body'] );
-		// $this->assertSame( $body['FOO'], 'bar' );
-		// $this->assertSame( $body['a'], 'b' );
+		$payload  = array( 'foo' => 'bar' );
+		$payload  = $bridge->add_custom_fields( $payload );
+		$payload  = $bridge->apply_mutation( $payload );
+		$response = $bridge->submit( $payload );
+		$this->assertTrue( $response['data']['success'] );
+
+		$this->assertSame( self::$request['url'], 'https://example.coop/api/endpoint' );
+		$this->assertTrue( isset( self::$request['args']['headers']['Authorization'] ) );
+
+		$body = json_decode( self::$request['args']['body'], true );
+		$this->assertSame( $body['boofoo'], 'bar' );
+		$this->assertSame( $body['a'], 'b' );
 	}
 }
