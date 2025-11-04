@@ -1,4 +1,9 @@
 <?php
+/**
+ * Class Job
+ *
+ * @package forms-bridge
+ */
 
 namespace FORMS_BRIDGE;
 
@@ -292,6 +297,13 @@ class Job {
 		return $next;
 	}
 
+	/**
+	 * Returns the source code of the body of a function.
+	 *
+	 * @param string $method Function name.
+	 *
+	 * @return string Function body source code.
+	 */
 	private static function reflect_method( $method ) {
 		if ( ! function_exists( $method ) ) {
 			return '';
@@ -308,7 +320,8 @@ class Job {
 			array_slice( file( $file ), $from_line - 1, $to_line - $from_line + 1 )
 		);
 
-		if ( $_snippet = strstr( $snippet, '{' ) ) {
+		$_snippet = strstr( $snippet, '{' );
+		if ( $_snippet ) {
 			$snippet = substr( $_snippet, 1 );
 		}
 
@@ -334,6 +347,16 @@ class Job {
 		return $indentation . trim( $snippet );
 	}
 
+	/**
+	 * Wraps a code snippet inside a function declaration and evaluate the code to register
+	 * it on the process. The function name is based on the job and addon names.
+	 *
+	 * @param string $snippet Code snippet.
+	 * @param string $name Name of the job.
+	 * @param string $addon Name of the addon.
+	 *
+	 * @return string Method name.
+	 */
 	private static function load_snippet( $snippet, $name, $addon ) {
 		$id = $addon . '_' . $name;
 

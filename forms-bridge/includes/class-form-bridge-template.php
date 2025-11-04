@@ -6,6 +6,7 @@ use Exception;
 use Error;
 use FBAPI;
 use WP_Error;
+use WP_Post;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit();
@@ -17,7 +18,12 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 class Form_Bridge_Template {
 
-	public const post_type = 'fb-bridge-template';
+	/**
+	 * Handles the template post type name.
+	 *
+	 * @var string
+	 */
+	public const TYPE = 'fb-bridge-template';
 
 	/**
 	 * Handles the template id;
@@ -398,12 +404,12 @@ class Form_Bridge_Template {
 		}
 
 		foreach ( $schema['properties'] as &$prop_schema ) {
-			if ( $prop_schema['type'] === 'string' ) {
+			if ( 'string' === $prop_schema['type'] ) {
 				$prop_schema['default'] = '';
 				unset( $prop_schema['minLength'] );
 				unset( $prop_schema['pattern'] );
 				unset( $prop_schema['format'] );
-			} elseif ( $prop_schema['type'] === 'array' ) {
+			} elseif ( 'array' === $prop_schema['type'] ) {
 				$prop_schema['default'] = array();
 				unset( $prop_schema['minItems'] );
 			}
@@ -564,8 +570,8 @@ class Form_Bridge_Template {
 	 * Store template attribute values, validates data and binds the
 	 * instance to custom forms bridge template hooks.
 	 *
-	 * @param string $name Template name.
 	 * @param array  $data Template data.
+	 * @param string $addon Addon name.
 	 */
 	public function __construct( $data, $addon ) {
 		if ( $data instanceof WP_Post ) {
@@ -652,7 +658,7 @@ class Form_Bridge_Template {
 	private function get_post_id() {
 		$ids = get_posts(
 			array(
-				'post_type'              => self::post_type,
+				'post_type'              => self::TYPE,
 				'name'                   => $this->name,
 				'meta_key'               => '_fb-addon',
 				'meta_value'             => $this->addon,
@@ -674,7 +680,7 @@ class Form_Bridge_Template {
 		}
 
 		$post_arr = array(
-			'post_type'    => self::post_type,
+			'post_type'    => self::TYPE,
 			'post_name'    => $this->name,
 			'post_title'   => $this->title,
 			'post_excerpt' => $this->description,
@@ -731,7 +737,7 @@ class Form_Bridge_Template {
 		$template = $this->data;
 		$schema   = static::schema( $this->addon );
 
-		// Add constants to the user fields
+		// Add constants to the user fields.
 		foreach ( $template['fields'] as $field ) {
 			if ( ! empty( $field['value'] ) ) {
 				$fields[] = $field;
@@ -775,8 +781,8 @@ class Form_Bridge_Template {
 				return new WP_Error(
 					'invalid_field',
 					sprintf(
+						/* translators: %s: Field name */
 						__(
-							/* translators: %s: Field name */
 							'Field `%s` does not match the schema',
 							'forms-bridge'
 						),
@@ -793,11 +799,11 @@ class Form_Bridge_Template {
 				continue;
 			}
 
-			if ( $field['value'] === '' ) {
+			if ( '' === $field['value'] ) {
 				continue;
 			}
 
-			if ( $field['type'] === 'boolean' ) {
+			if ( 'boolean' === $field['type'] ) {
 				if ( ! isset( $field['value'][0] ) ) {
 					continue;
 				} else {
@@ -805,11 +811,12 @@ class Form_Bridge_Template {
 				}
 			}
 
-			// Inherit form field structure if field ref points to form fields
-			if ( $field['ref'] === '#form/fields[]' ) {
+			// Inherit form field structure if field ref points to form fields.
+			if ( '#form/fields[]' === $field['ref'] ) {
 				$index = array_search(
 					$field['name'],
-					array_column( $template['form']['fields'], 'name' )
+					array_column( $template['form']['fields'], 'name' ),
+					true
 				);
 
 				$form_field     = $template['form']['fields'][ $index ];
@@ -821,8 +828,8 @@ class Form_Bridge_Template {
 					)
 				);
 			} elseif (
-				$field['ref'] === '#backend/headers[]' ||
-				$field['ref'] === '#bridge/custom_fields[]'
+				'#backend/headers[]' === $field['ref'] ||
+				'#bridge/custom_fields[]' === $field['ref']
 			) {
 				$field['value'] = array(
 					'name'  => $field['name'],
@@ -838,8 +845,8 @@ class Form_Bridge_Template {
 					return new WP_Error(
 						'invalid_ref',
 						sprintf(
+							/* translators: %s: ref value */
 							__(
-								/* translators: %s: ref value */
 								'Invalid template field ref `%s`',
 								'forms-bridge'
 							),
@@ -851,7 +858,7 @@ class Form_Bridge_Template {
 				$leaf = &$leaf[ $clean_key ];
 			}
 
-			if ( substr( $key, -2 ) === '[]' ) {
+			if ( '[]' === substr( $key, -2 ) ) {
 				if ( isset( $field['index'] ) ) {
 					$leaf[ $field['index'] ] = $field['value'];
 				} else {
@@ -878,12 +885,12 @@ class Form_Bridge_Template {
 			);
 		}
 
-		if ( $integration === 'woo' ) {
+		if ( 'woo' === $integration ) {
 			$data['form']['id'] = 1;
-		} elseif ( $integration === 'wpforms' ) {
+		} elseif ( 'wpforms' === $integration ) {
 			$mappers = array();
 			foreach ( $data['form']['fields'] as &$field ) {
-				if ( $field['type'] !== 'file' ) {
+				if ( 'file' !== $field['type'] ) {
 					$mappers[] = array(
 						'from' => JSON_Finger::sanitize_key( $field['label'] ),
 						'to'   => $field['name'],
@@ -968,10 +975,10 @@ class Form_Bridge_Template {
 							__(
 								'Forms bridge can\'t create the credential',
 								'forms-bridge',
-								array(
-									'status' => 400,
-									'data'   => $data['credential'],
-								)
+							),
+							array(
+								'status' => 400,
+								'data'   => $data['credential'],
 							)
 						);
 					}
@@ -998,10 +1005,10 @@ class Form_Bridge_Template {
 						__(
 							'Forms bridge can\'t create the backend',
 							'forms-bridge',
-							array(
-								'status' => 400,
-								'data'   => $data['backend'],
-							)
+						),
+						array(
+							'status' => 400,
+							'data'   => $data['backend'],
 						)
 					);
 				}
@@ -1031,10 +1038,10 @@ class Form_Bridge_Template {
 					__(
 						'Forms bridge can\'t create the form bridge',
 						'forms-bridge',
-						array(
-							'status' => 400,
-							'data'   => $data['bridge'],
-						)
+					),
+					array(
+						'status' => 400,
+						'data'   => $data['bridge'],
 					)
 				);
 			}
@@ -1089,7 +1096,7 @@ class Form_Bridge_Template {
 	 */
 	final protected function backend_exists( $name ) {
 		$backends = Settings_Store::setting( 'http' )->backends ?: array();
-		return array_search( $name, array_column( $backends, 'name' ) ) !== false;
+		return array_search( $name, array_column( $backends, 'name' ), true ) !== false;
 	}
 
 	/**
@@ -1146,14 +1153,13 @@ class Form_Bridge_Template {
 	/**
 	 * Checks if a bridge with the given name exists on the settings store.
 	 *
-	 * @param string $form_id Internal ID of the form.
-	 * @param string $integration Slug of the target integration.
+	 * @param string $name Bridge name.
 	 *
 	 * @return boolean
 	 */
 	private function bridge_exists( $name ) {
 		$bridges = Settings_Store::setting( $this->addon )->bridges ?: array();
-		return array_search( $name, array_column( $bridges, 'name' ) ) !== false;
+		return false !== array_search( $name, array_column( $bridges, 'name' ), true );
 	}
 
 	/**
@@ -1221,8 +1227,7 @@ class Form_Bridge_Template {
 	 */
 	private function credential_exists( $name ) {
 		$credentials = Settings_Store::setting( 'http' )->credentials ?: array();
-		return array_search( $name, array_column( $credentials, 'name' ) ) !==
-			false;
+		return false !== array_search( $name, array_column( $credentials, 'name' ), true );
 	}
 
 	/**

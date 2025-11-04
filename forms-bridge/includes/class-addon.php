@@ -1,4 +1,9 @@
 <?php
+/**
+ * Class Addon
+ *
+ * @package forms-bridge
+ */
 
 namespace FORMS_BRIDGE;
 
@@ -143,6 +148,11 @@ class Addon extends Singleton {
 		update_option( self::REGISTRY, $registry );
 	}
 
+	/**
+	 * Public addons list getter.
+	 *
+	 * @return Addon[] List of enabled addon instances.
+	 */
 	final public static function addons() {
 		$addons = array();
 		foreach ( self::$addons as $addon ) {
@@ -579,8 +589,16 @@ class Addon extends Singleton {
 		return array();
 	}
 
+	/**
+	 * Get posts from the database based on a post type and an addon name.
+	 *
+	 * @param string $post_type Post type slug.
+	 * @param string $addon Addon name.
+	 *
+	 * @return WP_Post[]
+	 */
 	private static function autoload_posts( $post_type, $addon ) {
-		if ( ! in_array( $post_type, array( 'fb-bridge-template', 'fb-job' ), true ) ) {
+		if ( ! in_array( $post_type, array( Form_Bridge_Template::TYPE, Job::TYPE ), true ) ) {
 			return array();
 		}
 
@@ -638,6 +656,7 @@ class Addon extends Singleton {
 			if ( 'php' === $ext ) {
 				$data = include_once $file_path;
 			} elseif ( 'json' === $ext ) {
+				// phpcs:disable Generic.CodeAnalysis.EmptyStatement
 				try {
 					$content = file_get_contents( $file_path );
 					$data    = json_decode( $content, true, JSON_THROW_ON_ERROR );
@@ -646,6 +665,7 @@ class Addon extends Singleton {
 				} catch ( Error ) {
 					// pass.
 				}
+				// phpcs:enable
 			}
 
 			if ( is_array( $data ) ) {
@@ -793,6 +813,7 @@ class Addon extends Singleton {
 		return $loaded;
 	}
 
+	// phpcs:disable
 	// public static function get_api()
 	// {
 	// $__FILE__ = (new ReflectionClass(static::class))->getFileName();

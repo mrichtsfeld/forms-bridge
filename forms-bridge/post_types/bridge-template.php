@@ -1,5 +1,7 @@
 <?php
 
+use FORMS_BRIDGE\Form_Bridge_Template;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit();
 }
@@ -8,7 +10,7 @@ add_action(
 	'init',
 	function () {
 		register_post_type(
-			'fb-bridge-template',
+			Form_Bridge_Template::TYPE,
 			array(
 				'labels'          => array(
 					'name'          => __( 'Bridge templates', 'forms-bridge' ),

@@ -1,5 +1,7 @@
 <?php
 
+use FORMS_BRIDGE\Job;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit();
 }
@@ -8,7 +10,7 @@ add_action(
 	'init',
 	function () {
 		register_post_type(
-			'fb-job',
+			Job::TYPE,
 			array(
 				'labels'          => array(
 					'name'          => __( 'Jobs', 'forms-bridge' ),
