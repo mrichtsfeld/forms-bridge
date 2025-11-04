@@ -1,4 +1,9 @@
 <?php
+/**
+ * GravityForms integration
+ *
+ * @package forms-bridge
+ */
 
 namespace FORMS_BRIDGE\GF;
 
@@ -12,6 +17,8 @@ use GFCommon;
 use GFFormDisplay;
 use GFFormsModel;
 
+// phpcs:disable WordPress.NamingConventions.ValidVariableName
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit();
 }
@@ -19,7 +26,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * GravityForms integration.
  */
-class Integration extends BaseIntegration {
+class GF_Integration extends BaseIntegration {
 
 	const NAME = 'gf';
 
@@ -51,8 +58,7 @@ class Integration extends BaseIntegration {
 			if ( ! $form_id && wp_doing_ajax() ) {
 				if (
 					isset( $_POST['gform_submission_method'] ) &&
-					$_POST['gform_submission_method'] ===
-						GFFormDisplay::SUBMISSION_METHOD_AJAX
+					GFFormDisplay::SUBMISSION_METHOD_AJAX === $_POST['gform_submission_method']
 				) {
 					$form_id = absint( $_POST['gform_submit'] );
 				}
@@ -156,9 +162,14 @@ class Integration extends BaseIntegration {
 	 * @return boolean Removal result.
 	 */
 	public function remove_form( $form_id ) {
-		GFFormsModel::delete_form( $form_id );
+		return GFFormsModel::delete_form( $form_id );
 	}
 
+	/**
+	 * Retrives the current submission ID.
+	 *
+	 * @return string|null
+	 */
 	public function submission_id() {
 		$submission = $this->submission( true );
 		if ( $submission ) {
@@ -270,7 +281,8 @@ class Integration extends BaseIntegration {
 					'html',
 					'submit',
 					'captcha',
-				)
+				),
+				true
 			)
 		) {
 			return;
@@ -327,7 +339,8 @@ class Integration extends BaseIntegration {
 
 		$subfields = array();
 		if ( count( $named_inputs ) ) {
-			for ( $i = 1; $i <= count( $inputs ); $i++ ) {
+			$count = count( $input );
+			for ( $i = 1; $i <= $count; $i++ ) {
 				$input = $inputs[ $i - 1 ];
 
 				$input_label = implode(
@@ -410,10 +423,10 @@ class Integration extends BaseIntegration {
 				'required'    => $field->isRequired,
 				'options'     => $options,
 				'inputs'      => $inputs,
-				'is_file'     => $field->type === 'fileupload',
+				'is_file'     => 'fileupload' === $field->type,
 				'is_multi'    => $this->is_multi_field( $field ),
 				'conditional' => $field->conditionalLogic['enabled'] ?? false,
-				'format'      => $field->type === 'date' ? 'yyyy-mm-dd' : '',
+				'format'      => 'date' === $field->type ? 'yyyy-mm-dd' : '',
 				'schema'      => $this->field_value_schema( $field ),
 				'_type'       => $field->type,
 			),
@@ -423,7 +436,7 @@ class Integration extends BaseIntegration {
 
 		if (
 			! empty( $subfields ) &&
-			( $allowsPrepopulate || $field['type'] === 'list' )
+			( $allowsPrepopulate || 'list' === $field['type'] )
 		) {
 			return array_map(
 				function ( $subfield ) use ( $field ) {
@@ -439,12 +452,12 @@ class Integration extends BaseIntegration {
 	/**
 	 * Checks if a filed is multi value field.
 	 *
-	 * @param GF_Field Target field instance.
+	 * @param GF_Field $field Target field instance.
 	 *
 	 * @return boolean
 	 */
 	private function is_multi_field( $field ) {
-		if ( $field->type === 'fileupload' ) {
+		if ( 'fileupload' === $field->type ) {
 			return $field->multipleFiles ?? false;
 		}
 
@@ -460,7 +473,7 @@ class Integration extends BaseIntegration {
 		// }
 		// }
 
-		if ( in_array( $field->inputType, array( 'list', 'checkbox' ) ) ) {
+		if ( in_array( $field->inputType, array( 'list', 'checkbox' ), true ) ) {
 			return true;
 		}
 
@@ -505,7 +518,8 @@ class Integration extends BaseIntegration {
 			case 'checkbox':
 			case 'multiselect':
 				$items = array();
-				for ( $i = 0; $i < count( $field->choices ); $i++ ) {
+				$count = count( $field->choices );
+				for ( $i = 0; $i < $count; $i++ ) {
 					$items[] = array( 'type' => 'string' );
 				}
 
@@ -566,7 +580,7 @@ class Integration extends BaseIntegration {
 	 * Serializes the current form's submission data.
 	 *
 	 * @param array $submission GF form submission.
-	 * @param array $form Form data.
+	 * @param array $form_data Form data.
 	 *
 	 * @return array
 	 */
@@ -675,7 +689,7 @@ class Integration extends BaseIntegration {
 			switch ( $field_type ) {
 				case 'consent':
 					if ( preg_match( '/\.1$/', $input['id'] ) ) {
-						return $value === '1';
+						return '1' === $value;
 					}
 
 					return null;
@@ -698,9 +712,11 @@ class Integration extends BaseIntegration {
 					return $value;
 				// return explode('|', $value)[0];
 			}
+		// phpcs:disable Generic.CodeAnalysis.EmptyStatement
 		} catch ( TypeError ) {
-			// do nothing
+			/* do nothing */
 		}
+		// phpcs:enable
 
 		return $value;
 	}
@@ -774,7 +790,8 @@ class Integration extends BaseIntegration {
 	 */
 	private function prepare_fields( $fields ) {
 		$gf_fields = array();
-		for ( $i = 0; $i < count( $fields ); $i++ ) {
+		$count     = count( $fields );
+		for ( $i = 0; $i < $count; $i++ ) {
 			$id    = $i + 1;
 			$field = $fields[ $i ];
 			$args  = array(
@@ -941,7 +958,7 @@ class Integration extends BaseIntegration {
 	 * @param string  $label Field label.
 	 * @param boolean $required Is field required.
 	 * @param array   $options Options data.
-	 * @param boolean $is_multi Is field multi value
+	 * @param bool    $is_multi Is field multi value.
 	 *
 	 * @return array
 	 */
@@ -967,7 +984,8 @@ class Integration extends BaseIntegration {
 
 		if ( $is_multi ) {
 			$inputs = array();
-			for ( $i = 0; $i < count( $choices ); $i++ ) {
+			$count  = count( $choices );
+			for ( $i = 0; $i < $count; $i++ ) {
 				$input_id = $i + 1;
 				$inputs[] = array(
 					'id'    => $id . '.' . $input_id,
@@ -1008,7 +1026,7 @@ class Integration extends BaseIntegration {
 	 * @param string  $name Input name.
 	 * @param string  $label Field label.
 	 * @param boolean $required Is field required.
-	 * @param boolean $is_mulit Is field multi value?
+	 * @param boolean $is_multi Indicates if the field supports multiple values.
 	 * @param string  $filetypes String with allowed file extensions separated by commas.
 	 *
 	 * @return array
@@ -1113,6 +1131,7 @@ class Integration extends BaseIntegration {
 	 * @param string  $name Input name.
 	 * @param string  $label Field label.
 	 * @param boolean $required Is field required.
+	 * @param array   $constraints Input constraints.
 	 *
 	 * @return array
 	 */
@@ -1133,7 +1152,7 @@ class Integration extends BaseIntegration {
 add_filter(
 	'gform_field_content',
 	function ( $field_content, $field, $value, $entry_id, $form_id ) {
-		if ( $field->type !== 'number' ) {
+		if ( 'number' !== $field->type ) {
 			return $field_content;
 		}
 
@@ -1148,4 +1167,4 @@ add_filter(
 	5
 );
 
-Integration::setup();
+GF_Integration::setup();

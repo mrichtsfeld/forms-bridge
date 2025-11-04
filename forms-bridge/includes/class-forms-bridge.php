@@ -340,9 +340,9 @@ class Forms_Bridge extends Base_Plugin {
 					Logger::log( $payload );
 				}
 
-								$job = $bridge->workflow;
-				if ( $job ) {
-					$payload = $job->run( $payload, $bridge );
+				$workflow = $bridge->workflow;
+				if ( $workflow ) {
+					$payload = $workflow->run( $payload, $bridge );
 
 					if ( empty( $payload ) ) {
 						Logger::log( 'Skip empty payload after bridge workflow' );
@@ -389,7 +389,7 @@ class Forms_Bridge extends Base_Plugin {
 
 				$response = $bridge->submit( $payload, $attachments );
 
-								$error = is_wp_error( $response ) ? $response : null;
+				$error = is_wp_error( $response ) ? $response : null;
 				if ( $error ) {
 					do_action(
 						'forms_bridge_on_failure',
