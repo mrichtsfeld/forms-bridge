@@ -445,7 +445,33 @@ class REST_Settings_Controller extends Base_Controller {
 		}
 
 		if ( count( $jobs ) !== count( $request['jobs'] ) ) {
-			return self::not_found();
+			$backup = $jobs;
+
+			$jobs  = array();
+			$index = 0;
+			foreach ( $request['jobs'] as $name ) {
+				foreach ( $backup as $job ) {
+					if ( $job['name'] === $name ) {
+						$jobs[] = $job;
+						break;
+					}
+				}
+
+				if ( ! isset( $jobs[ $index ] ) || $jobs[ $index ]['name'] !== $name ) {
+					$jobs[] = array(
+						'addon'       => $addon,
+						'id'          => $addon . '-' . $name,
+						'name'        => $name,
+						'title'       => '',
+						'description' => '',
+						'method'      => '',
+						'input'       => array(),
+						'output'      => array(),
+					);
+				}
+
+				++$index;
+			}
 		}
 
 		return $jobs;
