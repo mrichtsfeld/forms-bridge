@@ -158,7 +158,7 @@ class Forms_Bridge extends Base_Plugin {
 	 */
 	protected static function init() {
 		$db_version = get_option( self::DB_VERSION );
-		if ( self::version() !== $db_version && ! defined( 'WP_TEST_DOMAIN' ) ) {
+		if ( self::version() !== $db_version && ! defined( 'WP_TESTS_DOMAIN' ) ) {
 			self::do_migrations();
 		}
 	}

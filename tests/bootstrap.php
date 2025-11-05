@@ -43,6 +43,12 @@ function _manually_load_plugin() {
 	);
 
 	require dirname( __DIR__ ) . '/forms-bridge/forms-bridge.php';
+
+	/* Integrations */
+	require ABSPATH . 'wp-content/mu-plugins/contact-form-7/wp-contact-form-7.php';
+	require ABSPATH . 'wp-content/mu-plugins/gravityforms/gravityforms.php';
+	require ABSPATH . 'wp-content/mu-plugins/ninja-forms/ninja-forms.php';
+	require ABSPATH . 'wp-content/mu-plugins/wpforms/wpforms.php';
 }
 
 tests_add_filter( 'muplugins_loaded', '_manually_load_plugin' );

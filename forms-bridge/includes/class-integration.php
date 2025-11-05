@@ -1,4 +1,9 @@
 <?php
+/**
+ * Class Integration
+ *
+ * @package forms-bridge
+ */
 
 namespace FORMS_BRIDGE;
 
@@ -9,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Integration base class.
+ * Form builder integration base class.
  */
 class Integration extends Singleton {
 
@@ -20,8 +25,18 @@ class Integration extends Singleton {
 	 */
 	private const REGISTRY = 'forms_bridge_integrations';
 
+	/**
+	 * Handles integration title or public name.
+	 *
+	 * @var string
+	 */
 	const TITLE = '';
 
+	/**
+	 * Handles integration name.
+	 *
+	 * @var string
+	 */
 	const NAME = '';
 
 	/**
@@ -31,6 +46,13 @@ class Integration extends Singleton {
 	 */
 	private static $integrations = array();
 
+	/**
+	 * Checks if the integration plugin is active.
+	 *
+	 * @param string $integration Integration slug.
+	 *
+	 * @return bool
+	 */
 	private static function check_dependencies( $integration ) {
 		switch ( $integration ) {
 			case 'wpcf7':
@@ -58,7 +80,7 @@ class Integration extends Singleton {
 				return false;
 		}
 
-		return Forms_Bridge::is_plugin_active( $dep );
+		return Forms_Bridge::is_plugin_active( $dep ) || defined( 'WP_TESTS_DOMAIN' );
 	}
 
 	/**
@@ -104,7 +126,7 @@ class Integration extends Singleton {
 	 *
 	 * @param array $integrations New integrations' registry state.
 	 */
-	private static function update_registry( $integrations = array() ) {
+	public static function update_registry( $integrations = array() ) {
 		$registry = self::registry();
 		foreach ( $integrations as $name => $enabled ) {
 			if ( ! isset( $registry[ $name ] ) ) {
@@ -133,6 +155,13 @@ class Integration extends Singleton {
 		return $integrations;
 	}
 
+	/**
+	 * Public getter of integration addapter instances.
+	 *
+	 * @param string $name Integration name.
+	 *
+	 * @return Integration|null
+	 */
 	final public static function integration( $name ) {
 		return self::$integrations[ $name ] ?? null;
 	}
