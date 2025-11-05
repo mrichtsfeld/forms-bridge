@@ -13,6 +13,14 @@ else
 	mkdir -p "$WORDPRESS_DIR/wp-content/mu-plugins"
 fi
 
+if [ -z "$TEMP_DIR" ]; then
+	TEMP_DIR='/tmp'
+
+	if [ ! -d "$TEMP_DIR" ]; then
+		mkdir -p "$TEMP_DIR"
+	fi
+fi
+
 URLS=('https://downloads.wordpress.org/plugin/contact-form-7.6.1.3.zip'
 	'https://downloads.wordpress.org/plugin/ninja-forms.3.13.0.zip'
 	'https://www.codeccoop.org/formsbridge/plugins/wpforms.zip'
