@@ -22,7 +22,7 @@ class ConditionalMappersTest extends WP_UnitTestCase {
 	}
 
 	private function form_data() {
-		return include __DIR__ . '/data/shipping-form.php';
+		return include __DIR__ . '/data/templates/shipping-form.php';
 	}
 
 	private function bridge() {

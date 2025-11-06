@@ -11,6 +11,57 @@ use FORMS_BRIDGE\Integration;
  * GravityForms integration test case.
  */
 class GravityFormsTest extends WP_UnitTestCase {
+	private static function get_form( $title ) {
+		$forms = GFAPI::get_forms();
+
+		foreach ( $forms as $form ) {
+			if ( $form['title'] === $title ) {
+				return $form;
+			}
+		}
+	}
+
+	private function assertField( $field, $type, $args = array() ) {
+		$args = wp_parse_args(
+			$args,
+			array(
+				'type'        => $type,
+				'schema'      => 'string',
+				'required'    => true,
+				'is_file'     => false,
+				'is_multi'    => false,
+				'conditional' => false,
+			)
+		);
+
+		$this->assertSame( $args['type'], $field['type'] );
+
+		if ( isset( $args['gf'] ) ) {
+			$this->assertSame( $args['gf'], $field['_type'] );
+		} else {
+			$this->assertSame( $field['type'], $field['_type'] );
+		}
+
+		if ( $args['schema'] ) {
+			$this->assertSame( $args['schema'], $field['schema']['type'] );
+		} else {
+			$this->assertNull( $args['schema'] );
+		}
+
+		$flags = array( 'required', 'is_file', 'is_multi', 'conditional' );
+		foreach ( $flags as $flag ) {
+			if ( $args[ $flag ] ) {
+				$this->assertTrue( $field[ $flag ] );
+			} else {
+				$this->assertFalse( $field[ $flag ] );
+			}
+		}
+
+		if ( isset( $args['format'] ) ) {
+			$this->assertSame( $args['format'], $field['format'] );
+		}
+	}
+
 	public static function store() {
 		$dir = dirname( __DIR__, 1 ) . '/data/gf';
 
@@ -51,17 +102,67 @@ class GravityFormsTest extends WP_UnitTestCase {
 		Integration::update_registry( array( 'gf' => false ) );
 	}
 
-	public function test_subscription_form_serialization() {
-		$forms = GFAPI::get_forms();
+	public function test_signup_form_serialization() {
+		$form = self::get_form( 'Onboarding el Prat de Llobregat' );
 
-		foreach ( $forms as $candidate ) {
-			if ( 'Subscription Request' === $candidate['title'] ) {
-				$form = $candidate;
-				break;
-			}
+		if ( ! $form ) {
+			throw new Exception( 'Signup form not found' );
 		}
 
-		if ( ! isset( $form ) ) {
+		$integration = Integration::integration( 'gf' );
+		$form_data   = $integration->serialize_form( $form );
+
+		$fields = $form_data['fields'];
+		$this->assertEquals( 18, count( $fields ) );
+
+		$field = $fields[0];
+		$this->assertEquals( 2, count( $field['options'] ) );
+		$this->assertField( $field, 'select', array( 'gf' => 'radio' ) );
+
+		$field = $fields[4];
+		$this->assertField( $field, 'text', array( 'conditional' => true ) );
+
+		$field = $fields[7];
+		$this->assertField(
+			$field,
+			'date',
+			array(
+				'conditional' => true,
+				'format'      => 'yyyy-mm-dd',
+			)
+		);
+
+		$field = $fields[15];
+		$this->assertEquals( 1, count( $field['options'] ) );
+		$this->assertEquals( 1, count( $field['inputs'] ) );
+		$this->assertField(
+			$field,
+			'checkbox',
+			array(
+				'required' => false,
+				'schema'   => 'boolean',
+				'gf'       => 'consent',
+			)
+		);
+
+		$field = $fields[16];
+		$this->assertEquals( 1, count( $field['options'] ) );
+		$this->assertEquals( 1, count( $field['inputs'] ) );
+		$this->assertField(
+			$field,
+			'checkbox',
+			array(
+				'schema'      => 'boolean',
+				'gf'          => 'consent',
+				'conditional' => true,
+			)
+		);
+	}
+
+	public function test_subscription_form_serialization() {
+		$form = self::get_form( 'Subscription Request' );
+
+		if ( ! $form ) {
 			throw new Exception( 'Subscription Request not found' );
 		}
 
@@ -73,88 +174,63 @@ class GravityFormsTest extends WP_UnitTestCase {
 		$this->assertEquals( 16, count( $fields ) );
 
 		$field = $fields[0];
-		$this->assertSame( 'text', $field['type'] );
-		$this->assertSame( 'string', $field['schema']['type'] );
-		$this->assertSame( 'hidden', $field['_type'] );
-		$this->assertFalse( $field['required'] );
-		$this->assertFalse( $field['is_file'] );
-		$this->assertFalse( $field['is_multi'] );
-		$this->assertFalse( $field['conditional'] );
+		$this->assertField(
+			$field,
+			'text',
+			array(
+				'gf'       => 'hidden',
+				'required' => false,
+			)
+		);
 
 		$field = $fields[2];
-		$this->assertSame( 'text', $field['type'] );
-		$this->assertSame( 'string', $field['schema']['type'] );
-		$this->assertSame( 'name', $field['_type'] );
-		$this->assertTrue( $field['required'] );
-		$this->assertFalse( $field['is_file'] );
-		$this->assertFalse( $field['is_multi'] );
-		$this->assertFalse( $field['conditional'] );
 		$this->assertEquals( 2, count( $field['inputs'] ) );
+		$this->assertField( $field, 'text', array( 'gf' => 'name' ) );
 
 		$field = $fields[4];
-		$this->assertSame( 'text', $field['type'] );
-		$this->assertSame( 'string', $field['schema']['type'] );
-		$this->assertSame( 'phone', $field['_type'] );
-		$this->assertTrue( $field['required'] );
-		$this->assertFalse( $field['is_file'] );
-		$this->assertFalse( $field['is_multi'] );
-		$this->assertFalse( $field['conditional'] );
+		$this->assertField( $field, 'text', array( 'gf' => 'phone' ) );
 
 		$field = $fields[5];
-		$this->assertSame( 'email', $field['type'] );
-		$this->assertSame( 'string', $field['schema']['type'] );
-		$this->assertSame( 'email', $field['_type'] );
-		$this->assertTrue( $field['required'] );
-		$this->assertFalse( $field['is_file'] );
-		$this->assertFalse( $field['is_multi'] );
-		$this->assertFalse( $field['conditional'] );
+		$this->assertField( $field, 'email' );
 
 		$field = $fields[9];
-		$this->assertSame( 'number', $field['type'] );
-		$this->assertSame( 'number', $field['schema']['type'] );
-		$this->assertSame( 'quantity', $field['_type'] );
-		$this->assertTrue( $field['required'] );
-		$this->assertFalse( $field['is_file'] );
-		$this->assertFalse( $field['is_multi'] );
-		$this->assertFalse( $field['conditional'] );
+		$this->assertField(
+			$field,
+			'number',
+			array(
+				'gf'     => 'quantity',
+				'schema' => 'number',
+			)
+		);
 
 		$field = $fields[10];
-		$this->assertSame( 'select', $field['type'] );
-		$this->assertSame( 'string', $field['schema']['type'] );
-		$this->assertSame( 'select', $field['_type'] );
-		$this->assertTrue( $field['required'] );
-		$this->assertFalse( $field['is_file'] );
-		$this->assertFalse( $field['is_multi'] );
-		$this->assertFalse( $field['conditional'] );
-		$this->assertEquals( 2, count( $field['options'] ) );
+		$this->assertField( $field, 'select' );
 
 		$field = $fields[13];
-		$this->assertSame( 'file', $field['type'] );
-		$this->assertNull( $field['schema'] );
-		$this->assertSame( 'fileupload', $field['_type'] );
-		$this->assertTrue( $field['required'] );
-		$this->assertTrue( $field['is_file'] );
-		$this->assertFalse( $field['is_multi'] );
-		$this->assertTrue( $field['conditional'] );
+		$this->assertField(
+			$field,
+			'file',
+			array(
+				'gf'          => 'fileupload',
+				'schema'      => null,
+				'is_file'     => true,
+				'conditional' => true,
+			)
+		);
 
 		$field = $fields[14];
-		$this->assertSame( 'textarea', $field['type'] );
-		$this->assertSame( 'string', $field['schema']['type'] );
-		$this->assertSame( 'textarea', $field['_type'] );
-		$this->assertFalse( $field['required'] );
-		$this->assertFalse( $field['is_file'] );
-		$this->assertFalse( $field['is_multi'] );
-		$this->assertFalse( $field['conditional'] );
+		$this->assertField( $field, 'textarea', array( 'required' => false ) );
 
 		$field = $fields[15];
-		$this->assertSame( 'switch', $field['type'] );
-		$this->assertSame( 'boolean', $field['schema']['type'] );
-		$this->assertSame( 'consent', $field['_type'] );
-		$this->assertTrue( $field['required'] );
-		$this->assertFalse( $field['is_file'] );
-		$this->assertFalse( $field['is_multi'] );
-		$this->assertFalse( $field['conditional'] );
 		$this->assertEquals( 1, count( $field['inputs'] ) );
+		$this->assertField(
+			$field,
+			'checkbox',
+			array(
+				'gf'     => 'consent',
+				'schema' => 'boolean',
+			)
+		);
 	}
 
 	public function test_serialize_submission() {

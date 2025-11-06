@@ -376,7 +376,7 @@ class GF_Integration extends BaseIntegration {
 				$type = 'number';
 				break;
 			case 'consent':
-				$type = 'switch';
+				$type = 'checkbox';
 				break;
 			case 'fileupload':
 				$type = 'file';
