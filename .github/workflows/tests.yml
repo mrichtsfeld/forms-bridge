@@ -1,0 +1,25 @@
+name: Tests
+
+on:
+  pull_request:
+    branches: [main]
+
+  workflow_call:
+
+jobs:
+  phpunit:
+    name: PHP Unit Testing
+    runs-on: ubuntu-22.04
+    container:
+      image: codeccoop/wp-test
+    steps:
+      - name: Install WP Test Suite
+        run: |
+          nohup docker-entrypoint.sh mariadb 2>&1 >/dev/null &
+          composer -q install
+          sleep 5
+          chmod a+x bin/*
+          bin/install-wp-tests.sh
+          bin/download-test-deps.sh
+      - name: Unit testing
+        run: vendor/bin/phpunit -c phpunit.xml.dist
