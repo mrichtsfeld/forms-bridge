@@ -9,7 +9,7 @@ on:
 jobs:
   phpunit:
     name: PHP Unit Testing
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     container:
       image: codeccoop/wp-test
     steps:
