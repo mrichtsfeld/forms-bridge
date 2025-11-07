@@ -1,5 +1,9 @@
 # Forms Bridge
 
+[![Plugin version](https://img.shields.io/wordpress/plugin/v/forms-bridge)](https://wordpress.org/plugins/forms-bridge/)
+
+[Tests result](https://img.shields.io/github/actions/workflow/status/codeccoop/forms-bridge/tests)]
+
 Bridge your WordPress forms without code, add custom fields, use field mappers, set up a workflow and make your data flow seamlessly to your backend.
 
 ## Bridges
@@ -81,12 +85,12 @@ Browse the plugin's documentation on [formsbridge.codeccoop.org](https://formsbr
 
 ### API
 
-The plugin offers some hooks to expose its internal API. Go to [documentation](https://formsb
+The plugin offers some hooks to expose its internal API. Go to [documentation](<https://formsb>
 ridge.codeccoop.org/documentation/#api) to see more details about the hooks.
 
 ### Dependencies
 
-The repository handles dependencies as [git submodules](https://www.atlassian.com/git/tutoria
+The repository handles dependencies as [git submodules](<https://www.atlassian.com/git/tutoria>
 ls/git-submodule).
 In order to work local, you have to clone this repository and initialize its submodules
 with this command:
