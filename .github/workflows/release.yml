@@ -36,7 +36,7 @@ jobs:
         run: rm -rf node_modules
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: client-build
           path: forms-bridge/assets
@@ -51,7 +51,7 @@ jobs:
     needs: build
     steps:
       - name: Download build artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: client-build
           path: forms-bridge/assets
@@ -73,7 +73,7 @@ jobs:
         run: wp dist-archive forms-bridge ./$ZIP
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: plugin-archive
           path: ${{ env.ZIP }}
@@ -86,7 +86,7 @@ jobs:
       ZIP: "${{ github.ref_name }}.zip"
     steps:
       - name: Download build artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: plugin-archive
           path: ${{ env.ZIP }}
