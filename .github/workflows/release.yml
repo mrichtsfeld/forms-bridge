@@ -93,7 +93,7 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: plugin-archive
-          path: ${{ ZIP }}
+          path: "$ZIP"
 
       - name: Create release
         env:
