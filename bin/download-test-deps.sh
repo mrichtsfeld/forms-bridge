@@ -38,10 +38,7 @@ while [ $i -lt $COUNT ]; do
 		fi
 	fi
 
-	PLUGIN_DIR="$WORDPRESS_DIR/wp-content/mu-plugins/$PLUGIN"
-	if [ ! -d "$PLUGIN_DIR" ]; then
-		unzip -oqq "$ZIP" -d "$PLUGIN_DIR"
-	fi
+	unzip -oqq "$ZIP" -d "$WORDPRESS_DIR/wp-content/mu-plugins/$PLUGIN"
 
 	i=$((i + 1))
 done
