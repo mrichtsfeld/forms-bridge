@@ -27,6 +27,8 @@ while [ $i -lt $COUNT ]; do
 	URL=${URLS[$i]}
 	PLUGIN=${PLUGINS[$i]}
 
+	echo "[$PLUGIN]($URL)"
+
 	ZIP="$TMPDIR/$PLUGIN.zip"
 	if [ ! -f "$ZIP" ]; then
 		curl -sL --connect-timeout 5 --max-time 30 "$URL" >"$ZIP"
@@ -38,6 +40,7 @@ while [ $i -lt $COUNT ]; do
 		fi
 	fi
 
+	echo "unzip $ZIP -d "$WORDPRESS_DIR/wp-content/mu-plugins/$PLUGIN""
 	unzip -oqq "$ZIP" -d "$WORDPRESS_DIR/wp-content/mu-plugins/$PLUGIN"
 
 	i=$((i + 1))
