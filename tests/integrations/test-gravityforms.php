@@ -5,117 +5,56 @@
  * @package forms-bridge-tests
  */
 
-use FORMS_BRIDGE\Integration;
+require_once 'class-base-integration-test.php';
 
 /**
  * GravityForms integration test case.
  */
-class GravityFormsTest extends WP_UnitTestCase {
-	private static function get_form( $title ) {
-		$forms = GFAPI::get_forms();
+class GravityFormsTest extends BaseIntegrationTest {
+	public const NAME = 'gf';
 
-		foreach ( $forms as $form ) {
-			if ( $form['title'] === $title ) {
-				return $form;
-			}
-		}
-
-		throw new Exception( "Form {$title} not found" );
+	/**
+	 * Fetch forms from the database.
+	 *
+	 * @return GFForm[]
+	 */
+	protected static function get_forms() {
+		return GFAPI::get_forms();
 	}
 
-	private function assertField( $field, $type, $args = array() ) {
-		$args = wp_parse_args(
-			$args,
-			array(
-				'type'        => $type,
-				'schema'      => 'string',
-				'required'    => true,
-				'is_file'     => false,
-				'is_multi'    => false,
-				'conditional' => false,
-			)
-		);
-
-		$this->assertSame( $args['type'], $field['type'] );
-
-		if ( isset( $args['gf'] ) ) {
-			$this->assertSame( $args['gf'], $field['_type'] );
-		} else {
-			$this->assertSame( $field['type'], $field['_type'] );
-		}
-
-		if ( $args['schema'] ) {
-			$this->assertSame( $args['schema'], $field['schema']['type'] );
-		} else {
-			$this->assertNull( $args['schema'] );
-		}
-
-		$flags = array( 'required', 'is_file', 'is_multi', 'conditional' );
-		foreach ( $flags as $flag ) {
-			if ( $args[ $flag ] ) {
-				$this->assertTrue( $field[ $flag ] );
-			} else {
-				$this->assertFalse( $field[ $flag ] );
-			}
-		}
-
-		if ( isset( $args['format'] ) ) {
-			$this->assertSame( $args['format'], $field['format'] );
-		}
+	/**
+	 * Registers a new form on the database.
+	 *
+	 * @param object $config Form config.
+	 *
+	 * @return int Form ID.
+	 */
+	protected static function add_form( $config ) {
+		return GFAPI::add_form( $config );
 	}
 
-	public static function store() {
-		$dir = dirname( __DIR__, 1 ) . '/data/gf';
-
-		$store = array();
-		foreach ( array_diff( scandir( $dir ), array( '..', '.' ) ) as $filename ) {
-			$name           = explode( '.', $filename )[0];
-			$filepath       = $dir . '/' . $filename;
-			$store[ $name ] = unserialize( file_get_contents( $filepath ) );
-		}
-
-		return $store;
-	}
-
-	public static function set_up_before_class() {
-		Integration::update_registry( array( 'gf' => true ) );
-
-		$store = self::store();
-		foreach ( $store as $name => $object ) {
-			if ( ! str_ends_with( $name, '-form' ) ) {
-				continue;
-			}
-
-			$form_id = GFAPI::add_form( $object );
-
-			if ( ! $form_id ) {
-				throw new Exception( 'Unable to create GF Form' );
-			}
-		}
-	}
-
-	public static function tear_down_after_class() {
-		$forms = GFAPI::get_forms();
-
-		foreach ( $forms as $form ) {
-			GFAPI::delete_form( $form['id'] );
-		}
-
-		Integration::update_registry( array( 'gf' => false ) );
+	/**
+	 * Delete a form from de database by ID.
+	 *
+	 * @param object $form Form data.
+	 *
+	 * @return bool 1 if OK, 0 if KO.
+	 */
+	protected static function delete_form( $form ) {
+		return GFAPI::delete_form( $form['id'] );
 	}
 
 	public function test_signup_form_serialization() {
 		$form = self::get_form( 'Onboarding el Prat de Llobregat' );
 
-		$integration = Integration::integration( 'gf' );
-		$form_data   = $integration->serialize_form( $form );
+		$form_data = $this->serialize_form( $form );
 
 		$fields = $form_data['fields'];
 		$this->assertEquals( 18, count( $fields ) );
 
 		$field = $fields[0];
 		$this->assertEquals( 2, count( $field['options'] ) );
-		$this->assertField( $field, 'select', array( 'gf' => 'radio' ) );
+		$this->assertField( $field, 'select', array( '_type' => 'radio' ) );
 
 		$field = $fields[4];
 		$this->assertField( $field, 'text', array( 'conditional' => true ) );
@@ -139,7 +78,7 @@ class GravityFormsTest extends WP_UnitTestCase {
 			array(
 				'required' => false,
 				'schema'   => 'boolean',
-				'gf'       => 'consent',
+				'_type'    => 'consent',
 			)
 		);
 
@@ -151,7 +90,7 @@ class GravityFormsTest extends WP_UnitTestCase {
 			'checkbox',
 			array(
 				'schema'      => 'boolean',
-				'gf'          => 'consent',
+				'_type'       => 'consent',
 				'conditional' => true,
 			)
 		);
@@ -160,9 +99,7 @@ class GravityFormsTest extends WP_UnitTestCase {
 	public function test_serialize_signup_submission() {
 		$form = self::get_form( 'Onboarding el Prat de Llobregat' );
 
-		$integration = Integration::integration( 'gf' );
-
-		$form_data = $integration->serialize_form( $form );
+		$form_data = $this->serialize_form( $form );
 
 		$store = self::store();
 		foreach ( $store as $name => $object ) {
@@ -176,7 +113,7 @@ class GravityFormsTest extends WP_UnitTestCase {
 			throw new Exception( 'Signup submission not found' );
 		}
 
-		$payload = $integration->serialize_submission( $submission, $form_data );
+		$payload = $this->serialize_submission( $submission, $form_data );
 
 		$this->assertSame( '0', $payload['Ets soci o usuari de Som Mobilitat?'] );
 		$this->assertSame( 'female', $payload['gender'] );
@@ -189,9 +126,7 @@ class GravityFormsTest extends WP_UnitTestCase {
 	public function test_subscription_form_serialization() {
 		$form = self::get_form( 'Subscription Request' );
 
-		$integration = Integration::integration( 'gf' );
-
-		$form_data = $integration->serialize_form( $form );
+		$form_data = $this->serialize_form( $form );
 
 		$fields = $form_data['fields'];
 		$this->assertEquals( 16, count( $fields ) );
@@ -201,17 +136,17 @@ class GravityFormsTest extends WP_UnitTestCase {
 			$field,
 			'text',
 			array(
-				'gf'       => 'hidden',
+				'_type'    => 'hidden',
 				'required' => false,
 			)
 		);
 
 		$field = $fields[2];
 		$this->assertEquals( 2, count( $field['inputs'] ) );
-		$this->assertField( $field, 'text', array( 'gf' => 'name' ) );
+		$this->assertField( $field, 'text', array( '_type' => 'name' ) );
 
 		$field = $fields[4];
-		$this->assertField( $field, 'text', array( 'gf' => 'phone' ) );
+		$this->assertField( $field, 'text', array( '_type' => 'phone' ) );
 
 		$field = $fields[5];
 		$this->assertField( $field, 'email' );
@@ -221,7 +156,7 @@ class GravityFormsTest extends WP_UnitTestCase {
 			$field,
 			'number',
 			array(
-				'gf'     => 'quantity',
+				'_type'  => 'quantity',
 				'schema' => 'number',
 			)
 		);
@@ -234,8 +169,7 @@ class GravityFormsTest extends WP_UnitTestCase {
 			$field,
 			'file',
 			array(
-				'gf'          => 'fileupload',
-				'schema'      => null,
+				'_type'       => 'fileupload',
 				'is_file'     => true,
 				'conditional' => true,
 			)
@@ -250,7 +184,7 @@ class GravityFormsTest extends WP_UnitTestCase {
 			$field,
 			'checkbox',
 			array(
-				'gf'     => 'consent',
+				'_type'  => 'consent',
 				'schema' => 'boolean',
 			)
 		);
@@ -259,9 +193,7 @@ class GravityFormsTest extends WP_UnitTestCase {
 	public function test_serialize_sr_submission() {
 		$form = self::get_form( 'Subscription Request' );
 
-		$integration = Integration::integration( 'gf' );
-
-		$form_data = $integration->serialize_form( $form );
+		$form_data = $this->serialize_form( $form );
 
 		$store = self::store();
 		foreach ( $store as $name => $object ) {
@@ -275,7 +207,7 @@ class GravityFormsTest extends WP_UnitTestCase {
 			throw new Exception( 'Subscription Request submission not found' );
 		}
 
-		$payload = $integration->serialize_submission( $submission, $form_data );
+		$payload = $this->serialize_submission( $submission, $form_data );
 
 		$this->assertSame( 'EUSEBIO SALGADO', $payload['Nom i cognoms'] );
 		$this->assertSame( 'website', $payload['source'] );

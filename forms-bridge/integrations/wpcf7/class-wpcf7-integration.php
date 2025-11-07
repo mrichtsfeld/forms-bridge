@@ -109,11 +109,7 @@ class Integration extends BaseIntegration {
 		$contact_form = wpcf7_save_contact_form(
 			array(
 				'title'  => $data['title'],
-				'locale' => apply_filters(
-					'wpct_i18n_current_language',
-					null,
-					'locale'
-				),
+				'locale' => get_locale(),
 				'form'   => $form,
 				'mail'   => $email,
 			)
@@ -227,8 +223,19 @@ class Integration extends BaseIntegration {
 		$type = $field->basetype;
 		if ( $type === 'conditional' ) {
 			$type = $field->get_option( 'type' )[0];
-		} elseif ( $type === 'hidden' ) {
-			$type = 'text';
+		}
+
+		switch ( $type ) {
+			case 'radio':
+			case 'checkbox':
+				$type = 'select';
+				break;
+			case 'acceptance':
+				$type = 'checkbox';
+				break;
+			case 'hidden':
+				$type = 'text';
+				break;
 		}
 
 		$options = array();
@@ -359,7 +366,7 @@ class Integration extends BaseIntegration {
 	 * Serializes the form's submission data.
 	 *
 	 * @param WPCF7_Submission $submission Submission instance.
-	 * @param array            $form Form data.
+	 * @param array            $form_data Form data.
 	 *
 	 * @return array Submission data.
 	 */
@@ -370,19 +377,24 @@ class Integration extends BaseIntegration {
 			$i     = array_search( $key, array_column( $form_data['fields'], 'name' ) );
 			$field = $form_data['fields'][ $i ];
 
-			if ( $field['_type'] === 'hidden' ) {
+			if ( is_array( $val ) && ! $field['is_multi'] ) {
+				$data[ $key ] = $val[0];
+				$val          = $data[ $key ];
+			}
+
+			if ( 'hidden' === $field['_type'] ) {
 				$number_val = (float) $val;
 				if ( strval( $number_val ) === $val ) {
 					$data[ $key ] = $number_val;
 				} else {
 					$data[ $key ] = $val;
 				}
-			} elseif ( $field['_type'] === 'number' ) {
+			} elseif ( 'number' === $field['_type'] ) {
 				$data[ $key ] = (float) $val;
-			} elseif ( is_array( $val ) && ! $field['is_multi'] ) {
-				$data[ $key ] = $val[0];
-			} elseif ( $field['_type'] === 'file' ) {
+			} elseif ( 'file' === $field['_type'] ) {
 				unset( $data[ $key ] );
+			} elseif ( 'acceptance' === $field['_type'] ) {
+				$data[ $key ] = (bool) $val;
 			}
 		}
 

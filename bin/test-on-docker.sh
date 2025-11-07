@@ -13,7 +13,7 @@ echo -n 'Install composer dependencies:                '
 composer -q install
 echo '✅'
 echo -n 'Wait for mariadb to start for three seconds:  '
-sleep 3
+sleep 5
 echo '✅'
 echo -n 'Install wordpress test suite:                 '
 TMPDIR=/opt bin/install-wp-tests.sh >/dev/null 2>&1
