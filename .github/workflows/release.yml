@@ -76,12 +76,7 @@ jobs:
           path: forms-bridge/assets/plugin.bundle.js
 
       - name: Debug
-        run: |
-          ls -la
-          ls -la forms-bridge/assets
-          ls -la ~
-          which wp
-          cat /usr/bin/wp
+        run: wp help
 
       - name: Replace textdomains
         run: |
