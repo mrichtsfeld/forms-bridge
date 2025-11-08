@@ -116,8 +116,9 @@ jobs:
           # TAG: ${{ github.ref_name }}
           TAG: 4.0.7
         run: |
+          mv $ZIP forms-bridge.zip
           gh release create "$TAG" \
             --repo="$GITHUB_REPOSITORY" \
             --title="$TAG" \
             --generate-notes \
-            "$ZIP#forms-bridge.zip"
+            "forms-bridge.zip"
