@@ -76,7 +76,9 @@ upload:
   image: curlimages/curl:latest
   script:
     - |
-      curl --header "JOB-TOKEN: ${CI_JOB_TOKEN}" --upload-file ${ZIP} ${PACKAGE_REGISTRY_URL}/${ZIP}
+      curl --header "JOB-TOKEN: ${CI_JOB_TOKEN}" \
+      --upload-file ${ZIP} \
+      ${PACKAGE_REGISTRY_URL}/${ZIP}
 
 release:
   # Caution, as of 2021-02-02 these assets links require a login, see:
