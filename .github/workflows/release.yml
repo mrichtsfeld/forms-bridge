@@ -36,7 +36,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: build
-          path: forms-bridge/*
+          path: forms-bridge
 
   package:
     name: Prepare package
@@ -51,7 +51,6 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: build
-          path: forms-bridge
 
       - name: Replace textdomains
         run: |
