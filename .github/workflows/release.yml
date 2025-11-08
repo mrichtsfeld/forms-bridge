@@ -47,6 +47,9 @@ jobs:
       ZIP: "${{ github.ref_name }}.zip"
     needs: build
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
       - name: Download build artifact
         uses: actions/download-artifact@v4
         with:
@@ -82,6 +85,9 @@ jobs:
     env:
       ZIP: "${{ github.ref_name }}.zip"
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
       - name: Download build artifact
         uses: actions/download-artifact@v4
         with:
