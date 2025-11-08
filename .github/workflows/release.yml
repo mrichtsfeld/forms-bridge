@@ -2,8 +2,8 @@ name: Release
 
 on:
   push:
-    tags:
-      - "[0-9]+.[0-9]+.[0-9]+"
+    # tags:
+    #   - "[0-9]+.[0-9]+.[0-9]+"
 
 permissions:
   contents: "write"
@@ -16,10 +16,19 @@ jobs:
   build:
     name: Build client
     runs-on: ubuntu-latest
-    container:
-      image: node:latest
     needs: tests
     steps:
+      - name: Debug
+        run: |
+          echo whoami
+          echo $PWD
+          echo ls -l
+          echo $TMPDIR
+          cat /etc/os-release
+
+      - name: Setup node
+        uses: actions/setup-node@v6
+
       - name: Checkout code
         uses: actions/checkout@v4
 
@@ -47,6 +56,14 @@ jobs:
       ZIP: "${{ github.ref_name }}.zip"
     needs: build
     steps:
+      - name: Debug
+        run: |
+          whoami
+          echo $PWD
+          ls -l /
+          echo $TMPDIR
+          cat /etc/os-release
+
       - name: Setup node
         uses: actions/setup-node@v6
 
@@ -96,4 +113,4 @@ jobs:
             --repo="$GITHUB_REPOSITORY" \
             --title="$TAG" \
             --generate-notes \
-          "$ZIP"
+            "$ZIP"
