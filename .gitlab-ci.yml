@@ -73,7 +73,7 @@ package:
   script:
     - find forms-bridge/deps/plugin -name '*.php' -exec sed -i "s/wpct-plugin/forms-bridge/g" {} \;
     - find forms-bridge -name '*.php' -exec sed -i "s/wpct_plugin_/forms_bridge_plugin_/g" {} \;
-    - find forms-bridge -name "*.php" -exec sed -i 's/WPCT_PLUGIN/FORMS_BRIDGE\\Common/g' {} \;
+    - find forms-bridge -name "*.php" -exec sed -i 's/WPCT_PLUGIN/FORMS_BRIDGE\\Plugin/g' {} \;
     - find forms-bridge/deps/http -name '*.php' -exec sed -i "s/http-bridge/forms-bridge/g" {} \;
     - find forms-bridge -name '*.php' -exec sed -i "s/http_bridge_/forms_bridge_http_/g" {} \;
     - find forms-bridge -name "*.php" -exec sed -i 's/HTTP_BRIDGE_/FORMS_BRIDGE_HTTP_/g' {} \;
