@@ -446,7 +446,7 @@ class Integration extends BaseIntegration {
 	}
 
 	public function get_form_by_id( $form_id ) {
-		if ( $form_id != 1 ) {
+		if ( 1 !== +$form_id ) {
 			return;
 		}
 

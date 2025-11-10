@@ -97,17 +97,13 @@ class Integration extends BaseIntegration {
 	 * @todo Implement this routine.
 	 */
 	public function create_form( $data ) {
-		$title                                    = sanitize_text_field( $data['title'] );
-		$form_data                                = $this->form_template( $title );
-		$form_data['fields']                      = $this->decorate_form_fields( $data['fields'] );
-		$form_data['settings']['formContentData'] = array_map(
-			function (
-				$field
-			) {
-				return $field['settings']['key'];
-			},
-			$form_data['fields']
-		);
+		$title               = sanitize_text_field( $data['title'] );
+		$form_data           = $this->form_template( $title );
+		$form_data['fields'] = $this->decorate_form_fields( $data['fields'] );
+
+		foreach ( $form_data['fields'] as $field ) {
+			$form_data['settings']['formContentData'] = $field['settings']['key'];
+		}
 
 		$form = Ninja_Forms()->form()->get();
 		$form->save();

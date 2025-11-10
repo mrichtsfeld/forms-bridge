@@ -16,9 +16,10 @@ fi
 URLS=('https://downloads.wordpress.org/plugin/contact-form-7.6.1.3.zip'
 	'https://downloads.wordpress.org/plugin/ninja-forms.3.13.0.zip'
 	'https://www.codeccoop.org/formsbridge/plugins/wpforms.zip'
-	'https://www.codeccoop.org/formsbridge/plugins/gravityforms.zip')
+	'https://www.codeccoop.org/formsbridge/plugins/gravityforms.zip'
+	'https://downloads.wordpress.org/plugin/woocommerce.10.3.4.zip')
 
-PLUGINS=('contact-form-7' 'gravityforms' 'ninja-forms' 'wpforms')
+PLUGINS=('contact-form-7' 'gravityforms' 'ninja-forms' 'wpforms', 'woocommerce')
 
 COUNT=${#PLUGINS[@]}
 

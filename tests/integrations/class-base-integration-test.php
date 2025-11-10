@@ -115,6 +115,11 @@ abstract class BaseIntegrationTest extends WP_UnitTestCase {
 		$dir = dirname( __DIR__, 1 ) . '/data/' . static::NAME;
 
 		$store = array();
+
+		if ( ! is_dir( $dir ) ) {
+			return $store;
+		}
+
 		foreach ( array_diff( scandir( $dir ), array( '..', '.' ) ) as $filename ) {
 			$name           = explode( '.', $filename )[0];
 			$filepath       = $dir . '/' . $filename;

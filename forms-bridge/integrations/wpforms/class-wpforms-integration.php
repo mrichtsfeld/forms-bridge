@@ -94,12 +94,13 @@ class Integration extends BaseIntegration {
 	 */
 	public function forms() {
 		$forms = array_filter( (array) wpforms()->obj( 'form' )->get() );
-		return array_map(
-			function ( $form ) {
-				return $this->serialize_form( $form );
-			},
-			$forms
-		);
+
+		$forms_data = array();
+		foreach ( $forms as $form ) {
+			$forms_data[] = $this->serialize_form( $form );
+		}
+
+		return $forms_data;
 	}
 
 	/**
