@@ -392,8 +392,8 @@ class Ninja_Integration extends BaseIntegration {
 		return array(
 			'id'          => $id,
 			'type'        => $type,
-			'name'        => $name,
-			'label'       => $settings['label'],
+			'name'        => trim( $name ),
+			'label'       => trim( $settings['label'] ?? $name ),
 			'required'    => isset( $settings['required'] )
 				? '1' === $settings['required']
 				: false,

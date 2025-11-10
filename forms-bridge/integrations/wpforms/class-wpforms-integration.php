@@ -386,8 +386,8 @@ class WPForms_Integration extends BaseIntegration {
 			array(
 				'id'          => (int) ( $field['id'] ?? 0 ),
 				'type'        => $type,
-				'name'        => $field['label'] ?? '',
-				'label'       => $field['label'] ?? '',
+				'name'        => trim( $field['label'] ?? '' ),
+				'label'       => trim( $field['label'] ?? '' ),
 				'required'    => '1' === ( $field['required'] ?? '' ),
 				'options'     => isset( $field['choices'] ) ? array_values( $field['choices'] ) : array(),
 				'is_file'     => 'file-upload' === $field['type'],
@@ -577,7 +577,7 @@ class WPForms_Integration extends BaseIntegration {
 			}
 
 			$i = array_search(
-				$field['name'],
+				trim( $field['name'] ),
 				array_column( $form_data['fields'], 'name' ),
 				true
 			);
@@ -621,7 +621,7 @@ class WPForms_Integration extends BaseIntegration {
 	}
 
 	private function format_value( $field, $field_data ) {
-		if ( strstr( $field['basetype'], 'payment' ) ) {
+		if ( strstr( $field_data['basetype'], 'payment' ) ) {
 			$field['value'] = html_entity_decode( $field['value'] );
 		}
 
@@ -663,7 +663,7 @@ class WPForms_Integration extends BaseIntegration {
 		}
 
 		if ( 'address' === $field_data['basetype'] ) {
-			$post_values  = $_POST['wpforms']['fields'][ $field['id'] ];
+			$post_values  = $_POST['wpforms']['fields'][ $field['id'] ] ?? array();
 			$field_values = array();
 			foreach ( array_keys( $field_data['schema']['properties'] ) as $prop ) {
 				$field_values[ $prop ] = $post_values[ $prop ] ?? '';

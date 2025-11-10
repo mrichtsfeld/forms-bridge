@@ -420,8 +420,8 @@ class GF_Integration extends BaseIntegration {
 			array(
 				'id'          => $field->id,
 				'type'        => $type,
-				'name'        => $name,
-				'label'       => $label,
+				'name'        => trim( $name ),
+				'label'       => trim( $label ),
 				'required'    => $field->isRequired,
 				'options'     => $options,
 				'inputs'      => $inputs,

@@ -489,9 +489,6 @@ class WPCF7_Integration extends BaseIntegration {
 			$type = sanitize_text_field( $field['type'] );
 
 			switch ( $type ) {
-				case 'tel':
-					$type = 'text';
-					break;
 				case 'checkbox':
 					$type = 'acceptance';
 					break;
@@ -514,7 +511,7 @@ class WPCF7_Integration extends BaseIntegration {
 		foreach ( $field as $key => $val ) {
 			if ( ! in_array( $key, array( 'name', 'type', 'value', 'required', 'label' ), true ) ) {
 				$key  = sanitize_text_field( $key );
-				$val  = sanitize_text_field( $val );
+				$val  = trim( sanitize_text_field( $val ) );
 				$tag .= "{$key}:{$val} ";
 			}
 		}
@@ -522,12 +519,12 @@ class WPCF7_Integration extends BaseIntegration {
 		$value = null;
 
 		if ( strstr( $type, 'select' ) !== false || strstr( $type, 'checkbox' ) !== false ) {
-			$options = array_map(
-				function ( $opt ) {
-					return $opt['label'] . '|' . $opt['value'];
-				},
-				$field['options'] ?? array()
-			);
+			$options = array();
+			foreach ( (array) $field['options'] as $opt ) {
+				$value     = $opt['value'];
+				$label     = $opt['label'] ?? $value;
+				$options[] = $label . '|' . $value;
+			}
 
 			$value = implode( '" "', $options );
 		} elseif ( ! empty( $field['value'] ) ) {
