@@ -220,4 +220,135 @@ class GravityFormsTest extends BaseIntegrationTest {
 		$this->assertTrue( $payload['consent'] );
 		$this->assertSame( '1', $payload['add_collect_account'][0] );
 	}
+
+	public function test_employment_application_form_serialization() {
+		$form      = self::get_form( 'Eployment Application' );
+		$form_data = $this->serialize_form( $form );
+
+		$fields = $form_data['fields'];
+		$this->assertEquals( 11, count( $fields ) );
+
+		$field = $fields[2];
+		$this->assertEquals( 6, count( $field['inputs'] ) );
+		$this->assertField(
+			$field,
+			'text',
+			array(
+				'basetype' => 'address',
+				'required' => false,
+			)
+		);
+
+		$field = $fields[3];
+		$this->assertField(
+			$field,
+			'tel',
+			array(
+				'basetype' => 'phone',
+				'required' => false,
+			),
+		);
+
+		$field = $fields[4];
+		$this->assertField(
+			$field,
+			'select',
+			array(
+				'required' => false,
+				'options'  => array(
+					array(
+						'value' => 'Mornings',
+						'label' => 'Mornings',
+					),
+					array(
+						'value' => 'Early Afternoon',
+						'label' => 'Early Afternoon',
+					),
+					array(
+						'value' => 'Late Afternoon',
+						'label' => 'Late Afternoon',
+					),
+					array(
+						'value' => 'Early Evening',
+						'label' => 'Early Evening',
+					),
+				),
+			)
+		);
+
+		$field = $fields[5];
+		$this->assertField(
+			$field,
+			'select',
+			array(
+				'required' => false,
+				'basetype' => 'radio',
+				'options'  => 6,
+			),
+		);
+
+		$field = $fields[6];
+		$this->assertField(
+			$field,
+			'select',
+			array(
+				'required' => false,
+				'basetype' => 'list',
+				'is_multi' => true,
+				'schema'   => 'array',
+				'options'  => 5,
+			),
+		);
+
+		$field = $fields[10];
+		$this->assertField(
+			$field,
+			'checkbox',
+			array(
+				'basetype' => 'consent',
+				'schema'   => 'boolean',
+				'options'  => array(
+					array(
+						'value' => '1',
+						'label' => 'Checked',
+					),
+				),
+			),
+		);
+	}
+
+	public function test_employment_application_submission_serialization() {
+		$form      = self::get_form( 'Eployment Application' );
+		$form_data = $this->serialize_form( $form );
+
+		$store = self::store();
+		foreach ( $store as $name => $object ) {
+			if ( 'employment-application-submission' === $name ) {
+				$submission = $object;
+				break;
+			}
+		}
+
+		if ( ! isset( $submission ) ) {
+			throw new Exception( 'Employment application submission not found' );
+		}
+
+		$payload = $this->serialize_submission( $submission, $form_data );
+
+		$this->assertSame( 'John Doe', $payload['Your Name'] );
+		$this->assertSame( 'Early Afternoon', $payload['Best Time To Call You'] );
+		$this->assertEqualSets(
+			array(
+				array(
+					'Monday'    => '5',
+					'Tuesday'   => '5',
+					'Wednesday' => '5',
+					'Thursday'  => '',
+					'Friday'    => '',
+				),
+			),
+			$payload['Hours You Are Available for Work']
+		);
+		$this->assertTrue( $payload['Terms and Conditions'] );
+	}
 }

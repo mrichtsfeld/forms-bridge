@@ -218,15 +218,15 @@ class WPFormsTest extends BaseIntegrationTest {
 			array(
 				'options'  => array(
 					array(
-						'value' => '',
+						'value' => 'Room A',
 						'label' => 'Room A',
 					),
 					array(
-						'value' => '',
+						'value' => 'Room B',
 						'label' => 'Room B',
 					),
 					array(
-						'value' => '',
+						'value' => 'Room C',
 						'label' => 'Room C',
 					),
 				),
