@@ -469,6 +469,10 @@ class GF_Integration extends BaseIntegration {
 		// }
 		// }
 
+		if ( 'list' === $field->type ) {
+			return true;
+		}
+
 		if ( in_array( $field->inputType, array( 'list', 'checkbox' ), true ) ) {
 			return true;
 		}
