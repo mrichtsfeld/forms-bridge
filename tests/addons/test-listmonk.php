@@ -2,7 +2,7 @@
 /**
  * Class ListmonkTest
  *
- * @package forms-bridge-tests
+ * @package formsbridge-tests
  */
 
 use FORMS_BRIDGE\Listmonk_Form_Bridge;

@@ -2,7 +2,7 @@
 /**
  * Class BiginTest
  *
- * @package forms-bridge-tests
+ * @package formsbridge-tests
  */
 
 use FORMS_BRIDGE\Bigin_Form_Bridge;

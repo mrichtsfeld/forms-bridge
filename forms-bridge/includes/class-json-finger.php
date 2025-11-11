@@ -2,7 +2,7 @@
 /**
  * Class JSON_Finger
  *
- * @package forms-bridge
+ * @package formsbridge
  */
 
 namespace FORMS_BRIDGE;

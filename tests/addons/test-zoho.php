@@ -2,7 +2,7 @@
 /**
  * Class ZohoTest
  *
- * @package forms-bridge-tests
+ * @package formsbridge-tests
  */
 
 use FORMS_BRIDGE\Zoho_Form_Bridge;

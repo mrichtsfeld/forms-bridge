@@ -1,4 +1,9 @@
 <?php
+/**
+ * Class Menu
+ *
+ * @package formsbridge
+ */
 
 namespace FORMS_BRIDGE;
 

@@ -2,7 +2,7 @@
 /**
  * Class Form_Bridge_Template
  *
- * @package forms-bridge
+ * @package formsbridge
  */
 
 namespace FORMS_BRIDGE;

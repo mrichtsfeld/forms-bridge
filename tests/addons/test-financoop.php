@@ -2,7 +2,7 @@
 /**
  * Class FinancoopTest
  *
- * @package forms-bridge-tests
+ * @package formsbridge-tests
  */
 
 use FORMS_BRIDGE\Financoop_Form_Bridge;

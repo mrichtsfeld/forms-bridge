@@ -2,7 +2,7 @@
 /**
  * Class BrevoTest
  *
- * @package forms-bridge-tests
+ * @package formsbridge-tests
  */
 
 use FORMS_BRIDGE\Brevo_Form_Bridge;

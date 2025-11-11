@@ -2,7 +2,7 @@
 /**
  * Class NextcloudTest
  *
- * @package forms-bridge-tests
+ * @package formsbridge-tests
  */
 
 use FORMS_BRIDGE\Nextcloud_Form_Bridge;

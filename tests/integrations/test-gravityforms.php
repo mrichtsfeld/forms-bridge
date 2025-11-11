@@ -2,7 +2,7 @@
 /**
  * Class GravityFormsTest
  *
- * @package forms-bridge-tests
+ * @package formsbridge-tests
  */
 
 require_once 'class-base-integration-test.php';

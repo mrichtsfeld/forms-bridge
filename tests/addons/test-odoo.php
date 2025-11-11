@@ -2,7 +2,7 @@
 /**
  * Class OdooTest
  *
- * @package forms-bridge-tests
+ * @package formsbridge-tests
  */
 
 use FORMS_BRIDGE\Odoo_Form_Bridge;

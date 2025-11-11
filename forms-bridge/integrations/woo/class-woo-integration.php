@@ -1,4 +1,9 @@
 <?php
+/**
+ * Class Woo_Integration
+ *
+ * @package formsbridge
+ */
 
 namespace FORMS_BRIDGE\WOO;
 
@@ -10,10 +15,22 @@ use FORMS_BRIDGE\Integration as BaseIntegration;
 use WC_Session_Handler;
 use WC_Customer;
 
-class Integration extends BaseIntegration {
-
+/**
+ * WooCommerce integration class.
+ */
+class Woo_Integration extends BaseIntegration {
+	/**
+	 * Handles integration name.
+	 *
+	 * @var string
+	 */
 	const NAME = 'woo';
 
+	/**
+	 * Handles integration title.
+	 *
+	 * @var string
+	 */
 	const TITLE = 'WooCommerce';
 
 	/**
@@ -21,7 +38,7 @@ class Integration extends BaseIntegration {
 	 *
 	 * @var string
 	 */
-	private const is_order_bridged_custom_field = 'forms_bridge_woo_order_bridge';
+	private const ORDER_BRIDGED_CF = 'forms_bridge_woo_order_bridge';
 
 	/**
 	 * Handles the current order ID.
@@ -35,7 +52,7 @@ class Integration extends BaseIntegration {
 	 *
 	 * @var array
 	 */
-	private const order_data_schema = array(
+	private static $order_data_schema = array(
 		'type'                 => 'object',
 		'properties'           => array(
 			'id'                           => array( 'type' => 'integer' ),
@@ -374,6 +391,14 @@ class Integration extends BaseIntegration {
 		'additionalProperties' => false,
 	);
 
+	/**
+	 * Wraps a tax amount in a tax descriptor array.
+	 *
+	 * @param float $tax Tax amount.
+	 * @param float $total Tax total import.
+	 *
+	 * @return array Tax descriptor.
+	 */
 	private static function decorate_tax( $tax, $total ) {
 		try {
 			$tax  = (float) $tax;
@@ -394,6 +419,9 @@ class Integration extends BaseIntegration {
 		}
 	}
 
+	/**
+	 * Integration initializer. Hooks the integration to woocommerce events.
+	 */
 	public function init() {
 		add_action(
 			'woocommerce_order_status_changed',
@@ -401,13 +429,13 @@ class Integration extends BaseIntegration {
 				$is_bridged =
 					get_post_meta(
 						$order_id,
-						self::is_order_bridged_custom_field,
+						self::ORDER_BRIDGED_CF,
 						true
 					) === '1';
 
 				$trigger_submission = apply_filters(
 					'forms_bridge_woo_trigger_submission',
-					! $is_bridged && $new_status === 'completed',
+					! $is_bridged && 'completed' === $new_status,
 					$order_id,
 					$new_status,
 					$old_status,
@@ -422,7 +450,7 @@ class Integration extends BaseIntegration {
 						function () {
 							update_post_meta(
 								self::$order_id,
-								self::is_order_bridged_custom_field,
+								self::ORDER_BRIDGED_CF,
 								'1'
 							);
 						},
@@ -437,6 +465,11 @@ class Integration extends BaseIntegration {
 		);
 	}
 
+	/**
+	 * Retrives the checkout form data if an order is being processed.
+	 *
+	 * @return array|null
+	 */
 	public function form() {
 		if ( empty( self::$order_id ) ) {
 			return;
@@ -445,9 +478,16 @@ class Integration extends BaseIntegration {
 		return $this->get_form_by_id( 1 );
 	}
 
+	/**
+	 * Retrives checkout form data by ID.
+	 *
+	 * @param int $form_id Form ID.
+	 *
+	 * @return array|null Form data if ID is 1, null otherwise.
+	 */
 	public function get_form_by_id( $form_id ) {
 		if ( 1 !== +$form_id ) {
-			return;
+			return null;
 		}
 
 		WC()->session  = new WC_Session_Handler();
@@ -460,49 +500,101 @@ class Integration extends BaseIntegration {
 				'id'      => 1,
 				'title'   => __( 'Woo Checkout', 'forms-bridge' ),
 				'bridges' => FBAPI::get_form_bridges( 1, 'woo' ),
-				'fields'  => $this->serialize_order_fields(),
+				'fields'  => $this->serialize_form( null ),
 			),
 			WC()->checkout,
 			'woo'
 		);
 	}
 
+	/**
+	 * Retrives available forms' data.
+	 *
+	 * @return array Collection of form data array representations.
+	 */
 	public function forms() {
 		return array( $this->get_form_by_id( 1 ) );
 	}
 
+	/**
+	 * Skips form creation and return a success result.
+	 *
+	 * @param array $data Form template data, ignored.
+	 *
+	 * @return int 1, the checkout form internal ID.
+	 */
 	public function create_form( $data ) {
 		return 1;
 	}
 
+	/**
+	 * Skips form removal and return a success result.
+	 *
+	 * @param integer $form_id Form ID, ignored.
+	 *
+	 * @return boolean
+	 */
 	public function remove_form( $form_id ) {
-		return;
+		return true;
 	}
 
+	/**
+	 * Retrives the current order ID.
+	 *
+	 * @return string|null
+	 */
 	public function submission_id() {
 		if ( self::$order_id ) {
 			return (string) self::$order_id;
 		}
 	}
 
+	/**
+	 * Retrives the current order data.
+	 *
+	 * @param boolean $raw Control if the order is serialized before exit.
+	 *
+	 * @return array|null
+	 */
 	public function submission( $raw ) {
 		if ( empty( self::$order_id ) ) {
 			return;
 		}
 
-		return $this->serialize_order( self::$order_id );
+		return $this->serialize_order();
 	}
 
+	/**
+	 * Return an empty array as checkout form does not supports file uploads.
+	 *
+	 * @return array
+	 */
 	public function uploads() {
 		return array();
 	}
 
+	/**
+	 * Alias to the serialize_order_fields method.
+	 *
+	 * @param mixed $form Ignored argument.
+	 *
+	 * @return array The order fields serialized as array of data.
+	 */
+	public function serialize_form( $form ) {
+		return $this->serialize_order_fields();
+	}
+
+	/**
+	 * Serialize the order fields.
+	 *
+	 * @return array Order fields as form data.
+	 */
 	private function serialize_order_fields() {
 		$checkout_fields = WC()->checkout->checkout_fields;
 
 		$fields = array();
 		foreach (
-			self::order_data_schema['properties']
+			self::$order_data_schema['properties']
 			as $name => $field_schema
 		) {
 			$fields[] = self::decorate_order_field( $name, $field_schema );
@@ -510,7 +602,7 @@ class Integration extends BaseIntegration {
 
 		foreach ( array_keys( $checkout_fields['billing'] ) as $name ) {
 			$name = str_replace( 'billing_', '', $name );
-			if ( isset( self::order_data_schema['billing'][ $name ] ) ) {
+			if ( isset( self::$order_data_schema['billing'][ $name ] ) ) {
 				continue;
 			}
 
@@ -524,7 +616,7 @@ class Integration extends BaseIntegration {
 
 		foreach ( array_keys( $checkout_fields['shipping'] ) as $name ) {
 			$name = str_replace( 'shipping_', '', $name );
-			if ( isset( self::order_data_schema['shipping'][ $name ] ) ) {
+			if ( isset( self::$order_data_schema['shipping'][ $name ] ) ) {
 				continue;
 			}
 
@@ -571,8 +663,25 @@ class Integration extends BaseIntegration {
 		);
 	}
 
-	private function serialize_order( $order_id ) {
-		$order = wc_get_order( $order_id );
+	/**
+	 * Alias to the serialize_order method.
+	 *
+	 * @param array $submission Ignored argument.
+	 * @param array $form_data Ignored argument.
+	 *
+	 * @return array|null
+	 */
+	public function serialize_submission( $submission, $form_data ) {
+		return $this->serialize_order();
+	}
+
+	/**
+	 * Serialize the current WC_Order as a payload array.
+	 *
+	 * @return array
+	 */
+	private function serialize_order() {
+		$order = wc_get_order( self::$order_id );
 		if ( empty( $order ) ) {
 			return;
 		}
@@ -715,8 +824,8 @@ class Integration extends BaseIntegration {
 			$data['cart_total']
 		);
 
-		return rest_sanitize_value_from_schema( $data, self::order_data_schema );
+		return rest_sanitize_value_from_schema( $data, self::$order_data_schema );
 	}
 }
 
-Integration::setup();
+Woo_Integration::setup();

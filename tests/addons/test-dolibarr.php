@@ -2,7 +2,7 @@
 /**
  * Class DolibarrTest
  *
- * @package forms-bridge-tests
+ * @package formsbridge-tests
  */
 
 use FORMS_BRIDGE\Dolibarr_Form_Bridge;

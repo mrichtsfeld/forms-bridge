@@ -2,7 +2,7 @@
 /**
  * PHPUnit bootstrap file.
  *
- * @package forms-bridge-tests
+ * @package formsbridge-tests
  */
 
 // phpcs:disable WordPress.NamingConventions.PrefixAllGlobals
@@ -49,6 +49,7 @@ function _manually_load_plugin() {
 	require ABSPATH . 'wp-content/mu-plugins/gravityforms/gravityforms.php';
 	require ABSPATH . 'wp-content/mu-plugins/ninja-forms/ninja-forms.php';
 	require ABSPATH . 'wp-content/mu-plugins/wpforms/wpforms.php';
+	require ABSPATH . 'wp-content/mu-plugins/woocommerce/woocommerce.php';
 
 	/* Plugin tests */
 	require dirname( __DIR__ ) . '/forms-bridge/deps/plugin/tests/bootstrap.php';

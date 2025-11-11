@@ -1,4 +1,9 @@
 <?php
+/**
+ * Class WPForms_Integration
+ *
+ * @package formsbridge
+ */
 
 namespace FORMS_BRIDGE\WPFORMS;
 

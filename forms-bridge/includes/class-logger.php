@@ -1,4 +1,9 @@
 <?php
+/**
+ * Class Logger
+ *
+ * @package formsbridge
+ */
 
 namespace FORMS_BRIDGE;
 
@@ -9,6 +14,8 @@ use WPCT_PLUGIN\Singleton;
 if ( ! defined( 'ABSPATH' ) ) {
 	exit();
 }
+
+// phpcs:disable WordPress.WP.AlternativeFunctions
 
 /**
  * Admin logger class.
@@ -50,7 +57,7 @@ class Logger extends Singleton {
 		$dir = wp_upload_dir()['basedir'] . '/forms-bridge';
 
 		if ( ! is_dir( $dir ) ) {
-			if ( ! mkdir( $dir, 755 ) ) {
+			if ( ! mkdir( $dir ) ) {
 				return;
 			}
 		}
@@ -137,8 +144,10 @@ class Logger extends Singleton {
 			);
 		}
 
+		// phpcs:disable WordPress.PHP.DevelopmentFunctions
 		$message = print_r( $data, true );
 		$line    = sprintf( "[%s] %s\n", $level, $message );
+		// phpcs:enable WordPress.PHP.DevelopmentFunctions
 
 		$socket = fopen( self::log_path(), 'a+' );
 		fwrite( $socket, $line, strlen( $line ) );
@@ -186,10 +195,16 @@ class Logger extends Singleton {
 	 */
 	public static function setup() {
 		if ( self::is_active() ) {
+			// phpcs:disable WordPress.PHP.IniSet
+			// phpcs:disable WordPress.PHP.DiscouragedPHPFunctions
+			// phpcs:disable WordPress.PHP.DevelopmentFunctions
 			error_reporting( E_ALL );
+			// phpcs:enable WordPress.PHP.DevelopmentFunctions
+			// phpcs:enable WordPress.PHP.DiscouragedPHPFunctions
 			ini_set( 'log_errors', 1 );
 			ini_set( 'display_errors', 0 );
 			ini_set( 'error_log', self::log_path() );
+			// phpcs:enable WordPress.PHP.IniSet
 		}
 
 		return self::get_instance();

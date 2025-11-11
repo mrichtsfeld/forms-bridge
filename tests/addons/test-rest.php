@@ -2,7 +2,7 @@
 /**
  * Class RestTest
  *
- * @package forms-bridge-tests
+ * @package formsbridge-tests
  */
 
 use FORMS_BRIDGE\Rest_Form_Bridge;

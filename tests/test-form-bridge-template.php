@@ -2,7 +2,7 @@
 /**
  * Class FormBridgeTemplateTest
  *
- * @package forms-bridge-tests
+ * @package formsbridge-tests
  */
 
 /**

@@ -2,7 +2,7 @@
 /**
  * Class GF_Integration
  *
- * @package forms-bridge
+ * @package formsbridge
  */
 
 namespace FORMS_BRIDGE\GF;
@@ -27,7 +27,6 @@ if ( ! defined( 'ABSPATH' ) ) {
  * GravityForms integration.
  */
 class GF_Integration extends BaseIntegration {
-
 	/**
 	 * Handles integration name.
 	 *
@@ -57,7 +56,7 @@ class GF_Integration extends BaseIntegration {
 	/**
 	 * Retrives the current form's data.
 	 *
-	 * @return array.
+	 * @return array|null
 	 */
 	public function form() {
 		$form_id = null;
@@ -77,11 +76,11 @@ class GF_Integration extends BaseIntegration {
 
 		$form = GFAPI::get_form( $form_id );
 		if ( empty( $form ) || ! $form['is_active'] || $form['is_trash'] ) {
-			return;
+			return null;
 		}
 
 		if ( is_wp_error( $form ) ) {
-			return;
+			return null;
 		}
 
 		return $this->serialize_form( $form );
@@ -92,7 +91,7 @@ class GF_Integration extends BaseIntegration {
 	 *
 	 * @param int $form_id Form ID.
 	 *
-	 * @return array.
+	 * @return array
 	 */
 	public function get_form_by_id( $form_id ) {
 		$form = GFAPI::get_form( $form_id );

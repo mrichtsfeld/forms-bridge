@@ -2,7 +2,7 @@
 /**
  * Class Ninja_Integration
  *
- * @package forms-bridge
+ * @package formsbridge
  */
 
 namespace FORMS_BRIDGE\NINJA;

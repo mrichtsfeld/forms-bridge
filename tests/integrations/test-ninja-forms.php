@@ -2,10 +2,12 @@
 /**
  * Class NinjaFormsTest
  *
- * @package forms-bridge-tests
+ * @package formsbridge-tests
  */
 
 use FORMS_BRIDGE\Integration;
+
+require_once 'class-base-integration-test.php';
 
 /**
  * Ninja Forms integration test case.

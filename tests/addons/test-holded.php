@@ -2,7 +2,7 @@
 /**
  * Class HoldedTest
  *
- * @package forms-bridge-tests
+ * @package formsbridge-tests
  */
 
 use FORMS_BRIDGE\Holded_Form_Bridge;

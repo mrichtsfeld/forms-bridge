@@ -2,7 +2,7 @@
 /**
  * Class Job
  *
- * @package forms-bridge
+ * @package formsbridge
  */
 
 namespace FORMS_BRIDGE;
@@ -19,7 +19,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Job class
+ * A job is a link in a workflow chain with a subroutine that performs mutations
+ * on the chain input data or side effects when it runs.
  */
 class Job {
 

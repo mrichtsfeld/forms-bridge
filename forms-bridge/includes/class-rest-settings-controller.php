@@ -1,4 +1,9 @@
 <?php
+/**
+ * Class REST_Settings_Controller
+ *
+ * @package formsbridge
+ */
 
 namespace FORMS_BRIDGE;
 
@@ -8,6 +13,7 @@ use WPCT_PLUGIN\REST_Settings_Controller as Base_Controller;
 use FBAPI;
 use HTTP_BRIDGE\Backend;
 use HTTP_BRIDGE\Credential;
+use WP_REST_Request;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit();
@@ -48,6 +54,9 @@ class REST_Settings_Controller extends Base_Controller {
 		);
 	}
 
+	/**
+	 * Registers json schemas REST API routes.
+	 */
 	private static function register_schema_route() {
 		foreach ( Addon::addons() as $addon ) {
 			if ( ! $addon->enabled ) {
@@ -291,6 +300,9 @@ class REST_Settings_Controller extends Base_Controller {
 		}
 	}
 
+	/**
+	 * Registers http backends REST API routes.
+	 */
 	private static function register_backend_routes() {
 		foreach ( Addon::addons() as $addon ) {
 			if ( ! $addon->enabled ) {
@@ -379,7 +391,8 @@ class REST_Settings_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Callback for GET requests to the job endpoint.
+	 * Callback for GET requests to the job endpoint. Retrive a job from
+	 * the database.
 	 *
 	 * @param string          $addon Addon name.
 	 * @param WP_REST_Request $request Current REST request instance.
@@ -395,6 +408,15 @@ class REST_Settings_Controller extends Base_Controller {
 		return $job->data();
 	}
 
+	/**
+	 * Callback for POST requests to the job endpoint. Inserts a new job
+	 * on the database.
+	 *
+	 * @param string          $addon Addon name.
+	 * @param WP_REST_Request $request Current REST request instance.
+	 *
+	 * @return array|WP_Error
+	 */
 	private static function save_job( $addon, $request ) {
 		$data         = $request->get_json_params();
 		$data['name'] = $request['name'];
@@ -408,6 +430,15 @@ class REST_Settings_Controller extends Base_Controller {
 		return ( new Job( $post, $addon ) )->data();
 	}
 
+	/**
+	 * Callback for DELETE requests to the job endpoint. Removes a job
+	 * from the database.
+	 *
+	 * @param string          $addon Addon name.
+	 * @param WP_REST_Request $request Current REST request instance.
+	 *
+	 * @return array|WP_Error
+	 */
 	private static function reset_job( $addon, $request ) {
 		$job = FBAPI::get_job( $request['name'], $addon );
 
@@ -429,7 +460,8 @@ class REST_Settings_Controller extends Base_Controller {
 	}
 
 	/**
-	 * Callback for POST requests to the jobs endpoint.
+	 * Callback for GET requests to the jobs endpoint. Retrives the list
+	 * of available addon jobs.
 	 *
 	 * @param string          $addon Addon name.
 	 * @param WP_REST_Request $request Current REST request instance.
@@ -500,6 +532,15 @@ class REST_Settings_Controller extends Base_Controller {
 		return $template->data();
 	}
 
+	/**
+	 * Callback for POST requests to the template endpoint. Inserts a new template
+	 * in the database.
+	 *
+	 * @param string          $addon Addon name.
+	 * @param WP_REST_Request $request Current REST request instance.
+	 *
+	 * @return array|WP_Error
+	 */
 	private static function save_template( $addon, $request ) {
 		$data         = $request->get_json_params();
 		$data['name'] = $request['name'];
@@ -512,6 +553,15 @@ class REST_Settings_Controller extends Base_Controller {
 		return array( 'success' => true );
 	}
 
+	/**
+	 * Callback for DELETE requests to the template endpoint. Removes a template
+	 * from the database.
+	 *
+	 * @param string $addon Addon name.
+	 * @param string $name Template name.
+	 *
+	 * @return array|WP_Error
+	 */
 	private static function reset_template( $addon, $name ) {
 		$template = FBAPI::get_template( $name, $addon );
 

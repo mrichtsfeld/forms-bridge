@@ -1,4 +1,9 @@
 <?php
+/**
+ * Class FBAPI
+ *
+ * @package formsbridge
+ */
 
 use FORMS_BRIDGE\Settings_Store;
 use FORMS_BRIDGE\Forms_Bridge;
@@ -14,6 +19,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit();
 }
 
+/**
+ * Public php API of the plugin.
+ */
 class FBAPI {
 
 	/**

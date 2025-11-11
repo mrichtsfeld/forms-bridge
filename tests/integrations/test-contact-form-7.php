@@ -2,7 +2,7 @@
 /**
  * Class ContactForm7Test
  *
- * @package forms-bridge-tests
+ * @package formsbridge-tests
  */
 
 require_once 'class-base-integration-test.php';
@@ -32,8 +32,7 @@ class ContactForm7Test extends BaseIntegrationTest {
 	}
 
 	public function test_job_position_form_serialization() {
-		$form = self::get_form( 'Job position' );
-
+		$form      = self::get_form( 'Job position' );
 		$form_data = $this->serialize_form( $form );
 
 		$fields = $form_data['fields'];

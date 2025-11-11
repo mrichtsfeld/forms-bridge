@@ -2,7 +2,7 @@
 /**
  * Job post type
  *
- * @package forms-bridge
+ * @package formsbridge
  */
 
 use FORMS_BRIDGE\Job;

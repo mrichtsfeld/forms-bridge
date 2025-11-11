@@ -2,7 +2,7 @@
 /**
  * Class MutationsTest
  *
- * @package forms-bridge-tests
+ * @package formsbridge-tests
  */
 
 use FORMS_BRIDGE\Form_Bridge;
