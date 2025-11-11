@@ -493,7 +493,7 @@ class WPCF7_Integration extends BaseIntegration {
 					$type = 'acceptance';
 					break;
 				case 'select':
-					if ( $field['is_multi'] ) {
+					if ( $field['is_multi'] ?? false ) {
 						$type = 'checkbox';
 					}
 

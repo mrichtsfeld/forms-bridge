@@ -1170,6 +1170,32 @@ class GF_Integration extends BaseIntegration {
 			)
 		);
 	}
+
+	/**
+	 * Returns a valid checkbox field data.
+	 *
+	 * @param int     $id Field id.
+	 * @param string  $name Input name.
+	 * @param string  $label Field label.
+	 * @param boolean $required Is field required.
+	 *
+	 * @return array
+	 */
+	private function checkbox_field( $id, $name, $label, $required ) {
+		return array_merge(
+			$this->field_template( 'consent', $id, $name, $label, $required ),
+			array(
+				'choices' => array(
+					array(
+						'isSelected' => false,
+						'price'      => '',
+						'text'       => __( 'Checked', 'forms-bridge' ),
+						'value'      => '1',
+					),
+				),
+			),
+		);
+	}
 }
 
 add_filter(
