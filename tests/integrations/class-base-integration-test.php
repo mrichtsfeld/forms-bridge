@@ -84,6 +84,10 @@ abstract class BaseIntegrationTest extends WP_UnitTestCase {
 			)
 		);
 
+		if ( empty( $field['basetype'] ) ) {
+			$field['basetype'] = $field['type'];
+		}
+
 		$this->assertSame( $type, $field['type'] );
 		$this->assertSame( $args['basetype'], $field['basetype'] );
 

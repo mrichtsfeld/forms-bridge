@@ -672,16 +672,18 @@ class Woo_Integration extends BaseIntegration {
 	 * @return array|null
 	 */
 	public function serialize_submission( $submission, $form_data ) {
-		return $this->serialize_order();
+		return $this->serialize_order( self::$order_id );
 	}
 
 	/**
 	 * Serialize the current WC_Order as a payload array.
 	 *
+	 * @param integer $order_id ID of the order to serialize.
+	 *
 	 * @return array
 	 */
-	private function serialize_order() {
-		$order = wc_get_order( self::$order_id );
+	public function serialize_order( $order_id ) {
+		$order = wc_get_order( $order_id );
 		if ( empty( $order ) ) {
 			return;
 		}
