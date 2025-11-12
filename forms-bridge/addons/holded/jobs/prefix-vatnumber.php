@@ -20,7 +20,13 @@ function forms_bridge_holded_prefix_vatnumber( $payload ) {
 	} elseif ( $country_code ) {
 		$vat_prefix = $country_code;
 	} else {
-		$vat_prefix = strtoupper( explode( '_', get_locale() )[0] );
+		$locale = get_locale();
+
+		if ( strstr( $locale, '_' ) ) {
+			$locale = explode( '_', $locale )[1];
+		}
+
+		$vat_prefix = strtoupper( $locale );
 	}
 
 	if ( ! isset( $forms_bridge_iso2_countries[ $vat_prefix ] ) ) {

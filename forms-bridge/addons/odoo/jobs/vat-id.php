@@ -18,7 +18,7 @@ function forms_bridge_odoo_vat_id( $payload ) {
 	} else {
 		$locale = get_locale();
 
-		if ( $locale === 'ca' ) {
+		if ( 'ca' === $locale ) {
 			$locale = 'es';
 		}
 
