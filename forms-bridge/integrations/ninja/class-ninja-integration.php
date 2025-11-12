@@ -235,7 +235,11 @@ class Ninja_Integration extends BaseIntegration {
 
 		$fields = array();
 		foreach ( $form_factory->get_fields() as $field ) {
-			$fields[] = $this->serialize_field( $field, $form_settings );
+			$field = $this->serialize_field( $field, $form_settings );
+
+			if ( $field ) {
+				$fields[] = $field;
+			}
 		}
 
 		return apply_filters(
@@ -550,7 +554,12 @@ class Ninja_Integration extends BaseIntegration {
 		$data = array();
 
 		foreach ( $form_data['fields'] as $field_data ) {
-			if ( $field_data['is_file'] ) {
+			if ( ! $field_data ) {
+				continue;
+			}
+
+			$is_file = $field_data['is_file'] ?? false;
+			if ( $is_file ) {
 				continue;
 			}
 
@@ -662,15 +671,15 @@ class Ninja_Integration extends BaseIntegration {
 		$uploads = array();
 
 		foreach ( $form_data['fields'] as $field_data ) {
-			if ( ! $field_data['is_file'] ) {
+			$is_file = $field_data['is_file'] ?? false;
+			if ( ! $is_file ) {
 				continue;
 			}
 
 			$field = $submission['fields'][ (int) $field_data['id'] ];
 
-			$uploads_path =
-				wp_upload_dir()['basedir'] . '/ninja-forms/' . $form_data['id'];
-			$urls         = $field['value'];
+			$uploads_path = wp_upload_dir()['basedir'] . '/ninja-forms/' . $form_data['id'];
+			$urls         = (array) $field['value'];
 			$paths        = array();
 			foreach ( $urls as $url ) {
 				$basename = basename( $url );

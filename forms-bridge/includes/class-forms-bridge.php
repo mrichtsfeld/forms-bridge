@@ -262,7 +262,7 @@ class Forms_Bridge extends Base_Plugin {
 				'title'  => $form_data['title'],
 				'fields' => array_map(
 					function ( $field ) {
-						return $field['name'];
+						return $field['name'] ?? '';
 					},
 					$form_data['fields']
 				),
