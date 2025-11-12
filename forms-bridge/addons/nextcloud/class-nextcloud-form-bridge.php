@@ -1,4 +1,9 @@
 <?php
+/**
+ * Class Nextcloud_Form_Bridge
+ *
+ * @package formsbridge
+ */
 
 namespace FORMS_BRIDGE;
 
@@ -13,10 +18,22 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 class Nextcloud_Form_Bridge extends Form_Bridge {
 
+	/**
+	 * Bridge constructor with addon name provisioning.
+	 *
+	 * @param array $data Bridge data.
+	 */
 	public function __construct( $data ) {
 		parent::__construct( $data, 'nextcloud' );
 	}
 
+	/**
+	 * Returns the bridge local backup file path.
+	 *
+	 * @param bool &$touched Pointer to handle if the file has been touched boolean value.
+	 *
+	 * @return string|WP_Error File path or WP_Error if no write permissions.
+	 */
 	private function filepath( &$touched = false ) {
 		$uploads = Forms_Bridge::upload_dir() . '/nextcloud';
 
@@ -42,6 +59,11 @@ class Nextcloud_Form_Bridge extends Form_Bridge {
 		return $filepath;
 	}
 
+	/**
+	 * Returns the bridge table headers.
+	 *
+	 * @return array|null
+	 */
 	public function table_headers() {
 		$filepath = $this->filepath();
 
@@ -53,13 +75,20 @@ class Nextcloud_Form_Bridge extends Form_Bridge {
 		$line   = fgets( $stream );
 		fclose( $stream );
 
-		if ( $line === false ) {
+		if ( false === $line ) {
 			return;
 		}
 
 		return $this->decode_row( $line );
 	}
 
+	/**
+	 * Returns the remote file modification date.
+	 *
+	 * @param Backend $backend Bridge backend instance.
+	 *
+	 * @return integer|null
+	 */
 	private function get_dav_modified_date( $backend ) {
 		$response = $backend->head( $this->endpoint );
 
@@ -67,7 +96,7 @@ class Nextcloud_Form_Bridge extends Form_Bridge {
 			$error_data = $response->get_error_data();
 
 			$code = $error_data['response']['response']['code'] ?? null;
-			if ( $code !== 404 ) {
+			if ( 404 !== $code ) {
 				return $response;
 			}
 
@@ -82,10 +111,25 @@ class Nextcloud_Form_Bridge extends Form_Bridge {
 		return strtotime( $last_modified );
 	}
 
+	/**
+	 * Generates a heaaders csv row from a payload.
+	 *
+	 * @param array $payload Bridge payload.
+	 *
+	 * @return string
+	 */
 	private function payload_to_headers( $payload ) {
+		$payload = $this->flatten_payload( $payload );
 		return $this->encode_row( array_keys( $payload ) );
 	}
 
+	/**
+	 * Encode the payload as a csv row following the sheet headers columns order.
+	 *
+	 * @param array $payload Bridge payload.
+	 *
+	 * @return string
+	 */
 	private function payload_to_row( $payload ) {
 		$headers = $this->table_headers();
 		if ( ! is_array( $headers ) ) {
@@ -100,6 +144,13 @@ class Nextcloud_Form_Bridge extends Form_Bridge {
 		return $this->encode_row( $row );
 	}
 
+	/**
+	 * Returns a list of values as a comma separated values string.
+	 *
+	 * @param array $row List of values.
+	 *
+	 * @return string
+	 */
 	private function encode_row( $row ) {
 		return implode(
 			',',
@@ -113,11 +164,19 @@ class Nextcloud_Form_Bridge extends Form_Bridge {
 		);
 	}
 
+	/**
+	 * Returns a csv row as a list of values.
+	 *
+	 * @param string $row Comma separated values string.
+	 *
+	 * @return array
+	 */
 	private function decode_row( $row ) {
 		$row = preg_replace( '/\n+/', '', $row );
 		return array_map(
 			function ( $value ) {
-				if ( $decoded = json_decode( $value ) ) {
+				$decoded = json_decode( $value );
+				if ( $decoded ) {
 					return $decoded;
 				}
 
@@ -127,6 +186,11 @@ class Nextcloud_Form_Bridge extends Form_Bridge {
 		);
 	}
 
+	/**
+	 * Adds a row to the local sheet file.
+	 *
+	 * @param array $payload Bridge payload.
+	 */
 	private function add_row( $payload ) {
 		$row = $this->payload_to_row( $payload );
 
@@ -137,7 +201,7 @@ class Nextcloud_Form_Bridge extends Form_Bridge {
 		$char = fgetc( $sock );
 		fclose( $sock );
 
-		if ( $char !== "\n" && $char !== "\r" ) {
+		if ( "\n" !== $char && "\r" !== $char ) {
 			$row = "\n" . $row;
 		}
 
@@ -273,6 +337,14 @@ class Nextcloud_Form_Bridge extends Form_Bridge {
 		return $flat;
 	}
 
+	/**
+	 * Returns array values as a flat vector of play key values.
+	 *
+	 * @param mixed  $value Payload value.
+	 * @param string $path Hierarchical path to the value.
+	 *
+	 * @return mixed
+	 */
 	private static function flatten_value( $value, $path = '' ) {
 		if ( ! is_array( $value ) ) {
 			return $value;

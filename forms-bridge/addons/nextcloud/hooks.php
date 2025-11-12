@@ -1,4 +1,9 @@
 <?php
+/**
+ * Nextcloud addon hooks
+ *
+ * @package formsbridge
+ */
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit();
@@ -7,7 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 add_filter(
 	'forms_bridge_bridge_schema',
 	function ( $schema, $addon ) {
-		if ( $addon !== 'nextcloud' ) {
+		if ( 'nextcloud' !== $addon ) {
 			return $schema;
 		}
 
@@ -33,7 +38,7 @@ add_filter(
 add_filter(
 	'forms_bridge_template_defaults',
 	function ( $defaults, $addon, $schema ) {
-		if ( $addon !== 'nextcloud' ) {
+		if ( 'nextcloud' !== $addon ) {
 			return $defaults;
 		}
 
