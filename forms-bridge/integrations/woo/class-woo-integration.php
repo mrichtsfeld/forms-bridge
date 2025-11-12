@@ -426,16 +426,15 @@ class Woo_Integration extends BaseIntegration {
 		add_action(
 			'woocommerce_order_status_changed',
 			static function ( $order_id, $old_status, $new_status ) {
-				$is_bridged =
-					get_post_meta(
-						$order_id,
-						self::ORDER_BRIDGED_CF,
-						true
-					) === '1';
+				$is_bridged = get_post_meta(
+					$order_id,
+					self::ORDER_BRIDGED_CF,
+					true
+				);
 
 				$trigger_submission = apply_filters(
 					'forms_bridge_woo_trigger_submission',
-					! $is_bridged && 'completed' === $new_status,
+					'1' !== $is_bridged && 'completed' === $new_status,
 					$order_id,
 					$new_status,
 					$old_status,
@@ -561,7 +560,7 @@ class Woo_Integration extends BaseIntegration {
 			return;
 		}
 
-		return $this->serialize_order();
+		return $this->serialize_order( self::$order_id );
 	}
 
 	/**
@@ -606,7 +605,7 @@ class Woo_Integration extends BaseIntegration {
 				continue;
 			}
 
-			$index = array_search( 'billing', array_column( $fields, 'name' ) );
+			$index = array_search( 'billing', array_column( $fields, 'name' ), true );
 
 			$billing_field                                  = &$fields[ $index ];
 			$billing_field['schema']['properties'][ $name ] = array(
@@ -620,10 +619,9 @@ class Woo_Integration extends BaseIntegration {
 				continue;
 			}
 
-			$index = array_search( 'shipping', array_column( $fields, 'name' ) );
+			$index = array_search( 'shipping', array_column( $fields, 'name' ), true );
 
-			$shipping_field                                  = &$fields[ $index ];
-			$shipping_field['schema']['properties'][ $name ] = array(
+			$fields[ $index ]['schema']['properties'][ $name ] = array(
 				'type' => 'text',
 			);
 		}
@@ -631,6 +629,14 @@ class Woo_Integration extends BaseIntegration {
 		return $fields;
 	}
 
+	/**
+	 * Decorates order fields as form data fields.
+	 *
+	 * @param string $name Field name.
+	 * @param array  $schema Field schema.
+	 *
+	 * @return array Field data.
+	 */
 	private function decorate_order_field( $name, $schema ) {
 		switch ( $schema['type'] ) {
 			case 'string':
@@ -657,7 +663,7 @@ class Woo_Integration extends BaseIntegration {
 			'type'        => $field_type,
 			'required'    => true,
 			'is_file'     => false,
-			'is_multi'    => $schema['type'] === 'array',
+			'is_multi'    => 'array' === $schema['type'],
 			'conditional' => false,
 			'schema'      => $schema,
 		);

@@ -1,4 +1,9 @@
 <?php
+/**
+ * Date fields to date job
+ *
+ * @package formsbridge
+ */
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit();
@@ -35,6 +40,13 @@ return array(
 	),
 );
 
+/**
+ * Date fields to date job method.
+ *
+ * @param array $payload Bridge payload.
+ *
+ * @return array|WP_Error
+ */
 function forms_bridge_job_format_date_fields( $payload ) {
 	$date   = $payload['date'];
 	$hour   = $payload['hour'] ?? '00';
@@ -43,7 +55,8 @@ function forms_bridge_job_format_date_fields( $payload ) {
 	$form_data  = FBAPI::get_current_form();
 	$date_index = array_search(
 		'date',
-		array_column( $form_data['fields'], 'type' )
+		array_column( $form_data['fields'], 'type' ),
+		true
 	);
 
 	$date_format = $form_data['fields'][ $date_index ]['format'] ?? '';
@@ -79,7 +92,7 @@ function forms_bridge_job_format_date_fields( $payload ) {
 
 	$time = strtotime( "{$date} {$hour}:{$minute}" );
 
-	if ( $time === false ) {
+	if ( false === $time ) {
 		return new WP_Error(
 			'invalid-date',
 			__( 'Invalid date format', 'forms-bridge' )
