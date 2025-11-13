@@ -1,4 +1,9 @@
 <?php
+/**
+ * Nextcloud WooCommerce orders bridge template
+ *
+ * @package formsbridge
+ */
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit();

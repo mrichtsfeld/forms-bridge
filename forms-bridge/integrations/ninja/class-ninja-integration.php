@@ -1231,6 +1231,7 @@ class Ninja_Integration extends BaseIntegration {
 					),
 					'payment_gateways'    => '',
 					'payment_total'       => '',
+					'payment_total_type'  => '',
 					'tag'                 => '',
 					'to'                  => '',
 					'email_subject'       => '',
@@ -1245,6 +1246,7 @@ class Ninja_Integration extends BaseIntegration {
 					'redirect_url'        => '',
 					'email_message_plain' => '',
 					'fields-save-toggle'  => 'save_all',
+					'exception_fields'    => array(),
 				),
 				array(
 					'title'               => '',
@@ -1287,6 +1289,7 @@ class Ninja_Integration extends BaseIntegration {
 					),
 					'payment_gateways'    => '',
 					'payment_total'       => '',
+					'payment_total_type'  => '',
 					'tag'                 => '',
 					'to'                  => '',
 					'email_subject'       => '',
@@ -1304,6 +1307,7 @@ class Ninja_Integration extends BaseIntegration {
 						'forms-bridge'
 					),
 					'email_message_plain' => '',
+					'exception_fields'    => array(),
 				),
 			),
 		);
