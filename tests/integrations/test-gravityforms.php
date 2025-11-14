@@ -50,7 +50,7 @@ class GravityFormsTest extends BaseIntegrationTest {
 		$form_data = $this->serialize_form( $form );
 
 		$fields = $form_data['fields'];
-		$this->assertEquals( 18, count( $fields ) );
+		$this->assertEquals( 19, count( $fields ) );
 
 		$field = $fields[0];
 		$this->assertField(
@@ -62,10 +62,18 @@ class GravityFormsTest extends BaseIntegrationTest {
 			)
 		);
 
-		$field = $fields[4];
+		$field = $fields[1];
+		$this->assertSame( 'name', $field['parent']['basetype'] );
+		$this->assertField( $field, 'text' );
+
+		$field = $fields[2];
+		$this->assertSame( 'name', $field['parent']['basetype'] );
+		$this->assertField( $field, 'text' );
+
+		$field = $fields[5];
 		$this->assertField( $field, 'text', array( 'conditional' => true ) );
 
-		$field = $fields[7];
+		$field = $fields[8];
 		$this->assertField(
 			$field,
 			'date',
@@ -75,7 +83,7 @@ class GravityFormsTest extends BaseIntegrationTest {
 			)
 		);
 
-		$field = $fields[15];
+		$field = $fields[16];
 		$this->assertEquals( 1, count( $field['inputs'] ) );
 		$this->assertField(
 			$field,
@@ -88,7 +96,7 @@ class GravityFormsTest extends BaseIntegrationTest {
 			)
 		);
 
-		$field = $fields[16];
+		$field = $fields[17];
 		$this->assertEquals( 1, count( $field['inputs'] ) );
 		$this->assertField(
 			$field,
@@ -102,7 +110,7 @@ class GravityFormsTest extends BaseIntegrationTest {
 		);
 	}
 
-	public function test_serialize_signup_submission() {
+	public function test_signup_submission_serialization() {
 		$form = self::get_form( 'Onboarding el Prat de Llobregat' );
 
 		$form_data = $this->serialize_form( $form );
@@ -122,6 +130,8 @@ class GravityFormsTest extends BaseIntegrationTest {
 		$payload = $this->serialize_submission( $submission, $form_data );
 
 		$this->assertSame( '0', $payload['Ets soci o usuari de Som Mobilitat?'] );
+		$this->assertSame( 'MARTA', $payload['firstname'] );
+		$this->assertSame( 'AGUILAR', $payload['lastname'] );
 		$this->assertSame( 'female', $payload['gender'] );
 		$this->assertSame( '1990-01-01', $payload['birthdate'] );
 		$this->assertSame( '2026-12-10', $payload['driving_license_date'] );
@@ -135,7 +145,7 @@ class GravityFormsTest extends BaseIntegrationTest {
 		$form_data = $this->serialize_form( $form );
 
 		$fields = $form_data['fields'];
-		$this->assertEquals( 16, count( $fields ) );
+		$this->assertEquals( 19, count( $fields ) );
 
 		$field = $fields[0];
 		$this->assertField(
@@ -148,16 +158,30 @@ class GravityFormsTest extends BaseIntegrationTest {
 		);
 
 		$field = $fields[2];
-		$this->assertEquals( 2, count( $field['inputs'] ) );
-		$this->assertField( $field, 'text', array( 'basetype' => 'name' ) );
+		$this->assertField( $field, 'text', array( 'basetype' => 'text' ) );
 
-		$field = $fields[4];
-		$this->assertField( $field, 'tel', array( 'basetype' => 'phone' ) );
+		$field = $fields[3];
+		$this->assertField( $field, 'text', array( 'basetype' => 'text' ) );
 
 		$field = $fields[5];
+		$this->assertField( $field, 'tel', array( 'basetype' => 'phone' ) );
+
+		$field = $fields[6];
 		$this->assertField( $field, 'email' );
 
 		$field = $fields[9];
+		$this->assertSame( 'product', $field['parent']['basetype'] );
+		$this->assertField( $field, 'text', array( 'required' => false ) );
+
+		$field = $fields[10];
+		$this->assertSame( 'product', $field['parent']['basetype'] );
+		$this->assertField( $field, 'text', array( 'required' => false ) );
+
+		$field = $fields[11];
+		$this->assertSame( 'product', $field['parent']['basetype'] );
+		$this->assertField( $field, 'text', array( 'required' => false ) );
+
+		$field = $fields[12];
 		$this->assertField(
 			$field,
 			'number',
@@ -167,10 +191,10 @@ class GravityFormsTest extends BaseIntegrationTest {
 			)
 		);
 
-		$field = $fields[10];
+		$field = $fields[13];
 		$this->assertField( $field, 'select' );
 
-		$field = $fields[13];
+		$field = $fields[16];
 		$this->assertField(
 			$field,
 			'file',
@@ -181,10 +205,10 @@ class GravityFormsTest extends BaseIntegrationTest {
 			)
 		);
 
-		$field = $fields[14];
+		$field = $fields[17];
 		$this->assertField( $field, 'textarea', array( 'required' => false ) );
 
-		$field = $fields[15];
+		$field = $fields[18];
 		$this->assertEquals( 1, count( $field['inputs'] ) );
 		$this->assertField(
 			$field,
@@ -196,7 +220,7 @@ class GravityFormsTest extends BaseIntegrationTest {
 		);
 	}
 
-	public function test_serialize_sr_submission() {
+	public function test_subscription_submission_serialization() {
 		$form = self::get_form( 'Subscription Request' );
 
 		$form_data = $this->serialize_form( $form );
@@ -215,10 +239,14 @@ class GravityFormsTest extends BaseIntegrationTest {
 
 		$payload = $this->serialize_submission( $submission, $form_data );
 
-		$this->assertSame( 'EUSEBIO SALGADO', $payload['Nom i cognoms'] );
+		$this->assertSame( 'EUSEBIO', $payload['firstname'] );
+		$this->assertSame( 'SALGADO', $payload['lastname'] );
 		$this->assertSame( 'website', $payload['source'] );
 		$this->assertTrue( $payload['consent'] );
 		$this->assertSame( '1', $payload['add_collect_account'][0] );
+		$this->assertSame( '100,00 €', $payload['price'] );
+		$this->assertSame( 'Preu de la participació', $payload['product'] );
+		$this->assertEquals( 100, $payload['ordered_parts'] );
 	}
 
 	public function test_employment_application_form_serialization() {
