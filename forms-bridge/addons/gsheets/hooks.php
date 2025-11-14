@@ -1,4 +1,9 @@
 <?php
+/**
+ * Google Sheets addon hooks
+ *
+ * @package formsbridge
+ */
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit();
@@ -7,7 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 add_filter(
 	'forms_bridge_bridge_schema',
 	function ( $schema, $addon ) {
-		if ( $addon !== 'gsheets' ) {
+		if ( 'gsheets' !== $addon ) {
 			return $schema;
 		}
 
@@ -36,7 +41,7 @@ add_filter(
 add_filter(
 	'forms_bridge_template_defaults',
 	function ( $defaults, $addon, $schema ) {
-		if ( $addon !== 'gsheets' ) {
+		if ( 'gsheets' !== $addon ) {
 			return $defaults;
 		}
 
@@ -183,7 +188,7 @@ add_filter(
 			return $url;
 		}
 
-		if ( $verb === 'auth' ) {
+		if ( 'auth' === $verb ) {
 			return $url;
 		}
 
