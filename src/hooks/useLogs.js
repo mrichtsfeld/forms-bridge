@@ -15,7 +15,7 @@ export default function useLogs({ debug }) {
       signal: AbortSignal.timeout(3000),
     })
       .then((logs) => {
-        if (error) setError(false);
+        setError(false);
         setLogs(logs);
       })
       .catch(() => setError(true))
