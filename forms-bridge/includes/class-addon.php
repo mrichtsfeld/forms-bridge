@@ -709,9 +709,7 @@ class Addon extends Singleton {
 			array(
 				$dir,
 				Forms_Bridge::path() . 'includes/templates',
-				get_stylesheet_directory() .
-				'/forms-bridge/templates/' .
-				static::NAME,
+				get_stylesheet_directory() . '/forms-bridge/templates/' . static::NAME,
 			),
 			static::NAME
 		);
@@ -780,7 +778,7 @@ class Addon extends Singleton {
 			array(
 				$dir,
 				Forms_Bridge::path() . '/includes/jobs',
-				get_stylesheet_directory() . '/jobs/' . static::NAME,
+				get_stylesheet_directory() . '/forms-bridge/jobs/' . static::NAME,
 			),
 			static::NAME
 		);
