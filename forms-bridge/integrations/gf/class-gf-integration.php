@@ -359,6 +359,7 @@ class GF_Integration extends BaseIntegration {
 							'adminLabel' => $input_label,
 							'type'       => 'text',
 							'schema'     => array( 'type' => 'string' ),
+							'required'   => $field->isRequired,
 						)
 					)
 				);
