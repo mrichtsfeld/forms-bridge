@@ -20,7 +20,7 @@ export default function useWiredBackend({
 
   useEffect(() => {
     setWired(null);
-  }, [template, authorized]);
+  }, [template, credential, authorized]);
 
   const backend = useMemo(() => {
     if (!template) return;
