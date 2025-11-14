@@ -23,11 +23,11 @@ behat.yml
 bitbucket-pipelines.yml
 bin
 .circleci/config.yml
-# composer.json
+composer.json
 composer.lock
 dependencies.yml
 Gruntfile.js
-# package.json
+package.json
 package-lock.json
 phpunit.xml
 phpunit.xml.dist

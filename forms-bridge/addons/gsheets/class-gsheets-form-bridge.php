@@ -1,4 +1,9 @@
 <?php
+/**
+ * Class Google_Sheets_Form_Bridge
+ *
+ * @package formsbridge
+ */
 
 namespace FORMS_BRIDGE;
 
@@ -13,10 +18,24 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 class Google_Sheets_Form_Bridge extends Form_Bridge {
 
+	/**
+	 * Bridge constructor with addon name provisioning.
+	 *
+	 * @param array $data Bridge data.
+	 */
 	public function __construct( $data ) {
 		parent::__construct( $data, 'gsheets' );
 	}
 
+	/**
+	 * Given an array of values returns a value range descriptor.
+	 *
+	 * @param array $values Array of values.
+	 *
+	 * @return string
+	 *
+	 * @deprecated
+	 */
 	private function value_range( $values ) {
 		$range = rawurlencode( $this->tab );
 
@@ -29,12 +48,15 @@ class Google_Sheets_Form_Bridge extends Form_Bridge {
 		$len = strlen( $abc );
 
 		$columns = array();
-		for ( $row = 0; $row < count( $values ); $row++ ) {
-			$rowcols = array();
-			$i       = -1;
 
-			for ( $col = 0; $col < count( $values[ $row ] ); $col++ ) {
-				if ( $col > 0 && $col % $len === 0 ) {
+		$rows = count( $values );
+		for ( $row = 0; $row < $rows; $row++ ) {
+			$rowcols = array();
+
+			$i    = -1;
+			$cols = count( $values[ $row ] );
+			for ( $col = 0; $col < $cols; $col++ ) {
+				if ( $col > 0 && 0 === $col % $len ) {
 					++$i;
 				}
 
@@ -57,6 +79,13 @@ class Google_Sheets_Form_Bridge extends Form_Bridge {
 		return $range;
 	}
 
+	/**
+	 * Fetches the first row of the sheet and return it as an array of headers / columns.
+	 *
+	 * @param Backend|null $backend Bridge backend instance.
+	 *
+	 * @return array<string>
+	 */
 	public function get_headers( $backend = null ) {
 		if ( ! $this->is_valid ) {
 			return new WP_Error( 'invalid_bridge' );
@@ -77,6 +106,15 @@ class Google_Sheets_Form_Bridge extends Form_Bridge {
 		return $response['data']['values'][0] ?? array();
 	}
 
+	/**
+	 * Creates a new sheet on the document.
+	 *
+	 * @param integer $index Position of the new sheet in the sheets list.
+	 * @param string  $title Sheet title.
+	 * @param Backend $backend Bridge backend instance.
+	 *
+	 * @return array|WP_Error Sheet data or creation error.
+	 */
 	private function add_sheet( $index, $title, $backend ) {
 		$response = $backend->post(
 			$this->endpoint . ':batchUpdate',
@@ -108,6 +146,13 @@ class Google_Sheets_Form_Bridge extends Form_Bridge {
 		return $response['data'];
 	}
 
+	/**
+	 * Request for the list of sheets of the document.
+	 *
+	 * @param Backend $backend Bridge backend instance.
+	 *
+	 * @return array<string>|WP_Error
+	 */
 	private function get_sheets( $backend ) {
 		$response = $backend->get( $this->endpoint );
 
@@ -124,6 +169,7 @@ class Google_Sheets_Form_Bridge extends Form_Bridge {
 	}
 
 	/**
+	 * Sends the payload to the backend.
 	 *
 	 * @param array $payload Submission data.
 	 * @param array $attachments Submission's attached files. Will be ignored.
@@ -152,7 +198,7 @@ class Google_Sheets_Form_Bridge extends Form_Bridge {
 		$endpoint = $this->endpoint . '/values/' . rawurlencode( $this->tab );
 		$method   = $this->method;
 
-		if ( $method === 'POST' || $method === 'PUT' ) {
+		if ( 'POST' === $method || 'PUT' === $method ) {
 			$endpoint .= '!A1:Z:append/?valueInputOption=USER_ENTERED';
 
 			$headers = $this->get_headers( $backend );
@@ -216,6 +262,14 @@ class Google_Sheets_Form_Bridge extends Form_Bridge {
 		return $flat;
 	}
 
+	/**
+	 * Returns array values as a flat vector of play key values.
+	 *
+	 * @param mixed  $value Payload value.
+	 * @param string $path Hierarchical path to the value.
+	 *
+	 * @return mixed
+	 */
 	private static function flatten_value( $value, $path = '' ) {
 		if ( ! is_array( $value ) ) {
 			return $value;

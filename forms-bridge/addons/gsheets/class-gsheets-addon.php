@@ -1,8 +1,14 @@
 <?php
+/**
+ * Class Google_Sheets_Addon
+ *
+ * @package formsbridge
+ */
 
 namespace FORMS_BRIDGE;
 
 use FBAPI;
+use WP_Error;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit();
@@ -37,13 +43,17 @@ class Google_Sheets_Addon extends Addon {
 	 */
 	const BRIDGE = '\FORMS_BRIDGE\Google_Sheets_Form_Bridge';
 
+	/**
+	 * Addon loader. Set up hooks to skip payload prunes if it comes from a
+	 * google sheets bridge.
+	 */
 	public function load() {
 		parent::load();
 
 		add_filter(
 			'forms_bridge_prune_empties',
 			static function ( $prune, $bridge ) {
-				if ( $bridge->addon === 'gsheets' ) {
+				if ( 'gsheets' === $bridge->addon ) {
 					return false;
 				}
 
@@ -85,7 +95,7 @@ class Google_Sheets_Addon extends Addon {
 		$parsed = wp_parse_url( $backend->base_url );
 		$host   = $parsed['host'] ?? '';
 
-		if ( $host !== 'sheets.googleapis.com' ) {
+		if ( 'sheets.googleapis.com' !== $host ) {
 			return false;
 		}
 
