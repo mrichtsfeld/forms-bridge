@@ -97,7 +97,13 @@ Browse the plugin's documentation on [formsbridge.codeccoop.org](https://formsbr
 9. Debug console
 
 == Changelog ==
-
+
+= 4.1.1 =
+* feat: bearer credential authorization based on access tokens + expiration date
+* fix: gravityforms subfields serialization
+* fix: theme space jobs loading
+* fix: misleading nextcloud wizard fields descriptions
+
 = 4.1.0 =
 * feat: php unit testing
 * feat: wordpress conding standards
