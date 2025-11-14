@@ -15,11 +15,29 @@ export default function Logger() {
   const [debug, setDebug] = useDebug();
   const { logs, loading, error } = useLogs({ debug });
 
-  const console = useRef(null);
+  const follow = useRef(true);
+  const consoleRef = useRef(null);
 
   useEffect(() => {
-    if (!console.current || console.current.scrollTop > 0) return;
-    console.current.scrollTo(0, console.current.scrollHeight);
+    if (!debug || !consoleRef.current) return;
+
+    const onScroll = (ev) => {
+      const consoleViewbox =
+        ev.target.children[0].offsetHeight - ev.target.clientHeight;
+      follow.current = ev.target.scrollTop === consoleViewbox;
+    };
+
+    const el = consoleRef.current;
+    el.addEventListener("scroll", onScroll);
+
+    return () => {
+      el.removeEventListener("scroll", onScroll);
+    };
+  }, [debug]);
+
+  useEffect(() => {
+    if (!consoleRef.current || !follow.current) return;
+    consoleRef.current.scrollTo(0, consoleRef.current.scrollHeight);
   }, [logs]);
 
   return (
@@ -48,7 +66,7 @@ export default function Logger() {
           <Spacer paddingY="calc(8px)" />
           <PanelRow>
             <div
-              ref={console}
+              ref={consoleRef}
               style={{
                 height: "500px",
                 width: "100%",
