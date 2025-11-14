@@ -182,7 +182,11 @@ class Odoo_Form_Bridge extends Form_Bridge {
 	 */
 	public function submit( $payload = array(), $more_args = array() ) {
 		if ( ! $this->is_valid ) {
-			return new WP_Error( 'invalid_bridge' );
+			return new WP_Error(
+				'invalid_bridge',
+				'Bridge data is invalid',
+				(array) $this->data,
+			);
 		}
 
 		$backend = $this->backend();

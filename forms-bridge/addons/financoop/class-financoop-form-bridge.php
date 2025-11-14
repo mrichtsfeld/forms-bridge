@@ -43,6 +43,14 @@ class Finan_Coop_Form_Bridge extends Form_Bridge {
 	 * @return array|WP_Error
 	 */
 	public function submit( $payload = array(), $attachments = array() ) {
+		if ( ! $this->is_valid ) {
+			return new WP_Error(
+				'invalid_bridge',
+				'Bridge data is invalid',
+				(array) $this->data,
+			);
+		}
+
 		if ( isset( $payload['lang'] ) && 'ca' === $payload['lang'] ) {
 			$payload['lang'] = 'ca_ES';
 		}
