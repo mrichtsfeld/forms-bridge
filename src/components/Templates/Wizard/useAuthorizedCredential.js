@@ -66,7 +66,20 @@ export default function useAuthorizedCredential({ data = {}, fields = [] }) {
 
   const isOauth = data.schema === "Bearer";
 
-  const authorized = !isOauth || !!data.refresh_token;
+  const authorized = useMemo(() => {
+    if (!(isOauth && data.access_token && data.expires_at)) return false;
+
+    if (data.refresh_token) {
+      return true;
+    }
+
+    let expirationDate = new Date(data.expires_at);
+    if (expirationDate.getFullYear() === 1970) {
+      expirationDate = new Date(data.expires_at * 1000);
+    }
+
+    return Date.now() < expirationDate.getTime();
+  }, [isOauth, data.access_token, data.expires_at]);
 
   const fetchSettings = useFetchSettings();
   useEffect(() => {

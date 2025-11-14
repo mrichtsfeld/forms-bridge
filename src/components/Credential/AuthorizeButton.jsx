@@ -3,6 +3,7 @@ import { useError } from "../../providers/Error";
 import { useFetchSettings } from "../../providers/Settings";
 import { restUrl } from "../../lib/utils";
 
+const { useMemo } = wp.element;
 const { Button } = wp.components;
 const apiFetch = wp.apiFetch;
 const { __ } = wp.i18n;
@@ -12,6 +13,21 @@ export default function AuthorizeButton({ addon, data }) {
   const [error, setError] = useError();
 
   const fetchSettings = useFetchSettings();
+
+  const authorized = useMemo(() => {
+    if (!(data.access_token && data.expires_at)) return false;
+
+    if (data.refresh_token) {
+      return true;
+    }
+
+    let expirationDate = new Date(data.expires_at);
+    if (expirationDate.getFullYear() === 1970) {
+      expirationDate = new Date(data.expires_at * 1000);
+    }
+
+    return Date.now() < expirationDate.getTime();
+  }, [data.access_token, data.expires_at]);
 
   const revoke = () => {
     setLoading(true);
@@ -65,7 +81,7 @@ export default function AuthorizeButton({ addon, data }) {
       .finally(() => setLoading(false));
   };
 
-  if (data.refresh_token) {
+  if (authorized) {
     return (
       <Button
         onClick={revoke}
