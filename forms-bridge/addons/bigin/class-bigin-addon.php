@@ -46,7 +46,7 @@ class Bigin_Addon extends Zoho_Addon {
 	 * @return boolean
 	 */
 	public function ping( $backend ) {
-		$bridge_class = static::bridge_class;
+		$bridge_class = static::BRIDGE;
 		$bridge       = new $bridge_class(
 			array(
 				'name'     => '__bigin-' . time(),
@@ -58,11 +58,13 @@ class Bigin_Addon extends Zoho_Addon {
 
 		$backend = $bridge->backend;
 		if ( ! $backend ) {
+			Logger::log( 'Bigin backend ping error: The bridge has no valid backend', Logger::ERROR );
 			return false;
 		}
 
 		$credential = $backend->credential;
 		if ( ! $credential ) {
+			Logger::log( 'Bigin backend ping error: The backend has no valid credentials', Logger::ERROR );
 			return false;
 		}
 
@@ -76,16 +78,24 @@ class Bigin_Addon extends Zoho_Addon {
 				$matches
 			)
 		) {
+			Logger::log( 'Bigin backend ping error: The backend does not points to the zohoapis endpoints', Logger::ERROR );
 			return false;
 		}
 
-		$region = $matches[1];
-		if ( ! preg_match( '/' . $region . '$/', $credential->region ) ) {
-			return false;
-		}
+		// $region = $matches[1];
+		// if ( ! preg_match( '/' . $region . '$/', $credential->region ) ) {
+		// Logger::log( 'Bigin backend ping error: The backend endpoint and the credential region mismatch', Logger::ERROR );
+		// return false;
+		// }
 
 		$response = $bridge->submit( array( 'type' => 'CurrentUser' ) );
-		return ! is_wp_error( $response );
+		if ( is_wp_error( $response ) ) {
+			Logger::log( 'Bigin backend ping error response', Logger::ERROR );
+			Logger::log( $response, Logger::ERROR );
+			return false;
+		}
+
+		return true;
 	}
 
 	/**
@@ -109,7 +119,7 @@ class Bigin_Addon extends Zoho_Addon {
 
 		$module = $matches[2];
 
-		$bridge_class = self::bridge_class;
+		$bridge_class = self::BRIDGE;
 		$bridge       = new $bridge_class(
 			array(
 				'name'     => '__bigin-' . time(),

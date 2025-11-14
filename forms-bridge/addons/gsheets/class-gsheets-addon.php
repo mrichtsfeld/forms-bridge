@@ -84,11 +84,13 @@ class Google_Sheets_Addon extends Addon {
 
 		$backend = $bridge->backend;
 		if ( ! $backend ) {
+			Logger::log( 'Google Sheets backend ping error: Bridge has no valid backend', Logger::ERROR );
 			return false;
 		}
 
 		$credential = $backend->credential;
 		if ( ! $credential ) {
+			Logger::log( 'Google Sheets backend ping error: Backend has no valid credential', Logger::ERROR );
 			return false;
 		}
 
@@ -96,11 +98,18 @@ class Google_Sheets_Addon extends Addon {
 		$host   = $parsed['host'] ?? '';
 
 		if ( 'sheets.googleapis.com' !== $host ) {
+			Logger::log( 'Google Sheets backend ping error: Backend does not point to the Google Sheets API endpoints', Logger::ERROR );
 			return false;
 		}
 
 		$access_token = $credential->get_access_token();
-		return (bool) $access_token;
+
+		if ( ! $access_token ) {
+			Logger::log( 'Google Sheets backend ping error: Unable to recover the credential access token', Logger::ERROR );
+			return false;
+		}
+
+		return true;
 	}
 
 	/**

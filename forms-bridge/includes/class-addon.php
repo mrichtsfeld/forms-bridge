@@ -554,6 +554,7 @@ class Addon extends Singleton {
 	 * @return boolean|WP_Error
 	 */
 	public function ping( $backend ) {
+		Logger::log( 'This adddon bridges has not known ping endpoint', Logger::ERROR );
 		return false;
 	}
 

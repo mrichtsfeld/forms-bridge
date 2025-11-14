@@ -54,7 +54,14 @@ class Brevo_Addon extends Addon {
 		);
 
 		$response = $bridge->submit( array( 'limit' => 1 ) );
-		return ! is_wp_error( $response );
+
+		if ( is_wp_error( $response ) ) {
+			Logger::log( 'Brevo backend ping error response', Logger::ERROR );
+			Logger::log( $response, Logger::ERROR );
+			return false;
+		}
+
+		return true;
 	}
 
 	/**

@@ -56,11 +56,13 @@ class Zoho_Addon extends Addon {
 
 		$backend = $bridge->backend;
 		if ( ! $backend ) {
+			Logger::log( 'Zoho backend ping error: Bridge has no valid backend', Logger::ERROR );
 			return false;
 		}
 
 		$credential = $backend->credential;
 		if ( ! $credential ) {
+			Logger::log( 'Zoho backend ping error: Backend has no valid credential', Logger::ERROR );
 			return false;
 		}
 
@@ -74,16 +76,25 @@ class Zoho_Addon extends Addon {
 				$matches
 			)
 		) {
+			Logger::log( 'Zoho backend ping error: Backend does not point to the zohoapis endpoints', Logger::ERROR );
 			return false;
 		}
 
 		// $region = $matches[1];
 		// if (!preg_match('/' . $region . '$/', $credential->region)) {
+		// Logger::log( 'Bigin backend ping error: The backend endpoint and the credential region mismatch', Logger::ERROR );
 		// return false;
 		// }
 
 		$response = $bridge->submit( array( 'type' => 'CurrentUser' ) );
-		return ! is_wp_error( $response );
+
+		if ( is_wp_error( $response ) ) {
+			Logger::log( 'Zoho backend ping error response', Logger::ERROR );
+			Logger::log( $response, Logger::ERROR );
+			return false;
+		}
+
+		return true;
 	}
 
 	/**

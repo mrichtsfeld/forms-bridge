@@ -85,7 +85,13 @@ class Nextcloud_Addon extends Addon {
 			'/remote.php/dav/files/' . rawurlencode( $credential->client_id )
 		);
 
-		return ! is_wp_error( $response );
+		if ( is_wp_error( $response ) ) {
+			Logger::log( 'Nextcloud backend ping error response', Logger::ERROR );
+			Logger::log( $response, Logger::ERROR );
+			return false;
+		}
+
+		return true;
 	}
 
 	/**
