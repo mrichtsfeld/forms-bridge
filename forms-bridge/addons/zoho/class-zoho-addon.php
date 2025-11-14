@@ -20,21 +20,21 @@ class Zoho_Addon extends Addon {
 	 *
 	 * @var string
 	 */
-	const TITLE = 'Zoho';
+	public const TITLE = 'Zoho';
 
 	/**
 	 * Handles the addon's name.
 	 *
 	 * @var string
 	 */
-	const NAME = 'zoho';
+	public const NAME = 'zoho';
 
 	/**
 	 * Handles the addon's custom bridge class.
 	 *
 	 * @var string
 	 */
-	const BRIDGE = '\FORMS_BRIDGE\Zoho_Form_Bridge';
+	public const BRIDGE = '\FORMS_BRIDGE\Zoho_Form_Bridge';
 
 	/**
 	 * Performs a request against the backend to check the connexion status.

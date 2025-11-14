@@ -11,6 +11,11 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 class Bigin_Form_Bridge extends Zoho_Form_Bridge {
 
+	/**
+	 * Bridge constructor with addon name provisioning.
+	 *
+	 * @param array $data Bridge data.
+	 */
 	public function __construct( $data ) {
 		parent::__construct( $data, 'bigin' );
 	}

@@ -19,12 +19,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Zoho_Form_Bridge extends Form_Bridge {
 
 	/**
-	 * Bridge constructor.
+	 * Bridge constructor with addon name provisioning.
 	 *
-	 * @param array $data Bridge data.
+	 * @param array  $data Bridge data.
+	 * @param string $addon Addon name, default to zoho.
 	 */
-	public function __construct( $data ) {
-		parent::__construct( $data, 'zoho' );
+	public function __construct( $data, $addon = 'zoho' ) {
+		parent::__construct( $data, $addon );
 	}
 
 	/**
