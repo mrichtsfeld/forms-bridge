@@ -5,7 +5,6 @@
  * @package formsbridge
  */
 
-
 if ( ! defined( 'ABSPATH' ) ) {
 	exit();
 }
@@ -38,6 +37,11 @@ add_filter(
 						),
 						'type'        => 'url',
 						'default'     => 'https://your-organization.zulipchat.com',
+					),
+					array(
+						'ref'   => '#backend/headers[]',
+						'name'  => 'Content-Type',
+						'value' => 'application/x-www-form-urlencoded',
 					),
 					array(
 						'ref'      => '#credential',
@@ -81,7 +85,13 @@ add_filter(
 					'method'   => 'POST',
 				),
 				'backend'    => array(
-					'name' => 'Zulip API',
+					'name'    => 'Zulip API',
+					'headers' => array(
+						array(
+							'name'  => 'Content-Type',
+							'value' => 'application/x-www-form-urlencoded',
+						),
+					),
 				),
 				'credential' => array(
 					'name'          => '',
