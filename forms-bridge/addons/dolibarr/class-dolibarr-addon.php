@@ -7,6 +7,8 @@
 
 namespace FORMS_BRIDGE;
 
+use FORMS_BRIDGE\OpenAPI;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit();
 }
@@ -21,25 +23,32 @@ require_once 'api.php';
 class Dolibarr_Addon extends Addon {
 
 	/**
-	 * Handles the addon's title.
+	 * Holds the addon's title.
 	 *
 	 * @var string
 	 */
-	const TITLE = 'Dolibarr';
+	public const TITLE = 'Dolibarr';
 
 	/**
-	 * Handles the addon's name.
+	 * Holds the addon's name.
 	 *
 	 * @var string
 	 */
-	const NAME = 'dolibarr';
+	public const NAME = 'dolibarr';
 
 	/**
-	 * Handles the addom's custom bridge class.
+	 * Holds the addom's custom bridge class.
 	 *
 	 * @var string
 	 */
-	const BRIDGE = '\FORMS_BRIDGE\Dolibarr_Form_Bridge';
+	public const BRIDGE = '\FORMS_BRIDGE\Dolibarr_Form_Bridge';
+
+	/**
+	 * Holds the Dolibarr's REST API swagger.json endpoint.
+	 *
+	 * @var string
+	 */
+	public const SWAGGER_ENDPOINT = '/api/index.php/explorer/swagger.json';
 
 	/**
 	 * Performs a request against the backend to check the connexion status.
@@ -101,22 +110,44 @@ class Dolibarr_Addon extends Addon {
 	 * Performs an introspection of the backend endpoint and returns API fields
 	 * and accepted content type.
 	 *
-	 * @param string $endpoint API endpoint.
-	 * @param string $backend Backend name.
+	 * @param string      $endpoint API endpoint.
+	 * @param string      $backend Backend name.
+	 * @param string|null $method HTTP method.
 	 *
 	 * @return array
 	 */
-	public function get_endpoint_schema( $endpoint, $backend ) {
+	public function get_endpoint_schema( $endpoint, $backend, $method = null ) {
 		$bridge = new Dolibarr_Form_Bridge(
 			array(
 				'name'     => '__dolibarr-' . time(),
-				'endpoint' => $endpoint,
+				'endpoint' => self::SWAGGER_ENDPOINT,
 				'backend'  => $backend,
 				'method'   => 'GET',
 			)
 		);
 
-		$response = $bridge->submit( array( 'limit' => 1 ) );
+		$response = $bridge->submit();
+
+		if ( is_wp_error( $response ) ) {
+			return array();
+		}
+
+		$version = $response['data']['swagger'] ?? null;
+		if ( ! $version ) {
+			return array();
+		}
+
+		$oa_explorer = new OpenAPI( $response['data'] );
+
+		$path   = preg_replace( '/.*\/api\/index.php/', '', $endpoint );
+		$method = strtolower( $method ?? 'post' );
+		$params = $oa_explorer->params( $path, $method );
+		if ( empty( $params ) ) {
+			return array();
+		}
+
+		$response = $bridge->patch( array( 'endpoint' => $endpoint ) )
+			->submit( array( 'limit' => '1' ) );
 
 		if ( is_wp_error( $response ) ) {
 			return array();
@@ -131,8 +162,6 @@ class Dolibarr_Addon extends Addon {
 		foreach ( $entry as $field => $value ) {
 			if ( wp_is_numeric_array( $value ) ) {
 				$type = 'array';
-			} elseif ( is_array( $value ) ) {
-				$type = 'object';
 			} elseif ( is_double( $value ) ) {
 				$type = 'number';
 			} elseif ( is_int( $value ) ) {
