@@ -21,25 +21,25 @@ require_once 'api.php';
 class Odoo_Addon extends Addon {
 
 	/**
-	 * Handles the addon's title.
+	 * Holds the addon's title.
 	 *
 	 * @var string
 	 */
-	const TITLE = 'Odoo';
+	public const TITLE = 'Odoo';
 
 	/**
-	 * Handles the addon's name.
+	 * Holds the addon's name.
 	 *
 	 * @var string
 	 */
-	const NAME = 'odoo';
+	public const NAME = 'odoo';
 
 	/**
-	 * Handles the addom's custom bridge class.
+	 * Holds the addom's custom bridge class.
 	 *
 	 * @var string
 	 */
-	const BRIDGE = '\FORMS_BRIDGE\Odoo_Form_Bridge';
+	public const BRIDGE = '\FORMS_BRIDGE\Odoo_Form_Bridge';
 
 	/**
 	 * Performs a request against the backend to check the connexion status.
@@ -88,6 +88,39 @@ class Odoo_Addon extends Addon {
 		);
 
 		return $bridge->submit( array(), array( 'id', 'name' ) );
+	}
+
+	/**
+	 * Fetch available models from the backend
+	 *
+	 * @param Backend $backend HTTP backend object.
+	 *
+	 * @return array
+	 *
+	 * @todo Implementar el endpoint de consulta de endpoints disponibles.
+	 */
+	public function get_endpoints( $backend ) {
+		$bridge = new Odoo_Form_Bridge(
+			array(
+				'name'     => '__odoo-' . time(),
+				'method'   => 'search_read',
+				'endpoint' => 'ir.model',
+				'backend'  => $backend,
+			)
+		);
+
+		$response = $bridge->submit( array(), array( 'name', 'model' ) );
+
+		if ( is_wp_error( $response ) ) {
+			return array();
+		}
+
+		return array_map(
+			function ( $model ) {
+				return $model['model'];
+			},
+			$response['data']['result']
+		);
 	}
 
 	/**
