@@ -367,6 +367,13 @@ class REST_Settings_Controller extends Base_Controller {
 								'type'        => 'string',
 								'required'    => true,
 							),
+							'method'   => array(
+								'description' => __(
+									'HTTP method',
+									'forms-bridge',
+								),
+								'type'        => 'string',
+							),
 						),
 					),
 				)
@@ -584,8 +591,8 @@ class REST_Settings_Controller extends Base_Controller {
 	/**
 	 * Callback for POST requests to the templates endpoint.
 	 *
-	 * @param string       $addon Name of the owner addon of the template.
-	 * @param REST_Request $request CUrrent REST request instance.
+	 * @param string          $addon Name of the owner addon of the template.
+	 * @param WP_REST_Request $request Current REST request instance.
 	 *
 	 * @return array|WP_Error Template use result.
 	 */
@@ -775,6 +782,14 @@ class REST_Settings_Controller extends Base_Controller {
 		return array( $addon, $backend['name'], $credential['name'] ?? null );
 	}
 
+	/**
+	 * Callback to the backend ping endpoint.
+	 *
+	 * @param string          $addon Addon name.
+	 * @param WP_REST_Request $request Request object.
+	 *
+	 * @return array|WP_Error
+	 */
 	private static function ping_backend( $addon, $request ) {
 		$handler = self::prepare_addon_backend_request_handler(
 			$addon,
@@ -803,18 +818,27 @@ class REST_Settings_Controller extends Base_Controller {
 		return array( 'success' => $result );
 	}
 
+	/**
+	 * Backend endpoint schema route callback.
+	 *
+	 * @param string          $addon Addon name.
+	 * @param WP_REST_Request $request Request object.
+	 *
+	 * @return array|WP_Error
+	 */
 	private static function get_endpoint_schema( $addon, $request ) {
 		$handler = self::prepare_addon_backend_request_handler(
 			$addon,
 			$request
 		);
+
 		if ( is_wp_error( $handler ) ) {
 			return $handler;
 		}
 
 		[$addon, $backend] = $handler;
 
-		$schema = $addon->get_endpoint_schema( $request['endpoint'], $backend );
+		$schema = $addon->get_endpoint_schema( $request['endpoint'], $backend, $request['method'] );
 
 		if ( is_wp_error( $schema ) ) {
 			$error = self::internal_server_error();
@@ -830,11 +854,23 @@ class REST_Settings_Controller extends Base_Controller {
 		return $schema;
 	}
 
+	/**
+	 * Callback of the addon schemas endpoint.
+	 *
+	 * @param string $name Addon name.
+	 *
+	 * @return array
+	 */
 	private static function addon_schemas( $name ) {
 		$bridge = FBAPI::get_bridge_schema( $name );
 		return array( 'bridge' => $bridge );
 	}
 
+	/**
+	 * Callback of the http schemas endpoint.
+	 *
+	 * @return array
+	 */
 	private static function http_schemas() {
 		$backend    = FBAPI::get_backend_schema();
 		$credential = FBAPI::get_credential_schema();
