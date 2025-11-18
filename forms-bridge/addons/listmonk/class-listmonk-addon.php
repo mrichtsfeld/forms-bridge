@@ -20,25 +20,32 @@ require_once 'hooks.php';
 class Listmonk_Addon extends Addon {
 
 	/**
-	 * Handles the addon's title.
+	 * Holds the addon's title.
 	 *
 	 * @var string
 	 */
-	const TITLE = 'Listmonk';
+	public const TITLE = 'Listmonk';
 
 	/**
-	 * Handles the addon's name.
+	 * Holds the addon's name.
 	 *
 	 * @var string
 	 */
-	const NAME = 'listmonk';
+	public const NAME = 'listmonk';
 
 	/**
-	 * Handles the addom's custom bridge class.
+	 * Holds the addom's custom bridge class.
 	 *
 	 * @var string
 	 */
-	const BRIDGE = '\FORMS_BRIDGE\Listmonk_Form_Bridge';
+	public const BRIDGE = '\FORMS_BRIDGE\Listmonk_Form_Bridge';
+
+	/**
+	 * Holds the addon's OAS URL.
+	 *
+	 * @var string
+	 */
+	public const OAS_URL = 'https://listmonk.app/docs/swagger/collections.yaml';
 
 	/**
 	 * Performs a request against the backend to check the connexion status.
@@ -90,15 +97,65 @@ class Listmonk_Addon extends Addon {
 	}
 
 	/**
+	 * Fetch available models from the backend
+	 *
+	 * @param Backend $backend HTTP backend object.
+	 *
+	 * @return array
+	 *
+	 * @todo Implementar el endpoint de consulta de endpoints disponibles.
+	 */
+	public function get_endpoints( $backend ) {
+		if ( function_exists( 'yaml_parse' ) ) {
+			$response = wp_remote_get( self::OAS_URL );
+
+			if ( ! is_wp_error( $response ) ) {
+				$data = yaml_parse( $response['body'] );
+
+				$oa_explorer = new OpenAPI( $data );
+				$paths       = $oa_explorer->paths();
+
+				return array_map(
+					function ( $path ) {
+						return '/api' . $path;
+					},
+					$paths
+				);
+			}
+		}
+
+		return array(
+			'/api/subscribers',
+		);
+	}
+
+	/**
 	 * Performs an introspection of the backend endpoint and returns API fields
 	 * and accepted content type.
 	 *
-	 * @param string $endpoint API endpoint.
-	 * @param string $backend Backend name.
+	 * @param string      $endpoint API endpoint.
+	 * @param string      $backend Backend name.
+	 * @param string|null $method HTTP method.
 	 *
 	 * @return array
 	 */
-	public function get_endpoint_schema( $endpoint, $backend ) {
+	public function get_endpoint_schema( $endpoint, $backend, $method = null ) {
+		if ( function_exists( 'yaml_parse' ) ) {
+			$response = wp_remote_get( self::OAS_URL );
+
+			if ( ! is_wp_error( $response ) ) {
+				$data = yaml_parse( $response['body'] );
+
+				$oa_explorer = new OpenAPI( $data );
+
+				$method = strtolower( $method ?? 'post' );
+				$path   = preg_replace( '/^\/api/', '', $endpoint );
+				$params = $oa_explorer->params( $path, $method );
+
+				return $params ?: array();
+			}
+		}
+
 		if ( '/api/subscribers' === $endpoint ) {
 			return array(
 				array(
