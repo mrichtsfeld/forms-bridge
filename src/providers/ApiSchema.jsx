@@ -23,10 +23,11 @@ export default function ApiSchemaProvider({ children, bridge }) {
   const key = useMemo(
     () =>
       JSON.stringify({
+        method: bridge?.method,
         endpoint: bridge?.endpoint,
         backend,
       }),
-    [bridge?.endpoint, backend]
+    [bridge?.endpoint, bridge?.method, backend]
   );
 
   const addSchema = (key, schema) => {
@@ -34,13 +35,13 @@ export default function ApiSchemaProvider({ children, bridge }) {
     updates((i) => i + 1);
   };
 
-  const fetch = (key, endpoint, backend) => {
+  const fetch = (key, { endpoint, method }, backend) => {
     setLoading(true);
 
     apiFetch({
       path: `forms-bridge/v1/${addon}/backend/endpoint/schema`,
       method: "POST",
-      data: { endpoint, backend },
+      data: { endpoint, method, backend },
     })
       .then((schema) => addSchema(key, schema))
       .catch(() => addSchema(key, []))
@@ -53,10 +54,7 @@ export default function ApiSchemaProvider({ children, bridge }) {
 
     if (!backend || !bridge?.endpoint || loading || schemas.get(key)) return;
 
-    timeout.current = setTimeout(
-      () => fetch(key, bridge.endpoint, backend),
-      400
-    );
+    timeout.current = setTimeout(() => fetch(key, bridge, backend), 400);
   }, [key, bridge, backend]);
 
   const schema = schemas.get(key);
