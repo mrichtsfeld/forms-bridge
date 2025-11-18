@@ -37,6 +37,7 @@ if ( ! class_exists( 'HTTP_BRIDGE\Backend' ) ) {
 /* Classes */
 require_once __DIR__ . '/includes/class-api.php';
 require_once __DIR__ . '/includes/class-json-finger.php';
+require_once __DIR__ . '/includes/class-openapi.php';
 require_once __DIR__ . '/includes/class-rest-settings-controller.php';
 require_once __DIR__ . '/includes/class-settings-store.php';
 require_once __DIR__ . '/includes/class-logger.php';

@@ -25,21 +25,28 @@ class Brevo_Addon extends Addon {
 	 *
 	 * @var string
 	 */
-	const TITLE = 'Brevo';
+	public const TITLE = 'Brevo';
 
 	/**
 	 * Handles the addon's name.
 	 *
 	 * @var string
 	 */
-	const NAME = 'brevo';
+	public const NAME = 'brevo';
 
 	/**
 	 * Handles the addom's custom bridge class.
 	 *
 	 * @var string
 	 */
-	const BRIDGE = '\FORMS_BRIDGE\Brevo_Form_Bridge';
+	public const BRIDGE = '\FORMS_BRIDGE\Brevo_Form_Bridge';
+
+	/**
+	 * Holds the OAS URL.
+	 *
+	 * @var string
+	 */
+	public const OAS_URL = 'https://developers.brevo.com/reference/get_companies?json=on';
 
 	/**
 	 * Performs a request against the backend to check the connexion status.
@@ -91,241 +98,99 @@ class Brevo_Addon extends Addon {
 	}
 
 	/**
-	 * Performs an introspection of the backend endpoint and returns API fields
-	 * and accepted content type.
+	 * Fetch available models from the OAS spec.
 	 *
-	 * @param string $endpoint API endpoint.
-	 * @param string $backend Backend name.
+	 * @param Backend $backend HTTP backend object.
 	 *
 	 * @return array
+	 *
+	 * @todo Implementar el endpoint de consulta de endpoints disponibles.
 	 */
-	public function get_endpoint_schema( $endpoint, $backend ) {
-		$bridge = new Brevo_Form_Bridge(
+	public function get_endpoints( $backend ) {
+		$response = wp_remote_get(
+			self::OAS_URL,
 			array(
-				'name'     => '__brevo-' . time(),
-				'endpoint' => $endpoint,
-				'backend'  => $backend,
-				'method'   => 'GET',
+				'headers' => array(
+					'Accept'     => 'application/json',
+					'Host'       => 'developers.brevo.com',
+					'Referer'    => 'https://developers.brevo.com/reference/get_companies',
+					'Alt-Used'   => 'developers.brevo.com',
+					'User-Agent' => 'Mozilla/5.0 (X11; Linux x86_64; rv:144.0) Gecko/20100101 Firefox/144.0',
+				),
 			)
 		);
 
-		if ( strstr( $bridge->endpoint, 'contacts' ) ) {
-			$response = $bridge
-				->patch(
-					array(
-						'name'     => 'brevo-contacts-attributes',
-						'endpoint' => '/v3/contacts/attributes',
-						'method'   => 'GET',
-					)
-				)
-				->submit();
-
-			if ( is_wp_error( $response ) ) {
-				return array();
-			}
-
-			if ( $bridge->endpoint === '/v3/contacts/doubleOptinConfirmation' ) {
-				$fields = array(
-					array(
-						'name'     => 'email',
-						'schema'   => array( 'type' => 'string' ),
-						'required' => true,
-					),
-					array(
-						'name'     => 'includeListIds',
-						'schema'   => array(
-							'type'  => 'array',
-							'items' => array( 'type' => 'integer' ),
-						),
-						'required' => true,
-					),
-					array(
-						'name'   => 'excludeListIds',
-						'schema' => array(
-							'type'  => 'array',
-							'items' => array( 'type' => 'integer' ),
-						),
-					),
-					array(
-						'name'     => 'templateId',
-						'schema'   => array( 'type' => 'integer' ),
-						'required' => true,
-					),
-					array(
-						'name'     => 'redirectionUrl',
-						'schema'   => array( 'type' => 'string' ),
-						'required' => true,
-					),
-					array(
-						'name'   => 'attributes',
-						'schema' => array(
-							'type'       => 'object',
-							'properties' => array(),
-						),
-					),
-				);
-			} else {
-				$fields = array(
-					array(
-						'name'     => 'email',
-						'schema'   => array( 'type' => 'string' ),
-						'required' => true,
-					),
-					array(
-						'name'   => 'ext_id',
-						'schema' => array( 'type' => 'string' ),
-					),
-					array(
-						'name'   => 'emailBlacklisted',
-						'schema' => array( 'type' => 'boolean' ),
-					),
-					array(
-						'name'   => 'smsBlacklisted',
-						'schema' => array( 'type' => 'boolean' ),
-					),
-					array(
-						'name'   => 'listIds',
-						'schema' => array(
-							'type'  => 'array',
-							'items' => array( 'type' => 'integer' ),
-						),
-					),
-					array(
-						'name'   => 'updateEnabled',
-						'schema' => array( 'type' => 'boolean' ),
-					),
-					array(
-						'name'   => 'smtpBlacklistSender',
-						'schema' => array( 'type' => 'boolean' ),
-					),
-					array(
-						'name'   => 'attributes',
-						'schema' => array(
-							'type'       => 'object',
-							'properties' => array(),
-						),
-					),
-				);
-			}
-
-			foreach ( $response['data']['attributes'] as $attribute ) {
-				$fields[] = array(
-					'name'   => 'attributes.' . $attribute['name'],
-					'schema' => array( 'type' => 'string' ),
-				);
-			}
-
-			return $fields;
-		} else {
-			if ( ! preg_match( '/\/([a-z]+)$/', $bridge->endpoint, $matches ) ) {
-				return array();
-			}
-
-			$module   = $matches[1];
-			$response = $bridge
-				->patch(
-					array(
-						'name'     => "brevo-{$module}-attributes",
-						'endpoint' => "/v3/crm/attributes/{$module}",
-						'method'   => 'GET',
-					)
-				)
-				->submit();
-
-			if ( is_wp_error( $response ) ) {
-				return array();
-			}
-
-			if ( 'companies' === $module ) {
-				$fields = array(
-					array(
-						'name'     => 'name',
-						'schema'   => array( 'type' => 'string' ),
-						'required' => true,
-					),
-					array(
-						'name'   => 'countryCode',
-						'schema' => array( 'type' => 'integer' ),
-					),
-					array(
-						'name'   => 'linkedContactsIds',
-						'schema' => array(
-							'type'  => 'array',
-							'items' => array( 'type' => 'integer' ),
-						),
-					),
-					array(
-						'name'   => 'linkedDealsIds',
-						'schema' => array(
-							'type'  => 'array',
-							'items' => array( 'type' => 'integer' ),
-						),
-					),
-					array(
-						'name'   => 'attributes',
-						'schema' => array(
-							'type'       => 'object',
-							'properties' => array(),
-						),
-					),
-				);
-			} elseif ( 'deals' === $module ) {
-				$fields = array(
-					array(
-						'name'     => 'name',
-						'schema'   => array( 'type' => 'string' ),
-						'required' => true,
-					),
-					array(
-						'name'   => 'linkedDealsIds',
-						'schema' => array(
-							'type'  => 'array',
-							'items' => array( 'type' => 'integer' ),
-						),
-					),
-					array(
-						'name'   => 'linkedCompaniesIds',
-						'schema' => array(
-							'type'  => 'array',
-							'items' => array( 'type' => 'integer' ),
-						),
-					),
-					array(
-						'name'   => 'attributes',
-						'schema' => array(
-							'type'       => 'object',
-							'properties' => array(),
-						),
-					),
-				);
-			}
-
-			foreach ( $response['data'] as $attribute ) {
-				switch ( $attribute['attributeTypeName'] ) {
-					case 'number':
-						$type = 'number';
-						break;
-					case 'text':
-						$type = 'string';
-						break;
-					case 'user':
-						$type = 'email';
-						break;
-					case 'date':
-						$type = 'date';
-						break;
-					default:
-						$type = 'string';
-				}
-
-				$fields[] = array(
-					'name'   => 'attributes.' . $attribute['internalName'],
-					'schema' => array( 'type' => $type ),
-				);
-			}
-
-			return $fields;
+		if ( is_wp_error( $response ) ) {
+			return array();
 		}
+
+		$data        = json_decode( $response['body'], true );
+		$oa_explorer = new OpenAPI( $data['oasDefinition'] );
+
+		$paths = $oa_explorer->paths();
+
+		return array_map(
+			function ( $path ) {
+				return '/v3' . $path;
+			},
+			$paths,
+		);
+	}
+
+	/**
+	 * Performs an introspection of the backend endpoint and returns API fields
+	 * and accepted content type.
+	 *
+	 * @param string      $endpoint API endpoint.
+	 * @param string      $backend Backend name.
+	 * @param string|null $method HTTP method.
+	 *
+	 * @return array
+	 */
+	public function get_endpoint_schema( $endpoint, $backend, $method = null ) {
+		$bytes    = random_bytes( 16 );
+		$bytes[6] = chr( ord( $bytes[6] ) & 0x0f | 0x40 ); // set version to 0100
+		$bytes[8] = chr( ord( $bytes[8] ) & 0x3f | 0x80 ); // set bits 6-7 to 10
+		$uuid     = vsprintf( '%s%s-%s-%s-%s-%s%s%s', str_split( bin2hex( $bytes ), 4 ) );
+
+		$response = wp_remote_get(
+			self::OAS_URL,
+			array(
+				'headers' => array(
+					'Accept'           => 'application/json',
+					'Host'             => 'developers.brevo.com',
+					'Referer'          => 'https://developers.brevo.com/reference/get_companies',
+					'Alt-Used'         => 'developers.brevo.com',
+					'User-Agent'       => 'Mozilla/5.0 (X11; Linux x86_64; rv:144.0) Gecko/20100101 Firefox/144.0',
+					'X-Requested-With' => 'XMLHttpRequest',
+				),
+				'cookies' => array(
+					'anonymous_id'    => $uuid,
+					'first_referrer'  => 'https://app.brevo.com/',
+					'pscd'            => 'get.brevo.com',
+					'readme_language' => 'shell',
+					'readme_library'  => '{%22shell%22:%22curl%22}',
+				),
+			)
+		);
+
+		if ( is_wp_error( $response ) ) {
+			return array();
+		}
+
+		$data = json_decode( $response['body'], true );
+		if ( ! $data ) {
+			return array();
+		}
+
+		$oa_explorer = new OpenAPI( $data['oasDefinition'] );
+
+		$method = strtolower( $method ?? 'post' );
+		$path   = preg_replace( '/^\/v\d+/', '', $endpoint );
+		$source = in_array( $method, array( 'post', 'put', 'patch' ), true ) ? 'body' : 'query';
+		$params = $oa_explorer->params( $path, $method, $source );
+
+		return $params ?: array();
 	}
 }
 
