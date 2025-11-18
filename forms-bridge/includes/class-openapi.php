@@ -106,7 +106,7 @@ class OpenAPI {
 					$regexp = str_replace( $match, '[^\/]+', $regexp );
 				}
 
-				if ( preg_match( '$' . $regexp . '$', $path ) ) {
+				if ( preg_match( '#^' . $regexp . '$#', $path ) ) {
 					return $obj;
 				}
 			} elseif ( $path === $name ) {
@@ -161,7 +161,7 @@ class OpenAPI {
 			$parameters = array();
 		}
 
-		foreach ( $parameters as $param ) {
+		foreach ( $parameters as &$param ) {
 			$param['in'] = 'path';
 		}
 
@@ -174,6 +174,24 @@ class OpenAPI {
 			$parameters,
 			$method_obj['parameters'] ?? array()
 		);
+
+		$c = count( $parameters );
+		for ( $i = 0; $i < $c; $i++ ) {
+			$param = &$parameters[ $i ];
+			if ( 'body' === $param['in'] && isset( $param['schema'] ) && 'object' === $param['schema']['type'] ) {
+				array_splice( $parameters, $i, 1 );
+
+				foreach ( $param['schema']['properties'] as $prop => $prop_schema ) {
+					$parameters[] = array_merge(
+						$prop_schema,
+						array(
+							'name' => $prop,
+							'in'   => 'body',
+						),
+					);
+				}
+			}
+		}
 
 		$body = $method_obj['requestBody'] ?? null;
 		if ( $body ) {
@@ -200,6 +218,11 @@ class OpenAPI {
 		$l = count( $parameters );
 		for ( $i = 0; $i < $l; $i++ ) {
 			$param = &$parameters[ $i ];
+
+			if ( isset( $param['type'] ) && ! isset( $param['schema'] ) ) {
+				$param['schema'] = array( 'type' => $param['type'] );
+				unset( $param['type'] );
+			}
 
 			if ( isset( $param['$ref'] ) ) {
 				$parameters[ $i ] = $this->get_ref( $param['$ref'] );
@@ -270,6 +293,8 @@ class OpenAPI {
 		$url = wp_parse_url( $path );
 		if ( empty( $url['path'] ) ) {
 			return '/';
+		} else {
+			$path = $url['path'];
 		}
 
 		$path = strpos( $path, '/' ) !== 0 ? '/' . $path : $path;
