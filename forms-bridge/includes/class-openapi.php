@@ -195,7 +195,7 @@ class OpenAPI {
 
 		$body = $method_obj['requestBody'] ?? null;
 		if ( $body ) {
-			$parameters = array_merge( $parameters, self::body_to_params( $body ) );
+			$parameters = array_merge( $parameters, $this->body_to_params( $body ) );
 		}
 
 		if ( $source ) {
@@ -263,10 +263,14 @@ class OpenAPI {
 	 *
 	 * @return array
 	 */
-	private static function body_to_params( $body ) {
+	private function body_to_params( $body ) {
 		$parameters = array();
 
 		foreach ( $body['content'] as $encoding => $obj ) {
+			if ( isset( $obj['schema']['$ref'] ) ) {
+				$obj['schema'] = $this->get_ref( $obj['schema']['$ref'] );
+			}
+
 			foreach ( $obj['schema']['properties'] as $name => $defn ) {
 				$parameters[] = array_merge(
 					array(
