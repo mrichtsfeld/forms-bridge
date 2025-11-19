@@ -1,6 +1,6 @@
 <?php
 /**
- * Class Finan_Coop_Addon
+ * Class Financoop_Addon
  *
  * @package formsbridge
  */
@@ -18,7 +18,7 @@ require_once 'shortcodes.php';
 /**
  * FinanCoop Addon class.
  */
-class Finan_Coop_Addon extends Addon {
+class Financoop_Addon extends Addon {
 
 	/**
 	 * Handles the addon's title.
@@ -39,7 +39,7 @@ class Finan_Coop_Addon extends Addon {
 	 *
 	 * @var string
 	 */
-	const BRIDGE = '\FORMS_BRIDGE\Finan_Coop_Form_Bridge';
+	const BRIDGE = '\FORMS_BRIDGE\Financoop_Form_Bridge';
 
 	/**
 	 * Performs a request against the backend to check the connexion status.
@@ -49,7 +49,7 @@ class Finan_Coop_Addon extends Addon {
 	 * @return boolean
 	 */
 	public function ping( $backend ) {
-		$bridge = new Finan_Coop_Form_Bridge(
+		$bridge = new Financoop_Form_Bridge(
 			array(
 				'name'     => '__financoop-' . time(),
 				'endpoint' => '/api/campaign',
@@ -78,7 +78,7 @@ class Finan_Coop_Addon extends Addon {
 	 * @return array|WP_Error
 	 */
 	public function fetch( $endpoint, $backend ) {
-		$bridge = new Finan_Coop_Form_Bridge(
+		$bridge = new Financoop_Form_Bridge(
 			array(
 				'name'     => '__financoop-' . time(),
 				'endpoint' => $endpoint,
@@ -105,7 +105,7 @@ class Finan_Coop_Addon extends Addon {
 			return array();
 		}
 
-		$bridge = new Finan_Coop_Form_Bridge(
+		$bridge = new Financoop_Form_Bridge(
 			array(
 				'name'     => '__financoop-' . time(),
 				'endpoint' => $endpoint,
@@ -212,4 +212,4 @@ class Finan_Coop_Addon extends Addon {
 	}
 }
 
-Finan_Coop_Addon::setup();
+Financoop_Addon::setup();

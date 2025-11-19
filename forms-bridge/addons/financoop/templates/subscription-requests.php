@@ -1,4 +1,9 @@
 <?php
+/**
+ * FinanCoop subscription request bridge template.
+ *
+ * @package formsbridge
+ */
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit();

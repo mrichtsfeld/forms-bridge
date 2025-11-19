@@ -1,4 +1,9 @@
 <?php
+/**
+ * Google Sheets WooCommerce orders bridge template
+ *
+ * @package formsbridge
+ */
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit();

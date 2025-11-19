@@ -1,4 +1,9 @@
 <?php
+/**
+ * FinanCoop donation request bridge template.
+ *
+ * @package formsbridge
+ */
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit();

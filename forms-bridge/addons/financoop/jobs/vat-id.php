@@ -1,9 +1,21 @@
 <?php
+/**
+ * FinanCoop Vat ID job.
+ *
+ * @package formsbridge
+ */
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit();
 }
 
+/**
+ * Checks the validity and format of the payload vat field value.
+ *
+ * @param array $payload Bridge payload.
+ *
+ * @return array|WP_Error
+ */
 function forms_bridge_financoop_vat_id( $payload ) {
 	global $forms_bridge_iso2_countries;
 
@@ -18,7 +30,7 @@ function forms_bridge_financoop_vat_id( $payload ) {
 	} else {
 		$locale = get_locale();
 
-		if ( $locale === 'ca' ) {
+		if ( 'ca' === $locale ) {
 			$locale = 'es';
 		}
 

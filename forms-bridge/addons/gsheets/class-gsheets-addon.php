@@ -1,6 +1,6 @@
 <?php
 /**
- * Class Google_Sheets_Addon
+ * Class GSheets_Addon
  *
  * @package formsbridge
  */
@@ -20,7 +20,7 @@ require_once 'hooks.php';
 /**
  * Google Sheets addon class.
  */
-class Google_Sheets_Addon extends Addon {
+class GSheets_Addon extends Addon {
 
 	/**
 	 * Handles the addon's title.
@@ -41,7 +41,7 @@ class Google_Sheets_Addon extends Addon {
 	 *
 	 * @var string
 	 */
-	const BRIDGE = '\FORMS_BRIDGE\Google_Sheets_Form_Bridge';
+	const BRIDGE = '\FORMS_BRIDGE\GSheets_Form_Bridge';
 
 	/**
 	 * Addon loader. Set up hooks to skip payload prunes if it comes from a
@@ -72,7 +72,7 @@ class Google_Sheets_Addon extends Addon {
 	 * @return boolean
 	 */
 	public function ping( $backend ) {
-		$bridge = new Google_Sheets_Form_Bridge(
+		$bridge = new GSheets_Form_Bridge(
 			array(
 				'name'     => '__gsheets-' . time(),
 				'backend'  => $backend,
@@ -167,6 +167,7 @@ class Google_Sheets_Addon extends Addon {
 			return array();
 		}
 
+		$bridge  = null;
 		$bridges = FBAPI::get_addon_bridges( self::NAME );
 		foreach ( $bridges as $candidate ) {
 			$data = $candidate->data();
@@ -178,6 +179,11 @@ class Google_Sheets_Addon extends Addon {
 				$data['endpoint'] === $endpoint &&
 				$data['backend'] === $backend
 			) {
+				/**
+				 * Current bridge.
+				 *
+				 * @var GSheets_Form_Bridge
+				 */
 				$bridge = $candidate;
 			}
 		}
@@ -204,4 +210,4 @@ class Google_Sheets_Addon extends Addon {
 	}
 }
 
-Google_Sheets_Addon::setup();
+GSheets_Addon::setup();

@@ -1,4 +1,9 @@
 <?php
+/**
+ * FinanCoop loan request bridge template.
+ *
+ * @package formsbridge
+ */
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit();

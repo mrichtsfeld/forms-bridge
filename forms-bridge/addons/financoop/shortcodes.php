@@ -51,7 +51,7 @@ add_shortcode(
 		$atts['currency'] = $atts['currency'] ?? '€';
 
 		try {
-			$bridge = new Finan_Coop_Form_Bridge(
+			$bridge = new Financoop_Form_Bridge(
 				array(
 					'name'     => '__financoop-' . time(),
 					'endpoint' => "/api/campaign/{$atts['id']}",

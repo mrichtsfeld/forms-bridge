@@ -1,4 +1,9 @@
 <?php
+/**
+ * FinanCoop addon hooks.
+ *
+ * @package formsbridge
+ */
 
 use HTTP_BRIDGE\Credential;
 use HTTP_BRIDGE\Backend;
@@ -10,7 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 add_filter(
 	'forms_bridge_bridge_schema',
 	function ( $schema, $addon ) {
-		if ( $addon !== 'financoop' ) {
+		if ( 'financoop' !== $addon ) {
 			return $schema;
 		}
 
@@ -24,7 +29,7 @@ add_filter(
 add_filter(
 	'forms_bridge_template_defaults',
 	function ( $defaults, $addon, $schema ) {
-		if ( $addon !== 'financoop' ) {
+		if ( 'financoop' !== $addon ) {
 			return $defaults;
 		}
 
@@ -121,16 +126,17 @@ add_filter(
 add_filter(
 	'forms_bridge_template_data',
 	function ( $data, $template_id ) {
-		if ( strpos( $template_id, 'financoop-' ) !== 0 ) {
+		if ( 0 !== strpos( $template_id, 'financoop-' ) ) {
 			return $data;
 		}
 
 		$index = array_search(
 			'campaign_id',
-			array_column( $data['bridge']['custom_fields'], 'name' )
+			array_column( $data['bridge']['custom_fields'], 'name' ),
+			true
 		);
 
-		if ( $index !== false ) {
+		if ( false !== $index ) {
 			$campaign_id = $data['bridge']['custom_fields'][ $index ]['value'];
 
 			$data['bridge']['endpoint'] = preg_replace(
@@ -144,7 +150,7 @@ add_filter(
 			return new WP_Error(
 				'invalid_fields',
 				__(
-					'Financoop template requireds the field $campaign_id',
+					'FinanCoop template requireds the field $campaign_id',
 					'forms-bridge'
 				),
 				array( 'status' => 400 )
@@ -153,7 +159,7 @@ add_filter(
 
 		$endpoint = implode(
 			'/',
-			array_slice( explode( '/', $data['bridge']['endpoint'] ), 0, 4 )
+			array_slice( explode( '/', $data['bridge']['endpoint'] ), 0, 4 ),
 		);
 
 		$data['backend']['credential'] = $data['credential']['name'];
@@ -179,8 +185,8 @@ add_filter(
 		$campaign    = $response['data'];
 		$field_names = array_column( $data['form']['fields'], 'name' );
 
-		$index = array_search( 'donation_amount', $field_names );
-		if ( $index !== false ) {
+		$index = array_search( 'donation_amount', $field_names, true );
+		if ( false !== $index ) {
 			$field = &$data['form']['fields'][ $index ];
 
 			$min = $campaign['minimal_donation_amount'];
@@ -190,8 +196,8 @@ add_filter(
 			}
 		}
 
-		$index = array_search( 'loan_amount', $field_names );
-		if ( $index !== false ) {
+		$index = array_search( 'loan_amount', $field_names, true );
+		if ( false !== $index ) {
 			$field = &$data['form']['fields'][ $index ];
 
 			$min = $campaign['minimal_loan_amount'];
@@ -206,8 +212,8 @@ add_filter(
 			}
 		}
 
-		$index = array_search( 'ordered_parts', $field_names );
-		if ( $index !== false ) {
+		$index = array_search( 'ordered_parts', $field_names, true );
+		if ( false !== $index ) {
 			$field = &$data['form']['fields'][ $index ];
 
 			$min = $campaign['minimal_subscription_amount'];

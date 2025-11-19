@@ -1,6 +1,6 @@
 <?php
 /**
- * Class Google_Sheets_Form_Bridge
+ * Class GSheets_Form_Bridge
  *
  * @package formsbridge
  */
@@ -16,7 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Form bridge implementation for the Google Sheets service.
  */
-class Google_Sheets_Form_Bridge extends Form_Bridge {
+class GSheets_Form_Bridge extends Form_Bridge {
 
 	/**
 	 * Bridge constructor with addon name provisioning.
