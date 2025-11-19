@@ -4,7 +4,7 @@ Tags: odoo, dolibarr, listmonk, forms, woocommerce
 Donate link: https://buymeacoffee.com/codeccoop
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
-Stable Tag: 4.1.2
+Stable Tag: 4.2.0
 Tested up to: 6.8
 
 Bridge your WordPress forms without code, add custom fields, use field mappers, set up a workflow and make your data flow seamlessly to your backend.
@@ -97,6 +97,13 @@ Browse the plugin's documentation on [formsbridge.codeccoop.org](https://formsbr
 9. Debug console
 
 == Changelog ==
+
+= 4.2.0 =
+* feat: zulip addon
+* feat: slack addon
+* feat: openapi explorer
+* feat: use openapi explorer on api introspection
+* feat: pretty json cast
 
 = 4.1.2 =
 * feat: increase logs coverage
