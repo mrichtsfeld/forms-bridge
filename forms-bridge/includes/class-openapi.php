@@ -288,6 +288,12 @@ class OpenAPI {
 				$obj['schema'] = array_merge( $obj['schema'], $this->get_ref( $obj['schema']['$ref'] ) );
 			}
 
+			if ( isset( $obj['schema']['oneOf'] ) ) {
+				$obj['schema'] = $obj['schema']['oneOf'][0];
+			} elseif ( isset( $obj['schema']['anyOf'] ) ) {
+				$obj['schema'] = $obj['schema']['anyOf'][0];
+			}
+
 			foreach ( $obj['schema']['properties'] as $name => $defn ) {
 				$parameters[] = array_merge(
 					array(

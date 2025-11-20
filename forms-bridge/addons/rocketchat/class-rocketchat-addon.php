@@ -7,6 +7,8 @@
 
 namespace FORMS_BRIDGE;
 
+use Exception;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit();
 }
@@ -38,6 +40,13 @@ class Rocketchat_Addon extends Addon {
 	 * @var string
 	 */
 	public const BRIDGE = '\FORMS_BRIDGE\Rocketchat_Form_Bridge';
+
+	/**
+	 * Holds the OpenAPI Specification URL.
+	 *
+	 * @var string
+	 */
+	public const OAS_URL = 'https://raw.githubusercontent.com/RocketChat/Rocket.Chat-Open-API/refs/heads/main/messaging.yaml';
 
 	/**
 	 * Performs a request against the backend to check the connexion status.
@@ -77,7 +86,76 @@ class Rocketchat_Addon extends Addon {
 	 * @return array List of fields and content type of the endpoint.
 	 */
 	public function get_endpoint_schema( $endpoint, $backend, $method = null ) {
-		return array();
+		if ( function_exists( 'yaml_parse' ) ) {
+			$response = wp_remote_get( self::OAS_URL );
+
+			if ( ! is_wp_error( $response ) ) {
+				$data = yaml_parse( $response['body'] );
+
+				if ( $data ) {
+					// phpcs:disable Generic.CodeAnalysis.EmptyStatement
+					try {
+						$oa_explorer = new OpenAPI( $data );
+
+						$method = strtolower( $method ?? 'post' );
+						$source = in_array( $method, array( 'post', 'put', 'patch' ), true ) ? 'body' : 'query';
+						$params = $oa_explorer->params( $endpoint, $method, $source );
+
+						return $params ?: array();
+					} catch ( Exception ) {
+						// do nothing.
+					}
+					// phpcs:enable Generic.CodeAnalysis.EmptyStatement
+				}
+			}
+		}
+
+		if ( '/api/v1/chat.postMessage' !== $endpoint ) {
+			return array();
+		}
+
+		return array(
+			array(
+				'name'   => 'alias',
+				'schema' => array( 'type' => 'string' ),
+			),
+			array(
+				'name'   => 'avatar',
+				'schema' => array( 'type' => 'string' ),
+			),
+			array(
+				'name'   => 'emoji',
+				'schema' => array( 'type' => 'string' ),
+			),
+			array(
+				'name'   => 'roomId',
+				'schema' => array( 'type' => 'string' ),
+			),
+			array(
+				'name'   => 'text',
+				'schema' => array( 'type' => 'string' ),
+			),
+			array(
+				'name'   => 'parseUrls',
+				'schema' => array( 'type' => 'boolean' ),
+			),
+			array(
+				'name'   => 'attachments',
+				'items'  => array(
+					'type'       => 'object',
+					'properties' => array(),
+				),
+				'schema' => array( 'type' => 'array' ),
+			),
+			array(
+				'name'   => 'tmid',
+				'schema' => array( 'type' => 'string' ),
+			),
+			array(
+				'name'   => 'customFields',
+				'schema' => array( 'type' => 'object' ),
+			),
+		);
 	}
 }
 
