@@ -67,6 +67,7 @@ return array(
 	),
 	'bridge'      => array(
 		'endpoint'      => '/api/v1/messages',
+		'workflow'      => array( 'summary' ),
 		'custom_fields' => array(
 			array(
 				'name'  => 'type',
@@ -99,11 +100,6 @@ return array(
 					'from' => '?comments',
 					'to'   => 'content.comments',
 					'cast' => 'string',
-				),
-				array(
-					'from' => 'content',
-					'to'   => 'content',
-					'cast' => 'pretty_json',
 				),
 			),
 		),
