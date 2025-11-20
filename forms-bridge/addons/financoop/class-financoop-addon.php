@@ -70,27 +70,6 @@ class Financoop_Addon extends Addon {
 	}
 
 	/**
-	 * Performs a GET request against the backend endpoint and retrive the response data.
-	 *
-	 * @param string $endpoint API endpoint.
-	 * @param string $backend Backend name.
-	 *
-	 * @return array|WP_Error
-	 */
-	public function fetch( $endpoint, $backend ) {
-		$bridge = new Financoop_Form_Bridge(
-			array(
-				'name'     => '__financoop-' . time(),
-				'endpoint' => $endpoint,
-				'backend'  => $backend,
-				'method'   => 'GET',
-			)
-		);
-
-		return $bridge->submit();
-	}
-
-	/**
 	 * Performs an introspection of the backend endpoint and returns API fields
 	 * and accepted content type.
 	 *

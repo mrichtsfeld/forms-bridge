@@ -10,20 +10,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 add_filter(
-	'forms_bridge_bridge_schema',
-	function ( $schema, $addon ) {
-		if ( 'dolibarr' !== $addon ) {
-			return $schema;
-		}
-
-		unset( $schema['properties']['credential'] );
-		return $schema;
-	},
-	10,
-	2
-);
-
-add_filter(
 	'forms_bridge_template_defaults',
 	function ( $defaults, $addon, $schema ) {
 		if ( 'dolibarr' !== $addon ) {

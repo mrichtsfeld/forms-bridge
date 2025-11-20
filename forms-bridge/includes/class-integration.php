@@ -70,12 +70,6 @@ class Integration extends Singleton {
 			case 'woo':
 				$dep = 'woocommerce/woocommerce.php';
 				break;
-			// case 'formidable':
-			// $plugin = 'formidable/formidable.php';
-			// break;
-			// case 'forminator':
-			// $plugin = 'forminator/forminator.php';
-			// break;
 			default:
 				return false;
 		}
@@ -109,8 +103,7 @@ class Integration extends Singleton {
 			$index = "{$integration_dir}/class-{$integration}-integration.php";
 
 			if ( is_file( $index ) && is_readable( $index ) ) {
-				$registry[ $integration ] =
-					boolval( $state[ $integration ] ?? false ) && $has_deps;
+				$registry[ $integration ] = boolval( $state[ $integration ] ?? false ) && $has_deps;
 			}
 		}
 
@@ -207,10 +200,8 @@ class Integration extends Singleton {
 							$integrations[0]['enabled'] = true;
 						}
 
-						$integrations = apply_filters(
-							'forms_bridge_integrations',
-							$integrations
-						);
+						$integrations = apply_filters( 'forms_bridge_integrations', $integrations );
+
 						return array_merge( $data, array( 'integrations' => $integrations ) );
 					}
 				);
@@ -251,8 +242,7 @@ class Integration extends Singleton {
 					}
 				}
 
-				$woomode =
-					1 === count( $integrations ) && 'woo' === $integrations[0];
+				$woomode = 1 === count( $integrations ) && 'woo' === $integrations[0];
 
 				$filtered_templates = array();
 				foreach ( $templates as $template ) {
@@ -262,14 +252,7 @@ class Integration extends Singleton {
 						}
 
 						$filtered_templates[] = $template;
-					} elseif (
-						count(
-							array_intersect(
-								$integrations,
-								$template['integrations']
-							)
-						)
-					) {
+					} elseif ( count( array_intersect( $integrations, $template['integrations'] ) ) ) {
 						$filtered_templates[] = $template;
 					}
 				}

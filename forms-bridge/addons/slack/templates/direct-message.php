@@ -22,17 +22,18 @@ return array(
 			'value' => '/api/chat.postMessage',
 		),
 		array(
-			'ref'     => '#bridge/custom_fields[]',
-			'name'    => 'channel',
-			'label'   => __( 'User', 'forms-bridge' ),
-			'type'    => 'select',
-			'options' => array(
+			'ref'      => '#bridge/custom_fields[]',
+			'name'     => 'channel',
+			'label'    => __( 'User', 'forms-bridge' ),
+			'type'     => 'select',
+			'options'  => array(
 				'endpoint' => '/api/users.list',
 				'finger'   => array(
 					'value' => 'members[].id',
 					'label' => 'members[].name',
 				),
 			),
+			'required' => true,
 		),
 		array(
 			'ref'     => '#form',

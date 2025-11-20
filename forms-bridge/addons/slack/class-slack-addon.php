@@ -68,25 +68,16 @@ class Slack_Addon extends Addon {
 	}
 
 	/**
-	 * Performs a GET request against the backend endpoint and retrive the response data.
+	 * Performs an introspection of the backend endpoint and returns API fields.
 	 *
-	 * @param string $endpoint API endpoint.
-	 * @param string $backend Backend name.
+	 * @param string      $endpoint API endpoint.
+	 * @param string      $backend Backend name.
+	 * @param string|null $method HTTP method.
 	 *
-	 * @return array|WP_Error
+	 * @return array List of fields and content type of the endpoint.
 	 */
-	public function fetch( $endpoint, $backend ) {
-		$bridge = new Slack_Form_Bridge(
-			array(
-				'name'     => '__slack-' . time(),
-				'endpoint' => $endpoint,
-				'method'   => 'GET',
-				'backend'  => $backend,
-			),
-			'zulip'
-		);
-
-		return $bridge->submit();
+	public function get_endpoint_schema( $endpoint, $backend, $method = null ) {
+		return array();
 	}
 }
 

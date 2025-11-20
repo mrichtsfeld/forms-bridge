@@ -22,23 +22,6 @@ return array(
 			'value' => '/api/v1/messages',
 		),
 		array(
-			'ref'         => '#bridge/custom_fields[]',
-			'name'        => 'to[0]',
-			'label'       => __( 'Stream', 'forms-bridge' ),
-			'description' => __(
-				'Name of the stream (channel) where notifications will be sent',
-				'forms-bridge'
-			),
-			'type'        => 'select',
-			'options'     => array(
-				'endpoint' => '/api/v1/streams',
-				'finger'   => array(
-					'value' => 'streams[].stream_id',
-					'label' => 'streams[].name',
-				),
-			),
-		),
-		array(
 			'ref'     => '#form',
 			'name'    => 'title',
 			'default' => __( 'Support', 'forms-bridge' ),
@@ -65,11 +48,11 @@ return array(
 				'type'     => 'select',
 				'options'  => array(
 					array(
-						'value' => 'A',
+						'value' => 'Option 1',
 						'label' => 'Option 1',
 					),
 					array(
-						'value' => 'B',
+						'value' => 'Option 2',
 						'label' => 'Option 2',
 					),
 				),

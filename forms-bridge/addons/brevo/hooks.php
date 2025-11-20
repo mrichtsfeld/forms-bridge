@@ -7,7 +7,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 add_filter(
 	'forms_bridge_bridge_schema',
 	function ( $schema, $addon ) {
-		if ( $addon !== 'brevo' ) {
+		if ( 'brevo' !== $addon ) {
 			return $schema;
 		}
 
@@ -21,7 +21,7 @@ add_filter(
 add_filter(
 	'forms_bridge_template_defaults',
 	function ( $defaults, $addon, $schema ) {
-		if ( $addon !== 'brevo' ) {
+		if ( 'brevo' !== $addon ) {
 			return $defaults;
 		}
 

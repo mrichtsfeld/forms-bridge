@@ -567,22 +567,18 @@ class Addon extends Singleton {
 	 * @return array|WP_Error
 	 */
 	public function fetch( $endpoint, $backend ) {
-		return array(
-			'headers'       => array(),
-			'cookies'       => array(),
-			'filename'      => null,
-			'body'          => '',
-			'response'      => array(
-				'status'  => 202,
-				'message' => 'Accepted',
-			),
-			'http_response' => array(
-				'data'    => null,
-				'headers' => null,
-				'status'  => null,
-			),
-			'data'          => array(),
+		$bridge_class = static::BRIDGE;
+
+		$bridge = new $bridge_class(
+			array(
+				'name'     => '__' . self::NAME . '-' . time(),
+				'endpoint' => $endpoint,
+				'method'   => 'GET',
+				'backend'  => $backend,
+			)
 		);
+
+		return $bridge->submit();
 	}
 
 	/**

@@ -98,28 +98,6 @@ class Zoho_Addon extends Addon {
 	}
 
 	/**
-	 * Performs a GET request against the backend endpoint and retrive the response data.
-	 *
-	 * @param string $endpoint API endpoint.
-	 * @param string $backend Backend name.
-	 *
-	 * @return array|WP_Error
-	 */
-	public function fetch( $endpoint, $backend ) {
-		$bridge_class = static::BRIDGE;
-		$bridge       = new $bridge_class(
-			array(
-				'name'     => '__zoho-' . time(),
-				'backend'  => $backend,
-				'endpoint' => $endpoint,
-				'method'   => 'GET',
-			)
-		);
-
-		return $bridge->submit();
-	}
-
-	/**
 	 * Performs an introspection of the backend endpoint and returns API fields.
 	 *
 	 * @param string      $endpoint API endpoint.

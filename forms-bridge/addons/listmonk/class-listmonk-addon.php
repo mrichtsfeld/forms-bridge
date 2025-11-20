@@ -76,27 +76,6 @@ class Listmonk_Addon extends Addon {
 	}
 
 	/**
-	 * Performs a GET request against the backend endpoint and retrive the response data.
-	 *
-	 * @param string $endpoint API endpoint.
-	 * @param string $backend Backend name.
-	 *
-	 * @return array|WP_Error
-	 */
-	public function fetch( $endpoint, $backend ) {
-		$bridge = new Listmonk_Form_Bridge(
-			array(
-				'name'     => '__listmonk-' . time(),
-				'method'   => 'GET',
-				'endpoint' => $endpoint,
-				'backend'  => $backend,
-			)
-		);
-
-		return $bridge->submit();
-	}
-
-	/**
 	 * Fetch available models from the OAS spec.
 	 *
 	 * @param Backend $backend HTTP backend object.

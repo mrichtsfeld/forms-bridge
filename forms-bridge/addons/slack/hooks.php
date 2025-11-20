@@ -81,6 +81,201 @@ add_filter(
 						'name'  => 'method',
 						'value' => 'POST',
 					),
+					array(
+						'ref'         => '#bridge/custom_fields[]',
+						'name'        => 'channel',
+						'label'       => __( 'Channel', 'forms-bridge' ),
+						'description' => __(
+							'Name of the channel where messages will be sent',
+							'forms-bridge'
+						),
+						'type'        => 'select',
+						'options'     => array(
+							'endpoint' => '/api/conversations.list',
+							'finger'   => array(
+								'value' => 'channels[].id',
+								'label' => 'channels[].name',
+							),
+						),
+						'required'    => true,
+					),
+					array(
+						'ref'         => '#bridge/custom_fields[]',
+						'name'        => 'icon_emoji',
+						'label'       => __( 'Emoji', 'forms-bridge' ),
+						'description' => __( 'Emoji to use as the icon for this message', 'forms-bridge' ),
+						'type'        => 'select',
+						'options'     => array(
+							array(
+								'value' => ':smile:',
+								'label' => '😄',
+							),
+							array(
+								'value' => ':grinning:',
+								'label' => '😀',
+							),
+							array(
+								'value' => ':laughing:',
+								'label' => '😂',
+							),
+							array(
+								'value' => ':wink:',
+								'label' => '😉',
+							),
+							array(
+								'value' => ':blush:',
+								'label' => '😊',
+							),
+							array(
+								'value' => ':heart_eyes:',
+								'label' => '😍',
+							),
+							array(
+								'value' => ':sunglasses:',
+								'label' => '😎',
+							),
+							array(
+								'value' => ':rocket:',
+								'label' => '🚀',
+							),
+							array(
+								'value' => ':alien:',
+								'label' => '👽',
+							),
+							array(
+								'value' => ':robot:',
+								'label' => '🤖',
+							),
+							array(
+								'value' => ':ghost:',
+								'label' => '👻',
+							),
+							array(
+								'value' => ':cat:',
+								'label' => '🐱',
+							),
+							array(
+								'value' => ':dog:',
+								'label' => '🐶',
+							),
+							array(
+								'value' => ':panda_face:',
+								'label' => '🐼',
+							),
+							array(
+								'value' => ':owl:',
+								'label' => '🦉',
+							),
+							array(
+								'value' => ':fox_face:',
+								'label' => '🦊',
+							),
+							array(
+								'value' => ':fire:',
+								'label' => '🔥',
+							),
+							array(
+								'value' => ':sparkles:',
+								'label' => '✨',
+							),
+							array(
+								'value' => ':star:',
+								'label' => '⭐',
+							),
+							array(
+								'value' => ':crescent_moon:',
+								'label' => '🌙',
+							),
+							array(
+								'value' => ':rainbow:',
+								'label' => '🌈',
+							),
+							array(
+								'value' => ':tada:',
+								'label' => '🎉',
+							),
+							array(
+								'value' => ':confetti_ball:',
+								'label' => '🎊',
+							),
+							array(
+								'value' => ':bulb:',
+								'label' => '💡',
+							),
+							array(
+								'value' => ':gift:',
+								'label' => '🎁',
+							),
+							array(
+								'value' => ':trophy:',
+								'label' => '🏆',
+							),
+							array(
+								'value' => ':microphone:',
+								'label' => '🎤',
+							),
+							array(
+								'value' => ':headphones:',
+								'label' => '🎧',
+							),
+							array(
+								'value' => ':camera:',
+								'label' => '📷',
+							),
+							array(
+								'value' => ':video_game:',
+								'label' => '🎮',
+							),
+							array(
+								'value' => ':book:',
+								'label' => '📖',
+							),
+							array(
+								'value' => ':coffee:',
+								'label' => '☕',
+							),
+							array(
+								'value' => ':pizza:',
+								'label' => '🍕',
+							),
+							array(
+								'value' => ':hamburger:',
+								'label' => '🍔',
+							),
+							array(
+								'value' => ':fries:',
+								'label' => '🍟',
+							),
+							array(
+								'value' => ':cookie:',
+								'label' => '🍪',
+							),
+							array(
+								'value' => ':cake:',
+								'label' => '🍰',
+							),
+							array(
+								'value' => ':icecream:',
+								'label' => '🍦',
+							),
+							array(
+								'value' => ':beer:',
+								'label' => '🍺',
+							),
+							array(
+								'value' => ':wine_glass:',
+								'label' => '🍷',
+							),
+							array(
+								'value' => ':earth_americas:',
+								'label' => '🌎',
+							),
+							array(
+								'value' => ':milky_way:',
+								'label' => '🌌',
+							),
+						),
+					),
 				),
 				'credential' => array(
 					'name'          => '',

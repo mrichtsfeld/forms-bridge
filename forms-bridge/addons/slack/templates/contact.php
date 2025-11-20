@@ -22,23 +22,6 @@ return array(
 			'value' => '/api/chat.postMessage',
 		),
 		array(
-			'ref'         => '#bridge/custom_fields[]',
-			'name'        => 'channel',
-			'label'       => __( 'Channel', 'forms-bridge' ),
-			'description' => __(
-				'Name of the channel where notifications will be sent',
-				'forms-bridge'
-			),
-			'type'        => 'select',
-			'options'     => array(
-				'endpoint' => '/api/conversations.list',
-				'finger'   => array(
-					'value' => 'channels[].id',
-					'label' => 'channels[].name',
-				),
-			),
-		),
-		array(
 			'ref'     => '#form',
 			'name'    => 'title',
 			'default' => __( 'Contacts', 'forms-bridge' ),

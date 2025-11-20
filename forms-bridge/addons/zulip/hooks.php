@@ -78,6 +78,24 @@ add_filter(
 						'name'  => 'method',
 						'value' => 'POST',
 					),
+					array(
+						'ref'         => '#bridge/custom_fields[]',
+						'name'        => 'to[0]',
+						'label'       => __( 'Stream', 'forms-bridge' ),
+						'description' => __(
+							'Name of the stream (channel) where messages will be sent',
+							'forms-bridge'
+						),
+						'type'        => 'select',
+						'options'     => array(
+							'endpoint' => '/api/v1/streams',
+							'finger'   => array(
+								'value' => 'streams[].stream_id',
+								'label' => 'streams[].name',
+							),
+						),
+						'required'    => true,
+					),
 				),
 				'bridge'     => array(
 					'backend'  => '',

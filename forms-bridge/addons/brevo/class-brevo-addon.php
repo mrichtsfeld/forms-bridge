@@ -77,27 +77,6 @@ class Brevo_Addon extends Addon {
 	}
 
 	/**
-	 * Performs a GET request against the backend endpoint and retrive the response data.
-	 *
-	 * @param string $endpoint API endpoint.
-	 * @param string $backend Backend name.
-	 *
-	 * @return array|WP_Error
-	 */
-	public function fetch( $endpoint, $backend ) {
-		$bridge = new Brevo_Form_Bridge(
-			array(
-				'name'     => '__brevo-' . time(),
-				'endpoint' => $endpoint,
-				'backend'  => $backend,
-				'method'   => 'GET',
-			)
-		);
-
-		return $bridge->submit();
-	}
-
-	/**
 	 * Fetch available models from the OAS spec.
 	 *
 	 * @param Backend $backend HTTP backend object.

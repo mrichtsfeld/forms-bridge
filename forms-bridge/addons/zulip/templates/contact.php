@@ -23,23 +23,6 @@ return array(
 		),
 		array(
 			'ref'         => '#bridge/custom_fields[]',
-			'name'        => 'to[0]',
-			'label'       => __( 'Stream', 'forms-bridge' ),
-			'description' => __(
-				'Name of the stream (channel) where notifications will be sent',
-				'forms-bridge'
-			),
-			'type'        => 'select',
-			'options'     => array(
-				'endpoint' => '/api/v1/streams',
-				'finger'   => array(
-					'value' => 'streams[].stream_id',
-					'label' => 'streams[].name',
-				),
-			),
-		),
-		array(
-			'ref'         => '#bridge/custom_fields[]',
 			'name'        => 'topic',
 			'label'       => __( 'Topic', 'forms-bridge' ),
 			'description' => __( 'Topic under which the messages will be notified', 'forms-bridge' ),

@@ -1,4 +1,9 @@
 <?php
+/**
+ * Brevo contacts with double opt in bridge template
+ *
+ * @package formsbridge
+ */
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit();
