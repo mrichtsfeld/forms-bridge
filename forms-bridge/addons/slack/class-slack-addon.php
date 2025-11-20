@@ -7,6 +7,8 @@
 
 namespace FORMS_BRIDGE;
 
+use Exception;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit();
 }
@@ -38,6 +40,13 @@ class Slack_Addon extends Addon {
 	 * @var string
 	 */
 	public const BRIDGE = '\FORMS_BRIDGE\Slack_Form_Bridge';
+
+	/**
+	 * Holds the OpenAPI Specification URL.
+	 *
+	 * @var string
+	 */
+	public const OAS_URL = 'https://raw.githubusercontent.com/slackapi/slack-api-specs/refs/heads/master/web-api/slack_web_openapi_v2_without_examples.json';
 
 	/**
 	 * Performs a request against the backend to check the connexion status.
@@ -77,7 +86,96 @@ class Slack_Addon extends Addon {
 	 * @return array List of fields and content type of the endpoint.
 	 */
 	public function get_endpoint_schema( $endpoint, $backend, $method = null ) {
-		return array();
+		$response = wp_remote_get( self::OAS_URL );
+
+		if ( ! is_wp_error( $response ) ) {
+			$data = json_decode( $response['body'], true );
+
+			if ( $data ) {
+				// phpcs:disable Generic.CodeAnalysis.EmptyStatement
+				try {
+					$oas_explorer = new OpenAPI( $data );
+
+					$method = strtolower( $method ?? 'post' );
+					$path   = preg_replace( '/^\/api/', '', $endpoint );
+					$source = in_array( $method, array( 'post', 'put', 'patch' ), true ) ? 'body' : 'query';
+					$params = $oas_explorer->params( $path, $method, $source );
+
+					return $params ?: array();
+				} catch ( Exception ) {
+					// do nothin.
+				}
+				// phpcs:enable Generic.CodeAnalysis.EmptyStatement
+			}
+		}
+
+		if ( '/api/chat.postMessage' !== $endpoint ) {
+			return array();
+		}
+
+		return array(
+			array(
+				'name'   => 'as_user',
+				'schema' => array( 'type' => 'string' ),
+			),
+			array(
+				'name'   => 'attachments',
+				'schema' => array( 'type' => 'string' ),
+			),
+			array(
+				'name'   => 'blocks',
+				'schema' => array( 'type' => 'string' ),
+			),
+			array(
+				'name'     => 'channel',
+				'schema'   => array( 'type' => 'string' ),
+				'required' => true,
+			),
+			array(
+				'name'   => 'icon_emoji',
+				'schema' => array( 'type' => 'string' ),
+			),
+			array(
+				'name'   => 'icon_url',
+				'schema' => array( 'type' => 'string' ),
+			),
+			array(
+				'name'   => 'link_names',
+				'schema' => array( 'type' => 'boolean' ),
+			),
+			array(
+				'name'   => 'mrkdwn',
+				'schema' => array( 'type' => 'boolean' ),
+			),
+			array(
+				'name'   => 'parse',
+				'schema' => array( 'type' => 'string' ),
+			),
+			array(
+				'name'   => 'reply_broadcast',
+				'schema' => array( 'type' => 'boolean' ),
+			),
+			array(
+				'name'   => 'text',
+				'schema' => array( 'type' => 'string' ),
+			),
+			array(
+				'name'   => 'thread_ts',
+				'schema' => array( 'type' => 'string' ),
+			),
+			array(
+				'name'   => 'unfurl_links',
+				'schema' => array( 'type' => 'boolean' ),
+			),
+			array(
+				'name'   => 'unfurl_media',
+				'schema' => array( 'type' => 'boolean' ),
+			),
+			array(
+				'name'   => 'username',
+				'schema' => array( 'type' => 'string' ),
+			),
+		);
 	}
 }
 

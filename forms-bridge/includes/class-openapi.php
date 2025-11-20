@@ -178,6 +178,11 @@ class OpenAPI {
 		$c = count( $parameters );
 		for ( $i = 0; $i < $c; $i++ ) {
 			$param = &$parameters[ $i ];
+
+			if ( 'formData' === $param['in'] ) {
+				$param['in'] = 'body';
+			}
+
 			if ( 'body' === $param['in'] && isset( $param['schema'] ) ) {
 				if ( isset( $param['schema']['$ref'] ) ) {
 					$param['schema'] = array_merge( $param['schema'], $this->get_ref( $param['schema']['$ref'] ) );

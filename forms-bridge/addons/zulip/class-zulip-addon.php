@@ -96,6 +96,7 @@ class Zulip_Addon extends Addon {
 				$data = yaml_parse( $response['body'] );
 
 				if ( $data ) {
+					// phpcs:disable Generic.CodeAnalysis.EmptyStatement
 					try {
 						$oa_explorer = new OpenAPI( $data );
 
@@ -108,6 +109,7 @@ class Zulip_Addon extends Addon {
 					} catch ( Exception ) {
 						// do nothing.
 					}
+					// phpcs:enable Generic.CodeAnalysis.EmptyStatement
 				}
 			}
 		}
