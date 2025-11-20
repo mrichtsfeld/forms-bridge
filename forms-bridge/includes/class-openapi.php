@@ -179,7 +179,7 @@ class OpenAPI {
 		for ( $i = 0; $i < $c; $i++ ) {
 			$param = &$parameters[ $i ];
 
-			if ( 'formData' === $param['in'] ) {
+			if ( ! isset( $param['in'] ) || 'formData' === $param['in'] ) {
 				$param['in'] = 'body';
 			}
 
@@ -209,6 +209,29 @@ class OpenAPI {
 			$parameters = array_merge( $parameters, $this->body_to_params( $body ) );
 		}
 
+		$l = count( $parameters );
+		for ( $i = 0; $i < $l; $i++ ) {
+			$param = &$parameters[ $i ];
+
+			if ( isset( $param['$ref'] ) ) {
+				$parameters[ $i ] = array_merge( $param, $this->get_ref( $param['$ref'] ) );
+				$param            = &$parameters[ $i ];
+			} elseif ( isset( $param['schema']['$ref'] ) ) {
+				$param['schema'] = array_merge( $param['schema'], $this->get_ref( $param['schema']['$ref'] ) );
+			}
+
+			if ( isset( $param['anyOf'] ) ) {
+				$param['schema'] = $param['anyOf'][0];
+			} elseif ( isset( $param['oneOf'] ) ) {
+				$param['schema'] = $param['oneOf'][0];
+			}
+
+			if ( isset( $param['type'] ) && ! isset( $param['schema'] ) ) {
+				$param['schema'] = array( 'type' => $param['type'] );
+				unset( $param['type'] );
+			}
+		}
+
 		if ( $source ) {
 			$parameters = array_values(
 				array_filter(
@@ -224,28 +247,6 @@ class OpenAPI {
 					}
 				)
 			);
-		}
-
-		$l = count( $parameters );
-		for ( $i = 0; $i < $l; $i++ ) {
-			$param = &$parameters[ $i ];
-
-			if ( isset( $param['$ref'] ) ) {
-				$parameters[ $i ] = array_merge( $param, $this->get_ref( $param['$ref'] ) );
-			} elseif ( isset( $param['schema']['$ref'] ) ) {
-				$param['schema'] = array_merge( $param['schema'], $this->get_ref( $param['schema']['$ref'] ) );
-			}
-
-			if ( isset( $param['anyOf'] ) ) {
-				$param['schema'] = $param['anyOf'][0];
-			} elseif ( isset( $param['oneOf'] ) ) {
-				$param['schema'] = $param['oneOf'][0];
-			}
-
-			if ( isset( $param['type'] ) && ! isset( $param['schema'] ) ) {
-				$param['schema'] = array( 'type' => $param['type'] );
-				unset( $param['type'] );
-			}
 		}
 
 		return $parameters;
