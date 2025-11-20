@@ -1,4 +1,9 @@
 <?php
+/**
+ * Dolibarr company prospects bridge template
+ *
+ * @package formsbridge
+ */
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit();

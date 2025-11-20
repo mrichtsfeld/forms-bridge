@@ -1,4 +1,9 @@
 <?php
+/**
+ * Dolibarr WooCommerce validated orders bridge template
+ *
+ * @package formsbridge
+ */
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit();
