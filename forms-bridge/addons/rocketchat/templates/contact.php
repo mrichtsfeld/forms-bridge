@@ -69,27 +69,23 @@ return array(
 	),
 	'bridge'      => array(
 		'endpoint'  => '/api/v1/chat.postMessage',
+		'workflow'  => array( 'summary' ),
 		'mutations' => array(
 			array(
 				array(
 					'from' => 'your-name',
-					'to'   => 'text.name',
+					'to'   => 'fields.name',
 					'cast' => 'string',
 				),
 				array(
 					'from' => 'your-email',
-					'to'   => 'text.email',
+					'to'   => 'fields.email',
 					'cast' => 'string',
 				),
 				array(
 					'from' => '?comments',
-					'to'   => 'text.comments',
+					'to'   => 'fields.comments',
 					'cast' => 'string',
-				),
-				array(
-					'from' => 'text',
-					'to'   => 'text',
-					'cast' => 'pretty_json',
 				),
 			),
 		),
