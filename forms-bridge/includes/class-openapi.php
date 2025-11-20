@@ -180,7 +180,7 @@ class OpenAPI {
 			$param = &$parameters[ $i ];
 			if ( 'body' === $param['in'] && isset( $param['schema'] ) ) {
 				if ( isset( $param['schema']['$ref'] ) ) {
-					$param['schema'] = $this->get_ref( $param['schema']['$ref'] );
+					$param['schema'] = array_merge( $param['schema'], $this->get_ref( $param['schema']['$ref'] ) );
 				}
 
 				if ( isset( $param['schema']['properties'] ) && is_array( $param['schema']['properties'] ) ) {
@@ -225,15 +225,21 @@ class OpenAPI {
 		for ( $i = 0; $i < $l; $i++ ) {
 			$param = &$parameters[ $i ];
 
+			if ( isset( $param['$ref'] ) ) {
+				$parameters[ $i ] = array_merge( $param, $this->get_ref( $param['$ref'] ) );
+			} elseif ( isset( $param['schema']['$ref'] ) ) {
+				$param['schema'] = array_merge( $param['schema'], $this->get_ref( $param['schema']['$ref'] ) );
+			}
+
+			if ( isset( $param['anyOf'] ) ) {
+				$param['schema'] = $param['anyOf'][0];
+			} elseif ( isset( $param['oneOf'] ) ) {
+				$param['schema'] = $param['oneOf'][0];
+			}
+
 			if ( isset( $param['type'] ) && ! isset( $param['schema'] ) ) {
 				$param['schema'] = array( 'type' => $param['type'] );
 				unset( $param['type'] );
-			}
-
-			if ( isset( $param['$ref'] ) ) {
-				$parameters[ $i ] = $this->get_ref( $param['$ref'] );
-			} elseif ( isset( $param['schema']['$ref'] ) ) {
-				$param['schema'] = $this->get_ref( $param['schema']['$ref'] );
 			}
 		}
 
@@ -274,7 +280,7 @@ class OpenAPI {
 
 		foreach ( $body['content'] as $encoding => $obj ) {
 			if ( isset( $obj['schema']['$ref'] ) ) {
-				$obj['schema'] = $this->get_ref( $obj['schema']['$ref'] );
+				$obj['schema'] = array_merge( $obj['schema'], $this->get_ref( $obj['schema']['$ref'] ) );
 			}
 
 			foreach ( $obj['schema']['properties'] as $name => $defn ) {
