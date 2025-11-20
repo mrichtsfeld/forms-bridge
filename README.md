@@ -47,6 +47,7 @@ Forms Bridge has the following addons:
 - [Nextcloud](https://docs.nextcloud.com/server/20/user_manual/en/files/access_webdav.html)
 - [Mailchimp](https://mailchimp.com/developer/)
 - [Odoo](https://www.odoo.com/)
+- [Rocket.Chat](https://developer.rocket.chat/apidocs)
 - [Slack](https://docs.slack.dev/reference/)
 - [Zoho CRM](https://www.zoho.com/developer/rest-api.html)
 - [Zulip](https://zulip.com/api/rest)
