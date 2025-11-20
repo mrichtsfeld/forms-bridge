@@ -41,7 +41,7 @@ class Zulip_Form_Bridge extends Form_Bridge {
 				)
 			);
 
-			$annex = "\n**" . esc_html( __( 'Attachments', 'forms-bridge' ) ) . "**:\n";
+			$annex = "\n\n**" . esc_html( __( 'Attachments', 'forms-bridge' ) ) . "**:\n";
 
 			$attachments = Forms_Bridge::attachments( $uploads );
 

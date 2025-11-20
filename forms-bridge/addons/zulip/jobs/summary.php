@@ -1,17 +1,17 @@
 <?php
 /**
- * Zulip content summary job
+ * Zulip fields markdown summary job
  *
  * @package formsbridge
  */
 
 return array(
-	'title'       => __( 'Content Summary', 'forms-bridge' ),
-	'description' => __( 'Format the payload content field as a markdown list', 'forms-bridge' ),
+	'title'       => __( 'Fields summary', 'forms-bridge' ),
+	'description' => __( 'Format the payload fields field as a markdown list', 'forms-bridge' ),
 	'method'      => 'forms_bridge_zulip_payload_summary_md',
 	'input'       => array(
 		array(
-			'name'   => 'content',
+			'name'   => 'fields',
 			'schema' => array(
 				'type'                 => 'object',
 				'properties'           => array(),
@@ -35,7 +35,7 @@ return array(
  * @return array
  */
 function forms_bridge_zulip_payload_summary_md( $payload ) {
-	$payload['content'] = forms_bridge_zulip_content_md( $payload['content'] );
+	$payload['content'] = forms_bridge_zulip_content_md( $payload['fields'] );
 	return $payload;
 }
 

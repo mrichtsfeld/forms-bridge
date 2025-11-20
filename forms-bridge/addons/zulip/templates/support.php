@@ -88,17 +88,17 @@ return array(
 				),
 				array(
 					'from' => 'your-name',
-					'to'   => 'content.name',
+					'to'   => 'fields.name',
 					'cast' => 'string',
 				),
 				array(
 					'from' => 'your-email',
-					'to'   => 'content.email',
+					'to'   => 'fields.email',
 					'cast' => 'string',
 				),
 				array(
 					'from' => '?comments',
-					'to'   => 'content.comments',
+					'to'   => 'fields.comments',
 					'cast' => 'string',
 				),
 			),
