@@ -1,6 +1,6 @@
 <?php
 /**
- * Slack addon hooks.
+ * Rocket.Chat addon hooks
  *
  * @package formsbridge
  */
@@ -12,71 +12,43 @@ if ( ! defined( 'ABSPATH' ) ) {
 add_filter(
 	'forms_bridge_template_defaults',
 	function ( $defaults, $addon, $schema ) {
-		if ( 'slack' !== $addon ) {
+		if ( 'rocketchat' !== $addon ) {
 			return $defaults;
 		}
 
 		return wpct_plugin_merge_object(
 			array(
-				'fields'     => array(
-					array(
-						'ref'      => '#credential',
-						'name'     => 'name',
-						'label'    => __( 'Name', 'forms-bridge' ),
-						'type'     => 'text',
-						'required' => true,
-					),
-					array(
-						'ref'   => '#credential',
-						'name'  => 'schema',
-						'type'  => 'text',
-						'value' => 'Bearer',
-					),
-					array(
-						'ref'   => '#credential',
-						'name'  => 'oauth_url',
-						'label' => __( 'Authorization URL', 'forms-bridge' ),
-						'type'  => 'text',
-						'value' => 'https://slack.com/oauth/v2',
-					),
-					array(
-						'ref'         => '#credential',
-						'name'        => 'client_id',
-						'label'       => __( 'Client ID', 'forms-bridge' ),
-						'description' => __( 'Register Forms Bridge as an app on <a href="https://api.slack.com/apps">Slack API</a> and get its Client ID', 'forms-bridge' ),
-						'type'        => 'text',
-						'required'    => true,
-					),
-					array(
-						'ref'         => '#credential',
-						'name'        => 'client_secret',
-						'label'       => __( 'Client Secret', 'forms-bridge' ),
-						'description' => __( 'Register Forms Bridge as an app on <a href="https://api.slack.com/apps">Slack API</a> and get its Client Secret', 'forms-bridge' ),
-						'type'        => 'text',
-						'required'    => true,
-					),
-					array(
-						'ref'      => '#credential',
-						'name'     => 'scope',
-						'label'    => __( 'Scope', 'forms-bridge' ),
-						'type'     => 'text',
-						'value'    => 'chat:write,channels:read,users:read,files:write',
-						'required' => true,
-					),
+				'fields' => array(
 					array(
 						'ref'         => '#backend',
 						'name'        => 'name',
 						'description' => __(
-							'Label of the Slack API backend connection',
+							'Label of the Rocket.Chat API backend connection',
 							'forms-bridge'
 						),
-						'default'     => 'Slack API',
+						'default'     => 'Rocket.Chat API',
 					),
 					array(
-						'ref'   => '#backend',
-						'name'  => 'base_url',
-						'type'  => 'url',
-						'value' => 'https://slack.com',
+						'ref'         => '#backend/headers[]',
+						'name'        => 'X-Auth-Token',
+						'label'       => __( 'Personal Access Token', 'forms-bridge' ),
+						'description' => __(
+							'Use <a href="https://docs.rocket.chat/docs/manage-personal-access-tokens">Personal Access Tokens</a> to interact securely with the Rocket.Chat API',
+							'forms-bridge',
+						),
+						'type'        => 'text',
+						'required'    => true,
+					),
+					array(
+						'ref'         => '#backend/headers[]',
+						'name'        => 'X-User-Id',
+						'label'       => __( 'User Id', 'forms-bridge' ),
+						'description' => __(
+							'Displayed when the Personal Access Token is created',
+							'forms-bridge',
+						),
+						'type'        => 'text',
+						'required'    => true,
 					),
 					array(
 						'ref'   => '#bridge',
@@ -85,27 +57,9 @@ add_filter(
 					),
 					array(
 						'ref'         => '#bridge/custom_fields[]',
-						'name'        => 'channel',
-						'label'       => __( 'Channel', 'forms-bridge' ),
-						'description' => __(
-							'Name of the channel where messages will be sent',
-							'forms-bridge'
-						),
-						'type'        => 'select',
-						'options'     => array(
-							'endpoint' => '/api/conversations.list',
-							'finger'   => array(
-								'value' => 'channels[].id',
-								'label' => 'channels[].name',
-							),
-						),
-						'required'    => true,
-					),
-					array(
-						'ref'         => '#bridge/custom_fields[]',
-						'name'        => 'icon_emoji',
+						'name'        => 'emoji',
 						'label'       => __( 'Emoji', 'forms-bridge' ),
-						'description' => __( 'Emoji to use as the icon for this message', 'forms-bridge' ),
+						'description' => __( 'If provided, the avatar will be displayed as an emoji', 'forms-bridge' ),
 						'type'        => 'select',
 						'options'     => array(
 							array(
@@ -279,25 +233,8 @@ add_filter(
 						),
 					),
 				),
-				'credential' => array(
-					'name'          => '',
-					'schema'        => 'Bearer',
-					'oauth_url'     => 'https://slack.com/oauth/v2',
-					'scope'         => 'chat:write,channels:read,users:read',
-					'client_id'     => '',
-					'client_secret' => '',
-					'access_token'  => '',
-					'expires_at'    => 0,
-					'refresh_token' => '',
-				),
-				'backend'    => array(
-					'base_url' => 'https://slack.com',
-					'headers'  => array(
-						array(
-							'name'  => 'Accept',
-							'value' => 'application/json',
-						),
-					),
+				'bridge' => array(
+					'method' => 'POST',
 				),
 			),
 			$defaults,
@@ -309,36 +246,14 @@ add_filter(
 );
 
 add_filter(
-	'http_bridge_oauth_update_tokens',
-	function ( $tokens, $credential ) {
-		if ( false !== strstr( $credential->oauth_url, 'slack.com' ) ) {
-			$tokens['expires_at']               = time() + 60 * 60 * 24 * 365 * 10;
-			$tokens['refresh_token']            = $tokens['access_token'];
-			$tokens['refresh_token_expires_at'] = time() + 60 * 60 * 24 * 365 * 10;
+	'forms_bridge_bridge_schema',
+	function ( $schema, $addon ) {
+		if ( 'rocketchat' !== $addon ) {
+			return $schema;
 		}
 
-		return $tokens;
-	},
-	10,
-	2
-);
-
-add_filter(
-	'http_bridge_oauth_url',
-	function ( $url, $verb ) {
-		if ( false === strstr( $url, 'slack.com' ) ) {
-			return $url;
-		}
-
-		if ( 'auth' === $verb ) {
-			return $url .= 'orize';
-		}
-
-		if ( 'token/revoke' === $verb ) {
-			return 'https://slack.com/api/auth.revoke';
-		}
-
-		return 'https://slack.com/api/oauth.v2.access';
+		$schema['properties']['method']['enum'] = array( 'GET', 'POST' );
+		return $schema;
 	},
 	10,
 	2

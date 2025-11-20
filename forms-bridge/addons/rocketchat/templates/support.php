@@ -1,6 +1,6 @@
 <?php
 /**
- * Slack addon support channel bridge template
+ * Rocket.Chat addon support stream bridge template
  *
  * @package formsbridge
  */
@@ -12,14 +12,32 @@ if ( ! defined( 'ABSPATH' ) ) {
 return array(
 	'title'       => __( 'Support Channel', 'forms-bridge' ),
 	'description' => __(
-		'Support form template. The resulting bridge will notify form submissions in a Slack channel',
+		'Support form template. The resulting bridge will notify form submissions in a Rocket.Chat channel',
 		'forms-bridge'
 	),
 	'fields'      => array(
 		array(
 			'ref'   => '#bridge',
 			'name'  => 'endpoint',
-			'value' => '/api/chat.postMessage',
+			'value' => '/api/v1/chat.postMessage',
+		),
+		array(
+			'ref'         => '#bridge/custom_fields[]',
+			'name'        => 'roomId',
+			'label'       => __( 'Channel', 'forms-bridge' ),
+			'description' => __(
+				'Name of the channel where messages will be sent',
+				'forms-bridge'
+			),
+			'type'        => 'select',
+			'options'     => array(
+				'endpoint' => '/api/v1/rooms.get',
+				'finger'   => array(
+					'value' => 'update[]._id',
+					'label' => 'update[].name',
+				),
+			),
+			'required'    => true,
 		),
 		array(
 			'ref'     => '#form',
@@ -66,7 +84,7 @@ return array(
 		),
 	),
 	'bridge'      => array(
-		'endpoint'  => '/api/chat.postMessage',
+		'endpoint'  => '/api/v1/chat.postMessage',
 		'mutations' => array(
 			array(
 				array(

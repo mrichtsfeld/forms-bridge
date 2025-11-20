@@ -1,6 +1,6 @@
 <?php
 /**
- * Slack addon support channel bridge template
+ * Rocket.Chat addon direct message bridge template
  *
  * @package formsbridge
  */
@@ -10,25 +10,39 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 return array(
-	'title'       => __( 'Support Channel', 'forms-bridge' ),
+	'title'       => __( 'Direct Messages', 'forms-bridge' ),
 	'description' => __(
-		'Support form template. The resulting bridge will notify form submissions in a Slack channel',
+		'Contact form template. The resulting bridge will send form submissions as direct messages in Rocket.Chat',
 		'forms-bridge'
 	),
 	'fields'      => array(
 		array(
 			'ref'   => '#bridge',
 			'name'  => 'endpoint',
-			'value' => '/api/chat.postMessage',
+			'value' => '/api/v1/chat.postMessage',
+		),
+		array(
+			'ref'      => '#bridge/custom_fields[]',
+			'name'     => 'username',
+			'label'    => __( 'User', 'forms-bridge' ),
+			'type'     => 'select',
+			'options'  => array(
+				'endpoint' => '/api/v1/users.listByStatus',
+				'finger'   => array(
+					'value' => 'users[].username',
+					'label' => 'users[].name',
+				),
+			),
+			'required' => true,
 		),
 		array(
 			'ref'     => '#form',
 			'name'    => 'title',
-			'default' => __( 'Support', 'forms-bridge' ),
+			'default' => __( 'Direct Messages', 'forms-bridge' ),
 		),
 	),
 	'form'        => array(
-		'title'  => __( 'Support', 'forms-bridge' ),
+		'title'  => __( 'Direct Messages', 'forms-bridge' ),
 		'fields' => array(
 			array(
 				'name'     => 'your-name',
@@ -43,22 +57,6 @@ return array(
 				'required' => true,
 			),
 			array(
-				'name'     => 'subject',
-				'label'    => __( 'Subject', 'forms-bridge' ),
-				'type'     => 'select',
-				'options'  => array(
-					array(
-						'value' => 'Option 1',
-						'label' => 'Option 1',
-					),
-					array(
-						'value' => 'Option 2',
-						'label' => 'Option 2',
-					),
-				),
-				'required' => true,
-			),
-			array(
 				'name'  => 'comments',
 				'label' => __( 'Comments', 'forms-bridge' ),
 				'type'  => 'textarea',
@@ -66,7 +64,8 @@ return array(
 		),
 	),
 	'bridge'      => array(
-		'endpoint'  => '/api/chat.postMessage',
+		'endpoint'  => '/api/v1/chat.postMessage',
+		'workflow'  => array( 'create-dm' ),
 		'mutations' => array(
 			array(
 				array(
@@ -77,11 +76,6 @@ return array(
 				array(
 					'from' => 'your-email',
 					'to'   => 'text.email',
-					'cast' => 'string',
-				),
-				array(
-					'from' => 'subject',
-					'to'   => 'text.subject',
 					'cast' => 'string',
 				),
 				array(

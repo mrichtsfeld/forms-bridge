@@ -1,0 +1,84 @@
+<?php
+/**
+ * Class Rocketchat_Addon
+ *
+ * @package formsbridge
+ */
+
+namespace FORMS_BRIDGE;
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit();
+}
+
+require_once 'class-rocketchat-form-bridge.php';
+require_once 'hooks.php';
+
+/**
+ * RocketChat addon class
+ */
+class Rocketchat_Addon extends Addon {
+	/**
+	 * Holds the addon's title.
+	 *
+	 * @var string
+	 */
+	public const TITLE = 'Rocket.Chat';
+
+	/**
+	 * Holds the addon's name.
+	 *
+	 * @var string
+	 */
+	public const NAME = 'rocketchat';
+
+	/**
+	 * Holds the addon's custom bridge class.
+	 *
+	 * @var string
+	 */
+	public const BRIDGE = '\FORMS_BRIDGE\Rocketchat_Form_Bridge';
+
+	/**
+	 * Performs a request against the backend to check the connexion status.
+	 *
+	 * @param string $backend Backend name.
+	 *
+	 * @return boolean
+	 */
+	public function ping( $backend ) {
+		$bridge = new Rocketchat_Form_Bridge(
+			array(
+				'name'     => '__rocketchat-' . time(),
+				'endpoint' => '/api/v1/users.list',
+				'method'   => 'GET',
+				'backend'  => $backend,
+			)
+		);
+
+		$response = $bridge->submit( array( 'status' => 'active' ) );
+
+		if ( is_wp_error( $response ) ) {
+			Logger::log( 'Rocket.Chat backend ping error response', Logger::ERROR );
+			Logger::log( $response, Logger::ERROR );
+			return false;
+		}
+
+		return true;
+	}
+
+	/**
+	 * Performs an introspection of the backend endpoint and returns API fields.
+	 *
+	 * @param string      $endpoint API endpoint.
+	 * @param string      $backend Backend name.
+	 * @param string|null $method HTTP method.
+	 *
+	 * @return array List of fields and content type of the endpoint.
+	 */
+	public function get_endpoint_schema( $endpoint, $backend, $method = null ) {
+		return array();
+	}
+}
+
+Rocketchat_Addon::setup();
