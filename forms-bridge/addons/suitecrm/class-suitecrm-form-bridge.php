@@ -70,8 +70,7 @@ class SuiteCRM_Form_Bridge extends Form_Bridge {
 		}
 
 		if ( empty( $res['data'] ) ) {
-			$content_type =
-				Http_Client::get_content_type( $res['headers'] ) ?? 'undefined';
+			$content_type = Http_Client::get_content_type( $res['headers'] ) ?? 'undefined';
 
 			return new WP_Error(
 				'unknown_content_type',
@@ -112,18 +111,18 @@ class SuiteCRM_Form_Bridge extends Form_Bridge {
 	/**
 	 * Login to SuiteCRM and get session ID.
 	 *
-	 * @param array   $credentials Credentials array with client_id (username) and client_secret (password).
-	 * @param Backend $backend Bridge backend object.
+	 * @param Credential $credential Bridge credential object.
+	 * @param Backend    $backend Bridge backend object.
 	 *
 	 * @return string|WP_Error Session ID on success.
 	 */
-	private static function rest_login( $credentials, $backend ) {
+	private static function rest_login( $credential, $backend ) {
 		if ( self::$session_id ) {
 			return self::$session_id;
 		}
 
-		$username = $credentials[0] ?? '';
-		$password = $credentials[1] ?? '';
+		$username = $credential->client_id;
+		$password = $credential->client_secret;
 
 		// SuiteCRM v4_1 requires MD5 hashed password.
 		$password_hash = md5( $password );
@@ -131,16 +130,16 @@ class SuiteCRM_Form_Bridge extends Form_Bridge {
 		$payload = self::rest_payload(
 			'login',
 			array(
-				'user_auth'      => array(
+				'user_auth'       => array(
 					'user_name' => $username,
 					'password'  => $password_hash,
 				),
-				'application'    => 'FormsBridge',
+				'application'     => 'FormsBridge',
 				'name_value_list' => array(),
 			)
 		);
 
-		$response = $backend->post( self::ENDPOINT, $payload, 'application/x-www-form-urlencoded' );
+		$response = $backend->post( self::ENDPOINT, $payload );
 
 		$result = self::rest_response( $response );
 
@@ -213,20 +212,10 @@ class SuiteCRM_Form_Bridge extends Form_Bridge {
 			1
 		);
 
-		// Get credentials for login.
-		$login_credentials = $credential->authorization();
+		$session_id = self::rest_login( $credential, $backend );
 
-		// Methods that don't require authentication.
-		$public_methods = array( 'get_server_info' );
-
-		if ( ! in_array( $this->method, $public_methods, true ) ) {
-			$session_id = self::rest_login( $login_credentials, $backend );
-
-			if ( is_wp_error( $session_id ) ) {
-				return $session_id;
-			}
-		} else {
-			$session_id = '';
+		if ( is_wp_error( $session_id ) ) {
+			return $session_id;
 		}
 
 		// Build the API request based on method.
@@ -234,7 +223,7 @@ class SuiteCRM_Form_Bridge extends Form_Bridge {
 
 		$api_payload = self::rest_payload( $this->method, $rest_args );
 
-		$response = $backend->post( self::ENDPOINT, $api_payload, 'application/x-www-form-urlencoded' );
+		$response = $backend->post( self::ENDPOINT, $api_payload );
 
 		$result = self::rest_response( $response );
 
@@ -261,9 +250,6 @@ class SuiteCRM_Form_Bridge extends Form_Bridge {
 		$module = $this->endpoint;
 
 		switch ( $this->method ) {
-			case 'get_server_info':
-				return array();
-
 			case 'get_available_modules':
 				return array(
 					'session' => $session_id,
@@ -271,8 +257,8 @@ class SuiteCRM_Form_Bridge extends Form_Bridge {
 
 			case 'get_module_fields':
 				return array(
-					'session'      => $session_id,
-					'module_name'  => $module,
+					'session'     => $session_id,
+					'module_name' => $module,
 				);
 
 			case 'get_entry_list':
@@ -314,23 +300,23 @@ class SuiteCRM_Form_Bridge extends Form_Bridge {
 
 			case 'set_relationship':
 				return array(
-					'session'             => $session_id,
-					'module_name'         => $module,
-					'module_id'           => $payload['module_id'] ?? '',
-					'link_field_name'     => $payload['link_field_name'] ?? '',
-					'related_ids'         => $payload['related_ids'] ?? array(),
-					'name_value_list'     => $payload['name_value_list'] ?? array(),
-					'delete'              => $payload['delete'] ?? 0,
+					'session'         => $session_id,
+					'module_name'     => $module,
+					'module_id'       => $payload['module_id'] ?? '',
+					'link_field_name' => $payload['link_field_name'] ?? '',
+					'related_ids'     => $payload['related_ids'] ?? array(),
+					'name_value_list' => $payload['name_value_list'] ?? array(),
+					'delete'          => $payload['delete'] ?? 0,
 				);
 
 			case 'get_relationships':
 				return array(
-					'session'               => $session_id,
-					'module_name'           => $module,
-					'module_id'             => $payload['module_id'] ?? '',
-					'link_field_name'       => $payload['link_field_name'] ?? '',
-					'related_module_query'  => $more_args['query'] ?? '',
-					'related_fields'        => $more_args['select_fields'] ?? array(),
+					'session'              => $session_id,
+					'module_name'          => $module,
+					'module_id'            => $payload['module_id'] ?? '',
+					'link_field_name'      => $payload['link_field_name'] ?? '',
+					'related_module_query' => $more_args['query'] ?? '',
+					'related_fields'       => $more_args['select_fields'] ?? array(),
 				);
 
 			default:
