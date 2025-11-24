@@ -53,7 +53,7 @@ class SuiteCRM_Addon extends Addon {
 		$bridge = new SuiteCRM_Form_Bridge(
 			array(
 				'name'     => '__suitecrm-' . time(),
-				'method'   => 'get_server_info',
+				'method'   => 'get_user_id',
 				'endpoint' => '',
 				'backend'  => $backend,
 			)

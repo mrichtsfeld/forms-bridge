@@ -41,6 +41,7 @@ add_filter(
 			'get_relationships',
 			'get_module_fields',
 			'get_available_modules',
+			'get_user_id',
 		);
 		$schema['properties']['method']['default']     = 'set_entry';
 
@@ -112,6 +113,11 @@ add_filter(
 						'default' => 'SuiteCRM',
 					),
 					array(
+						'ref'   => '#backend/headers[]',
+						'name'  => 'Content-Type',
+						'value' => 'application/x-www-form-urlencoded',
+					),
+					array(
 						'ref'      => '#bridge',
 						'name'     => 'endpoint',
 						'label'    => __( 'Module', 'forms-bridge' ),
@@ -137,6 +143,10 @@ add_filter(
 				'backend'    => array(
 					'name'    => 'SuiteCRM',
 					'headers' => array(
+						array(
+							'name'  => 'Content-Type',
+							'value' => 'application/x-www-form-urlencoded',
+						),
 						array(
 							'name'  => 'Accept',
 							'value' => 'application/json',
