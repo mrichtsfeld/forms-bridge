@@ -351,9 +351,9 @@ class Vtiger_Form_Bridge extends Form_Bridge {
 			case 'sync':
 				$url      = self::ENDPOINT . '?' . http_build_query(
 					array(
-						'operation'   => 'sync',
-						'sessionName' => $session_name,
-						'elementType' => $module,
+						'operation'    => 'sync',
+						'sessionName'  => $session_name,
+						'elementType'  => $module,
 						'modifiedTime' => $more_args['modifiedTime'] ?? 0,
 					)
 				);
