@@ -27,32 +27,24 @@ return array(
 			'value' => 'Leads',
 		),
 		array(
-			'ref'         => '#bridge/custom_fields[]',
-			'name'        => 'assigned_user_id',
-			'label'       => __( 'Assigned User', 'forms-bridge' ),
-			'description' => __(
-				'User to assign the lead to',
-				'forms-bridge'
-			),
-			'type'        => 'select',
-			'options'     => array(
+			'ref'     => '#bridge/custom_fields[]',
+			'name'    => 'assigned_user_id',
+			'label'   => __( 'Assigned User', 'forms-bridge' ),
+			'type'    => 'select',
+			'options' => array(
 				'endpoint' => 'Users',
 				'finger'   => array(
-					'value' => 'entry_list.[].id',
-					'label' => 'entry_list.[].name_value_list.user_name.value',
+					'value' => 'entry_list[].id',
+					'label' => 'entry_list[].name_value_list.user_name.value',
 				),
 			),
 		),
 		array(
-			'ref'         => '#bridge/custom_fields[]',
-			'name'        => 'status',
-			'label'       => __( 'Lead Status', 'forms-bridge' ),
-			'description' => __(
-				'Initial status of the lead',
-				'forms-bridge'
-			),
-			'type'        => 'select',
-			'options'     => array(
+			'ref'     => '#bridge/custom_fields[]',
+			'name'    => 'status',
+			'label'   => __( 'Lead Status', 'forms-bridge' ),
+			'type'    => 'select',
+			'options' => array(
 				array(
 					'value' => 'New',
 					'label' => __( 'New', 'forms-bridge' ),
@@ -78,18 +70,14 @@ return array(
 					'label' => __( 'Dead', 'forms-bridge' ),
 				),
 			),
-			'default'     => 'New',
+			'default' => 'New',
 		),
 		array(
-			'ref'         => '#bridge/custom_fields[]',
-			'name'        => 'lead_source',
-			'label'       => __( 'Lead Source', 'forms-bridge' ),
-			'description' => __(
-				'Source of the lead',
-				'forms-bridge'
-			),
-			'type'        => 'select',
-			'options'     => array(
+			'ref'     => '#bridge/custom_fields[]',
+			'name'    => 'lead_source',
+			'label'   => __( 'Lead Source', 'forms-bridge' ),
+			'type'    => 'select',
+			'options' => array(
 				array(
 					'value' => 'Web Site',
 					'label' => __( 'Web Site', 'forms-bridge' ),
@@ -127,116 +115,12 @@ return array(
 					'label' => __( 'Other', 'forms-bridge' ),
 				),
 			),
-			'default'     => 'Web Site',
+			'default' => 'Web Site',
 		),
 	),
 	'bridge'      => array(
-		'endpoint'      => 'Leads',
-		'method'        => 'set_entry',
-		'custom_fields' => array(
-			array(
-				'name'  => 'status',
-				'value' => 'New',
-			),
-			array(
-				'name'  => 'lead_source',
-				'value' => 'Web Site',
-			),
-		),
-		'mutations'     => array(
-			array(
-				array(
-					'from' => 'first_name',
-					'to'   => 'first_name',
-					'cast' => 'string',
-				),
-				array(
-					'from' => 'last_name',
-					'to'   => 'last_name',
-					'cast' => 'string',
-				),
-				array(
-					'from' => 'email',
-					'to'   => 'email1',
-					'cast' => 'string',
-				),
-				array(
-					'from' => '?phone',
-					'to'   => 'phone_work',
-					'cast' => 'string',
-				),
-				array(
-					'from' => '?mobile',
-					'to'   => 'phone_mobile',
-					'cast' => 'string',
-				),
-				array(
-					'from' => '?company',
-					'to'   => 'account_name',
-					'cast' => 'string',
-				),
-				array(
-					'from' => '?title',
-					'to'   => 'title',
-					'cast' => 'string',
-				),
-				array(
-					'from' => '?department',
-					'to'   => 'department',
-					'cast' => 'string',
-				),
-				array(
-					'from' => '?description',
-					'to'   => 'description',
-					'cast' => 'string',
-				),
-				array(
-					'from' => '?website',
-					'to'   => 'website',
-					'cast' => 'string',
-				),
-				array(
-					'from' => '?address',
-					'to'   => 'primary_address_street',
-					'cast' => 'string',
-				),
-				array(
-					'from' => '?city',
-					'to'   => 'primary_address_city',
-					'cast' => 'string',
-				),
-				array(
-					'from' => '?state',
-					'to'   => 'primary_address_state',
-					'cast' => 'string',
-				),
-				array(
-					'from' => '?postal_code',
-					'to'   => 'primary_address_postalcode',
-					'cast' => 'string',
-				),
-				array(
-					'from' => '?country',
-					'to'   => 'primary_address_country',
-					'cast' => 'string',
-				),
-				array(
-					'from' => '?status',
-					'to'   => 'status',
-					'cast' => 'string',
-				),
-				array(
-					'from' => '?lead_source',
-					'to'   => 'lead_source',
-					'cast' => 'string',
-				),
-				array(
-					'from' => '?assigned_user_id',
-					'to'   => 'assigned_user_id',
-					'cast' => 'string',
-				),
-			),
-		),
+		'endpoint' => 'Leads',
+		'method'   => 'set_entry',
 	),
 	'form'        => array(
 		'fields' => array(
@@ -254,24 +138,59 @@ return array(
 			),
 			array(
 				'label'    => __( 'Email', 'forms-bridge' ),
-				'name'     => 'email',
+				'name'     => 'email1',
 				'type'     => 'email',
 				'required' => true,
 			),
 			array(
 				'label' => __( 'Phone', 'forms-bridge' ),
-				'name'  => 'phone',
+				'name'  => 'phone_work',
+				'type'  => 'tel',
+			),
+			array(
+				'label' => __( 'Mobile', 'forms-bridge' ),
+				'name'  => 'phone_mobile',
 				'type'  => 'tel',
 			),
 			array(
 				'label' => __( 'Company', 'forms-bridge' ),
-				'name'  => 'company',
+				'name'  => 'account_name',
+				'type'  => 'text',
+			),
+			array(
+				'label' => __( 'Title', 'forms-bridge' ),
+				'name'  => 'title',
 				'type'  => 'text',
 			),
 			array(
 				'label' => __( 'Website', 'forms-bridge' ),
 				'name'  => 'website',
 				'type'  => 'url',
+			),
+			array(
+				'label' => __( 'Address', 'forms-bridge' ),
+				'name'  => 'primary_address_street',
+				'type'  => 'text',
+			),
+			array(
+				'label' => __( 'City', 'forms-bridge' ),
+				'name'  => 'primary_address_city',
+				'type'  => 'text',
+			),
+			array(
+				'label' => __( 'Postal Code', 'forms-bridge' ),
+				'name'  => 'primary_address_postalcode',
+				'type'  => 'text',
+			),
+			array(
+				'label' => __( 'State', 'forms-bridge' ),
+				'name'  => 'primary_address_state',
+				'type'  => 'text',
+			),
+			array(
+				'label' => __( 'Country', 'forms-bridge' ),
+				'name'  => 'primary_address_country',
+				'type'  => 'text',
 			),
 			array(
 				'label' => __( 'Message', 'forms-bridge' ),

@@ -38,21 +38,17 @@ return array(
 			'options'     => array(
 				'endpoint' => 'Users',
 				'finger'   => array(
-					'value' => 'entry_list.[].id',
-					'label' => 'entry_list.[].name_value_list.user_name.value',
+					'value' => 'entry_list[].id',
+					'label' => 'entry_list[].name_value_list.user_name.value',
 				),
 			),
 		),
 		array(
-			'ref'         => '#bridge/custom_fields[]',
-			'name'        => 'account_type',
-			'label'       => __( 'Account Type', 'forms-bridge' ),
-			'description' => __(
-				'Type of account',
-				'forms-bridge'
-			),
-			'type'        => 'select',
-			'options'     => array(
+			'ref'     => '#bridge/custom_fields[]',
+			'name'    => 'account_type',
+			'label'   => __( 'Account Type', 'forms-bridge' ),
+			'type'    => 'select',
+			'options' => array(
 				array(
 					'value' => 'Analyst',
 					'label' => __( 'Analyst', 'forms-bridge' ),
@@ -94,18 +90,14 @@ return array(
 					'label' => __( 'Other', 'forms-bridge' ),
 				),
 			),
-			'default'     => 'Prospect',
+			'default' => 'Prospect',
 		),
 		array(
-			'ref'         => '#bridge/custom_fields[]',
-			'name'        => 'industry',
-			'label'       => __( 'Industry', 'forms-bridge' ),
-			'description' => __(
-				'Industry sector',
-				'forms-bridge'
-			),
-			'type'        => 'select',
-			'options'     => array(
+			'ref'     => '#bridge/custom_fields[]',
+			'name'    => 'industry',
+			'label'   => __( 'Industry', 'forms-bridge' ),
+			'type'    => 'select',
+			'options' => array(
 				array(
 					'value' => 'Apparel',
 					'label' => __( 'Apparel', 'forms-bridge' ),
@@ -200,103 +192,59 @@ return array(
 				),
 			),
 		),
+		array(
+			'ref'     => '#bridge/custom_fields[]',
+			'name'    => 'lead_source',
+			'label'   => __( 'Lead Source', 'forms-bridge' ),
+			'type'    => 'select',
+			'options' => array(
+				array(
+					'value' => 'Web Site',
+					'label' => __( 'Web Site', 'forms-bridge' ),
+				),
+				array(
+					'value' => 'Cold Call',
+					'label' => __( 'Cold Call', 'forms-bridge' ),
+				),
+				array(
+					'value' => 'Email',
+					'label' => __( 'Email', 'forms-bridge' ),
+				),
+				array(
+					'value' => 'Word of mouth',
+					'label' => __( 'Word of Mouth', 'forms-bridge' ),
+				),
+				array(
+					'value' => 'Campaign',
+					'label' => __( 'Campaign', 'forms-bridge' ),
+				),
+				array(
+					'value' => 'Other',
+					'label' => __( 'Other', 'forms-bridge' ),
+				),
+			),
+			'default' => 'Web Site',
+		),
 	),
 	'bridge'      => array(
-		'endpoint'      => 'Accounts',
-		'method'        => 'set_entry',
-		'custom_fields' => array(
-			array(
-				'name'  => 'account_type',
-				'value' => 'Prospect',
-			),
-		),
-		'mutations'     => array(
-			array(
-				array(
-					'from' => 'name',
-					'to'   => 'name',
-					'cast' => 'string',
-				),
-				array(
-					'from' => '?email',
-					'to'   => 'email1',
-					'cast' => 'string',
-				),
-				array(
-					'from' => '?phone',
-					'to'   => 'phone_office',
-					'cast' => 'string',
-				),
-				array(
-					'from' => '?fax',
-					'to'   => 'phone_fax',
-					'cast' => 'string',
-				),
-				array(
-					'from' => '?website',
-					'to'   => 'website',
-					'cast' => 'string',
-				),
-				array(
-					'from' => '?description',
-					'to'   => 'description',
-					'cast' => 'string',
-				),
-				array(
-					'from' => '?employees',
-					'to'   => 'employees',
-					'cast' => 'string',
-				),
-				array(
-					'from' => '?annual_revenue',
-					'to'   => 'annual_revenue',
-					'cast' => 'string',
-				),
-				array(
-					'from' => '?address',
-					'to'   => 'billing_address_street',
-					'cast' => 'string',
-				),
-				array(
-					'from' => '?city',
-					'to'   => 'billing_address_city',
-					'cast' => 'string',
-				),
-				array(
-					'from' => '?state',
-					'to'   => 'billing_address_state',
-					'cast' => 'string',
-				),
-				array(
-					'from' => '?postal_code',
-					'to'   => 'billing_address_postalcode',
-					'cast' => 'string',
-				),
-				array(
-					'from' => '?country',
-					'to'   => 'billing_address_country',
-					'cast' => 'string',
-				),
-				array(
-					'from' => '?account_type',
-					'to'   => 'account_type',
-					'cast' => 'string',
-				),
-				array(
-					'from' => '?industry',
-					'to'   => 'industry',
-					'cast' => 'string',
-				),
-				array(
-					'from' => '?assigned_user_id',
-					'to'   => 'assigned_user_id',
-					'cast' => 'string',
-				),
-			),
-		),
+		'endpoint' => 'Contacts',
+		'method'   => 'set_entry',
+		'workflow' => array( 'account' ),
 	),
 	'form'        => array(
 		'fields' => array(
+			array(
+				'label'    => __( 'First Name', 'forms-bridge' ),
+				'name'     => 'first_name',
+				'type'     => 'text',
+				'required' => true,
+			),
+			array(
+				'label'    => __( 'Last Name', 'forms-bridge' ),
+				'name'     => 'last_name',
+				'type'     => 'text',
+				'required' => true,
+			),
 			array(
 				'label'    => __( 'Company Name', 'forms-bridge' ),
 				'name'     => 'name',
@@ -305,12 +253,12 @@ return array(
 			),
 			array(
 				'label' => __( 'Email', 'forms-bridge' ),
-				'name'  => 'email',
+				'name'  => 'email1',
 				'type'  => 'email',
 			),
 			array(
 				'label' => __( 'Phone', 'forms-bridge' ),
-				'name'  => 'phone',
+				'name'  => 'phone_office',
 				'type'  => 'tel',
 			),
 			array(
@@ -320,17 +268,27 @@ return array(
 			),
 			array(
 				'label' => __( 'Address', 'forms-bridge' ),
-				'name'  => 'address',
+				'name'  => 'billing_address_street',
 				'type'  => 'text',
 			),
 			array(
 				'label' => __( 'City', 'forms-bridge' ),
-				'name'  => 'city',
+				'name'  => 'billing_address_city',
+				'type'  => 'text',
+			),
+			array(
+				'label' => __( 'Postal Code', 'forms-bridge' ),
+				'name'  => 'billing_address_postalcode',
+				'type'  => 'text',
+			),
+			array(
+				'label' => __( 'State', 'forms-bridge' ),
+				'name'  => 'billing_address_state',
 				'type'  => 'text',
 			),
 			array(
 				'label' => __( 'Country', 'forms-bridge' ),
-				'name'  => 'country',
+				'name'  => 'billing_address_country',
 				'type'  => 'text',
 			),
 			array(
