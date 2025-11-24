@@ -1,4 +1,9 @@
 <?php
+/**
+ * Odoo addon hooks
+ *
+ * @package formsbridge
+ */
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit();
@@ -7,7 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 add_filter(
 	'forms_bridge_bridge_schema',
 	function ( $schema, $addon ) {
-		if ( $addon !== 'odoo' ) {
+		if ( 'odoo' !== $addon ) {
 			return $schema;
 		}
 
@@ -45,7 +50,7 @@ add_filter(
 add_filter(
 	'forms_bridge_template_defaults',
 	function ( $defaults, $addon, $schema ) {
-		if ( $addon !== 'odoo' ) {
+		if ( 'odoo' !== $addon ) {
 			return $defaults;
 		}
 
@@ -150,20 +155,22 @@ add_filter(
 add_filter(
 	'forms_bridge_template_data',
 	function ( $data, $template_id ) {
-		if ( strpos( $template_id, 'odoo-' ) !== 0 ) {
+		if ( 0 !== strpos( $template_id, 'odoo-' ) ) {
 			return $data;
 		}
 
 		$index = array_search(
 			'tag_ids',
-			array_column( $data['bridge']['custom_fields'], 'name' )
+			array_column( $data['bridge']['custom_fields'], 'name' ),
+			true
 		);
 
-		if ( $index !== false ) {
+		if ( false !== $index ) {
 			$field = $data['bridge']['custom_fields'][ $index ];
 			$tags  = $field['value'] ?? array();
 
-			for ( $i = 0; $i < count( $tags ); $i++ ) {
+			$l = count( $tags );
+			for ( $i = 0; $i < $l; $i++ ) {
 				$data['bridge']['custom_fields'][] = array(
 					'name'  => "tag_ids[{$i}]",
 					'value' => $tags[ $i ],
@@ -181,14 +188,16 @@ add_filter(
 
 		$index = array_search(
 			'categ_ids',
-			array_column( $data['bridge']['custom_fields'], 'name' )
+			array_column( $data['bridge']['custom_fields'], 'name' ),
+			true
 		);
 
-		if ( $index !== false ) {
+		if ( false !== $index ) {
 			$field = $data['bridge']['custom_fields'][ $index ];
 			$tags  = $field['value'] ?? array();
 
-			for ( $i = 0; $i < count( $tags ); $i++ ) {
+			$l = count( $tags );
+			for ( $i = 0; $i < $l; $i++ ) {
 				$data['bridge']['custom_fields'][] = array(
 					'name'  => "categ_ids[{$i}]",
 					'value' => $tags[ $i ],
@@ -206,14 +215,16 @@ add_filter(
 
 		$index = array_search(
 			'list_ids',
-			array_column( $data['bridge']['custom_fields'], 'name' )
+			array_column( $data['bridge']['custom_fields'], 'name' ),
+			true
 		);
 
-		if ( $index !== false ) {
+		if ( false !== $index ) {
 			$field = $data['bridge']['custom_fields'][ $index ];
 			$lists = $field['value'] ?? array();
 
-			for ( $i = 0; $i < count( $lists ); $i++ ) {
+			$l = count( $lists );
+			for ( $i = 0; $i < $l; $i++ ) {
 				$data['bridge']['custom_fields'][] = array(
 					'name'  => "list_ids[{$i}]",
 					'value' => $lists[ $i ],
@@ -231,10 +242,11 @@ add_filter(
 
 		$index = array_search(
 			'allday',
-			array_column( $data['bridge']['custom_fields'], 'name' )
+			array_column( $data['bridge']['custom_fields'], 'name' ),
+			true
 		);
 
-		if ( $index !== false ) {
+		if ( false !== $index ) {
 			$data['form']['fields'] = array_filter(
 				$data['form']['fields'],
 				function ( $field ) {
@@ -253,10 +265,11 @@ add_filter(
 
 			$index = array_search(
 				'duration',
-				array_column( $data['bridge']['custom_fields'], 'name' )
+				array_column( $data['bridge']['custom_fields'], 'name' ),
+				true
 			);
 
-			if ( $index !== false ) {
+			if ( false !== $index ) {
 				array_splice( $data['bridge']['custom_fields'], $index, 1 );
 			}
 		}

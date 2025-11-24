@@ -87,8 +87,7 @@ class Odoo_Form_Bridge extends Form_Bridge {
 		}
 
 		if ( empty( $res['data'] ) ) {
-			$content_type =
-				Http_Client::get_content_type( $res['headers'] ) ?? 'undefined';
+			$content_type = Http_Client::get_content_type( $res['headers'] ) ?? 'undefined';
 
 			return new WP_Error(
 				'unkown_content_type',
