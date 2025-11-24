@@ -132,6 +132,10 @@ return array(
 			'schema' => array( 'type' => 'string' ),
 		),
 		array(
+			'name'   => 'parent_id',
+			'schema' => array( 'type' => 'string' ),
+		),
+		array(
 			'name'   => 'parent_name',
 			'schema' => array( 'type' => 'string' ),
 		),
@@ -199,6 +203,7 @@ function forms_bridge_suitecrm_create_account( $payload, $bridge ) {
 		'shipping_address_state',
 		'shipping_address_country',
 		'sic_code',
+		'parent_id',
 		'parent_name',
 		'campaign_id',
 		'campaign_name',

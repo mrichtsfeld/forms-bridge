@@ -24,7 +24,7 @@ return array(
 		array(
 			'ref'   => '#bridge',
 			'name'  => 'endpoint',
-			'value' => 'Accounts',
+			'value' => 'Contacts',
 		),
 		array(
 			'ref'         => '#bridge/custom_fields[]',
