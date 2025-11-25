@@ -116,6 +116,11 @@ add_filter(
 						'default' => 'Vtiger',
 					),
 					array(
+						'ref'   => '#backend/headers[]',
+						'name'  => 'Content-Type',
+						'value' => 'application/x-www-form-urlencoded',
+					),
+					array(
 						'ref'      => '#bridge',
 						'name'     => 'endpoint',
 						'label'    => __( 'Module', 'forms-bridge' ),
@@ -141,6 +146,10 @@ add_filter(
 				'backend'    => array(
 					'name'    => 'Vtiger',
 					'headers' => array(
+						array(
+							'name'  => 'Content-Type',
+							'value' => 'application/x-www-form-urlencoded',
+						),
 						array(
 							'name'  => 'Accept',
 							'value' => 'application/json',
