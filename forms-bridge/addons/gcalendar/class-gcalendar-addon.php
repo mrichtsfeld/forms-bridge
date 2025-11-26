@@ -55,7 +55,7 @@ class GCalendar_Addon extends Addon {
 			array(
 				'name'     => '__gcalendar-' . time(),
 				'backend'  => $backend,
-				'endpoint' => '/calendars/primary',
+				'endpoint' => '/calendar/v3/users/me/calendarList',
 				'method'   => 'GET',
 			)
 		);
@@ -141,12 +141,11 @@ class GCalendar_Addon extends Addon {
 	 * @return array List of fields and content type of the endpoint.
 	 */
 	public function get_endpoint_schema( $endpoint, $backend, $method = null ) {
-		if ( 'POST' !== $method ) {
+		if ( ! in_array( $method, array( 'POST', 'PUT' ), true ) ) {
 			return array();
 		}
 
-		// Google Calendar events have a standard schema
-		$fields = array(
+		return array(
 			array(
 				'name'   => 'summary',
 				'schema' => array(
@@ -169,43 +168,53 @@ class GCalendar_Addon extends Addon {
 				),
 			),
 			array(
-				'name'   => 'start.dateTime',
+				'name'   => 'start',
 				'schema' => array(
-					'type'        => 'string',
-					'description' => 'Start date and time (ISO 8601 format)',
+					'type'                 => 'object',
+					'properties'           => array(
+						'dateTime' => array(
+							'type'        => 'string',
+							'description' => 'Start date and time (ISO 8601 format)',
+						),
+						'timeZone' => array(
+							'type'        => 'string',
+							'description' => 'Start timezone',
+						),
+					),
+					'additionalProperties' => false,
+					'required'             => array( 'dateTime' ),
 				),
 			),
 			array(
-				'name'   => 'start.timeZone',
+				'name'   => 'end',
 				'schema' => array(
-					'type'        => 'string',
-					'description' => 'Start timezone',
-				),
-			),
-			array(
-				'name'   => 'end.dateTime',
-				'schema' => array(
-					'type'        => 'string',
-					'description' => 'End date and time (ISO 8601 format)',
-				),
-			),
-			array(
-				'name'   => 'end.timeZone',
-				'schema' => array(
-					'type'        => 'string',
-					'description' => 'End timezone',
+					'type'                 => 'object',
+					'properties'           => array(
+						'dateTime' => array(
+							'type'        => 'string',
+							'description' => 'End date and time (ISO 8601 format)',
+						),
+						'timeZone' => array(
+							'type'        => 'string',
+							'description' => 'End timezone',
+						),
+					),
+					'additionalProperties' => false,
+					'required'             => array( 'dateTime' ),
 				),
 			),
 			array(
 				'name'   => 'attendees',
 				'schema' => array(
-					'type'        => 'string',
-					'description' => 'Comma-separated list of attendee emails',
+					'type'            => 'array',
+					'items'           => array(
+						'type'        => 'string',
+						'description' => 'attendee email address',
+					),
+					'additionalItems' => true,
 				),
 			),
 		);
-
-		return $fields;
 	}
 }
 

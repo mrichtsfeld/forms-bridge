@@ -16,8 +16,7 @@ add_filter(
 			return $schema;
 		}
 
-		$schema['properties']['endpoint']['default'] =
-			'/calendars/primary/events';
+		$schema['properties']['endpoint']['default'] = '/calendars/v3/calendar/{$calendarId}/events';
 
 		$schema['properties']['backend']['default'] = 'Calendar API';
 
@@ -79,7 +78,7 @@ add_filter(
 						'name'     => 'scope',
 						'label'    => __( 'Scope', 'forms-bridge' ),
 						'type'     => 'text',
-						'value'    => 'https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/calendar.events',
+						'value'    => 'https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/calendar.events',
 						'required' => true,
 					),
 					array(
@@ -124,13 +123,13 @@ add_filter(
 				),
 				'bridge'     => array(
 					'backend'  => 'Calendar API',
-					'endpoint' => '',
+					'endpoint' => '/calendar/v3/calendars/{$calendarId}/events',
 				),
 				'credential' => array(
 					'name'          => '',
 					'schema'        => 'Bearer',
 					'oauth_url'     => 'https://accounts.google.com/o/oauth2/v2',
-					'scope'         => 'https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/calendar.events',
+					'scope'         => 'https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/calendar.events',
 					'client_id'     => '',
 					'client_secret' => '',
 					'access_token'  => '',
