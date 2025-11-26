@@ -1,6 +1,6 @@
 <?php
 /**
- * SuiteCRM Accounts template.
+ * Vtiger Accounts template.
  *
  * @package formsbridge
  */
@@ -12,7 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 return array(
 	'title'       => __( 'Accounts', 'forms-bridge' ),
 	'description' => __(
-		'Account form bridge template. The resulting bridge will convert form submissions into SuiteCRM accounts (companies/organizations).',
+		'Account form bridge template. The resulting bridge will convert form submissions into Vtiger accounts (organizations).',
 		'forms-bridge'
 	),
 	'fields'      => array(
@@ -34,14 +34,14 @@ return array(
 			'options' => array(
 				'endpoint' => 'Users',
 				'finger'   => array(
-					'value' => 'entry_list[].id',
-					'label' => 'entry_list[].name_value_list.name.value',
+					'value' => 'result[].id',
+					'label' => 'result[].user_name',
 				),
 			),
 		),
 		array(
 			'ref'     => '#bridge/custom_fields[]',
-			'name'    => 'account_type',
+			'name'    => 'accounttype',
 			'label'   => __( 'Account Type', 'forms-bridge' ),
 			'type'    => 'select',
 			'options' => array(
@@ -89,11 +89,15 @@ return array(
 			'default' => 'Prospect',
 		),
 		array(
-			'ref'     => '#bridge/custom_fields[]',
-			'name'    => 'industry',
-			'label'   => __( 'Industry', 'forms-bridge' ),
-			'type'    => 'select',
-			'options' => array(
+			'ref'         => '#bridge/custom_fields[]',
+			'name'        => 'industry',
+			'label'       => __( 'Industry', 'forms-bridge' ),
+			'description' => __(
+				'Industry sector',
+				'forms-bridge'
+			),
+			'type'        => 'select',
+			'options'     => array(
 				array(
 					'value' => 'Apparel',
 					'label' => __( 'Apparel', 'forms-bridge' ),
@@ -149,6 +153,10 @@ return array(
 				array(
 					'value' => 'Finance',
 					'label' => __( 'Finance', 'forms-bridge' ),
+				),
+				array(
+					'value' => 'Food & Beverage',
+					'label' => __( 'Food & Beverage', 'forms-bridge' ),
 				),
 				array(
 					'value' => 'Government',
@@ -216,71 +224,10 @@ return array(
 				),
 			),
 		),
-		array(
-			'ref'     => '#bridge/custom_fields[]',
-			'name'    => 'lead_source',
-			'label'   => __( 'Lead Source', 'forms-bridge' ),
-			'type'    => 'select',
-			'options' => array(
-				array(
-					'value' => 'Web Site',
-					'label' => __( 'Web Site', 'forms-bridge' ),
-				),
-				array(
-					'value' => 'Cold Call',
-					'label' => __( 'Cold Call', 'forms-bridge' ),
-				),
-				array(
-					'value' => 'Existing Customer',
-					'label' => __( 'Existing Customer', 'forms-bridge' ),
-				),
-				array(
-					'value' => 'Employee',
-					'label' => __( 'Employee', 'forms-bridge' ),
-				),
-				array(
-					'value' => 'Partner',
-					'label' => __( 'Partner', 'forms-bridge' ),
-				),
-				array(
-					'value' => 'Public Relations',
-					'label' => __( 'Public Relations', 'forms-bridge' ),
-				),
-				array(
-					'value' => 'Email',
-					'label' => __( 'Email', 'forms-bridge' ),
-				),
-				array(
-					'value' => 'Direct Mail',
-					'label' => __( 'Direct Mail', 'forms-bridge' ),
-				),
-				array(
-					'value' => 'Word of mouth',
-					'label' => __( 'Word of Mouth', 'forms-bridge' ),
-				),
-				array(
-					'value' => 'Campaign',
-					'label' => __( 'Campaign', 'forms-bridge' ),
-				),
-				array(
-					'value' => 'Conference',
-					'label' => __( 'Conference', 'forms-bridge' ),
-				),
-				array(
-					'value' => 'Trade Show',
-					'label' => __( 'Trade Show', 'forms-bridge' ),
-				),
-				array(
-					'value' => 'Other',
-					'label' => __( 'Other', 'forms-bridge' ),
-				),
-			),
-			'default' => 'Web Site',
-		),
 	),
 	'bridge'      => array(
 		'endpoint'  => 'Contacts',
-		'method'    => 'set_entry',
+		'method'    => 'create',
 		'workflow'  => array( 'account', 'skip-contact' ),
 		'mutations' => array(
 			array(
@@ -293,7 +240,7 @@ return array(
 			array(
 				array(
 					'from' => 'user_email',
-					'to'   => 'email1',
+					'to'   => 'email',
 					'cast' => 'string',
 				),
 			),
@@ -303,19 +250,19 @@ return array(
 		'fields' => array(
 			array(
 				'label'    => __( 'First Name', 'forms-bridge' ),
-				'name'     => 'first_name',
+				'name'     => 'firstname',
 				'type'     => 'text',
 				'required' => true,
 			),
 			array(
 				'label'    => __( 'Last Name', 'forms-bridge' ),
-				'name'     => 'last_name',
+				'name'     => 'lastname',
 				'type'     => 'text',
 				'required' => true,
 			),
 			array(
 				'label'    => __( 'Company Name', 'forms-bridge' ),
-				'name'     => 'name',
+				'name'     => 'accountname',
 				'type'     => 'text',
 				'required' => true,
 			),
@@ -332,7 +279,7 @@ return array(
 			),
 			array(
 				'label' => __( 'Phone', 'forms-bridge' ),
-				'name'  => 'phone_office',
+				'name'  => 'phone',
 				'type'  => 'tel',
 			),
 			array(
@@ -342,27 +289,27 @@ return array(
 			),
 			array(
 				'label' => __( 'Address', 'forms-bridge' ),
-				'name'  => 'billing_address_street',
+				'name'  => 'bill_street',
 				'type'  => 'text',
 			),
 			array(
 				'label' => __( 'City', 'forms-bridge' ),
-				'name'  => 'billing_address_city',
+				'name'  => 'bill_city',
 				'type'  => 'text',
 			),
 			array(
 				'label' => __( 'Postal Code', 'forms-bridge' ),
-				'name'  => 'billing_address_postalcode',
+				'name'  => 'bill_code',
 				'type'  => 'text',
 			),
 			array(
 				'label' => __( 'State', 'forms-bridge' ),
-				'name'  => 'billing_address_state',
+				'name'  => 'bill_state',
 				'type'  => 'text',
 			),
 			array(
 				'label' => __( 'Country', 'forms-bridge' ),
-				'name'  => 'billing_address_country',
+				'name'  => 'bill_country',
 				'type'  => 'text',
 			),
 			array(

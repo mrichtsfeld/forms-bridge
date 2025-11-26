@@ -15,6 +15,14 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
+      - name: Cache composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: ${{ runner.os }}-composer-${{ hashFiles('composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-composer-
+
       - name: Composer install
         run: composer -q install
 
@@ -35,17 +43,21 @@ jobs:
         with:
           submodules: true
 
-      - name: Cache composer
+      - name: Cache composer dependencies
         uses: actions/cache@v4
         with:
           path: vendor
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('composer.lock') }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-composer-
 
-      - name: Cache plugins
+      - name: Cache test plugins
         uses: actions/cache@v4
         with:
           path: /tmp/*.zip
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('bin/download-test-deps.sh') }}
+          key: ${{ runner.os }}-test-plugins-${{ hashFiles('bin/download-test-deps.sh') }}
+          restore-keys: |
+            ${{ runner.os }}-test-plugins-
 
       - name: Composer install
         run: composer -q install

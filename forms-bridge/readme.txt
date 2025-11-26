@@ -45,6 +45,7 @@ Forms Bridge has the following addons:
 * [Rocket.Chat](https://formsbridge.codeccoop.org/documentation/rocket-chat/)
 * [Slack](https://formsbridge.codeccoop.org/documentation/slack/)
 * [SuiteCRM](https://formsbridge.codeccoop.org/documentation/suitecrm/)
+* [Vtiger](https://formsbridge.codeccoop.org/documentation/vtiger/)
 * [Zoho CRM](https://formsbridge.codeccoop.org/documentation/zoho-crm/)
 * [Zulip](https://formsbridge.codeccoop.org/documentation/zulip/)
 

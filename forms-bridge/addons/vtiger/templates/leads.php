@@ -1,6 +1,6 @@
 <?php
 /**
- * SuiteCRM Contacts template.
+ * Vtiger Leads template.
  *
  * @package formsbridge
  */
@@ -10,21 +10,21 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 return array(
-	'title'       => __( 'Contacts', 'forms-bridge' ),
+	'title'       => __( 'Leads', 'forms-bridge' ),
 	'description' => __(
-		'Contact form bridge template. The resulting bridge will convert form submissions into SuiteCRM contacts.',
+		'Lead capture form template. The resulting bridge will convert form submissions into Vtiger leads.',
 		'forms-bridge'
 	),
 	'fields'      => array(
 		array(
 			'ref'     => '#form',
 			'name'    => 'title',
-			'default' => __( 'Contacts', 'forms-bridge' ),
+			'default' => __( 'Leads', 'forms-bridge' ),
 		),
 		array(
 			'ref'   => '#bridge',
 			'name'  => 'endpoint',
-			'value' => 'Contacts',
+			'value' => 'Leads',
 		),
 		array(
 			'ref'     => '#bridge/custom_fields[]',
@@ -34,14 +34,67 @@ return array(
 			'options' => array(
 				'endpoint' => 'Users',
 				'finger'   => array(
-					'value' => 'entry_list[].id',
-					'label' => 'entry_list[].name_value_list.name.value',
+					'value' => 'result[].id',
+					'label' => 'result[].user_name',
 				),
 			),
 		),
 		array(
 			'ref'     => '#bridge/custom_fields[]',
-			'name'    => 'lead_source',
+			'name'    => 'leadstatus',
+			'label'   => __( 'Lead Status', 'forms-bridge' ),
+			'type'    => 'select',
+			'options' => array(
+				array(
+					'value' => 'Not Contacted',
+					'label' => __( 'Not Contacted', 'forms-bridge' ),
+				),
+				array(
+					'value' => 'Contacted',
+					'label' => __( 'Contacted', 'forms-bridge' ),
+				),
+				array(
+					'value' => 'Attempted to Contact',
+					'label' => __( 'Attempted to Contact', 'forms-bridge' ),
+				),
+				array(
+					'value' => 'Contact in Future',
+					'label' => __( 'Contact in Future', 'forms-bridge' ),
+				),
+				array(
+					'value' => 'Cold',
+					'label' => __( 'Cold', 'forms-bridge' ),
+				),
+				array(
+					'value' => 'Warm',
+					'label' => __( 'Warm', 'forms-bridge' ),
+				),
+				array(
+					'value' => 'Hot',
+					'label' => __( 'Hot', 'forms-bridge' ),
+				),
+				array(
+					'value' => 'Lost Lead',
+					'label' => __( 'Lost Lead', 'forms-bridge' ),
+				),
+				array(
+					'value' => 'Pre Qualified',
+					'label' => __( 'Pre Qualified', 'forms-bridge' ),
+				),
+				array(
+					'value' => 'Qualified',
+					'label' => __( 'Junk Lead', 'forms-bridge' ),
+				),
+				array(
+					'value' => 'Junk Lead',
+					'label' => __( 'Junk Lead', 'forms-bridge' ),
+				),
+			),
+			'default' => 'Not Contacted',
+		),
+		array(
+			'ref'     => '#bridge/custom_fields[]',
+			'name'    => 'leadsource',
 			'label'   => __( 'Lead Source', 'forms-bridge' ),
 			'type'    => 'select',
 			'options' => array(
@@ -52,6 +105,10 @@ return array(
 				array(
 					'value' => 'Cold Call',
 					'label' => __( 'Cold Call', 'forms-bridge' ),
+				),
+				array(
+					'value' => 'Direct Mail',
+					'label' => __( 'Direct Mail', 'forms-bridge' ),
 				),
 				array(
 					'value' => 'Existing Customer',
@@ -70,28 +127,12 @@ return array(
 					'label' => __( 'Public Relations', 'forms-bridge' ),
 				),
 				array(
-					'value' => 'Email',
-					'label' => __( 'Email', 'forms-bridge' ),
-				),
-				array(
-					'value' => 'Direct Mail',
-					'label' => __( 'Direct Mail', 'forms-bridge' ),
-				),
-				array(
-					'value' => 'Word of mouth',
+					'value' => 'Word of Mouth',
 					'label' => __( 'Word of Mouth', 'forms-bridge' ),
-				),
-				array(
-					'value' => 'Campaign',
-					'label' => __( 'Campaign', 'forms-bridge' ),
 				),
 				array(
 					'value' => 'Conference',
 					'label' => __( 'Conference', 'forms-bridge' ),
-				),
-				array(
-					'value' => 'Trade Show',
-					'label' => __( 'Trade Show', 'forms-bridge' ),
 				),
 				array(
 					'value' => 'Other',
@@ -102,62 +143,51 @@ return array(
 		),
 	),
 	'bridge'      => array(
-		'endpoint' => 'Contacts',
-		'method'   => 'set_entry',
-		'workflow' => array( 'skip-contact' ),
+		'endpoint' => 'Leads',
+		'method'   => 'create',
 	),
 	'form'        => array(
 		'fields' => array(
 			array(
 				'label'    => __( 'First Name', 'forms-bridge' ),
-				'name'     => 'first_name',
+				'name'     => 'firstname',
 				'type'     => 'text',
 				'required' => true,
 			),
 			array(
 				'label'    => __( 'Last Name', 'forms-bridge' ),
-				'name'     => 'last_name',
+				'name'     => 'lastname',
 				'type'     => 'text',
 				'required' => true,
 			),
 			array(
 				'label'    => __( 'Email', 'forms-bridge' ),
-				'name'     => 'email1',
+				'name'     => 'email',
 				'type'     => 'email',
 				'required' => true,
 			),
 			array(
 				'label' => __( 'Phone', 'forms-bridge' ),
-				'name'  => 'phone_work',
+				'name'  => 'phone',
 				'type'  => 'tel',
 			),
 			array(
-				'label' => __( 'Address', 'forms-bridge' ),
-				'name'  => 'primary_address_street',
+				'label' => __( 'Company', 'forms-bridge' ),
+				'name'  => 'company',
 				'type'  => 'text',
 			),
 			array(
-				'label' => __( 'City', 'forms-bridge' ),
-				'name'  => 'primary_address_city',
+				'label' => __( 'Designation', 'forms-bridge' ),
+				'name'  => 'designation',
 				'type'  => 'text',
 			),
 			array(
-				'label' => __( 'Postal Code', 'forms-bridge' ),
-				'name'  => 'primary_address_postalcode',
-				'type'  => 'text',
+				'label' => __( 'Website', 'forms-bridge' ),
+				'name'  => 'website',
+				'type'  => 'url',
 			),
 			array(
-				'label' => __( 'State', 'forms-bridge' ),
-				'name'  => 'primary_address_state',
-				'type'  => 'text',
-			),
-			array(
-				'label' => __( 'Country', 'forms-bridge' ),
-				'name'  => 'primary_address_country',
-				'type'  => 'text',
-			),
-			array(
-				'label' => __( 'Description', 'forms-bridge' ),
+				'label' => __( 'Message', 'forms-bridge' ),
 				'name'  => 'description',
 				'type'  => 'textarea',
 			),
