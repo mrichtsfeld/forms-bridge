@@ -15,33 +15,6 @@ return array(
 		'Meetings bridge template. The resulting bridge will convert form submission into Google Calendar events.',
 		'forms-bridge',
 	),
-	'fields'      => array(
-		array(
-			'ref'      => '#bridge/custom_fields[]',
-			'name'     => 'duration_hours',
-			'label'    => __( 'Duration (Hours)', 'forms-bridge' ),
-			'type'     => 'number',
-			'required' => true,
-			'default'  => 1,
-		),
-		array(
-			'ref'     => '#bridge/custom_fields[]',
-			'name'    => 'duration_minutes',
-			'label'   => __( 'Duration (Minutes)', 'forms-bridge' ),
-			'type'    => 'number',
-			'default' => 0,
-		),
-		array(
-			'ref'         => '#bridge/custom_fields[]',
-			'name'        => 'location',
-			'label'       => __( 'Location', 'forms-bridge' ),
-			'description' => __(
-				'Geographic location of the event as free-form text',
-				'forms-bridge',
-			),
-			'type'        => 'text',
-		),
-	),
 	'bridge'      => array(
 		'workflow'  => array( 'date-fields-to-date', 'event-dates' ),
 		'mutations' => array(

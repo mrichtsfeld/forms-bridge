@@ -132,6 +132,10 @@ class GCalendar_Form_Bridge extends Form_Bridge {
 			$event['colorId'] = $payload['colorId'];
 		}
 
+		if ( isset( $payload['sendUpdates'] ) ) {
+			$event['sendUpdates'] = (bool) $payload['sendUpdates'];
+		}
+
 		if ( ! ( isset( $event['start'] ) && isset( $event['end'] ) ) ) {
 			return new WP_Error(
 				'missing_event_dates',
