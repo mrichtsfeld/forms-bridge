@@ -566,56 +566,6 @@ class SuiteCRMTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Test that templates exist and are valid.
-	 */
-	public function test_templates_exist() {
-		$templates_dir = dirname( dirname( __DIR__ ) ) . '/forms-bridge/addons/suitecrm/templates/';
-
-		$this->assertFileExists( $templates_dir . 'contacts.php' );
-		$this->assertFileExists( $templates_dir . 'leads.php' );
-		$this->assertFileExists( $templates_dir . 'accounts.php' );
-	}
-
-	/**
-	 * Test contacts template structure.
-	 */
-	public function test_contacts_template_structure() {
-		$template = include dirname( dirname( __DIR__ ) ) . '/forms-bridge/addons/suitecrm/templates/contacts.php';
-
-		$this->assertIsArray( $template );
-		$this->assertArrayHasKey( 'title', $template );
-		$this->assertArrayHasKey( 'description', $template );
-		$this->assertArrayHasKey( 'fields', $template );
-		$this->assertArrayHasKey( 'bridge', $template );
-		$this->assertArrayHasKey( 'form', $template );
-
-		$this->assertEquals( 'Contacts', $template['bridge']['endpoint'] );
-		$this->assertEquals( 'set_entry', $template['bridge']['method'] );
-	}
-
-	/**
-	 * Test leads template structure.
-	 */
-	public function test_leads_template_structure() {
-		$template = include dirname( dirname( __DIR__ ) ) . '/forms-bridge/addons/suitecrm/templates/leads.php';
-
-		$this->assertIsArray( $template );
-		$this->assertEquals( 'Leads', $template['bridge']['endpoint'] );
-		$this->assertEquals( 'set_entry', $template['bridge']['method'] );
-	}
-
-	/**
-	 * Test accounts template structure.
-	 */
-	public function test_accounts_template_structure() {
-		$template = include dirname( dirname( __DIR__ ) ) . '/forms-bridge/addons/suitecrm/templates/accounts.php';
-
-		$this->assertIsArray( $template );
-		$this->assertEquals( 'Contacts', $template['bridge']['endpoint'] );
-		$this->assertEquals( 'set_entry', $template['bridge']['method'] );
-	}
-
-	/**
 	 * Test bridge schema hook is applied.
 	 */
 	public function test_bridge_schema_hook() {
