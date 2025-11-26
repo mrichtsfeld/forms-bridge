@@ -210,7 +210,8 @@ class Vtiger_Form_Bridge extends Form_Bridge {
 		if ( ! $backend ) {
 			return new WP_Error(
 				'invalid_backend',
-				'The bridge does not have a valid backend'
+				'The bridge does not have a valid backend',
+				$this->data,
 			);
 		}
 
@@ -218,7 +219,8 @@ class Vtiger_Form_Bridge extends Form_Bridge {
 		if ( ! $credential ) {
 			return new WP_Error(
 				'invalid_credential',
-				'The bridge does not have a valid credential'
+				'The bridge does not have a valid credential',
+				$backend->data(),
 			);
 		}
 
@@ -280,7 +282,7 @@ class Vtiger_Form_Bridge extends Form_Bridge {
 				break;
 
 			case 'query':
-				$query    = $more_args['query'] ?? $payload['query'] ?? "SELECT * FROM {$module} LIMIT 20;";
+				$query    = $more_args['query'] ?? $payload['query'] ?? "SELECT * FROM {$module};";
 				$url      = self::ENDPOINT . '?' . http_build_query(
 					array(
 						'operation'   => 'query',

@@ -90,7 +90,7 @@ class Vtiger_Addon extends Addon {
 
 		return $bridge->submit(
 			array(
-				'query' => "SELECT id, label FROM {$endpoint} LIMIT 100;",
+				'query' => "SELECT * FROM {$endpoint};",
 			)
 		);
 	}

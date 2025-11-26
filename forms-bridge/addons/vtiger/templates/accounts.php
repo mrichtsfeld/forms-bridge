@@ -24,35 +24,27 @@ return array(
 		array(
 			'ref'   => '#bridge',
 			'name'  => 'endpoint',
-			'value' => 'Accounts',
+			'value' => 'Contacts',
 		),
 		array(
-			'ref'         => '#bridge/custom_fields[]',
-			'name'        => 'assigned_user_id',
-			'label'       => __( 'Assigned User', 'forms-bridge' ),
-			'description' => __(
-				'User to assign the account to',
-				'forms-bridge'
-			),
-			'type'        => 'select',
-			'options'     => array(
+			'ref'     => '#bridge/custom_fields[]',
+			'name'    => 'assigned_user_id',
+			'label'   => __( 'Assigned User', 'forms-bridge' ),
+			'type'    => 'select',
+			'options' => array(
 				'endpoint' => 'Users',
 				'finger'   => array(
-					'value' => 'result.[].id',
-					'label' => 'result.[].label',
+					'value' => 'result[].id',
+					'label' => 'result[].user_name',
 				),
 			),
 		),
 		array(
-			'ref'         => '#bridge/custom_fields[]',
-			'name'        => 'accounttype',
-			'label'       => __( 'Account Type', 'forms-bridge' ),
-			'description' => __(
-				'Type of account',
-				'forms-bridge'
-			),
-			'type'        => 'select',
-			'options'     => array(
+			'ref'     => '#bridge/custom_fields[]',
+			'name'    => 'accounttype',
+			'label'   => __( 'Account Type', 'forms-bridge' ),
+			'type'    => 'select',
+			'options' => array(
 				array(
 					'value' => 'Analyst',
 					'label' => __( 'Analyst', 'forms-bridge' ),
@@ -94,7 +86,7 @@ return array(
 					'label' => __( 'Other', 'forms-bridge' ),
 				),
 			),
-			'default'     => 'Prospect',
+			'default' => 'Prospect',
 		),
 		array(
 			'ref'         => '#bridge/custom_fields[]',
@@ -155,8 +147,16 @@ return array(
 					'label' => __( 'Entertainment', 'forms-bridge' ),
 				),
 				array(
+					'value' => 'Environmental',
+					'label' => __( 'Environmental', 'forms-bridge' ),
+				),
+				array(
 					'value' => 'Finance',
 					'label' => __( 'Finance', 'forms-bridge' ),
+				),
+				array(
+					'value' => 'Food & Beverage',
+					'label' => __( 'Food & Beverage', 'forms-bridge' ),
 				),
 				array(
 					'value' => 'Government',
@@ -175,6 +175,10 @@ return array(
 					'label' => __( 'Insurance', 'forms-bridge' ),
 				),
 				array(
+					'value' => 'Machinery',
+					'label' => __( 'Machinery', 'forms-bridge' ),
+				),
+				array(
 					'value' => 'Manufacturing',
 					'label' => __( 'Manufacturing', 'forms-bridge' ),
 				),
@@ -183,16 +187,36 @@ return array(
 					'label' => __( 'Media', 'forms-bridge' ),
 				),
 				array(
+					'value' => 'Not For Profit',
+					'label' => __( 'Not For Profit', 'forms-bridge' ),
+				),
+				array(
+					'value' => 'Recreation',
+					'label' => __( 'Recreation', 'forms-bridge' ),
+				),
+				array(
 					'value' => 'Retail',
 					'label' => __( 'Retail', 'forms-bridge' ),
+				),
+				array(
+					'value' => 'Shipping',
+					'label' => __( 'Shipping', 'forms-bridge' ),
 				),
 				array(
 					'value' => 'Technology',
 					'label' => __( 'Technology', 'forms-bridge' ),
 				),
 				array(
+					'value' => 'Telecomunications',
+					'label' => __( 'Telecomunications', 'forms-bridge' ),
+				),
+				array(
 					'value' => 'Transportation',
 					'label' => __( 'Transportation', 'forms-bridge' ),
+				),
+				array(
+					'value' => 'Utilities',
+					'label' => __( 'Utilities', 'forms-bridge' ),
 				),
 				array(
 					'value' => 'Other',
@@ -202,94 +226,21 @@ return array(
 		),
 	),
 	'bridge'      => array(
-		'endpoint'      => 'Accounts',
-		'method'        => 'create',
-		'custom_fields' => array(
+		'endpoint'  => 'Contacts',
+		'method'    => 'create',
+		'workflow'  => array( 'account', 'skip-contact' ),
+		'mutations' => array(
 			array(
-				'name'  => 'accounttype',
-				'value' => 'Prospect',
+				array(
+					'from' => 'email1',
+					'to'   => 'user_email',
+					'cast' => 'copy',
+				),
 			),
-		),
-		'mutations'     => array(
 			array(
 				array(
-					'from' => 'accountname',
-					'to'   => 'accountname',
-					'cast' => 'string',
-				),
-				array(
-					'from' => '?email',
-					'to'   => 'email1',
-					'cast' => 'string',
-				),
-				array(
-					'from' => '?phone',
-					'to'   => 'phone',
-					'cast' => 'string',
-				),
-				array(
-					'from' => '?fax',
-					'to'   => 'fax',
-					'cast' => 'string',
-				),
-				array(
-					'from' => '?website',
-					'to'   => 'website',
-					'cast' => 'string',
-				),
-				array(
-					'from' => '?description',
-					'to'   => 'description',
-					'cast' => 'string',
-				),
-				array(
-					'from' => '?employees',
-					'to'   => 'employees',
-					'cast' => 'integer',
-				),
-				array(
-					'from' => '?annual_revenue',
-					'to'   => 'annual_revenue',
-					'cast' => 'number',
-				),
-				array(
-					'from' => '?address',
-					'to'   => 'bill_street',
-					'cast' => 'string',
-				),
-				array(
-					'from' => '?city',
-					'to'   => 'bill_city',
-					'cast' => 'string',
-				),
-				array(
-					'from' => '?state',
-					'to'   => 'bill_state',
-					'cast' => 'string',
-				),
-				array(
-					'from' => '?postal_code',
-					'to'   => 'bill_code',
-					'cast' => 'string',
-				),
-				array(
-					'from' => '?country',
-					'to'   => 'bill_country',
-					'cast' => 'string',
-				),
-				array(
-					'from' => '?accounttype',
-					'to'   => 'accounttype',
-					'cast' => 'string',
-				),
-				array(
-					'from' => '?industry',
-					'to'   => 'industry',
-					'cast' => 'string',
-				),
-				array(
-					'from' => '?assigned_user_id',
-					'to'   => 'assigned_user_id',
+					'from' => 'user_email',
+					'to'   => 'email',
 					'cast' => 'string',
 				),
 			),
@@ -298,15 +249,33 @@ return array(
 	'form'        => array(
 		'fields' => array(
 			array(
-				'label'    => __( 'Account Name', 'forms-bridge' ),
+				'label'    => __( 'First Name', 'forms-bridge' ),
+				'name'     => 'firstname',
+				'type'     => 'text',
+				'required' => true,
+			),
+			array(
+				'label'    => __( 'Last Name', 'forms-bridge' ),
+				'name'     => 'lastname',
+				'type'     => 'text',
+				'required' => true,
+			),
+			array(
+				'label'    => __( 'Company Name', 'forms-bridge' ),
 				'name'     => 'accountname',
 				'type'     => 'text',
 				'required' => true,
 			),
 			array(
-				'label' => __( 'Email', 'forms-bridge' ),
-				'name'  => 'email',
-				'type'  => 'email',
+				'label'    => __( 'Email', 'forms-bridge' ),
+				'name'     => 'email1',
+				'type'     => 'email',
+				'required' => true,
+			),
+			array(
+				'label' => __( 'Title', 'forms-bridge' ),
+				'name'  => 'title',
+				'type'  => 'text',
 			),
 			array(
 				'label' => __( 'Phone', 'forms-bridge' ),
@@ -320,17 +289,27 @@ return array(
 			),
 			array(
 				'label' => __( 'Address', 'forms-bridge' ),
-				'name'  => 'address',
+				'name'  => 'bill_street',
 				'type'  => 'text',
 			),
 			array(
 				'label' => __( 'City', 'forms-bridge' ),
-				'name'  => 'city',
+				'name'  => 'bill_city',
+				'type'  => 'text',
+			),
+			array(
+				'label' => __( 'Postal Code', 'forms-bridge' ),
+				'name'  => 'bill_code',
+				'type'  => 'text',
+			),
+			array(
+				'label' => __( 'State', 'forms-bridge' ),
+				'name'  => 'bill_state',
 				'type'  => 'text',
 			),
 			array(
 				'label' => __( 'Country', 'forms-bridge' ),
-				'name'  => 'country',
+				'name'  => 'bill_country',
 				'type'  => 'text',
 			),
 			array(

@@ -27,69 +27,77 @@ return array(
 			'value' => 'Leads',
 		),
 		array(
-			'ref'         => '#bridge/custom_fields[]',
-			'name'        => 'assigned_user_id',
-			'label'       => __( 'Assigned User', 'forms-bridge' ),
-			'description' => __(
-				'User to assign the lead to',
-				'forms-bridge'
-			),
-			'type'        => 'select',
-			'options'     => array(
+			'ref'     => '#bridge/custom_fields[]',
+			'name'    => 'assigned_user_id',
+			'label'   => __( 'Assigned User', 'forms-bridge' ),
+			'type'    => 'select',
+			'options' => array(
 				'endpoint' => 'Users',
 				'finger'   => array(
-					'value' => 'result.[].id',
-					'label' => 'result.[].label',
+					'value' => 'result[].id',
+					'label' => 'result[].user_name',
 				),
 			),
 		),
 		array(
-			'ref'         => '#bridge/custom_fields[]',
-			'name'        => 'leadstatus',
-			'label'       => __( 'Lead Status', 'forms-bridge' ),
-			'description' => __(
-				'Initial status of the lead',
-				'forms-bridge'
+			'ref'     => '#bridge/custom_fields[]',
+			'name'    => 'leadstatus',
+			'label'   => __( 'Lead Status', 'forms-bridge' ),
+			'type'    => 'select',
+			'options' => array(
+				array(
+					'value' => 'Not Contacted',
+					'label' => __( 'Not Contacted', 'forms-bridge' ),
+				),
+				array(
+					'value' => 'Contacted',
+					'label' => __( 'Contacted', 'forms-bridge' ),
+				),
+				array(
+					'value' => 'Attempted to Contact',
+					'label' => __( 'Attempted to Contact', 'forms-bridge' ),
+				),
+				array(
+					'value' => 'Contact in Future',
+					'label' => __( 'Contact in Future', 'forms-bridge' ),
+				),
+				array(
+					'value' => 'Cold',
+					'label' => __( 'Cold', 'forms-bridge' ),
+				),
+				array(
+					'value' => 'Warm',
+					'label' => __( 'Warm', 'forms-bridge' ),
+				),
+				array(
+					'value' => 'Hot',
+					'label' => __( 'Hot', 'forms-bridge' ),
+				),
+				array(
+					'value' => 'Lost Lead',
+					'label' => __( 'Lost Lead', 'forms-bridge' ),
+				),
+				array(
+					'value' => 'Pre Qualified',
+					'label' => __( 'Pre Qualified', 'forms-bridge' ),
+				),
+				array(
+					'value' => 'Qualified',
+					'label' => __( 'Junk Lead', 'forms-bridge' ),
+				),
+				array(
+					'value' => 'Junk Lead',
+					'label' => __( 'Junk Lead', 'forms-bridge' ),
+				),
 			),
-			'type'        => 'select',
-			'options'     => array(
-				array(
-					'value' => 'New',
-					'label' => __( 'New', 'forms-bridge' ),
-				),
-				array(
-					'value' => 'Assigned',
-					'label' => __( 'Assigned', 'forms-bridge' ),
-				),
-				array(
-					'value' => 'In Process',
-					'label' => __( 'In Process', 'forms-bridge' ),
-				),
-				array(
-					'value' => 'Converted',
-					'label' => __( 'Converted', 'forms-bridge' ),
-				),
-				array(
-					'value' => 'Recycled',
-					'label' => __( 'Recycled', 'forms-bridge' ),
-				),
-				array(
-					'value' => 'Dead',
-					'label' => __( 'Dead', 'forms-bridge' ),
-				),
-			),
-			'default'     => 'New',
+			'default' => 'Not Contacted',
 		),
 		array(
-			'ref'         => '#bridge/custom_fields[]',
-			'name'        => 'leadsource',
-			'label'       => __( 'Lead Source', 'forms-bridge' ),
-			'description' => __(
-				'Source of the lead',
-				'forms-bridge'
-			),
-			'type'        => 'select',
-			'options'     => array(
+			'ref'     => '#bridge/custom_fields[]',
+			'name'    => 'leadsource',
+			'label'   => __( 'Lead Source', 'forms-bridge' ),
+			'type'    => 'select',
+			'options' => array(
 				array(
 					'value' => 'Web Site',
 					'label' => __( 'Web Site', 'forms-bridge' ),
@@ -99,139 +107,44 @@ return array(
 					'label' => __( 'Cold Call', 'forms-bridge' ),
 				),
 				array(
-					'value' => 'Email',
-					'label' => __( 'Email', 'forms-bridge' ),
+					'value' => 'Direct Mail',
+					'label' => __( 'Direct Mail', 'forms-bridge' ),
 				),
 				array(
-					'value' => 'Word of mouth',
-					'label' => __( 'Word of Mouth', 'forms-bridge' ),
+					'value' => 'Existing Customer',
+					'label' => __( 'Existing Customer', 'forms-bridge' ),
 				),
 				array(
-					'value' => 'Campaign',
-					'label' => __( 'Campaign', 'forms-bridge' ),
-				),
-				array(
-					'value' => 'Conference',
-					'label' => __( 'Conference', 'forms-bridge' ),
-				),
-				array(
-					'value' => 'Trade Show',
-					'label' => __( 'Trade Show', 'forms-bridge' ),
+					'value' => 'Employee',
+					'label' => __( 'Employee', 'forms-bridge' ),
 				),
 				array(
 					'value' => 'Partner',
 					'label' => __( 'Partner', 'forms-bridge' ),
 				),
 				array(
+					'value' => 'Public Relations',
+					'label' => __( 'Public Relations', 'forms-bridge' ),
+				),
+				array(
+					'value' => 'Word of Mouth',
+					'label' => __( 'Word of Mouth', 'forms-bridge' ),
+				),
+				array(
+					'value' => 'Conference',
+					'label' => __( 'Conference', 'forms-bridge' ),
+				),
+				array(
 					'value' => 'Other',
 					'label' => __( 'Other', 'forms-bridge' ),
 				),
 			),
-			'default'     => 'Web Site',
+			'default' => 'Web Site',
 		),
 	),
 	'bridge'      => array(
-		'endpoint'      => 'Leads',
-		'method'        => 'create',
-		'custom_fields' => array(
-			array(
-				'name'  => 'leadstatus',
-				'value' => 'New',
-			),
-			array(
-				'name'  => 'leadsource',
-				'value' => 'Web Site',
-			),
-		),
-		'mutations'     => array(
-			array(
-				array(
-					'from' => 'firstname',
-					'to'   => 'firstname',
-					'cast' => 'string',
-				),
-				array(
-					'from' => 'lastname',
-					'to'   => 'lastname',
-					'cast' => 'string',
-				),
-				array(
-					'from' => 'email',
-					'to'   => 'email',
-					'cast' => 'string',
-				),
-				array(
-					'from' => '?phone',
-					'to'   => 'phone',
-					'cast' => 'string',
-				),
-				array(
-					'from' => '?mobile',
-					'to'   => 'mobile',
-					'cast' => 'string',
-				),
-				array(
-					'from' => '?company',
-					'to'   => 'company',
-					'cast' => 'string',
-				),
-				array(
-					'from' => '?designation',
-					'to'   => 'designation',
-					'cast' => 'string',
-				),
-				array(
-					'from' => '?description',
-					'to'   => 'description',
-					'cast' => 'string',
-				),
-				array(
-					'from' => '?website',
-					'to'   => 'website',
-					'cast' => 'string',
-				),
-				array(
-					'from' => '?address',
-					'to'   => 'lane',
-					'cast' => 'string',
-				),
-				array(
-					'from' => '?city',
-					'to'   => 'city',
-					'cast' => 'string',
-				),
-				array(
-					'from' => '?state',
-					'to'   => 'state',
-					'cast' => 'string',
-				),
-				array(
-					'from' => '?postal_code',
-					'to'   => 'code',
-					'cast' => 'string',
-				),
-				array(
-					'from' => '?country',
-					'to'   => 'country',
-					'cast' => 'string',
-				),
-				array(
-					'from' => '?leadstatus',
-					'to'   => 'leadstatus',
-					'cast' => 'string',
-				),
-				array(
-					'from' => '?leadsource',
-					'to'   => 'leadsource',
-					'cast' => 'string',
-				),
-				array(
-					'from' => '?assigned_user_id',
-					'to'   => 'assigned_user_id',
-					'cast' => 'string',
-				),
-			),
-		),
+		'endpoint' => 'Leads',
+		'method'   => 'create',
 	),
 	'form'        => array(
 		'fields' => array(
@@ -261,6 +174,11 @@ return array(
 			array(
 				'label' => __( 'Company', 'forms-bridge' ),
 				'name'  => 'company',
+				'type'  => 'text',
+			),
+			array(
+				'label' => __( 'Designation', 'forms-bridge' ),
+				'name'  => 'designation',
 				'type'  => 'text',
 			),
 			array(

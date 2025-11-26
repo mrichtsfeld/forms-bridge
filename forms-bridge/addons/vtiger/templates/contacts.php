@@ -12,7 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 return array(
 	'title'       => __( 'Contacts', 'forms-bridge' ),
 	'description' => __(
-		'Contact form template. The resulting bridge will convert form submissions into Vtiger contacts.',
+		'Contact form bridge template. The resulting bridge will convert form submissions into Vtiger contacts.',
 		'forms-bridge'
 	),
 	'fields'      => array(
@@ -27,32 +27,24 @@ return array(
 			'value' => 'Contacts',
 		),
 		array(
-			'ref'         => '#bridge/custom_fields[]',
-			'name'        => 'assigned_user_id',
-			'label'       => __( 'Assigned User', 'forms-bridge' ),
-			'description' => __(
-				'User to assign the contact to',
-				'forms-bridge'
-			),
-			'type'        => 'select',
-			'options'     => array(
+			'ref'     => '#bridge/custom_fields[]',
+			'name'    => 'assigned_user_id',
+			'label'   => __( 'Assigned User', 'forms-bridge' ),
+			'type'    => 'select',
+			'options' => array(
 				'endpoint' => 'Users',
 				'finger'   => array(
-					'value' => 'result.[].id',
-					'label' => 'result.[].label',
+					'value' => 'result[].id',
+					'label' => 'result[].user_name',
 				),
 			),
 		),
 		array(
-			'ref'         => '#bridge/custom_fields[]',
-			'name'        => 'leadsource',
-			'label'       => __( 'Lead Source', 'forms-bridge' ),
-			'description' => __(
-				'Source of the contact',
-				'forms-bridge'
-			),
-			'type'        => 'select',
-			'options'     => array(
+			'ref'     => '#bridge/custom_fields[]',
+			'name'    => 'leadsource',
+			'label'   => __( 'Lead Source', 'forms-bridge' ),
+			'type'    => 'select',
+			'options' => array(
 				array(
 					'value' => 'Web Site',
 					'label' => __( 'Web Site', 'forms-bridge' ),
@@ -62,113 +54,45 @@ return array(
 					'label' => __( 'Cold Call', 'forms-bridge' ),
 				),
 				array(
-					'value' => 'Email',
-					'label' => __( 'Email', 'forms-bridge' ),
+					'value' => 'Direct Mail',
+					'label' => __( 'Direct Mail', 'forms-bridge' ),
 				),
 				array(
-					'value' => 'Word of mouth',
+					'value' => 'Existing Customer',
+					'label' => __( 'Existing Customer', 'forms-bridge' ),
+				),
+				array(
+					'value' => 'Employee',
+					'label' => __( 'Employee', 'forms-bridge' ),
+				),
+				array(
+					'value' => 'Partner',
+					'label' => __( 'Partner', 'forms-bridge' ),
+				),
+				array(
+					'value' => 'Public Relations',
+					'label' => __( 'Public Relations', 'forms-bridge' ),
+				),
+				array(
+					'value' => 'Word of Mouth',
 					'label' => __( 'Word of Mouth', 'forms-bridge' ),
 				),
 				array(
-					'value' => 'Campaign',
-					'label' => __( 'Campaign', 'forms-bridge' ),
+					'value' => 'Conference',
+					'label' => __( 'Conference', 'forms-bridge' ),
 				),
 				array(
 					'value' => 'Other',
 					'label' => __( 'Other', 'forms-bridge' ),
 				),
 			),
-			'default'     => 'Web Site',
+			'default' => 'Web Site',
 		),
 	),
 	'bridge'      => array(
-		'endpoint'      => 'Contacts',
-		'method'        => 'create',
-		'custom_fields' => array(
-			array(
-				'name'  => 'leadsource',
-				'value' => 'Web Site',
-			),
-		),
-		'mutations'     => array(
-			array(
-				array(
-					'from' => 'firstname',
-					'to'   => 'firstname',
-					'cast' => 'string',
-				),
-				array(
-					'from' => 'lastname',
-					'to'   => 'lastname',
-					'cast' => 'string',
-				),
-				array(
-					'from' => 'email',
-					'to'   => 'email',
-					'cast' => 'string',
-				),
-				array(
-					'from' => '?phone',
-					'to'   => 'phone',
-					'cast' => 'string',
-				),
-				array(
-					'from' => '?mobile',
-					'to'   => 'mobile',
-					'cast' => 'string',
-				),
-				array(
-					'from' => '?title',
-					'to'   => 'title',
-					'cast' => 'string',
-				),
-				array(
-					'from' => '?department',
-					'to'   => 'department',
-					'cast' => 'string',
-				),
-				array(
-					'from' => '?description',
-					'to'   => 'description',
-					'cast' => 'string',
-				),
-				array(
-					'from' => '?address',
-					'to'   => 'mailingstreet',
-					'cast' => 'string',
-				),
-				array(
-					'from' => '?city',
-					'to'   => 'mailingcity',
-					'cast' => 'string',
-				),
-				array(
-					'from' => '?state',
-					'to'   => 'mailingstate',
-					'cast' => 'string',
-				),
-				array(
-					'from' => '?postal_code',
-					'to'   => 'mailingzip',
-					'cast' => 'string',
-				),
-				array(
-					'from' => '?country',
-					'to'   => 'mailingcountry',
-					'cast' => 'string',
-				),
-				array(
-					'from' => '?leadsource',
-					'to'   => 'leadsource',
-					'cast' => 'string',
-				),
-				array(
-					'from' => '?assigned_user_id',
-					'to'   => 'assigned_user_id',
-					'cast' => 'string',
-				),
-			),
-		),
+		'endpoint' => 'Contacts',
+		'method'   => 'create',
+		'workflow' => array( 'skip-contact' ),
 	),
 	'form'        => array(
 		'fields' => array(
@@ -196,8 +120,28 @@ return array(
 				'type'  => 'tel',
 			),
 			array(
-				'label' => __( 'Title', 'forms-bridge' ),
-				'name'  => 'title',
+				'label' => __( 'Address', 'forms-bridge' ),
+				'name'  => 'mailingstreet',
+				'type'  => 'text',
+			),
+			array(
+				'label' => __( 'City', 'forms-bridge' ),
+				'name'  => 'mailingcity',
+				'type'  => 'text',
+			),
+			array(
+				'label' => __( 'Postal Code', 'forms-bridge' ),
+				'name'  => 'mailingzip',
+				'type'  => 'text',
+			),
+			array(
+				'label' => __( 'State', 'forms-bridge' ),
+				'name'  => 'mailingstate',
+				'type'  => 'text',
+			),
+			array(
+				'label' => __( 'Country', 'forms-bridge' ),
+				'name'  => 'mailingcountry',
 				'type'  => 'text',
 			),
 			array(
