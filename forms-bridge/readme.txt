@@ -1,6 +1,6 @@
 === Forms Bridge - Infinite integrations ===
 Contributors: codeccoop
-Tags: odoo, dolibarr, listmonk, forms, woocommerce
+Tags: forms, integration, erp, crm, rest api
 Donate link: https://buymeacoffee.com/codeccoop
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html

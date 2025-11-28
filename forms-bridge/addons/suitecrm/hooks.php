@@ -78,23 +78,18 @@ add_filter(
 						'value' => 'Basic',
 					),
 					array(
-						'ref'         => '#credential',
-						'name'        => 'client_id',
-						'label'       => __( 'Username', 'forms-bridge' ),
-						'description' => __(
-							'SuiteCRM user name',
-							'forms-bridge'
-						),
-						'type'        => 'text',
-						'required'    => true,
+						'ref'      => '#credential',
+						'name'     => 'client_id',
+						'label'    => __( 'Username', 'forms-bridge' ),
+						'type'     => 'text',
+						'required' => true,
 					),
 					array(
-						'ref'         => '#credential',
-						'name'        => 'client_secret',
-						'description' => __( 'User password', 'forms-bridge' ),
-						'label'       => __( 'Password', 'forms-bridge' ),
-						'type'        => 'text',
-						'required'    => true,
+						'ref'      => '#credential',
+						'name'     => 'client_secret',
+						'label'    => __( 'Password', 'forms-bridge' ),
+						'type'     => 'text',
+						'required' => true,
 					),
 					array(
 						'ref'         => '#backend',
