@@ -57,7 +57,7 @@ export default function WorkflowPipeline({ workflow, setWorkflow, setEdit }) {
       .slice(0, index)
       .concat(workflow.slice(index + 1, workflow.length));
 
-    setWorkflow(newWorkflow);
+    setWorkflow(newWorkflow, index);
 
     setTimeout(() => {
       if (step - 1 === index && index === newWorkflow.length) {
@@ -73,7 +73,7 @@ export default function WorkflowPipeline({ workflow, setWorkflow, setEdit }) {
         .concat([jobOptions[0].value])
         .concat(workflow.slice(index + 1, workflow.length));
 
-      setWorkflow(newWorkflow);
+      setWorkflow(newWorkflow, index + 1);
     },
     [workflow, jobOptions]
   );

@@ -16,6 +16,9 @@ const CSS = `.bridges-tabs-panel .components-tab-panel__tabs{overflow-x:auto;}
 .bridges-tabs-panel .components-tab-panel__tabs>button{flex-shrink:0;}`;
 
 const DEFAULTS = {
+  name: "bridge-" + Date.now(),
+  backend: "",
+  form_id: "",
   enabled: true,
   workflow: [],
   is_valid: true,
@@ -50,6 +53,17 @@ export default function Bridges() {
       ]);
   }, [names]);
 
+  const sanitizeBridgeData = (data) => {
+    data = { ...DEFAULTS, ...data };
+    data.mutations = data.mutations.slice(0, data.workflow.length + 1);
+
+    for (let i = data.mutations.length; i < data.workflow.length; i++) {
+      data.mutations.push([]);
+    }
+
+    return data;
+  };
+
   const updateBridge = (index, data) => {
     if (index === -1) index = bridges.length;
 
@@ -57,7 +71,7 @@ export default function Bridges() {
 
     const newBridges = bridges
       .slice(0, index)
-      .concat([{ ...DEFAULTS, ...data }])
+      .concat([sanitizeBridgeData(data)])
       .concat(bridges.slice(index + 1, bridges.length));
 
     setBridges(newBridges);

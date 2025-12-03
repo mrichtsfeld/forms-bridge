@@ -38,6 +38,25 @@ export default function Bridge({ data, update, remove, schema, copy, names }) {
 
   const patchState = (patch) => setState({ ...currentState.current, ...patch });
 
+  const updateWorkflow = (workflow, changeIndex) => {
+    // Update bridge mutations adding an empty collection of mutation layers in the new workflow slot position
+    const mutationIndex = changeIndex + 1;
+    let mutations = currentState.current.mutations.map((m) => m);
+
+    if (currentState.current.workflow.length > workflow.length) {
+      mutations = mutations
+        .slice(0, mutationIndex)
+        .concat(mutations.slice(mutationIndex + 1));
+    } else {
+      mutations = mutations
+        .slice(0, mutationIndex)
+        .concat([[]])
+        .concat(mutations.slice(mutationIndex));
+    }
+
+    patchState({ workflow, mutations });
+  };
+
   const nameConflict = useMemo(() => {
     if (!state.name) return false;
     if (state.name.trim() === name.current.trim()) return false;
@@ -318,15 +337,15 @@ export default function Bridge({ data, update, remove, schema, copy, names }) {
               />
               <Workflow
                 workflow={state.workflow}
-                setWorkflow={(workflow) => patchState({ workflow })}
-                setMutationMappers={(mutation, mappers) => {
+                setWorkflow={updateWorkflow}
+                setMutationMappers={(mutation, mappers) =>
                   patchState({
                     mutations: state.mutations
                       .slice(0, mutation)
                       .concat([mappers])
                       .concat(state.mutations.slice(mutation + 1)),
-                  });
-                }}
+                  })
+                }
                 open={workflowOpen}
                 setOpen={setWorkflowOpen}
               />
