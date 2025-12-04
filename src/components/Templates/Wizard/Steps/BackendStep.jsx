@@ -156,7 +156,15 @@ export default function BackendStep({
         }}
       >
         <strong>{__("Connection status", "forms-bridge")}:</strong>
-        <i style={{ fontSize: "1.5em", marginLeft: "0.25em" }}>{statusIcon}</i>
+        <i
+          style={{
+            fontSize: "1.5em",
+            marginLeft: "0.25em",
+            fontStyle: "normal",
+          }}
+        >
+          {statusIcon}
+        </i>
       </p>
       {backendOptions.length > 0 && (
         <SelectControl
