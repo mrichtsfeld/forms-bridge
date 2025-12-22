@@ -17,7 +17,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  *
  * @return array
  */
-function forms_bridge_dolibarr_country_id_from_code( $payload, $bridge ) {
+function forms_bridge_dolibarr_state_id_from_code( $payload, $bridge ) {
 	$response = $bridge
 		->patch(
 			array(
