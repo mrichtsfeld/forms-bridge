@@ -250,10 +250,10 @@ class Formidable_Integration extends BaseIntegration {
 						'description' => '',
 						'options'     => '',
 						'required'    => '0',
-						'form_id'     => $form_id,
 						'fields'      => array(),
 						'type'        => 'repeater',
 						'form_id'     => $frm_field->form_id,
+						'multiple'    => true,
 					);
 				}
 
