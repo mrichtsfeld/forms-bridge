@@ -243,17 +243,19 @@ class Formidable_Integration extends BaseIntegration {
 				}
 
 				if ( ! $repeater ) {
+					$repeater_form = FrmForm::getOne( $frm_field->form_id );
+
 					$repeater = (object) array(
-						'id'          => $frm_field->field_options['in_section'],
-						'field_key'   => $frm_field->form_name,
-						'name'        => 'repeater',
-						'description' => '',
-						'options'     => '',
-						'required'    => '0',
-						'fields'      => array(),
-						'type'        => 'repeater',
-						'form_id'     => $frm_field->form_id,
-						'multiple'    => true,
+						'id'            => $frm_field->field_options['in_section'],
+						'field_key'     => $repeater_form->form_key,
+						'name'          => $repeater_form->name,
+						'description'   => $repeater_form->description,
+						'options'       => '',
+						'required'      => '0',
+						'fields'        => array(),
+						'type'          => 'repeater',
+						'form_id'       => $frm_field->form_id,
+						'field_options' => array( 'multiple' => true ),
 					);
 				}
 
@@ -488,7 +490,7 @@ class Formidable_Integration extends BaseIntegration {
 					'additionalProperties' => false,
 				);
 			case 'select':
-				if ( $field->multiple ) {
+				if ( $field->field_options['multiple'] ) {
 					return array(
 						'type'            => 'array',
 						'items'           => array( 'type' => 'string' ),
@@ -547,7 +549,8 @@ class Formidable_Integration extends BaseIntegration {
 
 			if ( null !== $value ) {
 				if ( 'form' === $field['basetype'] ) {
-					$entry_id            = reset( maybe_unserialize( $value->meta_value ) );
+					$value               = maybe_unserialize( $value->meta_value );
+					$entry_id            = reset( $value );
 					$entry               = FrmEntry::getOne( $entry_id );
 					$embedded_form       = $this->get_form_by_id( $entry->form_id );
 					$embedded_submission = array(
@@ -556,7 +559,7 @@ class Formidable_Integration extends BaseIntegration {
 					);
 					$embedded_data       = $this->serialize_submission( $embedded_submission, $embedded_form );
 
-					$data[ $embedded_form['title'] ] = $embedded_data;
+					$data[ $field['name'] ] = $embedded_data;
 				} elseif ( 'repeater' === $field['basetype'] ) {
 					$entries_ids   = maybe_unserialize( $value->meta_value );
 					$repeater_form = $this->get_form_by_id( $field['form_id'] );
