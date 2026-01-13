@@ -115,11 +115,12 @@ class FormidableTest extends BaseIntegrationTest {
 
 		$payload = $this->serialize_submission( $submission, $form_data );
 
-		$this->assertSame( 'ESMERALDA LAGO', $payload['your-name'] );
-		$this->assertSame( '729949531', $payload['your-phone'] );
-		$this->assertSame( 'Lorem ipsum dolor sit amer', $payload['applicant_notes'] );
-		$this->assertSame( 'Option 2', $payload['position'] );
-		$this->assertTrue( $payload['acceptance'] );
+		$this->assertSame( 'ELADIO', $payload['First name'] );
+		$this->assertSame( 'CHACON', $payload['Last name'] );
+		$this->assertSame( 'wf96cchto@scientist.com', $payload['Email'] );
+		$this->assertSame( '2026-01-27', $payload['Date'] );
+		$this->assertSame( '9 AM', $payload['Hour'] );
+		$this->assertSame( '00', $payload['Minute'] );
 	}
 
 	public function test_contacts_form_serialization() {
@@ -159,10 +160,10 @@ class FormidableTest extends BaseIntegrationTest {
 
 		$payload = $this->serialize_submission( $submission, $form_data );
 
-		$this->assertSame( 'VICENTA SERRA', $payload['your-name'] );
-		$this->assertSame( 'https://www.codeccoop.org', $payload['website'] );
-		$this->assertSame( 'm', $payload['gender'] );
-		$this->assertEqualSets( array( 'Web development', 'Sys admin' ), $payload['skills'] );
+		$this->assertSame( 'hp3idrybf@yahoo.es', $payload['Your email'] );
+		$this->assertSame( 'JULIO', $payload['Your first name'] );
+		$this->assertSame( 'CLEMENTE', $payload['Your last name'] );
+		$this->assertSame( '739089195', $payload['Your phone'] );
 	}
 
 	public function test_leads_form_serialization() {
@@ -199,8 +200,11 @@ class FormidableTest extends BaseIntegrationTest {
 
 		$payload = $this->serialize_submission( $submission, $form_data );
 
-		$this->assertSame( 'VICENTA SERRA', $payload['your-name'] );
-		$this->assertSame( 'https://www.codeccoop.org', $payload['website'] );
+		$this->assertSame( 'JULIO', $payload['First name'] );
+		$this->assertSame( 'CLEMENTE', $payload['Last name'] );
+		$this->assertSame( 'hp3idrybf@yahoo.es', $payload['Email'] );
+		$this->assertSame( '739089195', $payload['Phone'] );
+		$this->assertSame( 'CUESTA DE ESPAÑA, 72, 13884, CIUDAD REAL(CIUDAD REAL)', $payload['Comments'] );
 	}
 
 	public function test_form_templates() {
