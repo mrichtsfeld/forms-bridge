@@ -366,7 +366,7 @@ class Formidable_Integration extends BaseIntegration {
 				$type = 'hidden';
 				break;
 			case 'toggle':
-				if ( $field->options[0] === '' && $field->options[1] === '1' ) {
+				if ( is_array( $field->options ) && '' === ( $field->options[0] ?? false ) && '1' === ( $field->options[1] ?? false ) ) {
 					$type = 'checkbox';
 				} else {
 					$type = 'text';
@@ -531,7 +531,7 @@ class Formidable_Integration extends BaseIntegration {
 			case 'file':
 				return null;
 			case 'toggle':
-				if ( $field->options[0] === '' && $field->options[1] === '1' ) {
+				if ( is_array( $field->options ) && '' === ( $field->options[0] ?? false ) && '1' === ( $field->options[1] ?? false ) ) {
 					$type = 'boolean';
 				} else {
 					$type = 'text';
@@ -665,7 +665,7 @@ class Formidable_Integration extends BaseIntegration {
 
 					return $value;
 				case 'toggle':
-					return $field['type'] === 'checkbox' ? boolval( $value ) : $value;
+					return 'checkbox' === $field['type'] ? boolval( $value ) : $value;
 				default:
 					return (string) $value;
 			}
