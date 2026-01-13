@@ -46,9 +46,10 @@ function _manually_load_plugin() {
 
 	/* Integrations */
 	require ABSPATH . 'wp-content/mu-plugins/contact-form-7/wp-contact-form-7.php';
+	require ABSPATH . 'wp-content/mu-plugins/formidable/formidable.php';
 	require ABSPATH . 'wp-content/mu-plugins/gravityforms/gravityforms.php';
 	require ABSPATH . 'wp-content/mu-plugins/ninja-forms/ninja-forms.php';
-	require ABSPATH . 'wp-content/mu-plugins/wpforms/wpforms.php';
+	require ABSPATH . 'wp-content/mu-plugins/wpforms-lite/wpforms.php';
 	require ABSPATH . 'wp-content/mu-plugins/woocommerce/woocommerce.php';
 
 	add_filter(
