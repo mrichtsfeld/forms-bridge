@@ -69,16 +69,42 @@ function forms_bridge_job_format_date_fields( $payload ) {
 		$separator = '/';
 	}
 
+	$year  = null;
+	$month = null;
+	$day   = null;
+
 	switch ( substr( $date_format, 0, 1 ) ) {
 		case 'y':
-			[$year, $month, $day] = explode( $separator, $date );
+			$chunks = explode( $separator, $date );
+
+			if ( 3 === count( $chunks ) ) {
+				[$year, $month, $day] = $chunks;
+			}
+
 			break;
 		case 'm':
-			[$month, $day, $year] = explode( $separator, $date );
+			$chunks = explode( $separator, $date );
+
+			if ( 3 === count( $chunks ) ) {
+				[$month, $day, $year] = $chunks;
+			}
+
 			break;
 		case 'd':
-			[$day, $month, $year] = explode( $separator, $date );
+			$chunks = explode( $separator, $date );
+
+			if ( 3 === count( $chunks ) ) {
+				[$day, $month, $year] = $chunks;
+			}
+
 			break;
+	}
+
+	if ( ! $year || ! $month || ! $day ) {
+		return new WP_Error(
+			'invalid-date',
+			__( 'Invalid date format', 'forms-bridge' )
+		);
 	}
 
 	$date = "{$year}-{$month}-{$day}";
