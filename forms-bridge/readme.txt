@@ -5,7 +5,7 @@ Tags: form integration, erp integration, crm integration, api integration, autom
 Donate link: https://buymeacoffee.com/codeccoop
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
-Stable Tag: 4.2.4
+Stable Tag: 4.2.5
 Tested up to: 6.9
 
 Seamlessly connect WordPress forms to CRMs, ERPs, and APIs — no coding required. Automate data flow with field mappers, custom fields, and workflows.
@@ -160,6 +160,11 @@ You can get support from Còdec using the [Forms Bridge support forum](https://w
 9. Debug console – Monitor and troubleshoot requests.
 
 == Changelog ==
+
+= 4.2.5 =
+* feat: integrations pro support check and polyfills
+* feat: backends endpoints introspection
+* fix: use tel inputs for phone fields
 
 = 4.2.4 =
 * feat: formidable forms integration
