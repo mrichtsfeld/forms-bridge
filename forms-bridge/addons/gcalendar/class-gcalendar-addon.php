@@ -141,7 +141,7 @@ class GCalendar_Addon extends Addon {
 	public function get_endpoints( $backend, $method = null ) {
 		$response = $this->fetch( null, $backend );
 
-		if ( is_wp_error( $response ) ) {
+		if ( is_wp_error( $response ) || empty( $response['data']['items'] ) ) {
 			return array();
 		}
 
