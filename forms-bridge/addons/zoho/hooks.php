@@ -107,7 +107,7 @@ add_filter(
 						'name'     => 'scope',
 						'label'    => __( 'Scope', 'forms-bridge' ),
 						'type'     => 'text',
-						'value'    => 'ZohoCRM.modules.ALL,ZohoCRM.settings.layouts.READ,ZohoCRM.users.READ',
+						'value'    => 'ZohoCRM.modules.ALL,ZohoCRM.settings.modules.READ,ZohoCRM.settings.layouts.READ,ZohoCRM.users.READ',
 						'required' => true,
 					),
 					array(
@@ -174,7 +174,7 @@ add_filter(
 					'name'          => '',
 					'schema'        => 'Bearer',
 					'oauth_url'     => 'https://accounts.{region}/oauth/v2',
-					'scope'         => 'ZohoCRM.modules.ALL,ZohoCRM.settings.layouts.READ,ZohoCRM.users.READ',
+					'scope'         => 'ZohoCRM.modules.ALL,ZohoCRM.settings.modules.READ,ZohoCRM.settings.layouts.READ,ZohoCRM.users.READ',
 					'client_id'     => '',
 					'client_secret' => '',
 					'access_token'  => '',

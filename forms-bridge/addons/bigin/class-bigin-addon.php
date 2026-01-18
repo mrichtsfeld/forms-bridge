@@ -104,6 +104,38 @@ class Bigin_Addon extends Zoho_Addon {
 	}
 
 	/**
+	 * Performs an introspection of the backend API and returns a list of available endpoints.
+	 *
+	 * @param string      $backend Target backend name.
+	 * @param string|null $method HTTP method.
+	 *
+	 * @return array|WP_Error
+	 */
+	public function get_endpoints( $backend, $method = null ) {
+		$bridge = new Bigin_Form_Bridge(
+			array(
+				'name'     => '__bigin-' . time(),
+				'endpoint' => '/bigin/v2/settings/modules',
+				'method'   => 'GET',
+				'backend'  => $backend,
+			)
+		);
+
+		$response = $bridge->submit();
+
+		if ( is_wp_error( $response ) ) {
+			return array();
+		}
+
+		return array_map(
+			function ( $module ) {
+				return '/bigin/v2/' . $module['api_name'];
+			},
+			$response['data']['modules'],
+		);
+	}
+
+	/**
 	 * Performs an introspection of the backend endpoint and returns API fields.
 	 *
 	 * @param string      $endpoint API endpoint.
