@@ -140,7 +140,7 @@ return array(
 			array(
 				'name'  => 'phone',
 				'label' => __( 'Your phone', 'forms-bridge' ),
-				'type'  => 'text',
+				'type'  => 'tel',
 			),
 			array(
 				'name'     => 'date',

@@ -108,7 +108,7 @@ return array(
 			array(
 				'label'    => __( 'Phone', 'forms-bridge' ),
 				'name'     => 'phone',
-				'type'     => 'text',
+				'type'     => 'tel',
 				'required' => true,
 			),
 			array(

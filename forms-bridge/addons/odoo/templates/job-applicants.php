@@ -122,13 +122,13 @@ return array(
 			array(
 				'name'     => 'your-email',
 				'label'    => __( 'Your email', 'forms-bridge' ),
-				'type'     => 'text',
+				'type'     => 'email',
 				'required' => true,
 			),
 			array(
 				'name'     => 'your-phone',
 				'label'    => __( 'Your phone', 'forms-bridge' ),
-				'type'     => 'text',
+				'type'     => 'tel',
 				'required' => true,
 			),
 			array(

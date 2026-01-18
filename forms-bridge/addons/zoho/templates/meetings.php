@@ -146,7 +146,7 @@ return array(
 			array(
 				'name'  => 'Phone',
 				'label' => __( 'Phone', 'forms-bridge' ),
-				'type'  => 'text',
+				'type'  => 'tel',
 			),
 			array(
 				'name'     => 'date',
