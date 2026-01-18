@@ -765,9 +765,18 @@ class Ninja_Integration extends BaseIntegration {
 					$nf_fields[] = $this->date_field( ...$args );
 					break;
 				case 'file':
-					$args[]      = $field['is_multi'] ?? false;
-					$args[]      = $field['filetypes'] ?? '';
-					$nf_fields[] = $this->upload_field( ...$args );
+					if ( ! class_exists( 'NF_FU_File_Uploads' ) ) {
+						if ( function_exists( 'NF_File_Uploads' ) ) {
+							NF_File_Uploads();
+						}
+					}
+
+					if ( class_exists( 'NF_FU_File_Uploads' ) ) {
+						$args[]      = $field['is_multi'] ?? false;
+						$args[]      = $field['filetypes'] ?? '';
+						$nf_fields[] = $this->upload_field( ...$args );
+					}
+
 					break;
 				case 'hidden':
 					if ( isset( $field['value'] ) ) {
