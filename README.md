@@ -2,9 +2,7 @@
 
 [![Plugin version](https://img.shields.io/wordpress/plugin/v/forms-bridge)](https://wordpress.org/plugins/forms-bridge/)
 ![GitHub Actions Tests Workflow Status](https://img.shields.io/github/actions/workflow/status/codeccoop/forms-bridge/tests.yml?label=tests)
-
-Bridge your WordPress forms without code, add custom fields, use field mappers,
-set up a workflow and make your data flow seamlessly to your backend.
+Seamlessly connect WordPress forms to CRMs, ERPs, and APIs — no coding required. Automate data flow with field mappers, custom fields, and workflows.
 
 ## Bridges
 
@@ -30,31 +28,48 @@ Forms Bridge supports the following form builders:
 - [Ninja Forms](https://wordpress.org/plugins/ninja-forms/)
 - [WooCommerce](https://wordpress.org/plugins/woocommerce)
 
-## Addons
+## Add-ons
 
-Forms Bridge comes with free addons. Each addon adds to the plugin new bridges
+Forms Bridge comes with free add-ons. Each add-on adds to the plugin new bridges
 to work with specific APIs, new workflow jobs and bridge templates.
 
-Forms Bridge has the following addons:
+Forms Bridge has the following add-ons:
 
-- [REST API](https://formsbridge.codeccoop.org/documentation/#backends)
+**📊 CRM & Sales**
+
 - [Bigin](https://formsbridge.codeccoop.org/documentation/bigin/)
-- [Brevo](https://formsbridge.codeccoop.org/documentation/brevo/)
-- [Dolibarr](https://formsbridge.codeccoop.org/documentation/dolibarr/)
-- [FinanCoop](https://formsbridge.codeccoop.org/documentation/financoop/)
-- [Google Calendar](https://formsbridge.codeccoop.org/documentation/google-calendar/)
-- [Google Sheets](https://formsbridge.codeccoop.org/documentation/google-sheets/)
-- [Holded](https://formsbridge.codeccoop.org/documentation/holded/)
-- [Listmonk](https://formsbridge.codeccoop.org/documentation/listmonk/)
-- [Nextcloud](https://formsbridge.codeccoop.org/documentation/nextcloud/)
-- [Mailchimp](https://formsbridge.codeccoop.org/documentation/mailchimp/)
-- [Odoo](https://formsbridge.codeccoop.org/documentation/odoo/)
-- [Rocket.Chat](https://formsbridge.codeccoop.org/documentation/rocket-chat/)
-- [Slack](https://formsbridge.codeccoop.org/documentation/slack/)
 - [SuiteCRM](https://formsbridge.codeccoop.org/documentation/suitecrm/)
 - [Vtiger](https://formsbridge.codeccoop.org/documentation/vtiger/)
 - [Zoho CRM](https://formsbridge.codeccoop.org/documentation/zoho-crm/)
+
+**📦 ERP & Accounting**
+
+- [Dolibarr](https://formsbridge.codeccoop.org/documentation/dolibarr/)
+- [FinanCoop](https://formsbridge.codeccoop.org/documentation/financoop/)
+- [Holded](https://formsbridge.codeccoop.org/documentation/holded/)
+- [Odoo](https://formsbridge.codeccoop.org/documentation/odoo/)
+
+**📧 Marketing & Email**
+
+- [Brevo](https://formsbridge.codeccoop.org/documentation/brevo/)
+- [Mailchimp](https://formsbridge.codeccoop.org/documentation/mailchimp/)
+- [Listmonk](https://formsbridge.codeccoop.org/documentation/listmonk/)
+
+**🗓️ Productivity**
+
+- [Google Calendar](https://formsbridge.codeccoop.org/documentation/google-calendar/)
+- [Google Sheets](https://formsbridge.codeccoop.org/documentation/google-sheets/)
+- [Nextcloud](https://formsbridge.codeccoop.org/documentation/nextcloud/)
+
+**📨 Messaging & Collaboration**
+
+- [Rocket.Chat](https://formsbridge.codeccoop.org/documentation/rocket-chat/)
+- [Slack](https://formsbridge.codeccoop.org/documentation/slack/)
 - [Zulip](https://formsbridge.codeccoop.org/documentation/zulip/)
+
+**Need a custom integration?**
+
+Connect to any custom API using standard HTTP methods and authentication using the abstract **REST API** add-on. Perfect for integrating with proprietary or less common systems.
 
 ## Backends
 
