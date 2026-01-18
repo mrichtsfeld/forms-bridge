@@ -346,7 +346,7 @@ class REST_Settings_Controller extends Base_Controller {
 				"/{$addon}/backend/endpoints",
 				array(
 					array(
-						'methods'              => WP_REST_Server::CREATABLE,
+						'methods'             => WP_REST_Server::CREATABLE,
 						'callback'            => static function ( $request ) use ( $addon ) {
 							return self::get_backend_endpoints( $addon, $request );
 						},
