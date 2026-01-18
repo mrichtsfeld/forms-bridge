@@ -390,4 +390,8 @@ class NinjaFormsTest extends BaseIntegrationTest {
 		);
 		$this->assertEquals( 3, $payload['starrating_1762818417160'] );
 	}
+
+	public function test_form_templates() {
+		$this->run_test_form_templates();
+	}
 }

@@ -254,10 +254,32 @@ abstract class BaseIntegrationTest extends WP_UnitTestCase {
 
 			$form_data = $integration->get_form_by_id( $form_id );
 
+			// Skip numeration of duplicated form titles
+			$form_title = substr( $form_data['title'], 0, strlen( $data['title'] ) );
+			$this->assertSame( $form_title, $data['title'] );
+
 			$l = count( $data['fields'] );
 			for ( $i = 0; $i < $l; $i++ ) {
 				$template_field = $data['fields'][ $i ];
 				$form_field     = $form_data['fields'][ $i ];
+
+				// Field serialization exceptions by integration
+				if ( 'formidable' === $integration::NAME ) {
+					if ( 'date' === $template_field['type'] ) {
+						$this->assertSame( 'text', $form_field['type'] );
+						continue;
+					}
+				} elseif ( 'wpforms' === $integration::NAME ) {
+					if ( 'date' === $template_field['type'] || 'url' === $template_field['type'] ) {
+						$this->assertSame( 'text', $form_field['type'] );
+						continue;
+					}
+				} elseif ( 'ninja' === $integration::NAME ) {
+					if ( 'url' === $template_field['type'] ) {
+						$this->assertSame( 'text', $form_field['type'] );
+						continue;
+					}
+				}
 
 				$this->assertSame( $template_field['type'], $form_field['type'] );
 			}

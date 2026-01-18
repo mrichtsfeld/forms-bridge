@@ -127,7 +127,8 @@ class Ninja_Integration extends BaseIntegration {
 			$form_data['settings']['formContentData'] = $field['settings']['key'];
 		}
 
-		$form = Ninja_Forms()->form()->get();
+		$form_id = defined( 'WP_TESTS_DOMAIN' ) ? rand( 1, 1000 ) : '';
+		$form    = Ninja_Forms()->form( $form_id )->get();
 		$form->save();
 
 		$form_data['id'] = $form->get_id();

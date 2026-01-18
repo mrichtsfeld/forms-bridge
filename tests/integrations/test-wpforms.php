@@ -276,4 +276,8 @@ class WPFormsTest extends BaseIntegrationTest {
 			$payload['Which time blocks would you like to reserve?']
 		);
 	}
+
+	public function test_form_templates() {
+		$this->run_test_form_templates();
+	}
 }

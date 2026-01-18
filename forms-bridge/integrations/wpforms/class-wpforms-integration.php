@@ -412,7 +412,7 @@ class WPForms_Integration extends BaseIntegration {
 				'conditional' => false,
 				'format'      => $format,
 				'children'    => array_values( $children ),
-				'schema'      => $this->field_value_schema( $field, $children, $type ),
+				'schema'      => $this->field_value_schema( $field, $type, $children ),
 				'basetype'    => $field['type'],
 			),
 			$field,
@@ -455,12 +455,12 @@ class WPForms_Integration extends BaseIntegration {
 	 * Gets the field value JSON schema.
 	 *
 	 * @param array  $field Field instance.
-	 * @param array  $children Children fields.
 	 * @param string $norm_type Normalized field type.
+	 * @param array  $children Children fields.
 	 *
 	 * @return array JSON schema of the value of the field.
 	 */
-	private function field_value_schema( $field, $children = array(), $norm_type ) {
+	private function field_value_schema( $field, $norm_type, $children = array() ) {
 		switch ( $field['type'] ) {
 			case 'name':
 			case 'email':
