@@ -32,7 +32,7 @@
       {
         "name": "phone",
         "label": "Your phone",
-        "type": "text"
+        "type": "tel"
       }
     ]
   },

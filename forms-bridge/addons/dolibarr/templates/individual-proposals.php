@@ -111,7 +111,7 @@ return array(
 			array(
 				'name'  => 'phone',
 				'label' => __( 'Phone', 'forms-bridge' ),
-				'type'  => 'text',
+				'type'  => 'tel',
 			),
 			array(
 				'name'     => 'address',

@@ -109,7 +109,7 @@ return array(
 			array(
 				'name'     => 'your-email',
 				'label'    => __( 'Your email', 'forms-bridge' ),
-				'type'     => 'text',
+				'type'     => 'email',
 				'required' => true,
 			),
 			array(

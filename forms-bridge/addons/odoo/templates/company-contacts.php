@@ -144,7 +144,7 @@ return array(
 			array(
 				'label' => __( 'Your phone', 'forms-bridge' ),
 				'name'  => 'phone',
-				'type'  => 'text',
+				'type'  => 'tel',
 			),
 		),
 	),

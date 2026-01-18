@@ -88,6 +88,15 @@ function _manually_load_plugin() {
 		20,
 	);
 
+	// Ninja forms hooks
+	add_action(
+		'init',
+		function () {
+			Ninja_Forms()->activation();
+		},
+		9,
+	);
+
 	/* Plugin tests */
 	require dirname( __DIR__ ) . '/forms-bridge/deps/plugin/tests/bootstrap.php';
 }
