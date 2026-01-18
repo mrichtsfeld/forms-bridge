@@ -1,109 +1,165 @@
-=== Forms Bridge - Infinite integrations ===
-Contributors: codeccoop
-Tags: forms, integration, erp, crm, rest api
-Donate link: https://buymeacoffee.com/codeccoop
-License: GPLv2 or later
-License URI: http://www.gnu.org/licenses/gpl-2.0.html
-Stable Tag: 4.2.4
-Tested up to: 6.9
-
-Bridge your WordPress forms without code, add custom fields, use field mappers, set up a workflow and make your data flow seamlessly to your backend.
-
-== Bridges ==
-
-Think of a bridge as a pipeline through which your form submissions data flows to your backend or service. In the middle, you can add custom fields to the form submissions, use field mappers to rename and mutate your form responses, or use workflow jobs to process the data before it is sent over the wire. With bridges you can connect your WordPress forms to any kind of backend, it doesn't matter if it is a CRM, an ERP, a booking system or an email marketing platform, the only requirement is an HTTP API. If it has an API it can be bridged!
-
-== Form builders ==
-
-Form builders are well known plugins that add forms to WordPress. We do bridges, let them do the forms and then work together to make your business work with ease.
-
-Forms Bridge supports the following form builders:
-
-* [Contact Form 7](https://wordpress.org/plugins/contact-form-7/)
-* [Formidable Forms](https://wordpress.org/plugins/formidable/)
-* [GravityForms](https://www.gravityforms.com)
-* [WP Forms](https://wpforms.com/)
-* [Ninja Forms](https://wordpress.org/plugins/ninja-forms/)
-* [WooCommerce](https://wordpress.org/plugins/woocommerce)
-
-== Addons ==
-
-Forms Bridge comes with free addons. Each addon adds to the plugin new bridges to work with specific APIs, new workflow jobs and bridge templates.
-
-Forms Bridge has the following addons:
-
-* [REST API](https://formsbridge.codeccoop.org/documentation/#backends)
-* [Bigin](https://formsbridge.codeccoop.org/documentation/bigin/)
-* [Brevo](https://formsbridge.codeccoop.org/documentation/brevo/)
-* [Dolibarr](https://formsbridge.codeccoop.org/documentation/dolibarr/)
-* [FinanCoop](https://formsbridge.codeccoop.org/documentation/financoop/)
-* [Google Calendar](https://formsbridge.codeccoop.org/documentation/google-calendar/)
-* [Google Sheets](https://formsbridge.codeccoop.org/documentation/google-sheets/)
-* [Holded](https://formsbridge.codeccoop.org/documentation/holded/)
-* [Listmonk](https://formsbridge.codeccoop.org/documentation/listmonk/)
-* [Nextcloud](https://formsbridge.codeccoop.org/documentation/nextcloud/)
-* [Mailchimp](https://formsbridge.codeccoop.org/documentation/mailchimp/)
-* [Odoo](https://formsbridge.codeccoop.org/documentation/odoo/)
-* [Rocket.Chat](https://formsbridge.codeccoop.org/documentation/rocket-chat/)
-* [Slack](https://formsbridge.codeccoop.org/documentation/slack/)
-* [SuiteCRM](https://formsbridge.codeccoop.org/documentation/suitecrm/)
-* [Vtiger](https://formsbridge.codeccoop.org/documentation/vtiger/)
-* [Zoho CRM](https://formsbridge.codeccoop.org/documentation/zoho-crm/)
-* [Zulip](https://formsbridge.codeccoop.org/documentation/zulip/)
-
-== Backends ==
-
-In Forms Bridge, a backend is a set of configurations that handles the information required to get your form submissions bridged over HTTP requests to remote systems.
-
-To register a new backend you only have to set 3 fields:
-
-1. A unique name for the new connection
-2. The URL of your backend
-3. An array of HTTP headers with connection metadata and credentials
-4. Optional, an HTTP authentication credential (Basic, Bearer, etc)
-
-Once registered, you can reuse your backend connection on your form bridges.
-
-== Custom fields ==
-
-Custom fields are data that will be added the bridge payload. Use them to store private data you don’t want to place on your public forms, like user emails, or config values, like product IDs or lead tags.
-
-== Field Mappers ==
-
-Field mappers are mutations with which you can rename your form submission fields and transform its values. Use them to make your form submissions to fit your backend API endpoint interface.
-
-== Workflows ==
-
-Make your form submissions flow through a chain of jobs that pre-process the data before it was sent over the wire. Think of workflow as a system to set up automations to run on each form submission.
-
-== Templates ==
-
-To streamline the bridge setup process, Forms Bridge comes packed with templates. Templates are blueprints of bridges you can use to set up your form integrations in a matter of minutes.
-
-== Docs ==
-
-Browse the plugin's documentation on [formsbridge.codeccoop.org](https://formsbridge.codeccoop.org/documentation/)
-
-== Links ==
-
-* [Official website](https://formsbridge.codeccoop.org/)
-* [GitHub](https://github.com/codeccoop/forms-bridge/)
-* [Còdec](https://www.codeccoop.org)
-* [Other plugins](https://profiles.wordpress.org/codeccoop/#content-plugins)
-
-== Screenshots ==
-
-1. Settings page
-2. Backends
-3. Bridges
-4. Custom fields
-5. Field mappers
-6. Workflows
-7. Job editor
-8. Template wizard
-9. Debug console
-
-== Changelog ==
+=== Forms Bridge - Infinite integrations ===
+
+Contributors: codeccoop
+Tags: form integration, erp integration, crm integration, api integration, automation
+Donate link: https://buymeacoffee.com/codeccoop
+License: GPLv2 or later
+License URI: http://www.gnu.org/licenses/gpl-2.0.html
+Stable Tag: 4.2.4
+Tested up to: 6.9
+
+Seamlessly connect WordPress forms to CRMs, ERPs, and APIs — no coding required. Automate data flow with field mappers, custom fields, and workflows.
+
+== Description ==
+
+**Struggling to connect your WordPress forms to your CRM, ERP, or other business tools?**
+
+Forms Bridge lets you automate data flow from WordPress forms to any API-powered system—without writing a single line of code.
+
+Whether you use Zoho, Odoo, Dolibarr, Zulip, or a custom backend, Forms Bridge makes it easy to map fields, add custom data, and set up workflows so your form submissions go exactly where you need them. **If it has an API it can be bridged!**
+
+**Why use Forms Bridge**
+
+✅ No code required – Set up integrations with a user-friendly interface.
+✅ Works with your favorite form plugins – Contact Form 7, Gravity Forms, WPForms, Ninja Forms, WooCommerce, and Formidable Forms.
+✅ 15+ ready-to-use add-ons – Connect to Zoho, Odoo, Dolibarr, Google Sheets, Slack, Mailchimp, and more.
+✅ Advanced data mapping – Rename, transform, and enrich form data before sending it.
+✅ Workflow automation – Pre-process submissions with custom jobs.
+✅ Reusable templates – Get started in minutes with pre-built blueprints.
+
+**Try Forms Bridge today and say goodbye to manual data entry!**
+
+== Form builders ==
+
+Form builders are well known plugins that add forms to WordPress. We do bridges, let them do the forms and then work together to make your business work with ease.
+
+Forms Bridge supports the following form builders:
+
+* [Contact Form 7](https://wordpress.org/plugins/contact-form-7/)
+* [Formidable Forms](https://wordpress.org/plugins/formidable/)
+* [GravityForms](https://www.gravityforms.com)
+* [WP Forms](https://wordpress.org/plugins/wpforms-lite/)
+* [Ninja Forms](https://wordpress.org/plugins/ninja-forms/)
+* [WooCommerce](https://wordpress.org/plugins/woocommerce)
+
+== Add-ons ==
+
+Forms Bridge comes with free add-ons. Each add-on add to the plugin new bridges to work with specific APIs, new workflow jobs and bridge templates.
+
+Forms Bridge has the following add-ons:
+
+**📊 CRM & Sales**
+
+* [Bigin](https://formsbridge.codeccoop.org/documentation/bigin/)
+* [SuiteCRM](https://formsbridge.codeccoop.org/documentation/suitecrm/)
+* [Vtiger](https://formsbridge.codeccoop.org/documentation/vtiger/)
+* [Zoho CRM](https://formsbridge.codeccoop.org/documentation/zoho-crm/)
+
+**📦 ERP & Accounting**
+
+* [Dolibarr](https://formsbridge.codeccoop.org/documentation/dolibarr/)
+* [FinanCoop](https://formsbridge.codeccoop.org/documentation/financoop/)
+* [Holded](https://formsbridge.codeccoop.org/documentation/holded/)
+* [Odoo](https://formsbridge.codeccoop.org/documentation/odoo/)
+
+**📧 Marketing & Email**
+
+* [Brevo](https://formsbridge.codeccoop.org/documentation/brevo/)
+* [Mailchimp](https://formsbridge.codeccoop.org/documentation/mailchimp/)
+* [Listmonk](https://formsbridge.codeccoop.org/documentation/listmonk/)
+
+**🗓️ Productivity**
+
+* [Google Calendar](https://formsbridge.codeccoop.org/documentation/google-calendar/)
+* [Google Sheets](https://formsbridge.codeccoop.org/documentation/google-sheets/)
+* [Nextcloud](https://formsbridge.codeccoop.org/documentation/nextcloud/)
+
+**📨 Messaging & Collaboration**
+
+* [Rocket.Chat](https://formsbridge.codeccoop.org/documentation/rocket-chat/)
+* [Slack](https://formsbridge.codeccoop.org/documentation/slack/)
+* [Zulip](https://formsbridge.codeccoop.org/documentation/zulip/)
+
+**Need a custom integration?**
+
+Connect to any custom API using standard HTTP methods and authentication using the abstract **REST API** add-on. Perfect for integrating with proprietary or less common systems.
+
+== Features ==
+
+**Bridges**
+Think of a bridge as a pipeline through which your form submissions data flows to your backend or service.
+
+**Backends**
+Think of it as a "connection profile" for your API. Save your API URL, headers, and credentials once, then reuse them across all your bridges. No need to re-enter details every time!
+
+**Credentials**
+Authenticate your HTTP requests using API keys, Basic Auth, OAuth, RPC credentials and Digest Auth.
+
+**Custom fields & mappers**
+Add hidden data (like user IDs or product codes) and rename/transform fields to match your API’s requirements.
+
+**Workflows**
+Chain together jobs to pre-process data before it’s sent. Filter, validate, enrich submissions automatically.
+
+**Templates**
+Use pre-built templates to integrate WooCommerce orders, CRM leads, or calendar events in minutes.
+
+**Debugging console**
+Monitor requests, responses, and errors in real time.
+
+== Links ==
+
+* [🌐 Official website](https://formsbridge.codeccoop.org/)
+* [📚 Documentation](https://formsbridge.codeccoop.org/documentation/)
+* [💻 GitHub](https://github.com/codeccoop/forms-bridge/)
+* [🏢 Còdec](https://www.codeccoop.org)
+* [⭐ Rate Forms Bridge](https://wordpress.org/plugins/forms-bridge/#reviews)
+
+== Frequently Asked Questions ==
+
+= Does Forms Bridge work with my form plugin? =
+
+Yes! We support Contact Form 7, Gravity Forms, WPForms, Ninja Forms, Formidable Forms, and WooCommerce. These are the most popular form builders in WordPress.
+
+At the same time, we are currently working on support for new WordPress form builders. Get in touch with us if you want a new form builder integration for Forms Bridge.
+
+= Do I need to know how to code? =
+
+Nope! Forms Bridge is designed to set up complex HTTP configurations and pipelines of data transformation without the need to write code.
+
+In addition, you can extend Forms Bridge with code using its hooks and PHP APIs.
+
+= Can I connect to my custom API? =
+
+Absolutely! Forms Bridge supports any HTTP API, whether it’s a cloud service or a self-hosted solution (like a Dockerized API on your VPS). If your API uses standard HTTP methods (GET, POST, PUT, etc.), Forms Bridge can connect to it.
+
+Maybe a little understanding about how HTTP and HTTP-like APIs works will be required to set up your custom integrations.
+
+= What if my API requires authentication? =
+
+Forms Bridge supports API keys, Basic Auth, OAuth, RPC credentials, Digest Auth and custom headers.
+
+= Is there a free trial? =
+
+Forms Bridge, including all its add-ons, is free to use.
+
+= How can I get support? =
+
+You can get support from Còdec using the [Forms Bridge support forum](https://wordpress.org/support/plugin/forms-bridge/) for free. We aim to respond to all inquiries within 24-48 hours.
+
+== Screenshots ==
+
+1. Settings page – Configure global plugin options.
+2. Backends – Save and reuse API connection details.
+3. Bridges – Create pipelines for your form data.
+4. Custom fields – Add hidden data to your submissions.
+5. Field mappers – Rename and transform form fields.
+6. Workflows – Automate data processing with jobs.
+7. Job editor– Customize how data is prepared.
+8. Template wizard – Set up integrations in minutes.
+9. Debug console – Monitor and troubleshoot requests.
+
+== Changelog ==
 
 = 4.2.4 =
 * feat: formidable forms integration
@@ -167,115 +223,116 @@ Browse the plugin's documentation on [formsbridge.codeccoop.org](https://formsbr
 * feat: include textarea to the standard field types
 = 4.0.5 =
 * fix: prepare mappers loop introduced in 4.0.4
-= 4.0.4 =
-* feat: add remuneration_type form field on financoop subscription request template
-* fix: minnor frontend fixes and improvements
-* fix: financoop shortcode, templates and jobs
-* fix: template config loading race conditions
-
-= 4.0.3 =
-* fix: load text domain warnings
-
-= 4.0.2 =
-* feat: mailchimp api url selector
-
-= 4.0.1 =
-* feat: rename form integrations to form builders
-* feat: oauth grant as GET requests
-* feat: dolibarr, odoo and holded sync products templates
-* feat: brevo woo orders template
-* fix: migrations enqueuement loop
-
-= 4.0.0 =
-* feat: Workflow jobs editor
-* feat: Nextcloud addon
-* fix: Edge case of mutations and fingers
-* feat: HTTP authentication
-* feat: Admin UI refactor
-* feat: Wipe config button
-* feat: Settings API refactor
-* feat: Zoho and Google Oauth web based credentials
-* feat: drop support for Google service credentials
-* feat: drop support for Zoho Self Client credentials
-
-= 3.5.4 =
-* fix: use conditional mappers on stringify attachments
-* fix: cast value type for join mutations
-
-= 3.5.3 =
-* feat: nename gsheet default backend
-* fix: bridge request filter callback removal
-
-= 3.5.2 =
-* feat: new google sheets woocomerce orders template
-* feat: disable default payload prune for gsheet bridges
-* feat: update gsheet composer dependencies
-* fix: remove php warnings on zoho and listmonk addons
-
-= 3.5.1 =
-* feat: improve dolibarr next code and product search api calls
-* feat: add is_bridged woocommerce order meta data
-* feat: new validate order job and template for the dolibarr addon
-* feat: new delivered order template for the odoo addon
-* feat: changes on the holded woocommerce template
-
-= 3.5.0 =
-* fix: woocommerce payload schema
-* feat: woocommerce bridge templates support
-* feat: woocommerce templates for odoo, dolibarr, holded, bigin, brevo, mailchimp and zoho
-* feat: jon finger expansions
-* feat: conditional json finger pointers
-* feat: improvements on the workflows panel UI
-* feat: backend and bridges json exports
-
-= 3.4.3 =
-* feat: bridge template descriptions
-* feat: listmonk skip subscription job
-
-= 3.4.2 =
-* fix: holded appointments template jobs
-* fix: typos from odoo workflow job descriptions
-* feat: add new chapters to the plugin's readme
-* feat: settings sanitization with defaults recovery
-
-= 3.4.1 =
-* feat: holded quotation templates
-* feat: holded API introspection based on swagger data
-* fix: bridge api schema invalidation
-* feat: api fields button with disabled state
-
-= 3.4.0 =
-* feat: odoo quotation templates
-* feat: dolibarr quotation templates
-* feat: country id odoo workflow job
-* feat: gmt date tags
-* feat: addons data autoload
-* feat: odoo state id job
-* feat: skip email list subscription jobs
-* fix: firefox backend state updates on firefox
-
-= 3.3.5 =
-* feat: support for ninja file fields and conditionals
-
-= 3.3.4 =
-* fix: does not skip empty array submissions on submission filter
-* feat: remove gf private uploads module
-* fix: scroll to bottom on mutations/custom fields tables
-
-= 3.3.3 =
-* feat: remove minLength constraint from bridge schema
-* feat: set null value on mappers with nowhere jsonfinger pointers
-
-= 3.3.2 =
-* feat: update plugin urls and readme
-* feat: remote assets from gitlab
-* fix: mailchimp template wizard
-* feat: update credits, donation link and screenshots
-
-= 3.3.1 =
-* fix: odoo api function bridge patches
-* feat: plugin screenshots
-* feat: update readme and plugin official url
-
-= 3.3.0 =
-* feat: introspection api
+
+= 4.0.4 =
+* feat: add remuneration_type form field on financoop subscription request template
+* fix: minnor frontend fixes and improvements
+* fix: financoop shortcode, templates and jobs
+* fix: template config loading race conditions
+
+= 4.0.3 =
+* fix: load text domain warnings
+
+= 4.0.2 =
+* feat: mailchimp api url selector
+
+= 4.0.1 =
+* feat: rename form integrations to form builders
+* feat: oauth grant as GET requests
+* feat: dolibarr, odoo and holded sync products templates
+* feat: brevo woo orders template
+* fix: migrations enqueuement loop
+
+= 4.0.0 =
+* feat: Workflow jobs editor
+* feat: Nextcloud addon
+* fix: Edge case of mutations and fingers
+* feat: HTTP authentication
+* feat: Admin UI refactor
+* feat: Wipe config button
+* feat: Settings API refactor
+* feat: Zoho and Google Oauth web based credentials
+* feat: drop support for Google service credentials
+* feat: drop support for Zoho Self Client credentials
+
+= 3.5.4 =
+* fix: use conditional mappers on stringify attachments
+* fix: cast value type for join mutations
+
+= 3.5.3 =
+* feat: nename gsheet default backend
+* fix: bridge request filter callback removal
+
+= 3.5.2 =
+* feat: new google sheets woocomerce orders template
+* feat: disable default payload prune for gsheet bridges
+* feat: update gsheet composer dependencies
+* fix: remove php warnings on zoho and listmonk addons
+
+= 3.5.1 =
+* feat: improve dolibarr next code and product search api calls
+* feat: add is_bridged woocommerce order meta data
+* feat: new validate order job and template for the dolibarr addon
+* feat: new delivered order template for the odoo addon
+* feat: changes on the holded woocommerce template
+
+= 3.5.0 =
+* fix: woocommerce payload schema
+* feat: woocommerce bridge templates support
+* feat: woocommerce templates for odoo, dolibarr, holded, bigin, brevo, mailchimp and zoho
+* feat: jon finger expansions
+* feat: conditional json finger pointers
+* feat: improvements on the workflows panel UI
+* feat: backend and bridges json exports
+
+= 3.4.3 =
+* feat: bridge template descriptions
+* feat: listmonk skip subscription job
+
+= 3.4.2 =
+* fix: holded appointments template jobs
+* fix: typos from odoo workflow job descriptions
+* feat: add new chapters to the plugin's readme
+* feat: settings sanitization with defaults recovery
+
+= 3.4.1 =
+* feat: holded quotation templates
+* feat: holded API introspection based on swagger data
+* fix: bridge api schema invalidation
+* feat: api fields button with disabled state
+
+= 3.4.0 =
+* feat: odoo quotation templates
+* feat: dolibarr quotation templates
+* feat: country id odoo workflow job
+* feat: gmt date tags
+* feat: addons data autoload
+* feat: odoo state id job
+* feat: skip email list subscription jobs
+* fix: firefox backend state updates on firefox
+
+= 3.3.5 =
+* feat: support for ninja file fields and conditionals
+
+= 3.3.4 =
+* fix: does not skip empty array submissions on submission filter
+* feat: remove gf private uploads module
+* fix: scroll to bottom on mutations/custom fields tables
+
+= 3.3.3 =
+* feat: remove minLength constraint from bridge schema
+* feat: set null value on mappers with nowhere jsonfinger pointers
+
+= 3.3.2 =
+* feat: update plugin urls and readme
+* feat: remote assets from gitlab
+* fix: mailchimp template wizard
+* feat: update credits, donation link and screenshots
+
+= 3.3.1 =
+* fix: odoo api function bridge patches
+* feat: plugin screenshots
+* feat: update readme and plugin official url
+
+= 3.3.0 =
+* feat: introspection api
