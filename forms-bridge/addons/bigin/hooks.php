@@ -43,12 +43,12 @@ add_filter(
 						'ref'   => '#credential',
 						'name'  => 'scope',
 						'value' =>
-							'ZohoBigin.modules.ALL,ZohoBigin.settings.layouts.READ,ZohoBigin.users.READ',
+							'ZohoBigin.modules.ALL,ZohoBigin.settings.modules.READ,ZohoBigin.settings.layouts.READ,ZohoBigin.users.READ',
 					),
 				),
 				'credential' => array(
 					'scope' =>
-						'ZohoBigin.modules.ALL,ZohoBigin.settings.layouts.READ,ZohoBigin.users.READ',
+						'ZohoBigin.modules.ALL,ZohoBigin.settings.modules.READ,ZohoBigin.settings.layouts.READ,ZohoBigin.users.READ',
 				),
 			),
 			$defaults,

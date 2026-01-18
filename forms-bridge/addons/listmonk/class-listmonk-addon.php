@@ -78,34 +78,50 @@ class Listmonk_Addon extends Addon {
 	/**
 	 * Fetch available models from the OAS spec.
 	 *
-	 * @param Backend $backend HTTP backend object.
+	 * @param string      $backend Backend name.
+	 * @param string|null $method HTTP method.
 	 *
 	 * @return array
 	 *
 	 * @todo Implementar el endpoint de consulta de endpoints disponibles.
 	 */
-	public function get_endpoints( $backend ) {
+	public function get_endpoints( $backend, $method = null ) {
 		if ( function_exists( 'yaml_parse' ) ) {
 			$response = wp_remote_get( self::OAS_URL );
 
 			if ( ! is_wp_error( $response ) ) {
 				$data = yaml_parse( $response['body'] );
 
-				$oa_explorer = new OpenAPI( $data );
-				$paths       = $oa_explorer->paths();
+				if ( $data ) {
+					$oa_explorer = new OpenAPI( $data );
+					$paths       = $oa_explorer->paths();
 
-				return array_map(
-					function ( $path ) {
-						return '/api' . $path;
-					},
-					$paths
-				);
+					if ( $method ) {
+						$method       = strtolower( $method );
+						$method_paths = array();
+
+						foreach ( $paths as $path ) {
+							$path_obj = $oa_explorer->path_obj( $path );
+
+							if ( $path_obj && isset( $path_obj[ $method ] ) ) {
+								$method_paths[] = $path;
+							}
+						}
+
+						$paths = $method_paths;
+					}
+
+					return array_map(
+						function ( $path ) {
+							return '/api' . $path;
+						},
+						$paths
+					);
+				}
 			}
 		}
 
-		return array(
-			'/api/subscribers',
-		);
+		return array( '/api/subscribers' );
 	}
 
 	/**

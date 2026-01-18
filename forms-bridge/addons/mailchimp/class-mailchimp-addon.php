@@ -77,6 +77,62 @@ class Mailchimp_Addon extends Addon {
 	}
 
 	/**
+	 * Performs an introspection of the backend API and returns a list of available endpoints.
+	 *
+	 * @param string      $backend Target backend name.
+	 * @param string|null $method HTTP method.
+	 *
+	 * @return array|WP_Error
+	 */
+	public function get_endpoints( $backend, $method = null ) {
+		$response = wp_remote_get(
+			self::SWAGGER_URL,
+			array(
+				'headers' => array(
+					'Accept'     => 'application/json',
+					'Host'       => 'mailchimp.com',
+					'Referer'    => 'https://mailchimp.com/developer/marketing/api/',
+					'User-Agent' => 'Mozilla/5.0 (X11; Linux x86_64; rv:144.0) Gecko/20100101 Firefox/144.0',
+				),
+			),
+		);
+
+		if ( ! is_wp_error( $response ) ) {
+			$data = json_decode( $response['body'], true );
+
+			if ( $data ) {
+				$oa_explorer = new OpenAPI( $data );
+
+				$paths = $oa_explorer->paths();
+
+				if ( $method ) {
+					$method       = strtolower( $method );
+					$method_paths = array();
+
+					foreach ( $paths as $path ) {
+						$path_obj = $oa_explorer->path_obj( $path );
+
+						if ( $path_obj && isset( $path_obj[ $method ] ) ) {
+							$method_paths[] = $path;
+						}
+					}
+
+					$paths = $method_paths;
+				}
+
+				return array_map(
+					function ( $path ) {
+						return '/3.0' . $path;
+					},
+					$paths,
+				);
+			}
+		}
+
+		return array( '/3.0/lists/{list_id}/members' );
+	}
+
+	/**
 	 * Performs an introspection of the backend endpoint and returns API fields
 	 * and accepted content type.
 	 *
