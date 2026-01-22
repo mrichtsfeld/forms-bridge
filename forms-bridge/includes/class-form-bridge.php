@@ -203,9 +203,15 @@ class Form_Bridge {
 					'type'        => 'boolean',
 					'default'     => true,
 				),
+				'allow_failure' => array(
+					'description' => __( 'Whether an error on bridge submission should stop the submission loop or not', 'forms-bridge' ),
+					'type'        => 'boolean',
+					'default'     => true,
+				),
 				'order'         => array(
 					'description' => __( 'Order in which the bridge should be submitted in the submission loop', 'forms-bridge' ),
 					'type'        => 'integer',
+					'default'     => -1,
 				),
 			),
 			'required'             => array(
@@ -219,6 +225,8 @@ class Form_Bridge {
 				'workflow',
 				'is_valid',
 				'enabled',
+				'allow_failure',
+				'order',
 			),
 			'additionalProperties' => false,
 		);

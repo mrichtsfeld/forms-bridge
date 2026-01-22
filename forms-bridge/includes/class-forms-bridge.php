@@ -285,7 +285,7 @@ class Forms_Bridge extends Base_Plugin {
 
 		$sorted_bridges = array();
 		foreach ( $bridges as $bridge ) {
-			$order = is_int( $bridge->order ) ? $bridge->order : 100 + count( $sorted_bridges );
+			$order = 0 <= $bridge->order ? $bridge->order : 100 + count( $sorted_bridges );
 
 			while ( isset( $sorted_bridges[ $order ] ) ) {
 				++$order;
@@ -450,6 +450,10 @@ class Forms_Bridge extends Base_Plugin {
 					$payload ?? $submission,
 					$attachments ?? array()
 				);
+
+				if ( false === $bridge->allow_failure ) {
+					break;
+				}
 			} finally {
 				self::$current_bridge = null;
 			}

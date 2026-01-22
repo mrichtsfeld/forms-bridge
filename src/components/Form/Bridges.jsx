@@ -34,10 +34,16 @@ export default function FormBridges({ bridges, setBridges }) {
     setBridges(newBridges);
   };
 
+  const setFailure = (index, policy) => {
+    const newBridges = bridges.map((bridge) => ({ ...bridge }));
+    newBridges[index].allow_failure = !!policy;
+    setBridges(newBridges);
+  };
+
   return (
     <>
       <Button variant="secondary" onClick={() => setOpen(true)}>
-        {__("Sort bridges", "forms-bridge")}
+        {__("Bridges", "forms-bridge")}
       </Button>
       {open && (
         <Modal
@@ -51,7 +57,10 @@ export default function FormBridges({ bridges, setBridges }) {
               zIndex: 1,
             }}
           >
-            {__("Manage the chain of bridges of the form", "forms-bridge")}
+            {__(
+              "Manage the form's bridge chain and their submission failure policies",
+              "forms-bridge"
+            )}
           </p>
           <div
             style={{
@@ -84,6 +93,8 @@ export default function FormBridges({ bridges, setBridges }) {
                     <BridgeStep
                       index={i}
                       name={bridge.name}
+                      failure={bridge.allow_failure}
+                      setFailure={(policy) => setFailure(i, policy)}
                       move={(direction) => move(i, i + direction)}
                       isLast={i === bridges.length - 1}
                     />
@@ -98,7 +109,7 @@ export default function FormBridges({ bridges, setBridges }) {
   );
 }
 
-function BridgeStep({ name, index, move, isLast }) {
+function BridgeStep({ index, name, failure, setFailure, move, isLast }) {
   return (
     <div style={{ display: "flex", alignItems: "center" }}>
       <p
@@ -114,6 +125,22 @@ function BridgeStep({ name, index, move, isLast }) {
           flex: 1,
         }}
       >
+        <span
+          title={__("Allow bridge failures", "forms-bridge")}
+          aria-role="button"
+          size="compact"
+          variant="secondary"
+          onClick={() => setFailure(!failure)}
+          style={{
+            fontSize: "1.25em",
+            marginRight: "1em",
+            marginLeft: "-0.7em",
+            cursor: "pointer",
+          }}
+          __next40pxDefaultSize
+        >
+          {failure === false ? "🔴" : "🟢"}
+        </span>
         {index + 1}. <b>{name}</b>
         <span
           style={{
@@ -145,7 +172,12 @@ function BridgeStep({ name, index, move, isLast }) {
           disabled={!index}
           __next40pxDefaultSize
         >
-          ⬆
+          <span
+            title={__("Move up", "forms-bridge")}
+            style={{ fontSize: "1.35em", marginLeft: "-4px" }}
+          >
+            ⬆
+          </span>
         </Button>
         <Button
           size="compact"
@@ -153,9 +185,15 @@ function BridgeStep({ name, index, move, isLast }) {
           onClick={() => move(+1)}
           style={{ width: "32px" }}
           disabled={isLast}
+          label={__("Move down", "forms-bridge")}
           __next40pxDefaultSize
         >
-          ⬇
+          <span
+            title={__("Move down", "forms-bridge")}
+            style={{ fontSize: "1.35em", marginLeft: "-4px" }}
+          >
+            ⬇
+          </span>
         </Button>
       </div>
     </div>

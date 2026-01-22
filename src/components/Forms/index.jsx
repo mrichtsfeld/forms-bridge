@@ -55,7 +55,11 @@ export default function Forms() {
     const newBridges = bridges.map((bridge) => {
       const index = order.findIndex((name) => name === bridge.name);
       if (index !== -1) {
-        return { ...bridge, order: index };
+        return {
+          ...bridge,
+          allow_failure: formBridges[index].allow_failure,
+          order: index,
+        };
       }
 
       return bridge;
