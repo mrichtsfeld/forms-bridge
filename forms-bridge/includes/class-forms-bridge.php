@@ -283,19 +283,18 @@ class Forms_Bridge extends Base_Plugin {
 			return;
 		}
 
-		$sorted_bridges = array();
-		foreach ( $bridges as $bridge ) {
-			$order = 0 <= $bridge->order ? $bridge->order : 100 + count( $sorted_bridges );
+		usort(
+			$bridges,
+			function ( $a, $b ) {
+				if ( 0 > $a->order ) {
+					return 1;
+				} elseif ( 0 > $b->order ) {
+					return -1;
+				}
 
-			while ( isset( $sorted_bridges[ $order ] ) ) {
-				++$order;
+				return $a->order - $b->order;
 			}
-
-			$sorted_bridges[ $order ] = $bridge;
-		}
-
-		ksort( $sorted_bridges );
-		$bridges = array_values( $sorted_bridges );
+		);
 
 		foreach ( $bridges as $bridge ) {
 			if ( ! $bridge->enabled ) {
