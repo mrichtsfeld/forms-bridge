@@ -194,20 +194,18 @@ class Form_Bridge {
 					'default'     => array(),
 				),
 				'is_valid'      => array(
-					'description' => __(
-						'Validation result of the bridge setting',
-						'forms-bridge'
-					),
+					'description' => __( 'Validation result of the bridge setting', 'forms-bridge' ),
 					'type'        => 'boolean',
 					'default'     => true,
 				),
 				'enabled'       => array(
-					'description' => __(
-						'Boolean flag to enable/disable a bridge',
-						'forms-bridge'
-					),
+					'description' => __( 'Boolean flag to enable/disable a bridge', 'forms-bridge' ),
 					'type'        => 'boolean',
 					'default'     => true,
+				),
+				'order'         => array(
+					'description' => __( 'Order in which the bridge should be submitted in the submission loop', 'forms-bridge' ),
+					'type'        => 'integer',
 				),
 			),
 			'required'             => array(
