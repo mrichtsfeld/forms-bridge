@@ -454,7 +454,11 @@ class Form_Bridge {
 
 		$backend = $this->backend();
 		if ( ! $backend ) {
-			return new WP_Error( 'invalid_bridge' );
+			return new WP_Error(
+				'invalid_backend',
+				'The bridge does not have a valid backend',
+				(array) $this->data,
+			);
 		}
 
 		$method = $this->method;

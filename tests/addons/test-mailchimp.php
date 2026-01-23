@@ -1,20 +1,20 @@
 <?php
 /**
- * Class ListmonkTest
+ * Class MailchimpTest
  *
  * @package formsbridge-tests
  */
 
-use FORMS_BRIDGE\Listmonk_Form_Bridge;
-use FORMS_BRIDGE\Listmonk_Addon;
+use FORMS_BRIDGE\Mailchimp_Form_Bridge;
+use FORMS_BRIDGE\Mailchimp_Addon;
 use FORMS_BRIDGE\Addon;
 use HTTP_BRIDGE\Backend;
 use HTTP_BRIDGE\Credential;
 
 /**
- * Listmonk test case.
+ * Mailchimp test case.
  */
-class ListmonkTest extends WP_UnitTestCase {
+class MailchimpTest extends WP_UnitTestCase {
 
 	/**
 	 * Handles the last intercepted http request data.
@@ -35,28 +35,28 @@ class ListmonkTest extends WP_UnitTestCase {
 	 *
 	 * @var string
 	 */
-	private const BACKEND_NAME = 'test-listmonk-backend';
+	private const BACKEND_NAME = 'test-mailchimp-backend';
 
 	/**
 	 * Holds the mocked backend base URL.
 	 *
 	 * @var string
 	 */
-	private const BACKEND_URL = 'https://listmonk.example.coop';
+	private const BACKEND_URL = 'https://us1.api.mailchimp.com';
 
 	/**
 	 * Holds the mocked credential name.
 	 *
 	 * @var string
 	 */
-	private const CREDENTIAL_NAME = 'test-listmonk-credential';
+	private const CREDENTIAL_NAME = 'test-mailchimp-credential';
 
 	/**
 	 * Holds the mocked bridge name.
 	 *
 	 * @var string
 	 */
-	private const BRIDGE_NAME = 'test-listmonk-bridge';
+	private const BRIDGE_NAME = 'test-mailchimp-bridge';
 
 	/**
 	 * Test credential provider.
@@ -68,7 +68,7 @@ class ListmonkTest extends WP_UnitTestCase {
 			new Credential(
 				array(
 					'name'          => self::CREDENTIAL_NAME,
-					'schema'        => 'Token',
+					'schema'        => 'Basic',
 					'client_id'     => 'test-client-id',
 					'client_secret' => 'test-client-secret',
 				)
@@ -129,6 +129,8 @@ class ListmonkTest extends WP_UnitTestCase {
 		$parsed_url = wp_parse_url( $url );
 		$path       = $parsed_url['path'] ?? '';
 
+		parse_str( $parsed_url['query'] ?? '', $query );
+
 		// Parse the body to determine the method being called.
 		$body = array();
 		if ( ! empty( $args['body'] ) ) {
@@ -147,7 +149,7 @@ class ListmonkTest extends WP_UnitTestCase {
 
 			self::$mock_response = null;
 		} else {
-			$response_body = self::get_mock_response( $method, $path, $body );
+			$response_body = self::get_mock_response( $method, $path, $body, $query );
 		}
 
 		return array(
@@ -165,42 +167,146 @@ class ListmonkTest extends WP_UnitTestCase {
 	 * @param string $method HTTP method.
 	 * @param string $path API endpoint path.
 	 * @param array  $body Request body.
+	 * @param array  $query Search query.
 	 *
 	 * @return array Mock response.
 	 */
-	private static function get_mock_response( $method, $path, $body ) {
+	private static function get_mock_response( $method, $path, $body, $query ) {
 		switch ( $path ) {
-			case '/api/lists':
+			case '/developer/spec/marketing.json':
 				return array(
-					'data' => array(
-						'results' => array(
-							array(
-								'id'   => 1,
-								'name' => 'Test List',
+					'swagger' => '2.0',
+					'paths'   => array(
+						'/lists/{list_id}'          => array(
+							'get'  => array(
+								'parameters' => array(
+									array(
+										'name' => 'list_id',
+										'type' => 'string',
+										'in'   => 'path',
+									),
+									array(
+										'name' => 'skip_merge_validation',
+										'type' => 'boolean',
+										'in'   => 'query',
+									),
+
+								),
+							),
+							'post' => array(
+								'parameters' => array(
+									array(
+										'name' => 'list_id',
+										'type' => 'string',
+										'in'   => 'path',
+									),
+									array(
+										'name' => 'skip_merge_validation',
+										'type' => 'boolean',
+										'in'   => 'query',
+									),
+								),
+							),
+						),
+						'/lists/{list_id}/members'  => array(
+							'get'  => array(
+								'parameters' => array(
+									array(
+										'name' => 'list_id',
+										'type' => 'string',
+										'in'   => 'path',
+									),
+									array(
+										'name' => 'skip_merge_validation',
+										'type' => 'boolean',
+										'in'   => 'query',
+									),
+								),
+							),
+							'post' => array(
+								'parameters' => array(
+									array(
+										'name' => 'list_id',
+										'type' => 'string',
+										'in'   => 'path',
+									),
+									array(
+										'name' => 'skip_merge_validation',
+										'type' => 'boolean',
+										'in'   => 'query',
+									),
+								),
+							),
+						),
+						'/lists/{list_id}/segments' => array(
+							'get'  => array(
+								'parameters' => array(
+									array(
+										'name' => 'list_id',
+										'type' => 'string',
+										'in'   => 'path',
+									),
+									array(
+										'name' => 'skip_merge_validation',
+										'type' => 'boolean',
+										'in'   => 'query',
+									),
+								),
+							),
+							'post' => array(
+								'parameters' => array(
+									array(
+										'name' => 'list_id',
+										'type' => 'string',
+										'in'   => 'path',
+									),
+									array(
+										'name' => 'skip_merge_validation',
+										'type' => 'boolean',
+										'in'   => 'query',
+									),
+								),
 							),
 						),
 					),
 				);
 
-			case '/api/subscribers':
+			case '/3.0/lists':
+				return array(
+					'lists' => array(
+						array(
+							'id'   => '123456789',
+							'name' => 'Test List',
+						),
+					),
+				);
+
+			case '/3.0/lists/123456789/members':
 				if ( 'POST' === $method ) {
 					return array(
-						'data' => array(
-							'id'     => 123456789,
-							'email'  => $body['email'],
-							'name'   => $body['name'],
-							'status' => 'enabled',
-						),
+						'id'            => '987654321',
+						'email_address' => $body['email_address'],
+						'status'        => 'subscribed',
 					);
 				}
+
 				return array(
-					'data' => array(
-						'results' => array(
+					'members' => array(
+						array(
+							'id'            => '987654321',
+							'email_address' => 'john.doe@example.com',
+							'status'        => 'subscribed',
+						),
+					),
+				);
+
+			case '/3.0/search-members':
+				return array(
+					'exact_matches' => array(
+						'members' => array(
 							array(
-								'id'     => 1,
-								'email'  => 'john.doe@example.com',
-								'name'   => 'John Doe',
-								'status' => 'enabled',
+								'id'            => '987654321',
+								'email_address' => $query['query'],
 							),
 						),
 					),
@@ -240,28 +346,28 @@ class ListmonkTest extends WP_UnitTestCase {
 	 * Test that the addon class exists and has correct constants.
 	 */
 	public function test_addon_class_exists() {
-		$this->assertTrue( class_exists( 'FORMS_BRIDGE\Listmonk_Addon' ) );
-		$this->assertEquals( 'Listmonk', Listmonk_Addon::TITLE );
-		$this->assertEquals( 'listmonk', Listmonk_Addon::NAME );
-		$this->assertEquals( '\FORMS_BRIDGE\Listmonk_Form_Bridge', Listmonk_Addon::BRIDGE );
+		$this->assertTrue( class_exists( 'FORMS_BRIDGE\Mailchimp_Addon' ) );
+		$this->assertEquals( 'Mailchimp', Mailchimp_Addon::TITLE );
+		$this->assertEquals( 'mailchimp', Mailchimp_Addon::NAME );
+		$this->assertEquals( '\FORMS_BRIDGE\Mailchimp_Form_Bridge', Mailchimp_Addon::BRIDGE );
 	}
 
 	/**
 	 * Test that the form bridge class exists.
 	 */
 	public function test_form_bridge_class_exists() {
-		$this->assertTrue( class_exists( 'FORMS_BRIDGE\Listmonk_Form_Bridge' ) );
+		$this->assertTrue( class_exists( 'FORMS_BRIDGE\Mailchimp_Form_Bridge' ) );
 	}
 
 	/**
 	 * Test bridge validation with valid data.
 	 */
 	public function test_bridge_validation() {
-		$bridge = new Listmonk_Form_Bridge(
+		$bridge = new Mailchimp_Form_Bridge(
 			array(
 				'name'     => self::BRIDGE_NAME,
 				'backend'  => self::BACKEND_NAME,
-				'endpoint' => '/api/subscribers',
+				'endpoint' => '/3.0/lists/123456789/members',
 				'method'   => 'POST',
 			)
 		);
@@ -273,7 +379,7 @@ class ListmonkTest extends WP_UnitTestCase {
 	 * Test bridge validation with invalid data.
 	 */
 	public function test_bridge_validation_invalid() {
-		$bridge = new Listmonk_Form_Bridge(
+		$bridge = new Mailchimp_Form_Bridge(
 			array(
 				'name' => 'invalid-bridge',
 				// Missing required fields.
@@ -284,39 +390,39 @@ class ListmonkTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Test POST request to create a subscriber.
+	 * Test POST request to create a member.
 	 */
-	public function test_post_create_subscriber() {
-		$bridge = new Listmonk_Form_Bridge(
+	public function test_post_create_member() {
+		$bridge = new Mailchimp_Form_Bridge(
 			array(
 				'name'     => self::BRIDGE_NAME,
 				'backend'  => self::BACKEND_NAME,
-				'endpoint' => '/api/subscribers',
+				'endpoint' => '/3.0/lists/123456789/members',
 				'method'   => 'POST',
 			)
 		);
 
 		$payload = array(
-			'email' => 'john.doe@example.com',
-			'name'  => 'John Doe',
+			'email_address' => 'john.doe@example.com',
+			'status'        => 'subscribed',
 		);
 
 		$response = $bridge->submit( $payload );
 
 		$this->assertFalse( is_wp_error( $response ) );
 		$this->assertArrayHasKey( 'data', $response );
-		$this->assertEquals( 123456789, $response['data']['data']['id'] );
+		$this->assertEquals( '987654321', $response['data']['id'] );
 	}
 
 	/**
-	 * Test GET request to fetch subscribers.
+	 * Test GET request to fetch members.
 	 */
-	public function test_get_subscribers() {
-		$bridge = new Listmonk_Form_Bridge(
+	public function test_get_members() {
+		$bridge = new Mailchimp_Form_Bridge(
 			array(
 				'name'     => self::BRIDGE_NAME,
 				'backend'  => self::BACKEND_NAME,
-				'endpoint' => '/api/subscribers',
+				'endpoint' => '/3.0/lists/123456789/members',
 				'method'   => 'GET',
 			)
 		);
@@ -325,15 +431,15 @@ class ListmonkTest extends WP_UnitTestCase {
 
 		$this->assertFalse( is_wp_error( $response ) );
 		$this->assertArrayHasKey( 'data', $response );
-		$this->assertArrayHasKey( 'results', $response['data']['data'] );
-		$this->assertEquals( 'john.doe@example.com', $response['data']['data']['results'][0]['email'] );
+		$this->assertArrayHasKey( 'members', $response['data'] );
+		$this->assertEquals( 'john.doe@example.com', $response['data']['members'][0]['email_address'] );
 	}
 
 	/**
 	 * Test addon ping method.
 	 */
 	public function test_addon_ping() {
-		$addon    = Addon::addon( 'listmonk' );
+		$addon    = Addon::addon( 'mailchimp' );
 		$response = $addon->ping( self::BACKEND_NAME );
 
 		$this->assertTrue( $response );
@@ -343,31 +449,29 @@ class ListmonkTest extends WP_UnitTestCase {
 	 * Test addon get_endpoints method.
 	 */
 	public function test_addon_get_endpoints() {
-		$addon     = Addon::addon( 'listmonk' );
+		$addon     = Addon::addon( 'mailchimp' );
 		$endpoints = $addon->get_endpoints( self::BACKEND_NAME );
 
 		$this->assertIsArray( $endpoints );
-		$this->assertContains( '/api/subscribers', $endpoints );
+		$this->assertContains( '/3.0/lists/{list_id}/members', $endpoints );
 	}
 
 	/**
 	 * Test addon get_endpoint_schema method.
 	 */
 	public function test_addon_get_endpoint_schema() {
-		$addon  = Addon::addon( 'listmonk' );
+		$addon  = Addon::addon( 'mailchimp' );
 		$schema = $addon->get_endpoint_schema(
-			'/api/subscribers',
+			'/3.0/lists/123456789/members',
 			self::BACKEND_NAME,
-			'POST'
+			'GET'
 		);
 
 		$this->assertIsArray( $schema );
 		$this->assertNotEmpty( $schema );
 
 		$field_names = array_column( $schema, 'name' );
-		$this->assertContains( 'email', $field_names );
-		$this->assertContains( 'name', $field_names );
-		$this->assertContains( 'status', $field_names );
+		$this->assertContains( 'skip_merge_validation', $field_names );
 	}
 
 	/**
@@ -375,18 +479,23 @@ class ListmonkTest extends WP_UnitTestCase {
 	 */
 	public function test_error_response_handling() {
 		self::$mock_response = array(
-			'http'    => array(
+			'http'     => array(
 				'code'    => 401,
 				'message' => 'Unauthorized',
 			),
-			'message' => 'Invalid authentication token',
+			'title'    => 'API Key Invalid',
+			'status'   => 401,
+			'detail'   => 'Your request did not include an API key.',
+			'type'     => 'https://mailchimp.com/developer/marketing/docs/errors/',
+			'code'     => 'INVALID_TOKEN',
+			'instance' => '1234abcd-1234-abcd-1234abcd',
 		);
 
-		$bridge = new Listmonk_Form_Bridge(
+		$bridge = new Mailchimp_Form_Bridge(
 			array(
 				'name'     => self::BRIDGE_NAME,
 				'backend'  => self::BACKEND_NAME,
-				'endpoint' => '/api/subscribers',
+				'endpoint' => '/3.0/lists/123456789/members',
 				'method'   => 'POST',
 			)
 		);
@@ -400,11 +509,11 @@ class ListmonkTest extends WP_UnitTestCase {
 	 * Test invalid backend handling.
 	 */
 	public function test_invalid_backend() {
-		$bridge = new Listmonk_Form_Bridge(
+		$bridge = new Mailchimp_Form_Bridge(
 			array(
 				'name'     => 'test-invalid-backend-bridge',
 				'backend'  => 'non-existent-backend',
-				'endpoint' => '/api/subscribers',
+				'endpoint' => '/3.0/lists/123456789/members',
 				'method'   => 'POST',
 			)
 		);
@@ -416,29 +525,31 @@ class ListmonkTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Test duplicate subscriber handling.
+	 * Test duplicate member handling.
 	 */
-	public function test_duplicate_subscriber_handling() {
+	public function test_duplicate_member_handling() {
 		self::$mock_response = array(
-			'http'    => array(
-				'code'    => 409,
-				'message' => 'Conflict',
+			'http'   => array(
+				'code'    => 400,
+				'message' => 'Bad Request',
 			),
-			'message' => 'Subscriber already exists',
+			'title'  => 'Member Exists',
+			'status' => 400,
+			'detail' => 'member@example.com has already subscribed to the list',
 		);
 
-		$bridge = new Listmonk_Form_Bridge(
+		$bridge = new Mailchimp_Form_Bridge(
 			array(
 				'name'     => self::BRIDGE_NAME,
 				'backend'  => self::BACKEND_NAME,
-				'endpoint' => '/api/subscribers',
+				'endpoint' => '/3.0/lists/123456789/members',
 				'method'   => 'POST',
 			)
 		);
 
-		$response = $bridge->submit( array( 'email' => 'duplicate@example.com' ) );
+		$response = $bridge->submit( array( 'email_address' => 'member@example.com' ) );
 
-		// Should not return WP_Error for DUPLICATE_SUBSCRIBER
+		// Should not return WP_Error for Member Exists
 		$this->assertFalse( is_wp_error( $response ) );
 		$this->assertArrayHasKey( 'data', $response );
 	}
@@ -447,11 +558,11 @@ class ListmonkTest extends WP_UnitTestCase {
 	 * Test authorization header transformation.
 	 */
 	public function test_authorization_header_transformation() {
-		$bridge = new Listmonk_Form_Bridge(
+		$bridge = new Mailchimp_Form_Bridge(
 			array(
 				'name'     => self::BRIDGE_NAME,
 				'backend'  => self::BACKEND_NAME,
-				'endpoint' => '/api/subscribers',
+				'endpoint' => '/3.0/lists/123456789/members',
 				'method'   => 'GET',
 			)
 		);
@@ -464,6 +575,6 @@ class ListmonkTest extends WP_UnitTestCase {
 		// Verify the Authorization header was transformed
 		$headers = self::$request['args']['headers'] ?? array();
 		$this->assertArrayHasKey( 'Authorization', $headers );
-		$this->assertStringContainsString( 'token', $headers['Authorization'] );
+		$this->assertStringContainsString( 'Basic', $headers['Authorization'] );
 	}
 }

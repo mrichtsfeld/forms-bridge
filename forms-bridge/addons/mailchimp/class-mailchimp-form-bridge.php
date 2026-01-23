@@ -54,13 +54,7 @@ class Mailchimp_Form_Bridge extends Form_Bridge {
 			}
 
 			if ( 'Member Exists' === $title ) {
-				if (
-					! preg_match(
-						'/(?<=lists\/).+(?=\/members)/',
-						$this->endpoint,
-						$matches
-					)
-				) {
+				if ( ! preg_match( '/(?<=lists\/).+(?=\/members)/', $this->endpoint, $matches ) ) {
 					return $response;
 				}
 
@@ -84,17 +78,15 @@ class Mailchimp_Form_Bridge extends Form_Bridge {
 					return $response;
 				}
 
-				$member_id =
-					$search_response['data']['exact_matches']['members'][0]['id'] ?? null;
+				$member_id = $search_response['data']['exact_matches']['members'][0]['id'] ?? null;
 
 				if ( ! $member_id ) {
 					return $response;
 				}
 
 				$update_endpoint = "/3.0/lists/{$list_id}/members/{$member_id}";
-				if (
-					strstr( $this->endpoint, 'skip_merge_validation' ) !== false
-				) {
+
+				if ( false !== strstr( $this->endpoint, 'skip_merge_validation' ) ) {
 					$update_endpoint .= '?skip_merge_validation=true';
 				}
 
