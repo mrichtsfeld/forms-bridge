@@ -169,6 +169,7 @@ You can get support from Còdec using the [Forms Bridge support forum](https://w
 * fix: xss vulnerability on financoop add-on shortcodes
 * fix: autoload option to false
 * fix: defer forms ajax loading
+* fix: brevo endpoint schema introspection
 
 = 4.2.5 =
 * feat: integrations pro support check and polyfills
