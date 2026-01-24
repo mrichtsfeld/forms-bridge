@@ -58,14 +58,14 @@ export default function FormBridges({ bridges, setBridges }) {
             }}
           >
             {__(
-              "Manage the form's bridge chain and their submission failure policies",
+              "Manage the form's bridge chain order and its submission failure policies",
               "forms-bridge"
             )}
           </p>
           <div
             style={{
               marginTop: "2rem",
-              width: "460px",
+              width: "680px",
               maxWidth: "80vw",
               minHeight: "125px",
               height: "calc(100% - 2rem)",
@@ -112,50 +112,28 @@ export default function FormBridges({ bridges, setBridges }) {
 function BridgeStep({ index, name, failure, setFailure, move, isLast }) {
   return (
     <div style={{ display: "flex", alignItems: "center" }}>
-      <p
-        style={{
-          cursor: "pointer",
-          textIndent: "12px",
-          padding: "10px 30px 10px 0",
-          whiteSpace: "nowrap",
-          margin: 0,
-          overflow: "hidden",
-          textOverflow: "ellipsis",
-          position: "relative",
-          flex: 1,
-        }}
+      <div style={{ flex: 1 }}>
+        {index + 1}. <b>{name}</b>
+      </div>
+      <div
+        style={{ marginRight: "1em", cursor: "pointer", minWidth: "180px" }}
+        onClick={() => setFailure(!failure)}
       >
         <span
-          title={__("Allow bridge failures", "forms-bridge")}
           aria-role="button"
           size="compact"
           variant="secondary"
-          onClick={() => setFailure(!failure)}
           style={{
             fontSize: "1.25em",
-            marginRight: "1em",
-            marginLeft: "-0.7em",
+            margin: "0 0.5em 0 1em",
             cursor: "pointer",
           }}
           __next40pxDefaultSize
         >
           {failure === false ? "🔴" : "🟢"}
         </span>
-        {index + 1}. <b>{name}</b>
-        <span
-          style={{
-            display: index ? "block" : "none",
-            position: "absolute",
-            top: "50%",
-            right: "8px",
-            width: "6px",
-            height: "6px",
-            borderBottom: "1px solid #d1cfcf",
-            borderRight: "1px solid #d1cfcf",
-            transform: "translate(-50%, -50%) rotate(45deg)",
-          }}
-        ></span>
-      </p>
+        {failure === false ? "Stop on failure" : "Continue on failure"}
+      </div>
       <div
         style={{
           display: "inline-flex",
