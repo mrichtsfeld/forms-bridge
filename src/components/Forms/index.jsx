@@ -73,6 +73,14 @@ export default function Forms() {
       <h3 style={{ marginTop: 0, fontSize: "13px" }}>
         {__("Bridged forms", "forms-bridge")}
       </h3>
+      {!tabs.length && (
+        <p>
+          {__(
+            "You have no bridged forms yet. You can set up new form bridges using the add-on tabs",
+            "forms-bridge"
+          )}
+        </p>
+      )}
       <TabPanel tabs={tabs} className="forms-tabs-panel">
         {(tab) => {
           const form = bridgedForms[tab.index];
