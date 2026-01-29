@@ -1,6 +1,14 @@
 <?php
+/**
+ * Class Grist_Addon
+ *
+ * @package formsbridge
+ */
 
 namespace FORMS_BRIDGE;
+
+use FBAPI;
+use WP_Error;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit();

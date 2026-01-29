@@ -51,8 +51,7 @@ class Grist_Form_Bridge extends Form_Bridge {
 			return $response;
 		}
 
-		// Parse Grist schema response
-		// Grist typically returns columns in a specific format
+		// Parse Grist schema response, Grist typically returns columns in a specific format.
 		if ( empty( $response['data']['columns'] ) ) {
 			return array();
 		}
