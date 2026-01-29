@@ -75,6 +75,13 @@ add_filter(
 						'name'    => 'endpoint',
 						'label'   => __( 'Filepath', 'forms-bridge' ),
 						'pattern' => '.+\.csv$',
+						'options' => array(
+							'endpoint' => 'files',
+							'finger'   => array(
+								'label' => 'files[].path',
+								'value' => 'files[].path',
+							),
+						),
 					),
 					array(
 						'ref'      => '#credential',

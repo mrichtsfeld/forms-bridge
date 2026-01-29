@@ -9,6 +9,7 @@ namespace FORMS_BRIDGE;
 
 use FBAPI;
 use SimpleXMLElement;
+use WP_Error;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit();
@@ -105,35 +106,23 @@ class Nextcloud_Addon extends Addon {
 	 * @return array|WP_Error
 	 */
 	public function fetch( $endpoint, $backend ) {
-		return array();
-	}
-
-	/**
-	 * Performs an introspection of the backend API and returns a list of available endpoints.
-	 *
-	 * @param string      $backend Target backend name.
-	 * @param string|null $method HTTP method.
-	 *
-	 * @return array|WP_Error
-	 */
-	public function get_endpoints( $backend, $method = null ) {
 		if ( ! class_exists( 'SimpleXMLElement' ) ) {
-			return array();
+			return new WP_Error( 'xml_not_supported', 'Requires phpxml extension to be enabled' );
 		}
 
 		$backend = FBAPI::get_backend( $backend );
 		if ( ! $backend ) {
-			return array();
+			return new WP_Error( 'invalid_backend', 'Backend not found', array( 'backend' => $backend ) );
 		}
 
 		$credential = $backend->credential;
 		if ( ! $credential ) {
-			return array();
+			return new WP_Error( 'invalid_backend', 'Backend has no credential', $backend->data() );
 		}
 
 		$authorization = $credential->authorization();
 		if ( ! $authorization ) {
-			return array();
+			return new WP_Error( 'invalid_credential', 'Credential has no authorization', $credential->data() );
 		}
 
 		$url = $backend->url( '/remote.php/dav/files/' . rawurlencode( $credential->client_id ) );
@@ -155,30 +144,64 @@ class Nextcloud_Addon extends Addon {
 		);
 
 		if ( is_wp_error( $response ) ) {
-			return array();
+			return $response;
 		}
 
 		$xml = new SimpleXMLElement( $response['body'] );
 		$xml->registerXPathNamespace( 'd', 'DAV:' );
 
-		$parsed_url = parse_url( $url );
+		$parsed_url = wp_parse_url( $url );
 		$basepath   = $parsed_url['path'] ?? '/';
 
-		$endpoints = array();
+		$files = array();
 		foreach ( $xml->xpath( '//d:response' ) as $item ) {
 			$href     = (string) $item->children( 'DAV:' )->href;
-			$endpoint = rawurldecode( str_replace( $basepath, '', $href ) );
+			$filepath = rawurldecode( str_replace( $basepath, '', $href ) );
 
-			if ( '/' === $endpoint ) {
+			if ( '/' === $filepath ) {
 				continue;
 			}
 
-			$pathinfo = pathinfo( $endpoint );
-			if ( isset( $pathinfo['extension'] ) && 'csv' !== strtolower( $pathinfo['extension'] ) ) {
+			$pathinfo = pathinfo( $filepath );
+			$is_file  = isset( $pathinfo['extension'] );
+
+			if ( $is_file && 'csv' !== strtolower( $pathinfo['extension'] ) ) {
 				continue;
 			}
 
-			$endpoints[] = substr( $endpoint, 1 );
+			if ( ! $is_file && 'files' === $endpoint ) {
+				continue;
+			} elseif ( $is_file && 'directories' === $endpoint ) {
+				continue;
+			}
+
+			$files[] = array(
+				'path'    => substr( $filepath, 1 ),
+				'is_file' => $is_file,
+			);
+		}
+
+		return array( 'data' => array( 'files' => $files ) );
+	}
+
+	/**
+	 * Performs an introspection of the backend API and returns a list of available endpoints.
+	 *
+	 * @param string      $backend Target backend name.
+	 * @param string|null $method HTTP method.
+	 *
+	 * @return array|WP_Error
+	 */
+	public function get_endpoints( $backend, $method = null ) {
+		$response = $this->fetch( 'endpoints', $backend );
+
+		if ( is_wp_error( $response ) ) {
+			return array();
+		}
+
+		$endpoints = array();
+		foreach ( $response['data']['files'] as $file ) {
+			$endpoints[] = $file['path'];
 		}
 
 		return $endpoints;
