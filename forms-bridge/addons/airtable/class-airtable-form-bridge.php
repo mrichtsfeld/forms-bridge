@@ -170,15 +170,8 @@ class Airtable_Form_Bridge extends Form_Bridge {
 				$field_name = $data_field['name'];
 
 				if ( isset( $payload[ $field_name ] ) ) {
-					if ( 'multipleSelects' === $data_field['type'] ) {
-						if ( ! is_array( $payload[ $field_name ] ) ) {
-							$payload[ $field_name ] = array( $payload[ $field_name ] );
-						}
-
-						$l = count( $payload[ $field_name ] );
-						for ( $i = 0; $i < $l; ++$i ) {
-							$payload[ $field_name ][ $i ] = array( 'name' => $payload[ $field_name ][ $i ] );
-						}
+					if ( 'multipleSelects' === $data_field['type'] && ! is_array( $payload[ $field_name ] ) ) {
+						$payload[ $field_name ] = array( $payload[ $field_name ] );
 					}
 
 					$record['fields'][ $field_name ] = $payload[ $field_name ];
