@@ -187,7 +187,6 @@ class Airtable_Addon extends Addon {
 						'lastModifiedTime',
 						'rollup',
 						'externalSyncSource',
-						'multipleAttachments',
 						'multipleCollaborators',
 						'multipleLookupValues',
 						'multipleRecordLinks',
@@ -208,6 +207,9 @@ class Airtable_Addon extends Addon {
 					break;
 				case 'multipleSelects':
 					$type = 'array';
+					break;
+				case 'multipleAttachments':
+					$type = 'file';
 					break;
 				default:
 					$type = 'string';

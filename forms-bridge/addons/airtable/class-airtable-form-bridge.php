@@ -7,6 +7,7 @@
 
 namespace FORMS_BRIDGE;
 
+use FBAPI;
 use WP_Error;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -88,6 +89,7 @@ class Airtable_Form_Bridge extends Form_Bridge {
 		foreach ( $response['data']['tables'] as $candidate ) {
 			if ( $table_id === $candidate['id'] || $table_id === $candidate['name'] ) {
 				$table = $candidate;
+				break;
 			}
 		}
 
@@ -129,12 +131,56 @@ class Airtable_Form_Bridge extends Form_Bridge {
 				return $fields;
 			}
 
-			$payload = self::flatten_payload( $payload );
+			$data_fields = array();
+			$attachments = array();
+
+			$l = count( $fields );
+			for ( $i = 0; $i < $l; ++$i ) {
+				if ( 'multipleAttachments' === $fields[ $i ]['type'] ) {
+					$attachment_field = $fields[ $i ];
+					$attachment_name  = $attachment_field['name'];
+
+					$names = array_keys( $payload );
+					$keys  = array_filter(
+						$names,
+						function ( $name ) use ( $attachment_name ) {
+							$name = preg_replace( '/_\d+$/', '', $name );
+							return $name === $attachment_name;
+						}
+					);
+
+					foreach ( $keys as $key ) {
+						$attachments[] = array(
+							'id'   => $attachment_field['id'],
+							'file' => $payload[ $attachment_name ],
+							'name' => $attachment_name,
+							'key'  => $key,
+						);
+
+						unset( $payload[ $key ] );
+						unset( $payload[ $key . '_filename' ] );
+					}
+				} else {
+					$data_fields[] = $fields[ $i ];
+				}
+			}
 
 			$record = array();
-			foreach ( $fields as $field ) {
-				$field_name = $field['name'];
+			foreach ( $data_fields as $data_field ) {
+				$field_name = $data_field['name'];
+
 				if ( isset( $payload[ $field_name ] ) ) {
+					if ( 'multipleSelects' === $data_field['type'] ) {
+						if ( ! is_array( $payload[ $field_name ] ) ) {
+							$payload[ $field_name ] = array( $payload[ $field_name ] );
+						}
+
+						$l = count( $payload[ $field_name ] );
+						for ( $i = 0; $i < $l; ++$i ) {
+							$payload[ $field_name ][ $i ] = array( 'name' => $payload[ $field_name ][ $i ] );
+						}
+					}
+
 					$record['fields'][ $field_name ] = $payload[ $field_name ];
 				}
 			}
@@ -144,63 +190,52 @@ class Airtable_Form_Bridge extends Form_Bridge {
 			);
 		}
 
-		return $this->backend->$method( $endpoint, $payload );
-	}
+		$response = $backend->$method( $endpoint, $payload );
 
-	/**
-	 * Flattens nested arrays in the payload and concatenates their keys as field names.
-	 *
-	 * @param array  $payload Submission payload.
-	 * @param string $path Prefix to prepend to the field name.
-	 *
-	 * @return array Flattened payload.
-	 */
-	private static function flatten_payload( $payload, $path = '' ) {
-		$flat = array();
-		foreach ( $payload as $field => $value ) {
-			$key   = $path . $field;
-			$value = self::flatten_value( $value, $key );
+		if ( is_wp_error( $response ) || empty( $response['data']['records'] ) ) {
+			return $response;
+		}
 
-			if ( ! is_array( $value ) ) {
-				$flat[ $key ] = $value;
-			} elseif ( wp_is_numeric_array( $value ) ) {
-				$flat[ $key ] = array_map(
-					function ( $value ) {
-						return array( 'name' => $value );
-					},
-					$value,
+		if ( 'POST' === $method && count( $attachments ) ) {
+			$base_id   = $this->base_id();
+			$record_id = $response['data']['records'][0]['id'];
+
+			$uploads = Forms_Bridge::attachments( FBAPI::get_uploads() );
+
+			foreach ( $attachments as $attachment ) {
+				$filetype = array( 'type' => 'octet/stream' );
+				$filename = $attachment['name'];
+
+				foreach ( $uploads as $upload_name => $path ) {
+					if ( $upload_name === $attachment['key'] || $upload_name === sanitize_title( $attachment['key'] ) ) {
+						$filename = basename( $path );
+						$filetype = wp_check_filetype( $path );
+						if ( empty( $filetype['type'] ) ) {
+							$filetype['type'] = mime_content_type( $path );
+						}
+					}
+				}
+
+				$upload_response = $backend->clone(
+					array(
+						'name'     => '__airtable-uploader',
+						'base_url' => 'https://content.airtable.com',
+					)
+				)->post(
+					"/v0/{$base_id}/{$record_id}/{$attachment['id']}/uploadAttachment",
+					array(
+						'contentType' => $filetype['type'],
+						'file'        => $attachment['file'],
+						'filename'    => $filename,
+					)
 				);
-			} else {
-				foreach ( $value as $_key => $_val ) {
-					$flat[ $_key ] = $_val;
+
+				if ( is_wp_error( $upload_response ) ) {
+					return $upload_response;
 				}
 			}
 		}
 
-		return $flat;
-	}
-
-	/**
-	 * Returns array values as a flat vector of field key values.
-	 *
-	 * @param mixed  $value Payload value.
-	 * @param string $path Hierarchical path to the value.
-	 *
-	 * @return mixed
-	 */
-	private static function flatten_value( $value, $path = '' ) {
-		if ( ! is_array( $value ) ) {
-			return $value;
-		}
-
-		if ( wp_is_numeric_array( $value ) ) {
-			$simple_items = array_filter( $value, fn( $item ) => ! is_array( $item ) );
-
-			if ( count( $simple_items ) === count( $value ) ) {
-				return $simple_items;
-			}
-		}
-
-		return self::flatten_payload( $value, $path . '.' );
+		return $response;
 	}
 }

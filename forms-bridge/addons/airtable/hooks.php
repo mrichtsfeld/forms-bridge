@@ -145,7 +145,6 @@ add_filter(
 								'lastModifiedTime',
 								'rollup',
 								'externalSyncSource',
-								'multipleAttachments',
 								'multipleCollaborators',
 								'multipleLookupValues',
 								'multipleRecordLinks',
@@ -163,6 +162,10 @@ add_filter(
 					);
 
 					switch ( $field['type'] ) {
+						case 'multipleAttachments':
+							$form_field['type']     = 'file';
+							$form_field['is_multi'] = true;
+							break;
 						case 'rating':
 						case 'number':
 							$form_field['type'] = 'number';
@@ -201,6 +204,14 @@ add_filter(
 					if ( $field['name'] !== $form_field['name'] ) {
 						if ( ! isset( $data['bridge']['mutations'][0] ) ) {
 							$data['bridge']['mutations'][0] = array();
+						}
+
+						if ( 'file' === $form_field['type'] ) {
+							$data['bridge']['mutations'][0][] = array(
+								'from' => $form_field['name'] . '_filename',
+								'to'   => $field['name'],
+								'cast' => 'null',
+							);
 						}
 
 						$data['bridge']['mutations'][0][] = array(
