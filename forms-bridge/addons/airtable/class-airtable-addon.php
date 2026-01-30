@@ -51,18 +51,16 @@ class Airtable_Addon extends Addon {
 	 * @return boolean
 	 */
 	public function ping( $backend ) {
-		$bridge = new Airtable_Form_Bridge(
-			array(
-				'name'     => '__airtable-' . time(),
-				'backend'  => $backend,
-				'endpoint' => '/v0/meta/bases',
-				'method'   => 'GET',
-			)
-		);
+		$backend = FBAPI::get_backend( $backend );
 
-		$response = $bridge->submit();
+		if ( ! $backend ) {
+			Logger::log( 'Airtable backend ping error: Backend is unkown or invalid', Logger::ERROR );
+			return false;
+		}
+
+		$response = $backend->get( '/v0/meta/bases' );
 		if ( is_wp_error( $response ) ) {
-			Logger::log( 'Airtable backend ping error: Unable to recover the credential access token', Logger::ERROR );
+			Logger::log( 'Airtable backend ping error: Unable to list airtable bases', Logger::ERROR );
 			return false;
 		}
 
@@ -78,16 +76,16 @@ class Airtable_Addon extends Addon {
 	 * @return array|WP_Error
 	 */
 	public function fetch( $endpoint, $backend ) {
-		$bridge = new Airtable_Form_Bridge(
-			array(
-				'name'     => '__airtable-meta-bases',
-				'backend'  => $backend,
-				'endpoint' => '/v0/meta/bases',
-				'method'   => 'GET',
-			),
-		);
+		$backend = FBAPI::get_backend( $backend );
+		if ( ! $backend ) {
+			return new WP_Error( 'invalid_backend', 'Backend is unkown or invalid', array( 'backend' => $backend ) );
+		}
 
-		$response = $bridge->submit();
+		if ( $endpoint && '/v0/meta/tables' !== $endpoint ) {
+			return $backend->get( $endpoint );
+		}
+
+		$response = $backend->get( '/v0/meta/bases' );
 
 		if ( is_wp_error( $response ) ) {
 			return $response;
@@ -95,8 +93,7 @@ class Airtable_Addon extends Addon {
 
 		$tables = array();
 		foreach ( $response['data']['bases'] as $base ) {
-			$schema_response = $bridge->patch( array( 'endpoint' => "/v0/meta/bases/{$base['id']}/tables" ) )
-				->submit();
+			$schema_response = $backend->get( "/v0/meta/bases/{$base['id']}/tables" );
 
 			if ( is_wp_error( $schema_response ) ) {
 				return $schema_response;
@@ -172,45 +169,20 @@ class Airtable_Addon extends Addon {
 
 		$schema = array();
 		foreach ( $fields as $field ) {
-			if (
-				in_array(
-					$field['type'],
-					array(
-						'aiText',
-						'formula',
-						'autoNumber',
-						'button',
-						'count',
-						'createdBy',
-						'createdTime',
-						'lastModifiedBy',
-						'lastModifiedTime',
-						'rollup',
-						'externalSyncSource',
-						'multipleCollaborators',
-						'multipleLookupValues',
-						'multipleRecordLinks',
-					),
-					true,
-				)
-			) {
-				continue;
-			}
-
 			switch ( $field['type'] ) {
-				case 'rating':
 				case 'number':
 					$type = 'number';
 					break;
 				case 'checkbox':
 					$type = 'boolean';
 					break;
-				case 'multipleSelects':
-					$type = 'array';
+				case 'select':
+					$type = $field['is_multi'] ? 'array' : 'string';
 					break;
-				case 'multipleAttachments':
+				case 'file':
 					$type = 'file';
 					break;
+				case 'textarea':
 				default:
 					$type = 'string';
 					break;

@@ -48,13 +48,19 @@ add_filter(
 						'required'    => true,
 					),
 					array(
+						'ref'   => '#credential',
+						'name'  => 'expires_at',
+						'type'  => 'number',
+						'value' => time() + 60 * 60 * 24 * 365 * 100,
+					),
+					array(
 						'ref'      => '#bridge',
 						'name'     => 'endpoint',
 						'label'    => __( 'Table', 'forms-bridge' ),
 						'type'     => 'text',
 						'required' => true,
 						'options'  => array(
-							'endpoint' => '/v0/meta/bases',
+							'endpoint' => '/v0/meta/tables',
 							'finger'   => array(
 								'value' => 'tables[].endpoint',
 								'label' => 'tables[].label',
@@ -105,7 +111,7 @@ add_filter(
 add_filter(
 	'forms_bridge_template_data',
 	function ( $data, $template_id ) {
-		if ( strpos( $template_id, 'airtable-' ) !== 0 ) {
+		if ( 0 !== strpos( $template_id, 'airtable-' ) ) {
 			return $data;
 		}
 
@@ -130,94 +136,41 @@ add_filter(
 			$fields = $bridge->get_fields();
 			if ( ! is_wp_error( $fields ) ) {
 				foreach ( $fields as $field ) {
-					if (
-						in_array(
-							$field['type'],
-							array(
-								'aiText',
-								'formula',
-								'autoNumber',
-								'button',
-								'count',
-								'createdBy',
-								'createdTime',
-								'lastModifiedBy',
-								'lastModifiedTime',
-								'rollup',
-								'externalSyncSource',
-								'multipleCollaborators',
-								'multipleLookupValues',
-								'multipleRecordLinks',
-							),
-							true,
-						)
-					) {
-						continue;
+					$field_name = $field['name'];
+					$sanitized  = sanitize_title( $field_name );
+					if ( strtolower( $field_name ) !== $sanitized ) {
+						$field['name'] = $sanitized;
 					}
 
-					$field_name = sanitize_title( $field['name'] );
-					$form_field = array(
-						'name'  => $field_name,
-						'label' => $field['name'],
-					);
+					$data['form']['fields'][] = $field;
 
-					switch ( $field['type'] ) {
-						case 'multipleAttachments':
-							$form_field['type']     = 'file';
-							$form_field['is_multi'] = true;
-							break;
-						case 'rating':
-						case 'number':
-							$form_field['type'] = 'number';
-							break;
-						case 'checkbox':
-							$form_field['type'] = 'checkbox';
-							break;
-						case 'multipleSelects':
-						case 'singleSelect':
-							$form_field['type']    = 'select';
-							$form_field['options'] = array_map(
-								function ( $choice ) {
-									return array(
-										'value' => $choice['name'],
-										'label' => $choice['name'],
-									);
-								},
-								$field['options']['choices'],
-							);
-
-							$form_field['is_multi'] = 'multipleSelects' === $field['type'];
-							break;
-						case 'date':
-							$form_field['type'] = 'date';
-							break;
-						case 'multilineText':
-							$form_field['type'] = 'textarea';
-							break;
-						default:
-							$form_field['type'] = 'text';
-							break;
-					}
-
-					$data['form']['fields'][] = $form_field;
-
-					if ( $field['name'] !== $form_field['name'] ) {
+					if ( $field['label'] !== $field['name'] ) {
 						if ( ! isset( $data['bridge']['mutations'][0] ) ) {
 							$data['bridge']['mutations'][0] = array();
 						}
 
-						if ( 'file' === $form_field['type'] ) {
+						if ( 'file' === $field['type'] ) {
 							$data['bridge']['mutations'][0][] = array(
-								'from' => $form_field['name'] . '_filename',
-								'to'   => $field['name'],
+								'from' => $field['name'] . '_filename',
+								'to'   => $field_name . '_filename',
 								'cast' => 'null',
 							);
 						}
 
 						$data['bridge']['mutations'][0][] = array(
-							'from' => $form_field['name'],
-							'to'   => $field['name'],
+							'from' => $field['name'],
+							'to'   => $field_name,
 							'cast' => 'inherit',
+						);
+					} elseif ( 'file' === $field['type'] ) {
+						if ( ! isset( $data['bridge']['mutations'][0] ) ) {
+							$data['bridge']['mutations'][0] = array();
+						}
+
+						$data['bridge']['mutations'][0][] = array(
+							'from' => $field['name'] . '_filename',
+							'to'   => $field_name . '_filename',
+							'cast' => 'null',
 						);
 					}
 				}
@@ -228,21 +181,4 @@ add_filter(
 	},
 	10,
 	2,
-);
-
-add_filter(
-	'http_bridge_oauth_url',
-	function ( $url, $verb ) {
-		if ( false === strstr( $url, 'airtable.com' ) ) {
-			return $url;
-		}
-
-		if ( 'auth' === $verb ) {
-			$url .= 'orize';
-		}
-
-		return $url;
-	},
-	10,
-	2
 );

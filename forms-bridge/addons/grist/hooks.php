@@ -171,6 +171,16 @@ add_filter(
 							'to'   => $field['name'],
 							'cast' => 'inherit',
 						);
+					} elseif ( 'file' === $field['type'] ) {
+						if ( ! isset( $data['bridge']['mutations'][0] ) ) {
+							$data['bridge']['mutations'][0] = array();
+						}
+
+						$data['bridge']['mutations'][0][] = array(
+							'from' => $field['name'] . '_filename',
+							'to'   => $field['name'],
+							'cast' => 'null',
+						);
 					}
 				}
 			}
