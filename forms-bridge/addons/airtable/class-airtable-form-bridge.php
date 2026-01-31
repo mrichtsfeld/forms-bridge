@@ -275,7 +275,7 @@ class Airtable_Form_Bridge extends Form_Bridge {
 			$uploads = Forms_Bridge::attachments( FBAPI::get_uploads() );
 
 			foreach ( $attachments as $attachment ) {
-				$filetype = array( 'type' => 'octet/stream' );
+				$filetype = array( 'type' => 'application/octet-stream' );
 				$filename = $attachment['name'];
 
 				foreach ( $uploads as $upload_name => $path ) {
@@ -283,7 +283,7 @@ class Airtable_Form_Bridge extends Form_Bridge {
 						$filename = basename( $path );
 						$filetype = wp_check_filetype( $path );
 						if ( empty( $filetype['type'] ) ) {
-							$filetype['type'] = mime_content_type( $path ) ?: 'octet/stream';
+							$filetype['type'] = mime_content_type( $path ) ?: 'application/octet-stream';
 						}
 					}
 				}
@@ -296,7 +296,7 @@ class Airtable_Form_Bridge extends Form_Bridge {
 				)->post(
 					"/v0/{$base_id}/{$record_id}/{$attachment['id']}/uploadAttachment",
 					array(
-						'contentType' => $filetype['type'] ?? 'octet/stream',
+						'contentType' => $filetype['type'] ?? 'application/octet-stream',
 						'file'        => $attachment['file'],
 						'filename'    => $filename,
 					),

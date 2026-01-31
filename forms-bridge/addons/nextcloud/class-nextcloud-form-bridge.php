@@ -38,7 +38,7 @@ class Nextcloud_Form_Bridge extends Form_Bridge {
 		$uploads = Forms_Bridge::upload_dir() . '/nextcloud';
 
 		if ( ! is_dir( $uploads ) ) {
-			if ( ! mkdir( $uploads, 755 ) ) {
+			if ( ! wp_mkdir_p( $uploads, 755 ) ) {
 				return;
 			}
 		}
@@ -229,13 +229,11 @@ class Nextcloud_Form_Bridge extends Form_Bridge {
 
 		if ( ! $backend ) {
 			return new WP_Error(
-				'invalid_bridge',
+				'invalid_backend',
 				'Bridge has no valid backend',
 				(array) $this->data,
 			);
 		}
-
-		$payload = self::flatten_payload( $payload );
 
 		add_filter(
 			'http_bridge_backend_url',
@@ -260,62 +258,68 @@ class Nextcloud_Form_Bridge extends Form_Bridge {
 			2
 		);
 
-		$filepath = $this->filepath( $touched );
+		if ( 'PUT' === $this->method ) {
+			$payload = self::flatten_payload( $payload );
 
-		if ( is_wp_error( $filepath ) ) {
-			return $filepath;
-		}
+			$filepath = $this->filepath( $touched );
 
-		$dav_modified = $this->get_dav_modified_date( $backend );
-		if ( is_wp_error( $dav_modified ) ) {
-			return $dav_modified;
-		}
+			if ( is_wp_error( $filepath ) ) {
+				return $filepath;
+			}
 
-		if ( ! $dav_modified ) {
-			$headers = $this->payload_to_headers( $payload );
-			$row     = $this->payload_to_row( $payload );
-			$csv     = implode( "\n", array( $headers, $row ) );
+			$dav_modified = $this->get_dav_modified_date( $backend );
+			if ( is_wp_error( $dav_modified ) ) {
+				return $dav_modified;
+			}
 
-			file_put_contents( $filepath, $csv );
-			$response = parent::submit( $csv );
-		} elseif ( $touched ) {
+			if ( ! $dav_modified ) {
 				$headers = $this->payload_to_headers( $payload );
 				$row     = $this->payload_to_row( $payload );
 				$csv     = implode( "\n", array( $headers, $row ) );
 
 				file_put_contents( $filepath, $csv );
 				$response = parent::submit( $csv );
-		} else {
-			$local_modified = filemtime( $filepath );
+			} elseif ( $touched ) {
+					$headers = $this->payload_to_headers( $payload );
+					$row     = $this->payload_to_row( $payload );
+					$csv     = implode( "\n", array( $headers, $row ) );
 
-			if ( $dav_modified > $local_modified ) {
-				$response = $backend->get(
-					$this->endpoint,
-					array(),
-					array(),
-					array(
-						'stream'   => true,
-						'filename' => $filepath,
-					)
-				);
+					file_put_contents( $filepath, $csv );
+					$response = parent::submit( $csv );
+			} else {
+				$local_modified = filemtime( $filepath );
 
-				if ( is_wp_error( $response ) ) {
-					return $response;
+				if ( $dav_modified > $local_modified ) {
+					$response = $backend->get(
+						$this->endpoint,
+						array(),
+						array(),
+						array(
+							'stream'   => true,
+							'filename' => $filepath,
+						)
+					);
+
+					if ( is_wp_error( $response ) ) {
+						return $response;
+					}
 				}
+
+				$this->add_row( $payload );
+
+				$csv      = file_get_contents( $filepath );
+				$response = parent::submit( $csv );
 			}
 
-			$this->add_row( $payload );
+			if ( is_wp_error( $response ) ) {
+				return $response;
+			}
 
-			$csv      = file_get_contents( $filepath );
-			$response = parent::submit( $csv );
-		}
-
-		if ( is_wp_error( $response ) ) {
+			touch( $filepath, time() );
 			return $response;
 		}
 
-		touch( $filepath, time() );
-		return $response;
+		return parent::submit( $payload );
 	}
 
 	/**
