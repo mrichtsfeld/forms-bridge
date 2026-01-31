@@ -1,20 +1,20 @@
 <?php
 /**
- * Class AirtableTest
+ * Class GristTest
  *
  * @package formsbridge-tests
  */
 
-use FORMS_BRIDGE\Airtable_Form_Bridge;
-use FORMS_BRIDGE\Airtable_Addon;
+use FORMS_BRIDGE\Grist_Form_Bridge;
+use FORMS_BRIDGE\Grist_Addon;
 use FORMS_BRIDGE\Addon;
 use HTTP_BRIDGE\Backend;
 use HTTP_BRIDGE\Credential;
 
 /**
- * Airtable test case.
+ * Grist addon test case.
  */
-class AirtableTest extends WP_UnitTestCase {
+class GristTest extends WP_UnitTestCase {
 
 	/**
 	 * Handles the last intercepted http request data.
@@ -35,28 +35,42 @@ class AirtableTest extends WP_UnitTestCase {
 	 *
 	 * @var string
 	 */
-	private const BACKEND_NAME = 'test-airtable-backend';
+	private const BACKEND_NAME = 'test-grist-backend';
 
 	/**
 	 * Holds the mocked backend base URL.
 	 *
 	 * @var string
 	 */
-	private const BACKEND_URL = 'https://api.airtable.com';
+	private const BACKEND_URL = 'https://test.getgrist.com';
 
 	/**
 	 * Holds the mocked credential name.
 	 *
 	 * @var string
 	 */
-	private const CREDENTIAL_NAME = 'test-airtable-credential';
+	private const CREDENTIAL_NAME = 'test-grist-credential';
 
 	/**
 	 * Holds the mocked bridge name.
 	 *
 	 * @var string
 	 */
-	private const BRIDGE_NAME = 'test-airtable-bridge';
+	private const BRIDGE_NAME = 'test-grist-bridge';
+
+	/**
+	 * Holds the mocked doc ID.
+	 *
+	 * @var string
+	 */
+	private const DOC_ID = 'doc123456789';
+
+	/**
+	 * Holds the mocked table ID.
+	 *
+	 * @var string
+	 */
+	private const TABLE_ID = 'TestTable';
 
 	/**
 	 * Test credential provider.
@@ -94,8 +108,8 @@ class AirtableTest extends WP_UnitTestCase {
 							'value' => 'application/json',
 						),
 						array(
-							'name'  => 'Accept',
-							'value' => 'application/json',
+							'name'  => 'orgId',
+							'value' => 'test',
 						),
 					),
 				)
@@ -169,166 +183,172 @@ class AirtableTest extends WP_UnitTestCase {
 	 * @return array Mock response.
 	 */
 	private static function get_mock_response( $method, $path, $body ) {
-		if ( 0 === strpos( $path, '/v0/meta/bases' ) ) {
-			// Meta bases endpoint.
-			if ( '/v0/meta/bases' === $path ) {
-				return array(
-					'bases' => array(
+		// Organizations endpoint.
+		if ( '/api/orgs' === $path && 'GET' === $method ) {
+			return array(
+				'orgs' => array(
+					array(
+						'id'   => 'org123456789',
+						'name' => 'Test Organization',
+					),
+				),
+			);
+		}
+
+		// Workspaces endpoint.
+		if ( preg_match( '/^\/api\/orgs\/([^\/]+)\/workspaces$/', $path ) && 'GET' === $method ) {
+			return array(
+				array(
+					'id'   => 'ws123456789',
+					'name' => 'Test Workspace',
+					'docs' => array(
 						array(
-							'id'   => 'app123456789',
-							'name' => 'Test Base',
-						),
-						array(
-							'id'   => 'app987654321',
-							'name' => 'Another Base',
+							'id'     => self::DOC_ID,
+							'urlId'  => self::DOC_ID,
+							'name'   => 'Test Document',
+							'access' => 'owners',
 						),
 					),
-				);
-			} elseif ( preg_match( '#^/v0/meta/bases/(app\d+)/tables$#', $path, $matches ) ) {
-				// Tables for a specific base.
-				return array(
-					'tables' => array(
-						array(
-							'id'     => 'tbl123456789',
-							'name'   => 'Contacts',
-							'fields' => array(
-								array(
-									'id'   => 'fld123456789',
-									'name' => 'Name',
-									'type' => 'singleLineText',
-								),
-								array(
-									'id'   => 'fld987654321',
-									'name' => 'Email',
-									'type' => 'email',
-								),
-								array(
-									'id'   => 'fld555555555',
-									'name' => 'Active',
-									'type' => 'checkbox',
-								),
-								array(
-									'id'   => 'fld777777777',
-									'name' => 'Score',
-									'type' => 'number',
-								),
-								array(
-									'id'      => 'fld888888888',
-									'name'    => 'Tags',
-									'type'    => 'multipleSelects',
-									'options' => array(
-										'choices' => array(
-											array(
-												'name' => 'A',
-												'id'   => 't1',
-											),
-											array(
-												'name' => 'B',
-												'id'   => 't2',
-											),
-											array(
-												'name' => 'C',
-												'id'   => 't3',
-											),
-										),
-									),
-								),
-								array(
-									'id'   => 'fld999999999',
-									'name' => 'Summary',
-									'type' => 'aiText',
-								),
-								array(
-									'id'   => 'fld2222222222',
-									'name' => 'Profile Picture',
-									'type' => 'multipleAttachments',
-								),
-							),
+				),
+			);
+		}
+
+		// Tables endpoint.
+		if ( preg_match( '/^\/api\/docs\/doc([^\/]+)\/tables$/', $path ) && 'GET' === $method ) {
+			return array(
+				'tables' => array(
+					array(
+						'id'   => self::TABLE_ID,
+						'name' => 'Test Table',
+					),
+					array(
+						'id'   => 'another-table',
+						'name' => 'Another Table',
+					),
+				),
+			);
+		}
+
+		// Columns endpoint.
+		if ( preg_match( '/^\/api\/docs\/doc([^\/]+)\/tables\/([^\/]+)\/columns$/', $path ) && 'GET' === $method ) {
+			return array(
+				'columns' => array(
+					array(
+						'id'     => 'name',
+						'fields' => array(
+							'label'         => 'Name',
+							'type'          => 'Text',
+							'isFormula'     => false,
+							'formula'       => '',
+							'widgetOptions' => '{}',
 						),
-						array(
-							'id'     => 'tbl987654321',
-							'name'   => 'Projects',
-							'fields' => array(
+					),
+					array(
+						'id'     => 'email',
+						'fields' => array(
+							'label'         => 'Email',
+							'type'          => 'Text',
+							'isFormula'     => false,
+							'formula'       => '',
+							'widgetOptions' => '{}',
+						),
+					),
+					array(
+						'id'     => 'age',
+						'fields' => array(
+							'label'         => 'Age',
+							'type'          => 'Int',
+							'isFormula'     => false,
+							'formula'       => '',
+							'widgetOptions' => '{}',
+						),
+					),
+					array(
+						'id'     => 'active',
+						'fields' => array(
+							'label'         => 'Active',
+							'type'          => 'Bool',
+							'isFormula'     => false,
+							'formula'       => '',
+							'widgetOptions' => '{}',
+						),
+					),
+					array(
+						'id'     => 'tags',
+						'fields' => array(
+							'label'         => 'Tags',
+							'type'          => 'ChoiceList',
+							'isFormula'     => false,
+							'formula'       => '',
+							'widgetOptions' => json_encode(
 								array(
-									'id'      => 'field1234',
-									'name'    => 'Name',
-									'type'    => 'singleLineText',
-									'options' => array(),
-								),
+									'choices' => array( 'A', 'B', 'C' ),
+								)
 							),
 						),
 					),
+					array(
+						'id'     => 'attachment',
+						'fields' => array(
+							'label'         => 'Attachment',
+							'type'          => 'Attachments',
+							'isFormula'     => false,
+							'formula'       => '',
+							'widgetOptions' => '{}',
+						),
+					),
+					array(
+						'id'     => 'formula_field',
+						'fields' => array(
+							'label'         => 'Formula Field',
+							'type'          => 'Text',
+							'isFormula'     => true,
+							'formula'       => '=1+1',
+							'widgetOptions' => '{}',
+						),
+					),
+					array(
+						'id'     => 'ref_field',
+						'fields' => array(
+							'label'         => 'Reference Field',
+							'type'          => 'Ref:test-table-456',
+							'isFormula'     => false,
+							'formula'       => '',
+							'widgetOptions' => '{}',
+						),
+					),
+				),
+			);
+		}
+
+		// Records endpoint (POST).
+		if ( preg_match( '/^\/api\/docs\/doc([^\/]+)\/tables\/([^\/]+)\/records$/', $path ) ) {
+			if ( 'POST' === $method ) {
+				return array(
+					'records' => array( array( 'id' => 'rec123456789' ) ),
 				);
-			}
-		} elseif ( preg_match( '#^/v0/(app\d+)/([^/]+)$#', $path, $matches ) ) {
-			// Table data endpoint.
-			if ( 'GET' === $method ) {
-				// Mock field schema for GET requests.
+			} else {
 				return array(
 					'records' => array(
 						array(
-							'id'          => 'rec123456789',
-							'createdTime' => '2023-01-01T00:00:00.000Z',
-							'fields'      => array(
-								array(
-									'id'   => 'fld123456789',
-									'name' => 'Name',
-									'type' => 'singleLineText',
-								),
-								array(
-									'id'   => 'fld987654321',
-									'name' => 'Email',
-									'type' => 'email',
-								),
-								array(
-									'id'   => 'fld555555555',
-									'name' => 'Active',
-									'type' => 'checkbox',
-								),
-								array(
-									'id'   => 'fld777777777',
-									'name' => 'Score',
-									'type' => 'number',
-								),
-								array(
-									'id'   => 'fld888888888',
-									'name' => 'Tags',
-									'type' => 'multipleSelects',
-								),
+							'id'     => 'rec123456789',
+							'fields' => array(
+								'email'       => 'john.doe@example.coop',
+								'name'        => 'John Doe',
+								'age'         => 43,
+								'tags'        => array( 'L', 'A', 'B' ),
+								'active'      => true,
+								'attachments' => array( 'L', 1 ),
 							),
 						),
 					),
 				);
-			} elseif ( 'POST' === $method ) {
-				// Mock successful record creation for POST requests.
-				return array(
-					'records' => array(
-						array(
-							'id'          => 'rec123456789',
-							'fields'      => $body['records'][0]['fields'],
-							'createdTime' => '2023-01-01T00:00:00.000Z',
-						),
-					),
-				);
 			}
-		} elseif ( preg_match( '#^/v0/(app\d+)/([^/]+)/uploadAttachment$#', $path, $matches ) ) {
-			if ( $method === 'POST' ) {
-				return array(
-					'createdTime' => '2022-02-01T21:25:05.663Z',
-					'fields'      => array(
-						'fld00000000000000' => array(
-							array(
-								'filename' => 'sample.txt',
-								'id'       => 'att00000000000000',
-								'size'     => 11,
-								'type'     => 'text/plain',
-								'url'      => 'https://v5.airtableusercontent.com/v3/u/29/29/1716940800000/ffhiecnieIwxisnIBDSAln/foDeknw_G5CdkdPW1j-U0yUCX9YSaE1EJft3wvXb85pnTY1sKZdYeFvKpsM-fqOa6Bnu5MQVPA_ApINEUXL_E3SAZn6z01VN9Pn9SluhSy4NoakZGapcvl4tuN3jktO2Dt7Ck_gh4oMdsrcV8J-t_A/53m17XmDDHsNtIqzM1PQVnRKutK6damFgNNS5WCaTbI',
-							),
-						),
-					),
-					'id'          => 'rec00000000000000',
-				);
-			}
+		}
+
+		// Attachments endpoint (POST).
+		if ( preg_match( '/^\/api\/docs\/doc([^\/]+)\/attachments$/', $path ) && 'POST' === $method ) {
+			return array( 1 );
 		}
 
 		// Default empty response.
@@ -361,32 +381,22 @@ class AirtableTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Test that the addon class exists and has correct constants.
-	 */
-	public function test_addon_class_exists() {
-		$this->assertTrue( class_exists( 'FORMS_BRIDGE\Airtable_Addon' ) );
-		$this->assertEquals( 'Airtable', Airtable_Addon::TITLE );
-		$this->assertEquals( 'airtable', Airtable_Addon::NAME );
-		$this->assertEquals( '\FORMS_BRIDGE\Airtable_Form_Bridge', Airtable_Addon::BRIDGE );
-	}
-
-	/**
 	 * Test that the form bridge class exists.
 	 */
 	public function test_form_bridge_class_exists() {
-		$this->assertTrue( class_exists( 'FORMS_BRIDGE\Airtable_Form_Bridge' ) );
+		$this->assertTrue( class_exists( 'FORMS_BRIDGE\Grist_Form_Bridge' ) );
 	}
 
 	/**
 	 * Test bridge validation with valid data.
 	 */
 	public function test_bridge_validation() {
-		$bridge = new Airtable_Form_Bridge(
+		$bridge = new Grist_Form_Bridge(
 			array(
 				'name'     => self::BRIDGE_NAME,
 				'backend'  => self::BACKEND_NAME,
-				'endpoint' => '/v0/app123456789/Contacts',
-				'method'   => 'POST',
+				'endpoint' => '/api/docs/' . self::DOC_ID . '/tables',
+				'method'   => 'GET',
 			)
 		);
 
@@ -397,7 +407,7 @@ class AirtableTest extends WP_UnitTestCase {
 	 * Test bridge validation with invalid data.
 	 */
 	public function test_bridge_validation_invalid() {
-		$bridge = new Airtable_Form_Bridge(
+		$bridge = new Grist_Form_Bridge(
 			array(
 				'name' => 'invalid-bridge',
 				// Missing required fields.
@@ -411,21 +421,21 @@ class AirtableTest extends WP_UnitTestCase {
 	 * Test POST request to create a record.
 	 */
 	public function test_post_create_record() {
-		$bridge = new Airtable_Form_Bridge(
+		$bridge = new Grist_Form_Bridge(
 			array(
 				'name'     => self::BRIDGE_NAME,
 				'backend'  => self::BACKEND_NAME,
-				'endpoint' => '/v0/app123456789/Contacts',
+				'endpoint' => '/api/docs/' . self::DOC_ID . '/tables/' . self::TABLE_ID . '/records',
 				'method'   => 'POST',
 			)
 		);
 
 		$payload = array(
-			'Name'   => 'John Doe',
-			'Email'  => 'john.doe@example.com',
-			'Score'  => 99,
-			'Tags'   => array( 'A', 'B' ),
-			'Active' => true,
+			'name'   => 'John Doe',
+			'email'  => 'john.doe@example.com',
+			'tags'   => array( 'A', 'B' ),
+			'active' => true,
+			'age'    => 42,
 		);
 
 		$response = $bridge->submit( $payload );
@@ -433,29 +443,28 @@ class AirtableTest extends WP_UnitTestCase {
 		$this->assertFalse( is_wp_error( $response ) );
 		$this->assertArrayHasKey( 'data', $response );
 		$this->assertEquals( 'rec123456789', $response['data']['records'][0]['id'] );
-		$this->assertEquals( 'John Doe', $response['data']['records'][0]['fields']['Name'] );
 	}
 
 	/**
 	 * Test POST request to create a record with uploads.
 	 */
-	public function test_post_create_record_with_uploads() {
-		$bridge = new Airtable_Form_Bridge(
+	public function test_post_create_record_with_upload() {
+		$bridge = new Grist_Form_Bridge(
 			array(
 				'name'     => self::BRIDGE_NAME,
 				'backend'  => self::BACKEND_NAME,
-				'endpoint' => '/v0/app123456789/Contacts',
+				'endpoint' => '/api/docs/' . self::DOC_ID . '/tables/' . self::TABLE_ID . '/records',
 				'method'   => 'POST',
 			)
 		);
 
 		$payload = array(
-			'Name'            => 'John Doe',
-			'Email'           => 'john.doe@example.com',
-			'Score'           => 99,
-			'Tags'            => array( 'A', 'B' ),
-			'Active'          => true,
-			'Profile Picture' => 'file',
+			'name'       => 'John Doe',
+			'email'      => 'john.doe@example.com',
+			'attachment' => 'file',
+			'tags'       => array( 'A', 'B' ),
+			'active'     => true,
+			'age'        => 42,
 		);
 
 		$response = $bridge->submit( $payload );
@@ -463,18 +472,17 @@ class AirtableTest extends WP_UnitTestCase {
 		$this->assertFalse( is_wp_error( $response ) );
 		$this->assertArrayHasKey( 'data', $response );
 		$this->assertEquals( 'rec123456789', $response['data']['records'][0]['id'] );
-		$this->assertEquals( 'John Doe', $response['data']['records'][0]['fields']['Name'] );
 	}
 
 	/**
 	 * Test GET request to fetch table schema.
 	 */
 	public function test_get_table_schema() {
-		$bridge = new Airtable_Form_Bridge(
+		$bridge = new Grist_Form_Bridge(
 			array(
 				'name'     => self::BRIDGE_NAME,
 				'backend'  => self::BACKEND_NAME,
-				'endpoint' => '/v0/app123456789/Contacts',
+				'endpoint' => '/api/docs/' . self::DOC_ID . '/tables/' . self::TABLE_ID . '/records',
 				'method'   => 'GET',
 			)
 		);
@@ -486,14 +494,14 @@ class AirtableTest extends WP_UnitTestCase {
 		$this->assertArrayHasKey( 'records', $response['data'] );
 		$this->assertCount( 1, $response['data']['records'] );
 		$this->assertArrayHasKey( 'fields', $response['data']['records'][0] );
-		$this->assertCount( 5, $response['data']['records'][0]['fields'] );
+		$this->assertCount( 6, $response['data']['records'][0]['fields'] );
 	}
 
 	/**
 	 * Test addon ping method.
 	 */
 	public function test_addon_ping() {
-		$addon    = Addon::addon( 'airtable' );
+		$addon    = Addon::addon( 'grist' );
 		$response = $addon->ping( self::BACKEND_NAME );
 
 		$this->assertTrue( $response );
@@ -503,47 +511,45 @@ class AirtableTest extends WP_UnitTestCase {
 	 * Test addon fetch method to get tables.
 	 */
 	public function test_addon_fetch_tables() {
-		$addon    = Addon::addon( 'airtable' );
-		$response = $addon->fetch( null, self::BACKEND_NAME );
+		$addon    = Addon::addon( 'grist' );
+		$response = $addon->fetch( '/api/orgs/{orgId}/tables', self::BACKEND_NAME );
 
 		$this->assertFalse( is_wp_error( $response ) );
 		$this->assertArrayHasKey( 'data', $response );
 		$this->assertArrayHasKey( 'tables', $response['data'] );
-		$this->assertCount( 4, $response['data']['tables'] ); // 2 bases × 2 tables each
+		$this->assertCount( 2, $response['data']['tables'] );
 
 		// Check that tables have the expected structure.
 		$table = $response['data']['tables'][0];
-		$this->assertArrayHasKey( 'base_id', $table );
-		$this->assertArrayHasKey( 'base_name', $table );
+		$this->assertArrayHasKey( 'org_id', $table );
+		$this->assertArrayHasKey( 'doc_id', $table );
+		$this->assertArrayHasKey( 'doc_name', $table );
 		$this->assertArrayHasKey( 'label', $table );
 		$this->assertArrayHasKey( 'id', $table );
 		$this->assertArrayHasKey( 'endpoint', $table );
-		$this->assertEquals( 'Test Base/Contacts', $table['label'] );
-		$this->assertEquals( '/v0/app123456789/Contacts', $table['endpoint'] );
+		$this->assertEquals( 'Test Document/' . self::TABLE_ID, $table['label'] );
+		$this->assertEquals( '/api/docs/' . self::DOC_ID . '/tables/' . self::TABLE_ID . '/records', $table['endpoint'] );
 	}
 
 	/**
 	 * Test addon get_endpoints method.
 	 */
 	public function test_addon_get_endpoints() {
-		$addon     = Addon::addon( 'airtable' );
+		$addon     = Addon::addon( 'grist' );
 		$endpoints = $addon->get_endpoints( self::BACKEND_NAME );
 
 		$this->assertIsArray( $endpoints );
-		$this->assertNotEmpty( $endpoints );
-		$this->assertContains( '/v0/app123456789/Contacts', $endpoints );
-		$this->assertContains( '/v0/app123456789/Projects', $endpoints );
-		$this->assertContains( '/v0/app987654321/Contacts', $endpoints );
-		$this->assertContains( '/v0/app987654321/Projects', $endpoints );
+		$this->assertCount( 2, $endpoints );
+		$this->assertContains( '/api/docs/' . self::DOC_ID . '/tables/' . self::TABLE_ID . '/records', $endpoints );
 	}
 
 	/**
 	 * Test addon get_endpoint_schema method for POST.
 	 */
 	public function test_addon_get_endpoint_schema_post() {
-		$addon  = Addon::addon( 'airtable' );
+		$addon  = Addon::addon( 'grist' );
 		$schema = $addon->get_endpoint_schema(
-			'/v0/app123456789/Contacts',
+			'/api/docs/' . self::DOC_ID . '/tables/' . self::TABLE_ID . '/records',
 			self::BACKEND_NAME,
 			'POST'
 		);
@@ -553,12 +559,12 @@ class AirtableTest extends WP_UnitTestCase {
 
 		// Check that schema contains expected fields.
 		$field_names = array_column( $schema, 'name' );
-		$this->assertContains( 'Name', $field_names );
-		$this->assertContains( 'Email', $field_names );
-		$this->assertContains( 'Active', $field_names );
-		$this->assertContains( 'Score', $field_names );
-		$this->assertContains( 'Tags', $field_names );
-		$this->assertContains( 'Profile Picture', $field_names );
+		$this->assertContains( 'name', $field_names );
+		$this->assertContains( 'email', $field_names );
+		$this->assertContains( 'active', $field_names );
+		$this->assertContains( 'age', $field_names );
+		$this->assertContains( 'tags', $field_names );
+		$this->assertContains( 'attachment', $field_names );
 
 		// Check field types.
 		$schema_map = array();
@@ -566,21 +572,21 @@ class AirtableTest extends WP_UnitTestCase {
 			$schema_map[ $field['name'] ] = $field['schema']['type'];
 		}
 
-		$this->assertEquals( 'string', $schema_map['Name'] );
-		$this->assertEquals( 'string', $schema_map['Email'] );
-		$this->assertEquals( 'boolean', $schema_map['Active'] );
-		$this->assertEquals( 'number', $schema_map['Score'] );
-		$this->assertEquals( 'array', $schema_map['Tags'] );
-		$this->assertEquals( 'file', $schema_map['Profile Picture'] );
+		$this->assertEquals( 'string', $schema_map['name'] );
+		$this->assertEquals( 'string', $schema_map['email'] );
+		$this->assertEquals( 'boolean', $schema_map['active'] );
+		$this->assertEquals( 'array', $schema_map['tags'] );
+		$this->assertEquals( 'file', $schema_map['attachment'] );
+		$this->assertEquals( 'number', $schema_map['age'] );
 	}
 
 	/**
 	 * Test addon get_endpoint_schema method for non-POST methods.
 	 */
 	public function test_addon_get_endpoint_schema_non_post() {
-		$addon  = Addon::addon( 'airtable' );
+		$addon  = Addon::addon( 'grist' );
 		$schema = $addon->get_endpoint_schema(
-			'/v0/app123456789/Contacts',
+			'/api/docs/' . self::DOC_ID . '/tables/' . self::TABLE_ID . '/records',
 			self::BACKEND_NAME,
 			'GET'
 		);
@@ -599,18 +605,15 @@ class AirtableTest extends WP_UnitTestCase {
 				'code'    => 401,
 				'message' => 'Unauthorized',
 			),
-			'error' => array(
-				'type'    => 'AUTHENTICATION_REQUIRED',
-				'message' => 'Authentication required',
-			),
+			'error' => 'Bad request: invalid API key',
 		);
 
-		$bridge = new Airtable_Form_Bridge(
+		$bridge = new Grist_Form_Bridge(
 			array(
 				'name'     => self::BRIDGE_NAME,
 				'backend'  => self::BACKEND_NAME,
-				'endpoint' => '/v0/app123456789/Contacts',
-				'method'   => 'POST',
+				'endpoint' => '/api/docs/' . self::DOC_ID . '/tables/' . self::TABLE_ID . '/records',
+				'method'   => 'GET',
 			)
 		);
 
@@ -623,11 +626,11 @@ class AirtableTest extends WP_UnitTestCase {
 	 * Test invalid backend handling.
 	 */
 	public function test_invalid_backend() {
-		$bridge = new Airtable_Form_Bridge(
+		$bridge = new Grist_Form_Bridge(
 			array(
 				'name'     => 'test-invalid-backend-bridge',
 				'backend'  => 'non-existent-backend',
-				'endpoint' => '/v0/app123456789/Contacts',
+				'endpoint' => '/api/docs/' . self::DOC_ID . '/tables/' . self::TABLE_ID . '/records',
 				'method'   => 'POST',
 			)
 		);
@@ -642,11 +645,11 @@ class AirtableTest extends WP_UnitTestCase {
 	 * Test authorization header transformation.
 	 */
 	public function test_authorization_header_transformation() {
-		$bridge = new Airtable_Form_Bridge(
+		$bridge = new Grist_Form_Bridge(
 			array(
 				'name'     => self::BRIDGE_NAME,
 				'backend'  => self::BACKEND_NAME,
-				'endpoint' => '/v0/app123456789/Contacts',
+				'endpoint' => '/api/docs/' . self::DOC_ID . '/tables/' . self::TABLE_ID . '/records',
 				'method'   => 'GET',
 			)
 		);
@@ -667,17 +670,18 @@ class AirtableTest extends WP_UnitTestCase {
 	 * Test field filtering in schema - should exclude certain field types.
 	 */
 	public function test_field_filtering_in_schema() {
-		$addon  = Addon::addon( 'airtable' );
+		$addon  = Addon::addon( 'grist' );
 		$schema = $addon->get_endpoint_schema(
-			'/v0/app123456789/Contacts',
+			'/api/docs/' . self::DOC_ID . '/tables/' . self::TABLE_ID . '/records',
 			self::BACKEND_NAME,
 			'POST'
 		);
 
 		// Should only include the singleLineText field, not the aiText field.
 		$field_names = array_column( $schema, 'name' );
-		$this->assertContains( 'Name', $field_names );
-		$this->assertNotContains( 'Summary', $field_names );
+		$this->assertContains( 'name', $field_names );
+		$this->assertNotContains( 'formula_field', $field_names );
+		$this->assertNotContains( 'ref_field', $field_names );
 		$this->assertCount( 6, $schema );
 	}
 }

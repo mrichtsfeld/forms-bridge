@@ -70,8 +70,10 @@ Forms Bridge has the following add-ons:
 
 **🗓️ Productivity**
 
+* [Airtable](https://formsbridge.codeccoop.org/documentation/airtable/)
 * [Google Calendar](https://formsbridge.codeccoop.org/documentation/google-calendar/)
 * [Google Sheets](https://formsbridge.codeccoop.org/documentation/google-sheets/)
+* [Grist](https://formsbridge.codeccoop.org/documentation/grist/)
 * [Nextcloud](https://formsbridge.codeccoop.org/documentation/nextcloud/)
 
 **📨 Messaging & Collaboration**
@@ -93,7 +95,7 @@ Think of a bridge as a pipeline through which your form submissions data flows t
 Think of it as a "connection profile" for your API. Save your API URL, headers, and credentials once, then reuse them across all your bridges. No need to re-enter details every time!
 
 **Credentials**
-Authenticate your HTTP requests using API keys, Basic Auth, OAuth, RPC credentials and Digest Auth.
+Authenticate your HTTP requests using API keys, Basic Auth, Bearer Tokens, OAuth, RPC credentials and Digest Auth.
 
 **Custom fields & mappers**
 Add hidden data (like user IDs or product codes) and rename/transform fields to match your API’s requirements.
@@ -137,7 +139,7 @@ Maybe a little understanding about how HTTP and HTTP-like APIs works will be req
 
 = What if my API requires authentication? =
 
-Forms Bridge supports API keys, Basic Auth, OAuth, RPC credentials, Digest Auth and custom headers.
+Forms Bridge supports API keys, Basic Auth, Bearer Tokens, OAuth, RPC credentials, Digest Auth and custom headers.
 
 = Is there a free trial? =
 
@@ -163,9 +165,12 @@ You can get support from Còdec using the [Forms Bridge support forum](https://w
 
 = 4.3.1 =
 feat: airtable add-on
+feat: grist add-on
 feat: dynamic form field templates for google sheets, airtable and nextcloud
 feat: nextcloud get endpoints method
+feat: rename bearer to oauth and new support for bearer tokens
 fix: skip internal field attributes in wpcf7 form creation
+
 
 = 4.3.0 =
 * feat: form's bridge chain order

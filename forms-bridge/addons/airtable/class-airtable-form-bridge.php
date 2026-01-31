@@ -68,19 +68,20 @@ class Airtable_Form_Bridge extends Form_Bridge {
 			return new WP_Error( 'invalid_bridge', 'The bridge is invalid', $this->data );
 		}
 
+		$backend = $this->backend;
+		if ( ! $backend ) {
+			return new WP_Error( 'invalid_backend', 'The bridge backend is unkown or invalid', $this->data );
+		}
+
 		$base_id  = $this->base_id();
 		$table_id = $this->table_id();
 
 		if ( ! $base_id || ! $table_id ) {
-			return new WP_Error( 'invalid_endpoint', 'The bridge has an invalid  endpoint', $this->data );
+			return new WP_Error( 'invalid_endpoint', 'The bridge has an invalid endpoint', $this->data );
 		}
 
-		$response = $this->patch(
-			array(
-				'method'   => 'GET',
-				'endpoint' => "/v0/meta/bases/{$base_id}/tables",
-			)
-		)->submit();
+		$endpoint = "/v0/meta/bases/{$base_id}/tables";
+		$response = $backend->get( $endpoint );
 
 		if ( is_wp_error( $response ) ) {
 			return $response;
@@ -97,7 +98,81 @@ class Airtable_Form_Bridge extends Form_Bridge {
 			return new WP_Error( 'not_found', 'Table not found', $this->data );
 		}
 
-		return $table['fields'];
+		$fields = array();
+		foreach ( $table['fields'] as $air_field ) {
+			if (
+				in_array(
+					$air_field['type'],
+					array(
+						'aiText',
+						'formula',
+						'autoNumber',
+						'button',
+						'count',
+						'createdBy',
+						'createdTime',
+						'lastModifiedBy',
+						'lastModifiedTime',
+						'rollup',
+						'externalSyncSource',
+						'multipleCollaborators',
+						'multipleLookupValues',
+						'multipleRecordLinks',
+					),
+					true,
+				)
+			) {
+				continue;
+			}
+
+			$field = array(
+				'id'    => $air_field['id'],
+				'name'  => $air_field['name'],
+				'label' => $air_field['name'],
+			);
+
+			switch ( $air_field['type'] ) {
+				case 'multipleAttachments':
+					$field['type']     = 'file';
+					$field['is_multi'] = true;
+					break;
+				case 'rating':
+				case 'number':
+					$field['type'] = 'number';
+					break;
+				case 'checkbox':
+					$field['type'] = 'checkbox';
+					break;
+				case 'multipleSelects':
+				case 'singleSelect':
+					$field['type']    = 'select';
+					$field['options'] = array_map(
+						function ( $choice ) {
+							return array(
+								'value' => $choice['name'],
+								'label' => $choice['name'],
+							);
+						},
+						$air_field['options']['choices'],
+					);
+
+					$field['is_multi'] = 'multipleSelects' === $air_field['type'];
+					break;
+				case 'date':
+					$field['type'] = 'date';
+					break;
+				case 'multilineText':
+					$field['type'] = 'textarea';
+					break;
+				default:
+					$field['type'] = 'text';
+					break;
+			}
+
+			$fields[] = $field;
+		}
+
+		return $fields;
 	}
 
 	/**
@@ -136,7 +211,7 @@ class Airtable_Form_Bridge extends Form_Bridge {
 
 			$l = count( $fields );
 			for ( $i = 0; $i < $l; ++$i ) {
-				if ( 'multipleAttachments' === $fields[ $i ]['type'] ) {
+				if ( 'file' === $fields[ $i ]['type'] ) {
 					$attachment_field = $fields[ $i ];
 					$attachment_name  = $attachment_field['name'];
 
@@ -170,7 +245,11 @@ class Airtable_Form_Bridge extends Form_Bridge {
 				$field_name = $data_field['name'];
 
 				if ( isset( $payload[ $field_name ] ) ) {
-					if ( 'multipleSelects' === $data_field['type'] && ! is_array( $payload[ $field_name ] ) ) {
+					if (
+						'select' === $data_field['type']
+						&& $data_field['is_multi']
+						&& ! is_array( $payload[ $field_name ] )
+					) {
 						$payload[ $field_name ] = array( $payload[ $field_name ] );
 					}
 
@@ -204,7 +283,7 @@ class Airtable_Form_Bridge extends Form_Bridge {
 						$filename = basename( $path );
 						$filetype = wp_check_filetype( $path );
 						if ( empty( $filetype['type'] ) ) {
-							$filetype['type'] = mime_content_type( $path );
+							$filetype['type'] = mime_content_type( $path ) ?: 'octet/stream';
 						}
 					}
 				}
@@ -217,10 +296,10 @@ class Airtable_Form_Bridge extends Form_Bridge {
 				)->post(
 					"/v0/{$base_id}/{$record_id}/{$attachment['id']}/uploadAttachment",
 					array(
-						'contentType' => $filetype['type'],
+						'contentType' => $filetype['type'] ?? 'octet/stream',
 						'file'        => $attachment['file'],
 						'filename'    => $filename,
-					)
+					),
 				);
 
 				if ( is_wp_error( $upload_response ) ) {

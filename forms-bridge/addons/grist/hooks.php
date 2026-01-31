@@ -1,11 +1,11 @@
 <?php
 /**
- * Airtable addon hooks
+ * Grist addon hooks
  *
  * @package formsbridge
  */
 
-use FORMS_BRIDGE\Airtable_Form_Bridge;
+use FORMS_BRIDGE\Grist_Form_Bridge;
 use HTTP_BRIDGE\Backend;
 use HTTP_BRIDGE\Credential;
 
@@ -16,7 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 add_filter(
 	'forms_bridge_template_defaults',
 	function ( $defaults, $addon, $schema ) {
-		if ( 'airtable' !== $addon ) {
+		if ( 'grist' !== $addon ) {
 			return $defaults;
 		}
 
@@ -41,7 +41,7 @@ add_filter(
 						'name'        => 'access_token',
 						'label'       => __( 'Access token', 'forms-bridge' ),
 						'description' => __(
-							'Register your Personal Access Token in the <a target="_blank" href="https://airtable.com/create/tokens">Airtable Builder Hub</a>',
+							'Register your Personal Access Token in your <a target="_blank" href="https://docs.getgrist.com/account">Grist account settings page</a>',
 							'forms-bridge'
 						),
 						'type'        => 'text',
@@ -60,7 +60,7 @@ add_filter(
 						'type'     => 'text',
 						'required' => true,
 						'options'  => array(
-							'endpoint' => '/v0/meta/tables',
+							'endpoint' => '/api/orgs/{orgId}/tables',
 							'finger'   => array(
 								'value' => 'tables[].endpoint',
 								'label' => 'tables[].label',
@@ -75,20 +75,29 @@ add_filter(
 					array(
 						'ref'     => '#backend',
 						'name'    => 'name',
-						'default' => 'Airtable API',
+						'default' => 'Grist API',
 					),
 					array(
-						'ref'   => '#backend',
-						'name'  => 'base_url',
-						'value' => 'https://api.airtable.com',
+						'ref'     => '#backend',
+						'name'    => 'base_url',
+						'default' => 'https://docs.getgrist.com',
+					),
+					array(
+						'ref'         => '#backend/headers[]',
+						'name'        => 'orgId',
+						'label'       => __( 'Team ID', 'forms-bridge' ),
+						'description' => __(
+							'Use `docs` by default for personal sites. If you\'ve created team site, it should be the team subdomain (e.g. `example` from https://example.getgrist.com). In self-hosted instances, the team ID is the last part of the team\'s homepage URL (e.g. `example` from http://localhost:8484/o/example)',
+							'forms-bridge',
+						),
+						'type'        => 'text',
+						'required'    => true,
+						'default'     => 'docs',
 					),
 				),
-				'backend'    => array(
-					'name'     => 'Airtable API',
-					'base_url' => 'https://api.airtable.com',
-				),
+				'backend'    => array(),
 				'bridge'     => array(
-					'backend'  => 'Airtable API',
+					'backend'  => 'Grist API',
 					'endpoint' => '',
 				),
 				'credential' => array(
@@ -111,27 +120,27 @@ add_filter(
 add_filter(
 	'forms_bridge_template_data',
 	function ( $data, $template_id ) {
-		if ( 0 !== strpos( $template_id, 'airtable-' ) ) {
+		if ( 0 !== strpos( $template_id, 'grist-' ) ) {
 			return $data;
 		}
 
 		if ( empty( $data['form']['fields'] ) ) {
 			$credential_data         = $data['credential'];
-			$credential_data['name'] = '__airtable-' . time();
+			$credential_data['name'] = '__grist-' . time();
 
 			Credential::temp_registration( $credential_data );
 
 			$backend_data               = $data['backend'];
 			$backend_data['credential'] = $credential_data['name'];
-			$backend_data['name']       = '__airtable-' . time();
+			$backend_data['name']       = '__grist-' . time();
 
 			Backend::temp_registration( $backend_data );
 
 			$bridge_data            = $data['bridge'];
-			$bridge_data['name']    = '__airtable-' . time();
+			$bridge_data['name']    = '__grist-' . time();
 			$bridge_data['backend'] = $backend_data['name'];
 
-			$bridge = new Airtable_Form_Bridge( $bridge_data );
+			$bridge = new Grist_Form_Bridge( $bridge_data );
 
 			$fields = $bridge->get_fields();
 			if ( ! is_wp_error( $fields ) ) {
@@ -144,7 +153,7 @@ add_filter(
 
 					$data['form']['fields'][] = $field;
 
-					if ( $field['label'] !== $field['name'] ) {
+					if ( $field['name'] !== $field_name ) {
 						if ( ! isset( $data['bridge']['mutations'][0] ) ) {
 							$data['bridge']['mutations'][0] = array();
 						}
@@ -152,14 +161,14 @@ add_filter(
 						if ( 'file' === $field['type'] ) {
 							$data['bridge']['mutations'][0][] = array(
 								'from' => $field['name'] . '_filename',
-								'to'   => $field_name . '_filename',
+								'to'   => $field['name'],
 								'cast' => 'null',
 							);
 						}
 
 						$data['bridge']['mutations'][0][] = array(
 							'from' => $field['name'],
-							'to'   => $field_name,
+							'to'   => $field['name'],
 							'cast' => 'inherit',
 						);
 					} elseif ( 'file' === $field['type'] ) {
@@ -169,7 +178,7 @@ add_filter(
 
 						$data['bridge']['mutations'][0][] = array(
 							'from' => $field['name'] . '_filename',
-							'to'   => $field_name . '_filename',
+							'to'   => $field['name'],
 							'cast' => 'null',
 						);
 					}

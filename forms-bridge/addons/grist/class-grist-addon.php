@@ -1,6 +1,6 @@
 <?php
 /**
- * Class Airtable_Addon
+ * Class Grist_Addon
  *
  * @package formsbridge
  */
@@ -14,34 +14,34 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit();
 }
 
-require_once 'class-airtable-form-bridge.php';
+require_once 'class-grist-form-bridge.php';
 require_once 'hooks.php';
 
 /**
- * Airtable addon class.
+ * Grist addon class.
  */
-class Airtable_Addon extends Addon {
+class Grist_Addon extends Addon {
 
 	/**
 	 * Handles the addon's title.
 	 *
 	 * @var string
 	 */
-	const TITLE = 'Airtable';
+	const TITLE = 'Grist';
 
 	/**
 	 * Handles the addon's name.
 	 *
 	 * @var string
 	 */
-	const NAME = 'airtable';
+	const NAME = 'grist';
 
 	/**
 	 * Handles the addon's custom bridge class.
 	 *
 	 * @var string
 	 */
-	const BRIDGE = '\FORMS_BRIDGE\Airtable_Form_Bridge';
+	const BRIDGE = '\FORMS_BRIDGE\Grist_Form_Bridge';
 
 	/**
 	 * Performs a request against the backend to check the connection status.
@@ -54,13 +54,14 @@ class Airtable_Addon extends Addon {
 		$backend = FBAPI::get_backend( $backend );
 
 		if ( ! $backend ) {
-			Logger::log( 'Airtable backend ping error: Backend is unkown or invalid', Logger::ERROR );
+			Logger::log( 'Grist backend ping error: Backend is unkown or invalid', Logger::ERROR );
 			return false;
 		}
 
-		$response = $backend->get( '/v0/meta/bases' );
+		$response = $backend->get( '/api/orgs' );
+
 		if ( is_wp_error( $response ) ) {
-			Logger::log( 'Airtable backend ping error: Unable to list airtable bases', Logger::ERROR );
+			Logger::log( 'Grist backend ping error: Unable to list grist organizations', Logger::ERROR );
 			return false;
 		}
 
@@ -70,7 +71,7 @@ class Airtable_Addon extends Addon {
 	/**
 	 * Performs a GET request against the backend endpoint and retrive the response data.
 	 *
-	 * @param string $endpoint Airtable endpoint.
+	 * @param string $endpoint Grist endpoint.
 	 * @param string $backend Backend name.
 	 *
 	 * @return array|WP_Error
@@ -81,33 +82,52 @@ class Airtable_Addon extends Addon {
 			return new WP_Error( 'invalid_backend', 'Backend is unkown or invalid', array( 'backend' => $backend ) );
 		}
 
-		if ( $endpoint && '/v0/meta/tables' !== $endpoint ) {
+		if ( $endpoint && '/api/orgs/{orgId}/tables' !== $endpoint ) {
 			return $backend->get( $endpoint );
 		}
 
-		$response = $backend->get( '/v0/meta/bases' );
+		if ( preg_match( '/[^\/]+(?=\.getgrist.com)/', $backend->base_url, $matches ) ) {
+			$org_id = $matches[0];
+		}
+
+		if ( ! isset( $org_id ) ) {
+			foreach ( $backend->headers as $header => $value ) {
+				if ( 'orgid' === strtolower( $header ) ) {
+					$org_id = $value;
+					break;
+				}
+			}
+		}
+
+		if ( ! isset( $org_id ) ) {
+			return new WP_Error( 'invalid_backend', 'Backend does not have the orgId header', $backend->data() );
+		}
+
+		$response = $backend->get( "/api/orgs/{$org_id}/workspaces" );
 
 		if ( is_wp_error( $response ) ) {
 			return $response;
 		}
 
 		$tables = array();
-		foreach ( $response['data']['bases'] as $base ) {
-			$schema_response = $backend->get( "/v0/meta/bases/{$base['id']}/tables" );
+		foreach ( $response['data'] as $workspace ) {
+			foreach ( $workspace['docs'] as $doc ) {
+				$docs_response = $backend->get( "/api/docs/{$doc['id']}/tables" );
 
-			if ( is_wp_error( $schema_response ) ) {
-				return $schema_response;
-			}
+				if ( is_wp_error( $docs_response ) ) {
+					continue;
+				}
 
-			foreach ( $schema_response['data']['tables'] as $table ) {
-				$tables[] = array(
-					'base_id'   => $base['id'],
-					'base_name' => $base['name'],
-					'label'     => "{$base['name']}/{$table['name']}",
-					'name'      => $table['name'],
-					'id'        => $table['id'],
-					'endpoint'  => "/v0/{$base['id']}/{$table['name']}",
-				);
+				foreach ( $docs_response['data']['tables'] as $table ) {
+					$tables[] = array(
+						'org_id'   => $org_id,
+						'doc_id'   => $doc['urlId'],
+						'doc_name' => $doc['name'],
+						'id'       => $table['id'],
+						'label'    => "{$doc['name']}/{$table['id']}",
+						'endpoint' => "/api/docs/{$doc['urlId']}/tables/{$table['id']}/records",
+					);
+				}
 			}
 		}
 
@@ -141,7 +161,7 @@ class Airtable_Addon extends Addon {
 	 * Performs an introspection of the backend endpoint and returns API fields
 	 * and accepted content type.
 	 *
-	 * @param string      $endpoint Airtable endpoint.
+	 * @param string      $endpoint Grist endpoint.
 	 * @param string      $backend Backend name.
 	 * @param string|null $method HTTP method.
 	 *
@@ -152,14 +172,18 @@ class Airtable_Addon extends Addon {
 			return array();
 		}
 
-		$bridge = new Airtable_Form_Bridge(
+		$bridge = new Grist_Form_Bridge(
 			array(
-				'name'     => '__airtable-endpoint-schema',
-				'method'   => 'GET',
+				'name'     => '__grist-endpoint-introspection',
 				'backend'  => $backend,
 				'endpoint' => $endpoint,
+				'method'   => 'GET',
 			)
 		);
+
+		if ( ! $bridge->is_valid ) {
+			return array();
+		}
 
 		$fields = $bridge->get_fields();
 
@@ -182,7 +206,6 @@ class Airtable_Addon extends Addon {
 				case 'file':
 					$type = 'file';
 					break;
-				case 'textarea':
 				default:
 					$type = 'string';
 					break;
@@ -198,4 +221,4 @@ class Airtable_Addon extends Addon {
 	}
 }
 
-Airtable_Addon::setup();
+Grist_Addon::setup();
