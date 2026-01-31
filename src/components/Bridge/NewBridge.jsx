@@ -1,5 +1,6 @@
 // source
 import WorkflowProvider from "../../providers/Workflow";
+import ApiSchemaProvider from "../../providers/ApiSchema";
 import { useError } from "../../providers/Error";
 import BridgeFields, { INTERNALS } from "./Fields";
 import Templates from "../Templates";
@@ -111,118 +112,122 @@ export default function NewBridge({ add, schema, names }) {
   }, [schema]);
 
   return (
-    <WorkflowProvider
-      formId={data.form_id}
-      mutations={[]}
-      workflow={[]}
-      customFields={[]}
-      includeFiles={includeFiles}
-    >
-      <div
-        style={{
-          padding: "calc(24px) calc(32px)",
-          width: "calc(100% - 64px)",
-          backgroundColor: "rgb(245, 245, 245)",
-          display: "flex",
-          flexDirection: isResponsive ? "column" : "row",
-          gap: "2rem",
-        }}
+    <ApiSchemaProvider bridge={data}>
+      <WorkflowProvider
+        formId={data.form_id}
+        mutations={[]}
+        workflow={[]}
+        customFields={[]}
+        includeFiles={includeFiles}
       >
         <div
-          ref={fieldsRef}
-          style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}
+          style={{
+            padding: "calc(24px) calc(32px)",
+            width: "calc(100% - 64px)",
+            backgroundColor: "rgb(245, 245, 245)",
+            display: "flex",
+            flexDirection: isResponsive ? "column" : "row",
+            gap: "2rem",
+          }}
         >
-          <BridgeFields
-            data={data}
-            setData={setData}
-            schema={schema}
-            optionals={true}
-            errors={{
-              name: nameConflict
-                ? __("This name is already in use", "forms-bridge")
-                : false,
-            }}
-          />
-          <div style={{ marginTop: "0.5rem", display: "flex", gap: "0.5rem" }}>
-            <Button
-              variant="primary"
-              onClick={create}
-              style={{ width: "100px", justifyContent: "center" }}
-              disabled={nameConflict || !isValid}
-              __next40pxDefaultSize
-            >
-              {__("Add", "forms-bridge")}
-            </Button>
-            <Button
-              variant="tertiary"
-              size="compact"
-              style={{
-                width: "40px",
-                height: "40px",
-                justifyContent: "center",
-                fontSize: "1.5em",
-                border: "1px solid",
-                color: "grey",
-              }}
-              disabled={!!error}
-              onClick={uploadConfig}
-              __next40pxDefaultSize
-              label={__("Upload", "forms-bridge")}
-              showTooltip
-            >
-              <ArrowUpIcon width="12" height="20" color="gray" />
-            </Button>
-          </div>
-        </div>
-        <div
-          style={
-            isResponsive
-              ? {
-                  paddingTop: "2rem",
-                  borderTop: "1px solid",
-                }
-              : {
-                  paddingLeft: "2rem",
-                  borderLeft: "1px solid",
-                  display: "flex",
-                  flexDirection: "column",
-                  flex: 1,
-                }
-          }
-        >
-          <BridgePayload height={height} />
           <div
-            style={{
-              paddingTop: "16px",
-              display: "flex",
-              gap: "0.5rem",
-              flexDirection: "row",
-              borderTop: "1px solid",
-            }}
+            ref={fieldsRef}
+            style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}
           >
-            <div style={{ display: "flex", gap: "0.5rem" }}>
-              <Button variant="secondary" disabled __next40pxDefaultSize>
-                {__("Custom fields", "forms-bridge")} (0)
+            <BridgeFields
+              data={data}
+              setData={setData}
+              schema={schema}
+              optionals={true}
+              errors={{
+                name: nameConflict
+                  ? __("This name is already in use", "forms-bridge")
+                  : false,
+              }}
+            />
+            <div
+              style={{ marginTop: "0.5rem", display: "flex", gap: "0.5rem" }}
+            >
+              <Button
+                variant="primary"
+                onClick={create}
+                style={{ width: "100px", justifyContent: "center" }}
+                disabled={nameConflict || !isValid}
+                __next40pxDefaultSize
+              >
+                {__("Add", "forms-bridge")}
               </Button>
-              <Button variant="secondary" disabled __next40pxDefaultSize>
-                {__("Mappers", "forms-bridge")} (0)
-              </Button>
-              <Button variant="secondary" disabled __next40pxDefaultSize>
-                {__("Workflow", "forms-bridge")} (0)
+              <Button
+                variant="tertiary"
+                size="compact"
+                style={{
+                  width: "40px",
+                  height: "40px",
+                  justifyContent: "center",
+                  fontSize: "1.5em",
+                  border: "1px solid",
+                  color: "grey",
+                }}
+                disabled={!!error}
+                onClick={uploadConfig}
+                __next40pxDefaultSize
+                label={__("Upload", "forms-bridge")}
+                showTooltip
+              >
+                <ArrowUpIcon width="12" height="20" color="gray" />
               </Button>
             </div>
+          </div>
+          <div
+            style={
+              isResponsive
+                ? {
+                    paddingTop: "2rem",
+                    borderTop: "1px solid",
+                  }
+                : {
+                    paddingLeft: "2rem",
+                    borderLeft: "1px solid",
+                    display: "flex",
+                    flexDirection: "column",
+                    flex: 1,
+                  }
+            }
+          >
+            <BridgePayload height={height} />
             <div
               style={{
-                marginLeft: isResponsive ? 0 : "auto",
+                paddingTop: "16px",
                 display: "flex",
-                alignItems: "center",
+                gap: "0.5rem",
+                flexDirection: "row",
+                borderTop: "1px solid",
               }}
             >
-              <Templates />
+              <div style={{ display: "flex", gap: "0.5rem" }}>
+                <Button variant="secondary" disabled __next40pxDefaultSize>
+                  {__("Custom fields", "forms-bridge")} (0)
+                </Button>
+                <Button variant="secondary" disabled __next40pxDefaultSize>
+                  {__("Mappers", "forms-bridge")} (0)
+                </Button>
+                <Button variant="secondary" disabled __next40pxDefaultSize>
+                  {__("Workflow", "forms-bridge")} (0)
+                </Button>
+              </div>
+              <div
+                style={{
+                  marginLeft: isResponsive ? 0 : "auto",
+                  display: "flex",
+                  alignItems: "center",
+                }}
+              >
+                <Templates />
+              </div>
             </div>
           </div>
         </div>
-      </div>
-    </WorkflowProvider>
+      </WorkflowProvider>
+    </ApiSchemaProvider>
   );
 }
