@@ -28,3 +28,5 @@ function forms_bridge_migration_431() {
 
 	update_option( 'forms-bridge_http', $http );
 }
+
+forms_bridge_migration_431();
