@@ -44,10 +44,18 @@ export default function Bridge({ data, update, remove, schema, copy, names }) {
     let mutations = currentState.current.mutations.map((m) => m);
 
     if (currentState.current.workflow.length > workflow.length) {
+      // remove the mutations for the leaving job
       mutations = mutations
         .slice(0, mutationIndex)
         .concat(mutations.slice(mutationIndex + 1));
+    } else if (currentState.current.workflow.length < workflow.length) {
+      // add a new slot at the mutation index for the new job
+      mutations = mutations
+        .slice(0, mutationIndex)
+        .concat([[]])
+        .concat(mutations.slice(mutationIndex));
     } else {
+      // replace the slot by an empty array
       mutations = mutations
         .slice(0, mutationIndex)
         .concat([[]])
