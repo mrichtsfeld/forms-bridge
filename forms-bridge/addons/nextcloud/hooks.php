@@ -30,7 +30,7 @@ add_filter(
 		);
 		$schema['properties']['endpoint']['pattern']     = '.+\.csv$';
 
-		$schema['properties']['method']['enum']    = array( 'PUT' );
+		$schema['properties']['method']['enum']    = array( 'GET', 'PUT', 'DELETE', 'MOVE', 'MKCOL', 'PROPFIND' );
 		$schema['properties']['method']['default'] = 'PUT';
 
 		return $schema;
