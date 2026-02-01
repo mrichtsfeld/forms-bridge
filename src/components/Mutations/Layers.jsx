@@ -234,6 +234,11 @@ export default function MutationLayers({ fields, mappers, setMappers }) {
   return (
     <>
       <div ref={tableWrapper} className="scrollbar-hide" style={{ flex: 1 }}>
+        <datalist id="datalist-mutation-api-fields">
+          {apiFields.map((f) => (
+            <option value={f.name} />
+          ))}
+        </datalist>
         <table
           style={{
             width: "calc(100% + 10px)",
@@ -312,6 +317,7 @@ export default function MutationLayers({ fields, mappers, setMappers }) {
                               setMapper("to", i, ev.target.value)
                             }
                             style={useInputStyle(to, from)}
+                            list="datalist-mutation-api-fields"
                           />
                         </BaseControl>
                       </div>

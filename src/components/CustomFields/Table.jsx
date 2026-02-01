@@ -243,6 +243,11 @@ export default function CustomFieldsTable({ customFields, setCustomFields }) {
   return (
     <>
       <div ref={tableWrapper} className="scrollbar-hide" style={{ flex: 1 }}>
+        <datalist id="datalist-mappers-api-fields">
+          {apiFields.map((f) => (
+            <option value={f.name} />
+          ))}
+        </datalist>
         <table
           style={{
             width: "calc(100% + 10px)",
@@ -283,6 +288,7 @@ export default function CustomFieldsTable({ customFields, setCustomFields }) {
                             setCustomField("name", i, ev.target.value)
                           }
                           style={useInputStyle(name)}
+                          list="datalist-mappers-api-fields"
                         />
                       </BaseControl>
                     </div>
