@@ -122,9 +122,9 @@ class Brevo_Addon extends Addon {
 					);
 				}
 			}
-
-			return array( '/v3/contacts' );
 		}
+
+		return array( '/v3/contacts' );
 	}
 
 	/**
