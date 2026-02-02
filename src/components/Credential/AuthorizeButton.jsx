@@ -1,21 +1,20 @@
 import { useLoading } from "../../providers/Loading";
 import { useError } from "../../providers/Error";
 import { useFetchSettings } from "../../providers/Settings";
-import { restUrl } from "../../lib/utils";
 
 const { useMemo } = wp.element;
 const { Button } = wp.components;
 const apiFetch = wp.apiFetch;
 const { __ } = wp.i18n;
 
-export default function AuthorizeButton({ addon, data }) {
+export default function AuthorizeButton({ data }) {
   const [loading, setLoading] = useLoading();
   const [error, setError] = useError();
 
   const fetchSettings = useFetchSettings();
 
   const authorized = useMemo(() => {
-    if (!!data.refresh_token) return true;
+    if (data.refresh_token) return true;
     else if (!(data.access_token && data.expires_at)) return false;
 
     let expirationDate = new Date(data.expires_at);

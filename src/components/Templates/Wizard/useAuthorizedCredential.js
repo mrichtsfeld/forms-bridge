@@ -1,5 +1,5 @@
 import useTab from "../../../hooks/useTab";
-import { isset, restUrl } from "../../../lib/utils";
+import { isset } from "../../../lib/utils";
 import { useLoading } from "../../../providers/Loading";
 import { useSchemas } from "../../../providers/Schemas";
 import { useFetchSettings } from "../../../providers/Settings";

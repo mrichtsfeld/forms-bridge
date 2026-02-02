@@ -245,7 +245,7 @@ export default function CustomFieldsTable({ customFields, setCustomFields }) {
       <div ref={tableWrapper} className="scrollbar-hide" style={{ flex: 1 }}>
         <datalist id="datalist-mappers-api-fields">
           {apiFields.map((f) => (
-            <option value={f.name} />
+            <option key={f.name} value={f.name} />
           ))}
         </datalist>
         <table

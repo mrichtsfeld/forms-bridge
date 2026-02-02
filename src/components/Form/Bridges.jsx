@@ -120,15 +120,13 @@ function BridgeStep({ index, name, failure, setFailure, move, isLast }) {
         onClick={() => setFailure(!failure)}
       >
         <span
-          aria-role="button"
+          role="button"
           size="compact"
-          variant="secondary"
           style={{
             fontSize: "1.25em",
             margin: "0 0.5em 0 1em",
             cursor: "pointer",
           }}
-          __next40pxDefaultSize
         >
           {failure === false ? "🔴" : "🟢"}
         </span>

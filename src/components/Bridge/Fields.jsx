@@ -187,7 +187,7 @@ export function StringField({
         />
         <datalist id={"datalist-" + label}>
           {datalist.map((endpoint) => (
-            <option value={endpoint}></option>
+            <option key={endpoint} value={endpoint}></option>
           ))}
         </datalist>
       </BaseControl>

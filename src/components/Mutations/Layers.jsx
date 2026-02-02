@@ -236,7 +236,7 @@ export default function MutationLayers({ fields, mappers, setMappers }) {
       <div ref={tableWrapper} className="scrollbar-hide" style={{ flex: 1 }}>
         <datalist id="datalist-mutation-api-fields">
           {apiFields.map((f) => (
-            <option value={f.name} />
+            <option key={f.name} value={f.name} />
           ))}
         </datalist>
         <table
