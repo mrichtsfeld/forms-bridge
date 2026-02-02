@@ -26,7 +26,7 @@ module.exports = defineConfig([
         version: "18",
       }
     },
-    files: ["forms-bridge/src/**/*.js", "forms-bridge/src/**/*.jsx"],
+    files: ["src/**/*.js", "src/**/*.jsx"],
     plugins: { js, react },
     extends: [
       "js/recommended",
