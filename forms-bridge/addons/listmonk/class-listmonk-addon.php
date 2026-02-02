@@ -91,37 +91,42 @@ class Listmonk_Addon extends Addon {
 
 			if ( ! is_wp_error( $response ) ) {
 				$data = yaml_parse( $response['body'] );
-
-				if ( $data ) {
-					$oa_explorer = new OpenAPI( $data );
-					$paths       = $oa_explorer->paths();
-
-					if ( $method ) {
-						$method       = strtolower( $method );
-						$method_paths = array();
-
-						foreach ( $paths as $path ) {
-							$path_obj = $oa_explorer->path_obj( $path );
-
-							if ( $path_obj && isset( $path_obj[ $method ] ) ) {
-								$method_paths[] = $path;
-							}
-						}
-
-						$paths = $method_paths;
-					}
-
-					return array_map(
-						function ( $path ) {
-							return '/api' . $path;
-						},
-						$paths
-					);
-				}
 			}
 		}
 
-		return array( '/api/subscribers' );
+		if ( empty( $data ) ) {
+			$contents = file_get_contents( FORMS_BRIDGE_ADDONS_DIR . '/listmonk/assets/openapi.json' );
+			$data     = json_decode( $contents, true );
+		}
+
+		if ( ! $data ) {
+			return array( '/api/subscribers' );
+		}
+
+		$oa_explorer = new OpenAPI( $data );
+		$paths       = $oa_explorer->paths();
+
+		if ( $method ) {
+			$method       = strtolower( $method );
+			$method_paths = array();
+
+			foreach ( $paths as $path ) {
+				$path_obj = $oa_explorer->path_obj( $path );
+
+				if ( $path_obj && isset( $path_obj[ $method ] ) ) {
+					$method_paths[] = $path;
+				}
+			}
+
+			$paths = $method_paths;
+		}
+
+		$endpoints = array();
+		foreach ( $paths as $path ) {
+			$endpoints[] = '/api' . $path;
+		}
+
+		return $endpoints;
 	}
 
 	/**
@@ -140,57 +145,26 @@ class Listmonk_Addon extends Addon {
 
 			if ( ! is_wp_error( $response ) ) {
 				$data = yaml_parse( $response['body'] );
-
-				if ( $data ) {
-					$oa_explorer = new OpenAPI( $data );
-
-					$method = strtolower( $method ?? 'post' );
-					$path   = preg_replace( '/^\/api/', '', $endpoint );
-					$source = in_array( $method, array( 'post', 'put', 'patch' ), true ) ? 'body' : 'query';
-					$params = $oa_explorer->params( $path, $method, $source );
-
-					return $params ?: array();
-				}
 			}
 		}
 
-		if ( '/api/subscribers' !== $endpoint ) {
+		if ( empty( $data ) ) {
+			$contents = file_get_contents( FORMS_BRIDGE_ADDONS_DIR . '/listmonk/assets/openapi.json' );
+			$data     = json_decode( $contents, true );
+		}
+
+		if ( ! $data ) {
 			return array();
 		}
 
-		return array(
-			array(
-				'name'     => 'email',
-				'schema'   => array( 'type' => 'string' ),
-				'required' => true,
-			),
-			array(
-				'name'   => 'name',
-				'schema' => array( 'type' => 'string' ),
-			),
-			array(
-				'name'   => 'status',
-				'schema' => array( 'type' => 'string' ),
-			),
-			array(
-				'name'   => 'lists',
-				'schema' => array(
-					'type'  => 'array',
-					'items' => array( 'type' => 'number' ),
-				),
-			),
-			array(
-				'name'   => 'preconfirm_subscriptions',
-				'schema' => array( 'type' => 'boolean' ),
-			),
-			array(
-				'name'   => 'attribs',
-				'schema' => array(
-					'type'       => 'object',
-					'properties' => array(),
-				),
-			),
-		);
+		$oa_explorer = new OpenAPI( $data );
+
+		$method = strtolower( $method ?? 'post' );
+		$path   = preg_replace( '/^\/api/', '', $endpoint );
+		$source = in_array( $method, array( 'post', 'put', 'patch' ), true ) ? 'body' : 'query';
+		$params = $oa_explorer->params( $path, $method, $source );
+
+		return $params ?: array();
 	}
 }
 

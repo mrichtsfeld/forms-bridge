@@ -175,12 +175,18 @@ class Holded_Addon extends Addon {
 			return array();
 		}
 
-		$api_base = $chunks[0];
+		$api_base = $chunks[0] ?? null;
 		if ( 'api' !== $api_base ) {
 			array_unshift( $chunks, 'api' );
 		}
 
-		[, $module, $version, $resource] = $chunks;
+		$module   = $chunks[1] ?? null;
+		$version  = $chunks[2] ?? null;
+		$resource = $chunks[3] ?? null;
+
+		if ( ! ( $module && $version && $resource ) ) {
+			return array();
+		}
 
 		$oas_url = self::OAS_URLS[ $module ] ?? null;
 		if ( ! $oas_url ) {

@@ -93,38 +93,43 @@ class Brevo_Addon extends Addon {
 
 			if ( ! is_wp_error( $response ) ) {
 				$data = yaml_parse( $response['body'] );
-
-				if ( $data ) {
-					$oa_explorer = new OpenAPI( $data );
-
-					$paths = $oa_explorer->paths();
-
-					if ( $method ) {
-						$method       = strtolower( $method );
-						$method_paths = array();
-
-						foreach ( $paths as $path ) {
-							$path_obj = $oa_explorer->path_obj( $path );
-
-							if ( $path_obj && isset( $path_obj[ $method ] ) ) {
-								$method_paths[] = $path;
-							}
-						}
-
-						$paths = $method_paths;
-					}
-
-					return array_map(
-						function ( $path ) {
-							return '/v3' . $path;
-						},
-						$paths,
-					);
-				}
 			}
 		}
 
-		return array( '/v3/contacts' );
+		if ( empty( $data ) ) {
+			$contents = file_get_contents( FORMS_BRIDGE_ADDONS_DIR . '/brevo/assets/openapi.json' );
+			$data     = json_decode( $contents, true );
+		}
+
+		if ( ! $data ) {
+			return array( '/v3/contacts' );
+		}
+
+		$oa_explorer = new OpenAPI( $data );
+
+		$paths = $oa_explorer->paths();
+
+		if ( $method ) {
+			$method       = strtolower( $method );
+			$method_paths = array();
+
+			foreach ( $paths as $path ) {
+				$path_obj = $oa_explorer->path_obj( $path );
+
+				if ( $path_obj && isset( $path_obj[ $method ] ) ) {
+					$method_paths[] = $path;
+				}
+			}
+
+			$paths = $method_paths;
+		}
+
+		$endpoints = array();
+		foreach ( $paths as $path ) {
+			$endpoints[] = '/v3' . $path;
+		}
+
+		return $endpoints;
 	}
 
 	/**
@@ -138,17 +143,19 @@ class Brevo_Addon extends Addon {
 	 * @return array
 	 */
 	public function get_endpoint_schema( $endpoint, $backend, $method = null ) {
-		if ( ! function_exists( 'yaml_parse' ) ) {
-			return array();
+		if ( function_exists( 'yaml_parse' ) ) {
+			$response = wp_remote_get( self::OAS_URL );
+
+			if ( ! is_wp_error( $response ) ) {
+				$data = yaml_parse( $response['body'] );
+			}
 		}
 
-		$response = wp_remote_get( self::OAS_URL );
-
-		if ( is_wp_error( $response ) ) {
-			return array();
+		if ( empty( $data ) ) {
+			$contents = file_get_contents( FORMS_BRIDGE_ADDONS_DIR . '/brevo/assets/openapi.json' );
+			$data     = json_decode( $contents, true );
 		}
 
-		$data = yaml_parse( $response['body'] );
 		if ( ! $data ) {
 			return array();
 		}

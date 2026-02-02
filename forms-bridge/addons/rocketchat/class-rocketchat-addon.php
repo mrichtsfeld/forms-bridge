@@ -92,32 +92,37 @@ class Rocketchat_Addon extends Addon {
 
 			if ( ! is_wp_error( $response ) ) {
 				$data = yaml_parse( $response['body'] );
-
-				if ( $data ) {
-					$oa_explorer = new OpenAPI( $data );
-					$paths       = $oa_explorer->paths();
-
-					if ( $method ) {
-						$method       = strtolower( $method );
-						$method_paths = array();
-
-						foreach ( $paths as $path ) {
-							$path_obj = $oa_explorer->path_obj( $path );
-
-							if ( $path_obj && isset( $path_obj[ $method ] ) ) {
-								$method_paths[] = $path;
-							}
-						}
-
-						$paths = $method_paths;
-					}
-
-					return $paths;
-				}
 			}
 		}
 
-		return array( '/api/v1/chat.postMessage' );
+		if ( empty( $data ) ) {
+			$contents = file_get_contents( FORMS_BRIDGE_ADDONS_DIR . '/rocketchat/assets/openapi.json' );
+			$data     = json_decode( $contents, true );
+		}
+
+		if ( ! $data ) {
+			return array( '/api/v1/chat.postMessage' );
+		}
+
+		$oa_explorer = new OpenAPI( $data );
+		$paths       = $oa_explorer->paths();
+
+		if ( $method ) {
+			$method       = strtolower( $method );
+			$method_paths = array();
+
+			foreach ( $paths as $path ) {
+				$path_obj = $oa_explorer->path_obj( $path );
+
+				if ( $path_obj && isset( $path_obj[ $method ] ) ) {
+					$method_paths[] = $path;
+				}
+			}
+
+			$paths = $method_paths;
+		}
+
+		return $paths;
 	}
 
 	/**
@@ -135,71 +140,25 @@ class Rocketchat_Addon extends Addon {
 
 			if ( ! is_wp_error( $response ) ) {
 				$data = yaml_parse( $response['body'] );
-
-				if ( $data ) {
-					// phpcs:disable Generic.CodeAnalysis.EmptyStatement
-					try {
-						$oa_explorer = new OpenAPI( $data );
-
-						$method = strtolower( $method ?? 'post' );
-						$source = in_array( $method, array( 'post', 'put', 'patch' ), true ) ? 'body' : 'query';
-						$params = $oa_explorer->params( $endpoint, $method, $source );
-
-						return $params ?: array();
-					} catch ( Exception ) {
-						// do nothing.
-					}
-					// phpcs:enable Generic.CodeAnalysis.EmptyStatement
-				}
 			}
 		}
 
-		if ( '/api/v1/chat.postMessage' !== $endpoint ) {
+		if ( empty( $data ) ) {
+			$contents = file_get_contents( FORMS_BRIDGE_ADDONS_DIR . '/rocketchat/assets/openapi.json' );
+			$data     = json_decode( $contents, true );
+		}
+
+		if ( ! $data ) {
 			return array();
 		}
 
-		return array(
-			array(
-				'name'   => 'alias',
-				'schema' => array( 'type' => 'string' ),
-			),
-			array(
-				'name'   => 'avatar',
-				'schema' => array( 'type' => 'string' ),
-			),
-			array(
-				'name'   => 'emoji',
-				'schema' => array( 'type' => 'string' ),
-			),
-			array(
-				'name'   => 'roomId',
-				'schema' => array( 'type' => 'string' ),
-			),
-			array(
-				'name'   => 'text',
-				'schema' => array( 'type' => 'string' ),
-			),
-			array(
-				'name'   => 'parseUrls',
-				'schema' => array( 'type' => 'boolean' ),
-			),
-			array(
-				'name'   => 'attachments',
-				'items'  => array(
-					'type'       => 'object',
-					'properties' => array(),
-				),
-				'schema' => array( 'type' => 'array' ),
-			),
-			array(
-				'name'   => 'tmid',
-				'schema' => array( 'type' => 'string' ),
-			),
-			array(
-				'name'   => 'customFields',
-				'schema' => array( 'type' => 'object' ),
-			),
-		);
+		$oa_explorer = new OpenAPI( $data );
+
+		$method = strtolower( $method ?? 'post' );
+		$source = in_array( $method, array( 'post', 'put', 'patch' ), true ) ? 'body' : 'query';
+		$params = $oa_explorer->params( $endpoint, $method, $source );
+
+		return $params ?: array();
 	}
 }
 

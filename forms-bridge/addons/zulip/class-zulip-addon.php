@@ -93,37 +93,42 @@ class Zulip_Addon extends Addon {
 
 			if ( ! is_wp_error( $response ) ) {
 				$data = yaml_parse( $response['body'] );
-
-				if ( $data ) {
-					$oa_explorer = new OpenAPI( $data );
-					$paths       = $oa_explorer->paths();
-
-					if ( $method ) {
-						$method       = strtolower( $method );
-						$method_paths = array();
-
-						foreach ( $paths as $path ) {
-							$path_obj = $oa_explorer->path_obj( $path );
-
-							if ( $path_obj && isset( $path_obj[ $method ] ) ) {
-								$method_paths[] = $path;
-							}
-						}
-
-						$paths = $method_paths;
-					}
-
-					return array_map(
-						function ( $path ) {
-							return '/api/v1' . $path;
-						},
-						$paths,
-					);
-				}
 			}
 		}
 
-		return array( '/api/v1/messages' );
+		if ( empty( $data ) ) {
+			$contents = file_get_contents( FORMS_BRIDGE_ADDONS_DIR . '/zulip/assets/openapi.json' );
+			$data     = json_decode( $contents, true );
+		}
+
+		if ( ! $data ) {
+			return array( '/api/v1/messages' );
+		}
+
+		$oa_explorer = new OpenAPI( $data );
+		$paths       = $oa_explorer->paths();
+
+		if ( $method ) {
+			$method       = strtolower( $method );
+			$method_paths = array();
+
+			foreach ( $paths as $path ) {
+				$path_obj = $oa_explorer->path_obj( $path );
+
+				if ( $path_obj && isset( $path_obj[ $method ] ) ) {
+					$method_paths[] = $path;
+				}
+			}
+
+			$paths = $method_paths;
+		}
+
+		$endpoints = array();
+		foreach ( $paths as $path ) {
+			$endpoints[] = '/api/v1' . $path;
+		}
+
+		return $endpoints;
 	}
 
 	/**
@@ -143,74 +148,26 @@ class Zulip_Addon extends Addon {
 
 			if ( ! is_wp_error( $response ) ) {
 				$data = yaml_parse( $response['body'] );
-
-				if ( $data ) {
-					// phpcs:disable Generic.CodeAnalysis.EmptyStatement
-					try {
-						$oa_explorer = new OpenAPI( $data );
-
-						$method = strtolower( $method ?? 'post' );
-						$path   = preg_replace( '/^\/api\/v1/', '', $endpoint );
-						$source = in_array( $method, array( 'post', 'put', 'patch' ), true ) ? 'body' : 'query';
-						$params = $oa_explorer->params( $path, $method, $source );
-
-						return $params ?: array();
-					} catch ( Exception ) {
-						// do nothing.
-					}
-					// phpcs:enable Generic.CodeAnalysis.EmptyStatement
-				}
 			}
 		}
 
-		if ( '/api/v1/messages' !== $endpoint ) {
+		if ( empty( $data ) ) {
+			$contents = file_get_contents( FORMS_BRIDGE_ADDONS_DIR . '/zulip/assets/openapi.json' );
+			$data     = json_decode( $contents, true );
+		}
+
+		if ( ! $data ) {
 			return array();
 		}
 
-		return array(
-			array(
-				'name'     => 'type',
-				'schema'   => array(
-					'type' => 'string',
-					'enum' => array( 'direct', 'stream' ),
-				),
-				'required' => true,
-			),
-			array(
-				'name'     => 'to',
-				'schema'   => array(
-					'type'  => 'array',
-					'items' => array(
-						'type' => array( 'string', 'integer' ),
-					),
-				),
-				'required' => true,
-			),
-			array(
-				'name'     => 'content',
-				'schema'   => array( 'type' => 'string' ),
-				'required' => true,
-			),
-			array(
-				'name'   => 'topic',
-				'schema' => array(
-					'type'    => 'string',
-					'default' => '(no topic)',
-				),
-			),
-			array(
-				'name'   => 'queue_id',
-				'schema' => array( 'type' => 'string' ),
-			),
-			array(
-				'name'   => 'local_id',
-				'schema' => array( 'type' => 'string' ),
-			),
-			array(
-				'name'   => 'read_by_sender',
-				'schema' => array( 'type' => 'boolean' ),
-			),
-		);
+		$oa_explorer = new OpenAPI( $data );
+
+		$method = strtolower( $method ?? 'post' );
+		$path   = preg_replace( '/^\/api\/v1/', '', $endpoint );
+		$source = in_array( $method, array( 'post', 'put', 'patch' ), true ) ? 'body' : 'query';
+		$params = $oa_explorer->params( $path, $method, $source );
+
+		return $params ?: array();
 	}
 }
 
