@@ -88,7 +88,7 @@ class Form_Bridge {
 					'title'       => _x( 'Backend', 'Bridge schema', 'forms-bridge' ),
 					'description' => __( 'Backend name', 'forms-bridge' ),
 					'type'        => 'string',
-					// 'default' => '',
+					'default'     => '',
 				),
 				'endpoint'      => array(
 					'title'       => _x( 'Endpoint', 'Bridge schema', 'forms-bridge' ),
@@ -432,15 +432,10 @@ class Form_Bridge {
 			);
 		}
 
-		$schema = $this->schema();
+		$schema = $this->schema( $this->addon );
 
-		if (
-			! in_array(
-				$this->method,
-				$schema['properties']['method']['enum'],
-				true
-			)
-		) {
+		$allowed_methods = $schema['properties']['method']['enum'] ?? array( $this->method );
+		if ( ! in_array( $this->method, $allowed_methods, true ) ) {
 			return new WP_Error(
 				'method_not_allowed',
 				sprintf(
@@ -486,9 +481,7 @@ class Form_Bridge {
 		}
 
 		foreach ( $mutation as $mapper ) {
-			$is_valid =
-				JSON_Finger::validate( $mapper['from'] ) &&
-				JSON_Finger::validate( $mapper['to'] );
+			$is_valid = JSON_Finger::validate( $mapper['from'] ) && JSON_Finger::validate( $mapper['to'] );
 
 			if ( ! $is_valid ) {
 				continue;
@@ -508,10 +501,7 @@ class Form_Bridge {
 			$unset = 'null' === $mapper['cast'];
 
 			if ( 'copy' !== $mapper['cast'] ) {
-				$unset =
-					$unset ||
-					preg_replace( '/^\?/', '', $mapper['from'] ) !==
-						$mapper['to'];
+				$unset = $unset || preg_replace( '/^\?/', '', $mapper['from'] ) !== $mapper['to'];
 			}
 
 			if ( $unset ) {
@@ -780,9 +770,7 @@ class Form_Bridge {
 						$mapper['to'] . '_1';
 
 					for ( $j = 2; $j < 10; $j++ ) {
-						$from =
-							strstr( $mapper['from'], '?' ) ?:
-							'?' . $mapper['from'];
+						$from = strstr( $mapper['from'], '?' ) ?: '?' . $mapper['from'];
 
 						$this->data['mutations'][0][] = array(
 							'from' => $from . '_' . $j,
@@ -818,9 +806,7 @@ class Form_Bridge {
 				return get_bloginfo( 'version' );
 			case 'ip_address':
 				if ( isset( $_SERVER['HTTP_X_FORWARDED_FOR'] ) ) {
-					return sanitize_text_field(
-						wp_unslash( $_SERVER['HTTP_X_FORWARDED_FOR'] )
-					);
+					return sanitize_text_field( wp_unslash( $_SERVER['HTTP_X_FORWARDED_FOR'] ) );
 				} elseif ( isset( $_SERVER['REMOTE_ADDR'] ) ) {
 					return sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) );
 				}

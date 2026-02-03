@@ -28,58 +28,6 @@ class GSheets_Form_Bridge extends Form_Bridge {
 	}
 
 	/**
-	 * Given an array of values returns a value range descriptor.
-	 *
-	 * @param array $values Array of values.
-	 *
-	 * @return string
-	 *
-	 * @deprecated
-	 */
-	private function value_range( $values ) {
-		$range = rawurlencode( $this->tab );
-
-		if ( empty( $values ) ) {
-			return $range;
-		}
-
-		$abc = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-
-		$len = strlen( $abc );
-
-		$columns = array();
-
-		$rows = count( $values );
-		for ( $row = 0; $row < $rows; $row++ ) {
-			$rowcols = array();
-
-			$i    = -1;
-			$cols = count( $values[ $row ] );
-			for ( $col = 0; $col < $cols; $col++ ) {
-				if ( $col > 0 && 0 === $col % $len ) {
-					++$i;
-				}
-
-				if ( $col >= $len ) {
-					$index     = $col % $len;
-					$rowcols[] = $abc[ $i ] . $abc[ $index ];
-				} else {
-					$rowcols[] = $abc[ $col ];
-				}
-			}
-
-			if ( count( $rowcols ) > count( $columns ) ) {
-				$columns = $rowcols;
-			}
-		}
-
-		$range .= '!' . $columns[0] . '1';
-		$range .= ':' . $columns[ count( $columns ) - 1 ] . $row;
-
-		return $range;
-	}
-
-	/**
 	 * Fetches the first row of the sheet and return it as an array of headers / columns.
 	 *
 	 * @param Backend|null $backend Bridge backend instance.
@@ -95,7 +43,8 @@ class GSheets_Form_Bridge extends Form_Bridge {
 			$backend = $this->backend;
 		}
 
-		$range = rawurlencode( $this->tab ) . '!1:1';
+		$tab   = strtolower( strpos( trim( $this->tab ), ' ' ) ? "'{$this->tab}'" : $this->tab );
+		$range = rawurlencode( $tab ) . '!1:1';
 
 		$response = $backend->get( $this->endpoint . '/values/' . $range );
 
@@ -195,14 +144,16 @@ class GSheets_Form_Bridge extends Form_Bridge {
 			return $sheets;
 		}
 
-		if ( ! in_array( strtolower( $this->tab ), $sheets, true ) ) {
-			$result = $this->add_sheet( count( $sheets ), $this->tab, $backend );
+		$tab = trim( $this->tab );
+		if ( ! in_array( strtolower( $tab ), $sheets, true ) ) {
+			$result = $this->add_sheet( count( $sheets ), $tab, $backend );
 			if ( is_wp_error( $result ) ) {
 				return $result;
 			}
 		}
 
-		$endpoint = $this->endpoint . '/values/' . rawurlencode( $this->tab );
+		$tab      = strtolower( strpos( $tab, ' ' ) ? "'{$tab}'" : $tab );
+		$endpoint = $this->endpoint . '/values/' . rawurlencode( $tab );
 		$method   = $this->method;
 
 		if ( 'POST' === $method || 'PUT' === $method ) {

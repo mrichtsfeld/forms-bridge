@@ -197,10 +197,7 @@ class GSheets_Addon extends Addon {
 				continue;
 			}
 
-			if (
-				$data['endpoint'] === $endpoint &&
-				$data['backend'] === $backend
-			) {
+			if ( $data['backend'] === $backend ) {
 				/**
 				 * Current bridge.
 				 *
