@@ -1,14 +1,14 @@
-=== Forms Bridge - Infinite integrations ==
+=== Forms Bridge - Infinite integrations ===
 
-Contributors: codeccoo
+Contributors: codeccoop
 Tags: form integration, erp, crm, api integration, automation
-Donate link: https://buymeacoffee.com/codeccoo
-License: GPLv2 or late
-License URI: http://www.gnu.org/licenses/gpl-2.0.htm
+Donate link: https://buymeacoffee.com/codeccoop
+License: GPLv2 or later
+License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Stable Tag: 4.3.
 Tested up to: 6.9
 
-Seamlessly connect WordPress forms to CRMs, ERPs, and APIs — no coding required. Automate data flow with field mappers, custom fields, and workflows
+Seamlessly connect WordPress forms to CRMs, ERPs, and APIs — no coding required. Automate data flow with field mappers, custom fields, and workflows.
 
 == Description ==
 
@@ -151,8 +151,8 @@ You can get support from Còdec using the [Forms Bridge support forum](https://w
 
 == Screenshots ==
 
-1. Settings page – Configure global plugin options
-2. Backends – Save and reuse API connection details
+1. Settings page – Configure global plugin options.
+2. Backends – Save and reuse API connection details.
 3. Bridges – Create pipelines for your form data.
 4. Custom fields – Add hidden data to your submissions.
 5. Field mappers – Rename and transform form fields.
