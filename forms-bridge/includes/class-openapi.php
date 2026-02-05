@@ -177,17 +177,14 @@ class OpenAPI {
 
 		$c = count( $parameters );
 		for ( $i = 0; $i < $c; $i++ ) {
-			$param = &$parameters[ $i ];
+			$parameters[ $i ] = $this->expand_refs( $parameters[ $i ] );
 
+			$param = &$parameters[ $i ];
 			if ( ! isset( $param['in'] ) || 'formData' === $param['in'] ) {
 				$param['in'] = 'body';
 			}
 
 			if ( 'body' === $param['in'] && isset( $param['schema'] ) ) {
-				if ( isset( $param['schema']['$ref'] ) ) {
-					$param['schema'] = array_merge( $param['schema'], $this->get_ref( $param['schema']['$ref'] ) );
-				}
-
 				if ( isset( $param['schema']['properties'] ) && is_array( $param['schema']['properties'] ) ) {
 					array_splice( $parameters, $i, 1 );
 
@@ -204,32 +201,18 @@ class OpenAPI {
 			}
 		}
 
-		$body = $method_obj['requestBody'] ?? null;
-		if ( $body ) {
-			$parameters = array_merge( $parameters, $this->body_to_params( $body ) );
-		}
-
 		$l = count( $parameters );
-		for ( $i = 0; $i < $l; $i++ ) {
+		for ( $i = 0; $i < $l; ++$i ) {
 			$param = &$parameters[ $i ];
-
-			if ( isset( $param['$ref'] ) ) {
-				$parameters[ $i ] = array_merge( $param, $this->get_ref( $param['$ref'] ) );
-				$param            = &$parameters[ $i ];
-			} elseif ( isset( $param['schema']['$ref'] ) ) {
-				$param['schema'] = array_merge( $param['schema'], $this->get_ref( $param['schema']['$ref'] ) );
-			}
-
-			if ( isset( $param['anyOf'] ) ) {
-				$param['schema'] = $param['anyOf'][0];
-			} elseif ( isset( $param['oneOf'] ) ) {
-				$param['schema'] = $param['oneOf'][0];
-			}
-
 			if ( isset( $param['type'] ) && ! isset( $param['schema'] ) ) {
 				$param['schema'] = array( 'type' => $param['type'] );
 				unset( $param['type'] );
 			}
+		}
+
+		$body = $method_obj['requestBody'] ?? null;
+		if ( $body ) {
+			$parameters = array_merge( $parameters, $this->body_to_params( $body ) );
 		}
 
 		if ( $source ) {
@@ -250,6 +233,137 @@ class OpenAPI {
 		}
 
 		return $parameters;
+	}
+
+	/**
+	 * Retrives response fields for a path and an HTTP method.
+	 *
+	 * @param string $path Target path.
+	 * @param string $method HTTP method.
+	 *
+	 * @return array|null
+	 */
+	public function response( $path, $method = null ) {
+		$path = self::parse_path( $path );
+
+		$path_obj = $this->path_obj( $path );
+		if ( ! $path_obj ) {
+			return;
+		}
+
+		$response_obj = $path_obj[ $method ]['responses'][200] ?? null;
+		if ( ! $response_obj ) {
+			return;
+		}
+
+		$parameters = $this->body_to_params( $response_obj );
+
+		$l = count( $parameters );
+		for ( $i = 0; $i < $l; ++$i ) {
+			$param = &$parameters[ $i ];
+			if ( isset( $param['type'] ) && ! isset( $param['schema'] ) ) {
+				$param['schema'] = array( 'type' => $param['type'] );
+				unset( $param['type'] );
+			}
+		}
+
+		return $parameters;
+	}
+
+	/**
+	 * Checks if an object has a composition policy declared.
+	 *
+	 * @param array $obj Target object.
+	 *
+	 * @return string|null Composition policy.
+	 */
+	private function is_composite( $obj ) {
+		return isset( $obj['anyOf'] )
+			? 'anyOf'
+			: (
+				isset( $obj['oneOf'] )
+				? 'oneOf'
+					: (
+						isset( $obj['allOf'] )
+						? 'allOf'
+						: null
+					)
+			);
+	}
+
+	/**
+	 * Resolve the object composition based on the compoisition policy.
+	 *
+	 * @param array  $obj Target object.
+	 * @param string $policy Composition policy.
+	 *
+	 * @return array
+	 */
+	private function compose( $obj, $policy ) {
+		switch ( $policy ) {
+			case 'oneOf':
+			case 'anyOf':
+				$obj = $this->expand_refs( $obj[ $policy ][0] );
+				unset( $obj[ $policy ] );
+				return $obj;
+			case 'allOf':
+				$schema = array();
+				foreach ( $obj[ $policy ] as $partial ) {
+					$schema = array_merge( $schema, $partial );
+				}
+
+				unset( $schema[ $policy ] );
+				$obj = $this->expand_refs( $schema );
+				return $obj;
+		}
+
+		return $obj;
+	}
+
+	/**
+	 * Replace refs and non deterministic schemas.
+	 *
+	 * @param array $obj Schema of the param.
+	 *
+	 * @return array
+	 */
+	private function expand_refs( $obj ) {
+		if ( isset( $obj['$ref'] ) ) {
+			$obj = array_merge( $obj, $this->get_ref( $obj['$ref'] ) );
+			unset( $obj['$ref'] );
+		}
+
+		$compose_policy = $this->is_composite( $obj );
+		if ( $compose_policy ) {
+			return $this->compose( $obj, $compose_policy );
+		}
+
+		if ( isset( $obj['schema'] ) ) {
+			$obj['schema'] = $this->expand_refs( $obj['schema'] );
+			return $obj;
+		}
+
+		if ( ! isset( $obj['type'] ) ) {
+			return $obj;
+		}
+
+		if ( 'object' === $obj['type'] ) {
+			$properties = $obj['properties'] ?? array();
+			foreach ( $properties as $name => $prop_schema ) {
+				$properties[ $name ] = $this->expand_refs( $prop_schema );
+			}
+
+			$obj['properties'] = $properties;
+		} elseif ( 'array' === $obj['type'] ) {
+			$items = $obj['items'] ?? array();
+			if ( wp_is_numeric_array( $items ) ) {
+				return $obj;
+			}
+
+			$obj['items'] = $this->expand_refs( $items );
+		}
+
+		return $obj;
 	}
 
 	/**
@@ -285,24 +399,30 @@ class OpenAPI {
 		$parameters = array();
 
 		foreach ( $body['content'] as $encoding => $obj ) {
-			if ( isset( $obj['schema']['$ref'] ) ) {
-				$obj['schema'] = array_merge( $obj['schema'], $this->get_ref( $obj['schema']['$ref'] ) );
-			}
+			$obj = $this->expand_refs( $obj );
 
-			if ( isset( $obj['schema']['oneOf'] ) ) {
-				$obj['schema'] = $obj['schema']['oneOf'][0];
-			} elseif ( isset( $obj['schema']['anyOf'] ) ) {
-				$obj['schema'] = $obj['schema']['anyOf'][0];
-			}
-
-			foreach ( $obj['schema']['properties'] as $name => $defn ) {
-				$parameters[] = array_merge(
-					array(
+			if ( 'object' === $obj['schema']['type'] ) {
+				$properties = $obj['schema']['properties'] ?? array();
+				foreach ( $properties as $name => $prop_schema ) {
+					$parameters[] = array(
 						'name'     => $name,
 						'encoding' => $encoding,
 						'in'       => 'body',
-					),
-					$defn
+						'schema'   => $prop_schema,
+					);
+				}
+			} elseif ( 'array' === $obj['schema']['type'] ) {
+				$items = $obj['schema']['items'] ?? array();
+				if ( wp_is_numeric_array( $items ) ) {
+					continue;
+				}
+
+				$obj['schema']['items'] = $items;
+				$parameters[]           = array(
+					'name'     => '',
+					'encoding' => $encoding,
+					'in'       => 'body',
+					'schema'   => $obj['schema'],
 				);
 			}
 		}
