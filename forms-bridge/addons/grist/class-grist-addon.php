@@ -111,6 +111,10 @@ class Grist_Addon extends Addon {
 
 		$tables = array();
 		foreach ( $response['data'] as $workspace ) {
+			if ( $workspace['isSupportWorkspace'] ) {
+				continue;
+			}
+
 			foreach ( $workspace['docs'] as $doc ) {
 				$docs_response = $backend->get( "/api/docs/{$doc['id']}/tables" );
 
