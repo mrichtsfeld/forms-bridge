@@ -77,7 +77,6 @@ export default function DropdownSelect({
           <strong>{title}</strong>
         </label>
         <input
-          name="dropdown-select"
           ref={searchRef}
           type="text"
           value={pattern}
