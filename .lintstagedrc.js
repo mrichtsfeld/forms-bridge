@@ -15,6 +15,6 @@ const buildPhpCbfCommand = (filenames) =>
 
 module.exports = {
   "src/**/*.{js,jsx}": [buildEslintCommand],
-  "*.{json,js,jsx,html,css}": [buildPrettierCommand],
+  "*.{js,jsx,html,css}": [buildPrettierCommand],
   "*.php": [buildPhpCbfCommand],
 };
