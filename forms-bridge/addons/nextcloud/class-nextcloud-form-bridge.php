@@ -7,6 +7,7 @@
 
 namespace FORMS_BRIDGE;
 
+use FBAPI;
 use WP_Error;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -28,6 +29,47 @@ class Nextcloud_Form_Bridge extends Form_Bridge {
 	}
 
 	/**
+	 * Downloads the file from nextcloud and stream its contents to the bridge filepath.
+	 *
+	 * @param Backend|null $backend Backend object.
+	 *
+	 * @return string|WP_Error Filepath or error.
+	 */
+	private function download_file( $backend = null ) {
+		if ( ! $backend ) {
+			$backend = $this->backend;
+		}
+
+		$filepath = $this->filepath();
+
+		$response = $backend->get(
+			rawurlencode( $this->endpoint ),
+			array(),
+			array(),
+			array(
+				'stream'   => true,
+				'filename' => $filepath,
+			)
+		);
+
+		if ( is_wp_error( $response ) ) {
+			if ( is_file( $filepath ) ) {
+				wp_delete_file( $filepath );
+			}
+
+			return $response;
+		}
+
+		$mime_type = mime_content_type( $filepath );
+		if ( 'text/csv' !== $mime_type ) {
+			wp_delete_file( $filepath );
+			return new WP_Error( 'mimetype_error', 'File is not CSV', array( 'filepath' => $filepath ) );
+		}
+
+		return $filepath;
+	}
+
+	/**
 	 * Returns the bridge local backup file path.
 	 *
 	 * @param bool &$touched Pointer to handle if the file has been touched boolean value.
@@ -39,21 +81,35 @@ class Nextcloud_Form_Bridge extends Form_Bridge {
 
 		if ( ! is_dir( $uploads ) ) {
 			if ( ! wp_mkdir_p( $uploads, 755 ) ) {
-				return;
+				return new WP_Error(
+					'file_permission_error',
+					'Can not create the uploads directory',
+					array( 'directory' => $uploads ),
+				);
 			}
 		}
 
-		$endpoint = preg_replace( '/^\/+/', '', $this->data['endpoint'] );
+		$endpoint = ltrim( $this->data['endpoint'], '/' );
 		$name     = str_replace( '/', '-', $endpoint );
 		$filepath = $uploads . '/' . $name;
+
+		if ( ! str_ends_with( strtolower( $filepath ), '.csv' ) ) {
+			$filepath .= '.csv';
+		}
 
 		if ( ! is_file( $filepath ) ) {
 			$touched = true;
 			$result  = touch( $filepath );
 
 			if ( ! $result ) {
-				return new WP_Error( 'file_permission_error' );
+				return new WP_Error(
+					'file_permission_error',
+					'Can not create the local file',
+					array( 'filepath' => $filepath ),
+				);
 			}
+		} else {
+			$touched = false;
 		}
 
 		return $filepath;
@@ -65,10 +121,18 @@ class Nextcloud_Form_Bridge extends Form_Bridge {
 	 * @return array|null
 	 */
 	public function table_headers() {
-		$filepath = $this->filepath();
+		$filepath = $this->filepath( $touched );
 
 		if ( is_wp_error( $filepath ) ) {
 			return $filepath;
+		}
+
+		if ( $touched ) {
+			$filepath = $this->download_file();
+
+			if ( is_wp_error( $filepath ) ) {
+				return;
+			}
 		}
 
 		$stream = fopen( $filepath, 'r' );
@@ -90,7 +154,7 @@ class Nextcloud_Form_Bridge extends Form_Bridge {
 	 * @return integer|null
 	 */
 	private function get_dav_modified_date( $backend ) {
-		$response = $backend->head( $this->endpoint );
+		$response = $backend->head( rawurlencode( $this->endpoint ) );
 
 		if ( is_wp_error( $response ) ) {
 			$error_data = $response->get_error_data();
@@ -155,7 +219,7 @@ class Nextcloud_Form_Bridge extends Form_Bridge {
 		return implode(
 			',',
 			array_map(
-				fn( $value ) => json_encode(
+				fn( $value ) => wp_json_encode(
 					$value,
 					JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
 				),
@@ -175,6 +239,11 @@ class Nextcloud_Form_Bridge extends Form_Bridge {
 		$row = preg_replace( '/\n+/', '', $row );
 		return array_map(
 			function ( $value ) {
+				$value = trim( $value );
+				if ( ! $value ) {
+					return $value;
+				}
+
 				$decoded = json_decode( $value );
 				if ( $decoded ) {
 					return $decoded;
@@ -225,7 +294,8 @@ class Nextcloud_Form_Bridge extends Form_Bridge {
 			);
 		}
 
-		$backend = $this->backend;
+		$backend  = $this->backend;
+		$endpoint = rawurlencode( $this->endpoint );
 
 		if ( ! $backend ) {
 			return new WP_Error(
@@ -234,29 +304,6 @@ class Nextcloud_Form_Bridge extends Form_Bridge {
 				(array) $this->data,
 			);
 		}
-
-		add_filter(
-			'http_bridge_backend_url',
-			function ( $url, $backend ) {
-				if ( $backend->name === $this->data['backend'] ) {
-					$credential = $backend->credential;
-					if ( ! $credential ) {
-						return;
-					}
-
-					$user  = rawurlencode( $credential->client_id );
-					[$pre] = explode( $this->endpoint, $url );
-					$url   =
-						preg_replace( '/\/+$/', '', $pre ) .
-						"/remote.php/dav/files/{$user}/" .
-						preg_replace( '/^\/+/', '', $this->endpoint );
-				}
-
-				return $url;
-			},
-			10,
-			2
-		);
 
 		if ( 'PUT' === $this->method ) {
 			$payload = self::flatten_payload( $payload );
@@ -278,37 +325,33 @@ class Nextcloud_Form_Bridge extends Form_Bridge {
 				$csv     = implode( "\n", array( $headers, $row ) );
 
 				file_put_contents( $filepath, $csv );
-				$response = parent::submit( $csv );
+				$response = $backend->put( $endpoint, $csv );
 			} elseif ( $touched ) {
-					$headers = $this->payload_to_headers( $payload );
-					$row     = $this->payload_to_row( $payload );
-					$csv     = implode( "\n", array( $headers, $row ) );
+				$headers = $this->payload_to_headers( $payload );
+				$row     = $this->payload_to_row( $payload );
+				$csv     = implode( "\n", array( $headers, $row ) );
 
-					file_put_contents( $filepath, $csv );
-					$response = parent::submit( $csv );
+				file_put_contents( $filepath, $csv );
+				$response = $backend->put( $endpoint, $csv );
 			} else {
 				$local_modified = filemtime( $filepath );
 
 				if ( $dav_modified > $local_modified ) {
-					$response = $backend->get(
-						$this->endpoint,
-						array(),
-						array(),
-						array(
-							'stream'   => true,
-							'filename' => $filepath,
-						)
-					);
+					$filepath = $this->download_file( $backend );
 
-					if ( is_wp_error( $response ) ) {
-						return $response;
+					if ( is_wp_error( $filepath ) ) {
+						return $filepath;
 					}
 				}
 
 				$this->add_row( $payload );
 
-				$csv      = file_get_contents( $filepath );
-				$response = parent::submit( $csv );
+				$csv = file_get_contents( $filepath );
+
+				$bom = pack( 'H*', 'EFBBBF' );
+				$csv = preg_replace( "/^$bom/", '', trim( $csv ) );
+
+				$response = $backend->put( $endpoint, $csv );
 			}
 
 			if ( is_wp_error( $response ) ) {
@@ -319,7 +362,22 @@ class Nextcloud_Form_Bridge extends Form_Bridge {
 			return $response;
 		}
 
-		return parent::submit( $payload );
+		$method = $this->method;
+
+		$allowed_methods = array( 'GET', 'DELETE', 'MOVE', 'MKCOL', 'PROPFIND' );
+		if ( ! in_array( $method, $allowed_methods, true ) ) {
+			return new WP_Error(
+				'method_not_allowed',
+				sprintf(
+					/* translators: %s: method name */
+					__( 'HTTP method %s is not allowed', 'forms-bridge' ),
+					sanitize_text_field( $this->method )
+				),
+				array( 'method' => $this->method )
+			);
+		}
+
+		return $backend->$method( $endpoint, $payload );
 	}
 
 	/**
@@ -371,5 +429,35 @@ class Nextcloud_Form_Bridge extends Form_Bridge {
 		}
 
 		return self::flatten_payload( $value, $path . '.' );
+	}
+
+	/**
+	 * Retrives the bridge's backend instance with the base url formated to point
+	 * to the root of the nextcloud webdav API.
+	 *
+	 * @return Backend|null
+	 */
+	protected function backend() {
+		if ( ! $this->is_valid ) {
+			return;
+		}
+
+		$backend = FBAPI::get_backend( $this->data['backend'] );
+		if ( ! $backend ) {
+			return;
+		}
+
+		$base_url = $backend->base_url;
+		$base_url = substr( $base_url, 0, strpos( $base_url, '/remote.php', 0 ) ?: strlen( $base_url ) );
+
+		$credential = $backend->credential;
+		if ( ! $credential || 'Basic' !== $credential->schema ) {
+			return;
+		}
+
+		$user     = rawurlencode( $credential->client_id );
+		$base_url = rtrim( $base_url, '/' ) . "/remote.php/dav/files/{$user}/";
+
+		return $backend->clone( array( 'base_url' => $base_url ) );
 	}
 }
