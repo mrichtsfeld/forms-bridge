@@ -180,6 +180,11 @@ class Zoho_Addon extends Addon {
 		foreach ( $response['data']['layouts'] as $layout ) {
 			foreach ( $layout['sections'] as $section ) {
 				foreach ( $section['fields'] as $field ) {
+					$read_only = $field['field_read_only'] ?? false;
+					if ( $read_only ) {
+						continue;
+					}
+
 					$type = $field['json_type'];
 					if ( 'jsonobject' === $type ) {
 						$type = 'object';

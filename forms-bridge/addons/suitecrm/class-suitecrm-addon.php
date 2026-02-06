@@ -163,9 +163,16 @@ class SuiteCRM_Addon extends Addon {
 
 		$fields = array();
 		foreach ( $response['data']['module_fields'] as $name => $spec ) {
+			if ( $spec['calculated'] ) {
+				continue;
+			}
+
 			$type = 'string';
 
-			if ( in_array( $spec['type'], array( 'int', 'integer' ), true ) ) {
+			if (
+				in_array( $spec['type'], array( 'id', 'int', 'integer', 'relate', 'parent' ), true )
+				|| ! empty( $spec['id_name'] )
+			) {
 				$type = 'integer';
 			} elseif ( in_array( $spec['type'], array( 'decimal', 'float', 'currency' ), true ) ) {
 				$type = 'number';

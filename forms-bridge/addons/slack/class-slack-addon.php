@@ -148,7 +148,7 @@ class Slack_Addon extends Addon {
 					$source = in_array( $method, array( 'post', 'put', 'patch' ), true ) ? 'body' : 'query';
 					$params = $oas_explorer->params( $path, $method, $source );
 
-					return $params ?: array();
+					return self::expand_endpoint_schema( $params ?: array() );
 				} catch ( Exception ) {
 					// do nothin.
 				}

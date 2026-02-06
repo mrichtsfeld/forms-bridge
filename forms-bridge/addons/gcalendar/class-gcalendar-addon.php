@@ -168,7 +168,7 @@ class GCalendar_Addon extends Addon {
 			return array();
 		}
 
-		return array(
+		$fields = array(
 			array(
 				'name'   => 'summary',
 				'schema' => array(
@@ -189,6 +189,14 @@ class GCalendar_Addon extends Addon {
 					'type'        => 'string',
 					'description' => 'Event location',
 				),
+			),
+			array(
+				'name'   => 'colorId',
+				'schema' => array( 'type' => 'string' ),
+			),
+			array(
+				'name'   => 'sendUpdates',
+				'schema' => array( 'type' => 'boolean' ),
 			),
 			array(
 				'name'   => 'start',
@@ -238,6 +246,8 @@ class GCalendar_Addon extends Addon {
 				),
 			),
 		);
+
+		return self::expand_endpoint_schema( $fields );
 	}
 }
 
