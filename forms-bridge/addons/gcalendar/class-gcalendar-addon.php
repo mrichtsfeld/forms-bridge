@@ -249,6 +249,29 @@ class GCalendar_Addon extends Addon {
 
 		return OpenAPI::expand_fields_schema( $fields );
 	}
+
+	/**
+	 * Gets expiration time for introspection cache based on the introspection
+	 * method.
+	 *
+	 * @param string $method Introspection method (ping, endpoints, schema).
+	 *
+	 * @return int Time in seconds.
+	 */
+	public function introspection_cache_expiration( $method ) {
+		if ( Logger::is_active() ) {
+			return 0;
+		}
+
+		switch ( $method ) {
+			case 'ping':
+				return 60 * 10;
+			case 'endpoints':
+				return 60 * 5;
+			default:
+				return 0;
+		}
+	}
 }
 
 GCalendar_Addon::setup();

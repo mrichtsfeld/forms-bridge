@@ -611,7 +611,7 @@ class Addon extends Singleton {
 	 * @return int Time in seconds.
 	 */
 	public function introspection_cache_expiration( $method ) {
-		return apply_filters( 'forms_bridge_introspection_cache_expiration', 60, $method, self::NAME );
+		return apply_filters( 'forms_bridge_introspection_cache_expiration', 0, $method, self::NAME );
 	}
 
 	/**

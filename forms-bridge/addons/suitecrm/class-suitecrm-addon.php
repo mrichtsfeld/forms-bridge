@@ -193,6 +193,31 @@ class SuiteCRM_Addon extends Addon {
 
 		return $fields;
 	}
+
+	/**
+	 * Gets expiration time for introspection cache based on the introspection
+	 * method.
+	 *
+	 * @param string $method Introspection method (ping, endpoints, schema).
+	 *
+	 * @return int Time in seconds.
+	 */
+	public function introspection_cache_expiration( $method ) {
+		if ( Logger::is_active() ) {
+			return 0;
+		}
+
+		switch ( $method ) {
+			case 'ping':
+				return 60 * 60 * 24;
+			case 'endpoints':
+				return 60 * 10;
+			case 'schema':
+				return 60 * 5;
+			default:
+				return 0;
+		}
+	}
 }
 
 SuiteCRM_Addon::setup();

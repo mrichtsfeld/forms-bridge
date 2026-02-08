@@ -224,6 +224,29 @@ class Slack_Addon extends Addon {
 			),
 		);
 	}
+
+	/**
+	 * Gets expiration time for introspection cache based on the introspection
+	 * method.
+	 *
+	 * @param string $method Introspection method (ping, endpoints, schema).
+	 *
+	 * @return int Time in seconds.
+	 */
+	public function introspection_cache_expiration( $method ) {
+		if ( Logger::is_active() ) {
+			return 0;
+		}
+
+		switch ( $method ) {
+			case 'ping':
+			case 'endpoints':
+			case 'schema':
+				return 60 * 60 * 24;
+			default:
+				return 0;
+		}
+	}
 }
 
 Slack_Addon::setup();
