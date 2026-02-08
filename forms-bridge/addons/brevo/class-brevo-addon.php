@@ -167,7 +167,7 @@ class Brevo_Addon extends Addon {
 		$source = in_array( $method, array( 'post', 'put', 'patch' ), true ) ? 'body' : 'query';
 		$params = $oa_explorer->params( $path, $method, $source );
 
-		return self::expand_endpoint_schema( $params ?: array() );
+		return OpenAPI::expand_fields_schema( $params ?: array() );
 	}
 }
 

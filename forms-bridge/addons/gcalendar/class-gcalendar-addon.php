@@ -247,7 +247,7 @@ class GCalendar_Addon extends Addon {
 			),
 		);
 
-		return self::expand_endpoint_schema( $fields );
+		return OpenAPI::expand_fields_schema( $fields );
 	}
 }
 

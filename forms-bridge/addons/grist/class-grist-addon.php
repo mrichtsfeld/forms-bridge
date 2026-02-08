@@ -226,7 +226,7 @@ class Grist_Addon extends Addon {
 			);
 		}
 
-		return self::expand_endpoint_schema( $api_schema );
+		return OpenAPI::expand_fields_schema( $api_schema );
 	}
 }
 

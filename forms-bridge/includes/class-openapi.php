@@ -461,4 +461,62 @@ class OpenAPI {
 		$path = strpos( $path, '/' ) !== 0 ? '/' . $path : $path;
 		return preg_replace( '/\/+$/', '', $path );
 	}
+
+	/**
+	 * Expand a list of fields schemas to a plain list of fields with
+	 * finger pointers as names.
+	 *
+	 * @param array $fields Array of API fields.
+	 *
+	 * @return array
+	 */
+	public static function expand_fields_schema( $fields ) {
+		$schema = array();
+		foreach ( $fields as $field ) {
+			$finger = array( $field['name'] );
+
+			$type = $field['schema']['type'] ?? null;
+			if ( 'array' === $type && isset( $field['schema']['items']['type'] ) ) {
+				$field['schema']['type'] = $field['schema']['items']['type'] . '[]';
+
+				$finger[] = 0;
+				$schema[] = $field;
+
+				$field['schema'] = $field['schema']['items'];
+			} else {
+				$schema[] = $field;
+			}
+
+			if ( 'object' === $type ) {
+				$props = $field['schema']['properties'] ?? array();
+				$queue = array();
+
+				if ( true === ( $field['schema']['additionalProperties'] ?? false ) ) {
+					$schema[] = array(
+						'name'   => JSON_Finger::pointer( array_merge( $finger, array( '*' ) ) ),
+						'schema' => array( 'type' => 'mixed' ),
+					);
+				}
+
+				while ( $props ) {
+					foreach ( $props as $key => $prop_schema ) {
+						$schema[] = array(
+							'name'   => JSON_Finger::pointer( array_merge( $finger, array( $key ) ) ),
+							'schema' => $prop_schema,
+						);
+
+						if ( 'object' === $prop_schema['type'] ) {
+							$finger[] = $key;
+							$queue[]  = $prop_schema['properties'];
+						}
+					}
+
+					$finger = array_slice( $finger, 0, -1 );
+					$props  = array_shift( $queue );
+				}
+			}
+		}
+
+		return $schema;
+	}
 }
