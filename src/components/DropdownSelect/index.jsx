@@ -81,6 +81,7 @@ export default function DropdownSelect({
           type="text"
           value={pattern}
           onChange={(ev) => setPattern(ev.target.value)}
+          aria-controls="bridge-tags-list"
           style={{
             position: "fixed",
             top: "32.2px",
@@ -102,6 +103,8 @@ export default function DropdownSelect({
             maxHeight: "300px",
             width: "100%",
           }}
+          aria-live="polite"
+          role="region"
         >
           {filteredTags.map(({ label, value }, i) => (
             <li
