@@ -35,11 +35,7 @@ class Nextcloud_Form_Bridge extends Form_Bridge {
 	 *
 	 * @return string|WP_Error Filepath or error.
 	 */
-	private function download_file( $backend = null ) {
-		if ( ! $backend ) {
-			$backend = $this->backend;
-		}
-
+	private function download_file( $backend ) {
 		$filepath = $this->filepath();
 
 		$response = $backend->get(
@@ -124,19 +120,28 @@ class Nextcloud_Form_Bridge extends Form_Bridge {
 	 * @return array|null
 	 */
 	public function table_headers() {
+		if ( ! $this->is_valid ) {
+			return new WP_Error( 'invalid_bridge' );
+		}
+
+		$backend = $this->backend();
+		if ( ! $backend ) {
+			return new WP_Error( 'invalid_bridge' );
+		}
+
 		$filepath = $this->filepath( $touched );
 
 		if ( is_wp_error( $filepath ) ) {
 			return $filepath;
 		}
 
-		$dav_modified = $touched ? time() + 3600 : $this->get_dav_modified_date();
+		$dav_modified = $touched ? time() + 3600 : $this->get_dav_modified_date( $backend );
 		if ( is_wp_error( $dav_modified ) ) {
 			$dav_modified = time() + 3600;
 		}
 
 		if ( $touched || filemtime( $filepath ) < $dav_modified ) {
-			$filepath = $this->download_file();
+			$filepath = $this->download_file( $backend );
 
 			if ( is_wp_error( $filepath ) ) {
 				return;
@@ -163,7 +168,7 @@ class Nextcloud_Form_Bridge extends Form_Bridge {
 	 *
 	 * @return integer|null
 	 */
-	private function get_dav_modified_date( $backend = null ) {
+	private function get_dav_modified_date( $backend ) {
 		if ( ! $backend ) {
 			$backend = $this->backend();
 		}
