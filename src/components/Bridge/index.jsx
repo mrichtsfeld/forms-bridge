@@ -204,6 +204,12 @@ export default function Bridge({ data, update, remove, schema, copy, names }) {
       .finally(() => setLoading(false));
   }, [addon, backend]);
 
+  useEffect(() => {
+    if (ping) {
+      setTimeout(() => setPing(false), 3e3);
+    }
+  }, [ping]);
+
   const enabled = isValid && state.enabled;
 
   return (
