@@ -550,8 +550,7 @@ class Addon extends Singleton {
 	 * @return boolean|WP_Error
 	 */
 	public function ping( $backend ) {
-		Logger::log( 'This adddon bridges has not known ping endpoint', Logger::ERROR );
-		return false;
+		return apply_filters( 'forms_bridge_introspection_ping', true, $backend, self::NAME );
 	}
 
 	/**
@@ -587,8 +586,8 @@ class Addon extends Singleton {
 	 *
 	 * @return array|WP_Error
 	 */
-	public function get_endpoint_schema( $endpoint, $backend, $method = null ) {
-		return array();
+	public function get_endpoint_schema( $endpoint, $backend, $method = 'POST' ) {
+		return apply_filters( 'forms_bridge_introspection_schema', array(), $endpoint, $backend, $method, self::NAME );
 	}
 
 	/**
@@ -599,8 +598,8 @@ class Addon extends Singleton {
 	 *
 	 * @return array|WP_Error
 	 */
-	public function get_endpoints( $backend, $method = null ) {
-		return array();
+	public function get_endpoints( $backend, $method = 'POST' ) {
+		return apply_filters( 'forms_bridge_intospection_endpoints', array(), $backend, $method, self::NAME );
 	}
 
 	/**
