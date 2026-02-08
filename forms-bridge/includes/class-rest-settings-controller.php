@@ -758,7 +758,7 @@ class REST_Settings_Controller extends Base_Controller {
 	 * @param string          $addon Target addon name.
 	 * @param WP_REST_Request $request Request instance.
 	 *
-	 * @return [Addon, string]|WP_Error
+	 * @return array{0:Addon, 1:string}|WP_Error
 	 */
 	private static function prepare_addon_backend_request_handler(
 		$addon,

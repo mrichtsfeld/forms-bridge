@@ -58,7 +58,7 @@ class Odoo_Addon extends Addon {
 			)
 		);
 
-		$response = $bridge->submit();
+		$response = $bridge->login();
 
 		if ( is_wp_error( $response ) ) {
 			Logger::log( 'Odoo backend ping error response', Logger::ERROR );

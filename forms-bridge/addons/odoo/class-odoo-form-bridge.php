@@ -139,13 +139,9 @@ class Odoo_Form_Bridge extends Form_Bridge {
 	 * @param array{0: string, 1: string, 2: string} $login RPC login credentials.
 	 * @param Backend                                $backend Bridge backend object.
 	 *
-	 * @return array|WP_Error Tuple with RPC session id and user id.
+	 * @return array{0:string, 1:integer}|WP_Error Tuple with RPC session id and user id.
 	 */
 	private static function rpc_login( $login, $backend ) {
-		if ( self::$session ) {
-			return self::$session;
-		}
-
 		$session_id = 'forms-bridge-' . time();
 
 		$payload = self::rpc_payload( $session_id, 'common', 'login', $login );
@@ -172,14 +168,11 @@ class Odoo_Form_Bridge extends Form_Bridge {
 	}
 
 	/**
-	 * Submits submission to the backend.
+	 * Performs a login call and sets up hooks to handle RPC calls over HTTP requests .
 	 *
-	 * @param array      $payload Submission data.
-	 * @param array|null $more_args Additional RPC call params.
-	 *
-	 * @return array|WP_Error Http
+	 * @return array{0:string, 1:integer, 2:string}|WP_Error RPC login credentials.
 	 */
-	public function submit( $payload = array(), $more_args = array() ) {
+	public function login() {
 		if ( ! $this->is_valid ) {
 			return new WP_Error(
 				'invalid_bridge',
@@ -205,60 +198,78 @@ class Odoo_Form_Bridge extends Form_Bridge {
 			);
 		}
 
-		add_filter(
-			'http_bridge_request',
-			static function ( $request ) {
-				self::$request = $request;
-				return $request;
-			},
-			10,
-			1
-		);
+		$login = $credential->authorization();
 
-		$backend_name = $backend->name;
+		if ( ! self::$session ) {
+			add_filter(
+				'http_bridge_request',
+				static function ( $request ) {
+					self::$request = $request;
+					return $request;
+				},
+				10,
+				1
+			);
 
-		add_filter(
-			'http_bridge_backend_headers',
-			static function ( $headers, $backend ) use ( $backend_name ) {
-				if ( $backend->name !== $backend_name ) {
+			$backend_name = $backend->name;
+
+			add_filter(
+				'http_bridge_backend_headers',
+				static function ( $headers, $backend ) use ( $backend_name ) {
+					if ( $backend->name !== $backend_name ) {
+						return $headers;
+					}
+
+					$locale = get_locale();
+					if ( ! $locale ) {
+						return $headers;
+					}
+
+					if ( 'ca' === $locale ) {
+						$locale = 'ca_ES';
+					}
+
+					$headers['Accept-Language'] = $locale;
 					return $headers;
-				}
+				},
+				20,
+				2
+			);
+		}
 
-				$locale = get_locale();
-				if ( ! $locale ) {
-					return $headers;
-				}
-
-				if ( 'ca' === $locale ) {
-					$locale = 'ca_ES';
-				}
-
-				$headers['Accept-Language'] = $locale;
-				return $headers;
-			},
-			20,
-			2
-		);
-
-		$login   = $credential->authorization();
 		$session = self::rpc_login( $login, $backend );
-
 		if ( is_wp_error( $session ) ) {
 			return $session;
 		}
 
-		[$sid, $uid] = $session;
-		$login[1]    = $uid;
+		$login[1] = $session[1];
+		return $login;
+	}
+
+	/**
+	 * Submits submission to the backend.
+	 *
+	 * @param array      $payload Submission data.
+	 * @param array|null $more_args Additional RPC call params.
+	 *
+	 * @return array|WP_Error Http
+	 */
+	public function submit( $payload = array(), $more_args = array() ) {
+		$login = $this->login();
+
+		if ( is_wp_error( $login ) ) {
+			return $login;
+		}
 
 		$payload = self::rpc_payload(
-			$sid,
+			self::$session[0],
 			'object',
 			'execute',
 			array_merge( $login, array( $this->endpoint, $this->method, $payload ) ),
 			$more_args
 		);
 
-		$response = $backend->post( self::ENDPOINT, $payload );
+		$response = $this->backend()->post( self::ENDPOINT, $payload );
 
 		$result = self::rpc_response( $response );
 		if ( is_wp_error( $result ) ) {
