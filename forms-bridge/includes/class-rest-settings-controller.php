@@ -973,7 +973,7 @@ class REST_Settings_Controller extends Base_Controller {
 	 * @return array|null Cached introspection response.
 	 */
 	private static function cache_lookup( ...$keys ) {
-		$key       = sanitize_title( implode( '-', array_filter( $keys ) ) );
+		$key       = 'fb-introspection-' . sanitize_title( implode( '-', array_filter( $keys ) ) );
 		$transient = get_transient( $key );
 		if ( ! $transient ) {
 			return null;
@@ -1000,7 +1000,7 @@ class REST_Settings_Controller extends Base_Controller {
 			return $data;
 		}
 
-		$key = sanitize_title( implode( '-', array_filter( $keys ) ) );
+		$key = 'fb-introspection-' . sanitize_title( implode( '-', array_filter( $keys ) ) );
 
 		$transient_data = array(
 			'key'  => self::$introspection_data,
