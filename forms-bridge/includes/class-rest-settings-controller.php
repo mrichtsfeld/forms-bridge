@@ -910,6 +910,10 @@ class REST_Settings_Controller extends Base_Controller {
 
 		list( $addon, $backend ) = $handler;
 
+		$introspection_data             = json_decode( self::$introspection_data, true );
+		$introspection_data['endpoint'] = $request['endpoint'];
+		self::$introspection_data       = wp_json_encode( $introspection_data );
+
 		$schema = self::cache_lookup( $addon::NAME, $backend, 'schema' );
 		if ( null !== $schema ) {
 			return $schema;
