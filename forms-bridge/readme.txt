@@ -1,7 +1,7 @@
 === Forms Bridge - Infinite integrations ===
 
 Contributors: codeccoop
-Tags: form integration, erp, crm, api integration, automation
+Tags: erp, crm, api integration, automation, http api, odoo, dolibarr, holded, nextcloud, listmonk, airtable, grist
 Donate link: https://buymeacoffee.com/codeccoop
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
