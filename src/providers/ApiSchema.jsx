@@ -11,9 +11,6 @@ export default function ApiSchemaProvider({ children, bridge }) {
   const [addon] = useTab();
   const [backends] = useBackends();
 
-  const [loadingEndpoints, setLoadingEndpoints] = useState(false);
-  const [loadingSchema, setLoadingSchema] = useState(false);
-
   const endpoints = useRef(new Map()).current;
   const schemas = useRef(new Map()).current;
 
@@ -41,29 +38,44 @@ export default function ApiSchemaProvider({ children, bridge }) {
   };
 
   const fetchEndpoints = (key, method, backend) => {
-    setLoadingEndpoints(true);
+    let done = false;
+    const abortController = new AbortController();
 
     apiFetch({
       path: `forms-bridge/v1/${addon}/backend/endpoints`,
       method: "POST",
       data: { method, backend },
+      signal: abortController.signal,
     })
       .then((endpoints) => addEndpoints(key, endpoints))
-      .catch(() => addEndpoints(key, []))
-      .finally(() => setLoadingEndpoints(false));
+      .catch((err) => {
+        if (DOMException.ABORT_ERR !== err.code) {
+          addEndpoints(key, []);
+        }
+      })
+      .finally(() => (done = true));
+
+    return () => {
+      !done && abortController.abort();
+    };
   };
 
   const endpointsTimeout = useRef();
   useEffect(() => {
-    clearTimeout(endpointsTimeout.current);
+    if (!backend || !bridge?.method || endpoints.get(endpointsKey)) {
+      return;
+    }
 
-    if (!bridge || loadingEndpoints || endpoints.get(endpointsKey)) return;
+    let abort;
+    endpointsTimeout.current = setTimeout(() => {
+      abort = fetchEndpoints(endpointsKey, bridge.method, backend);
+    }, 500);
 
-    endpointsTimeout.current = setTimeout(
-      () => fetchEndpoints(endpointsKey, bridge.method, backend),
-      400
-    );
-  }, [endpointsKey, bridge, backend]);
+    return () => {
+      clearTimeout(endpointsTimeout.current);
+      abort && abort();
+    };
+  }, [endpointsKey, backend, bridge?.method]);
 
   const schemaKey = useMemo(() => {
     if (!bridge?.method || !backend?.name) return "";
@@ -82,29 +94,48 @@ export default function ApiSchemaProvider({ children, bridge }) {
   };
 
   const fetchSchema = (key, endpoint, method, backend) => {
-    setLoadingSchema(true);
+    let done = false;
+    const abortController = new AbortController();
 
     apiFetch({
       path: `forms-bridge/v1/${addon}/backend/endpoint/schema`,
       method: "POST",
       data: { endpoint, method, backend },
+      signal: abortController.signal,
     })
       .then((schema) => addSchema(key, schema))
-      .catch(() => addSchema(key, []))
-      .finally(() => setLoadingSchema(false));
+      .catch((err) => {
+        if (DOMException.ABORT_ERR !== err.code) {
+          addSchema(key, []);
+        }
+      })
+      .finally(() => (done = true));
+
+    return () => {
+      !done && abortController.abort();
+    };
   };
 
   const schemaTimeout = useRef();
   useEffect(() => {
-    clearTimeout(schemaTimeout.current);
+    if (!backend || !bridge?.endpoint || schemas.get(schemaKey)) {
+      return;
+    }
 
-    if (!bridge || !backend || loadingSchema || schemas.get(schemaKey)) return;
+    let abort;
+    schemaTimeout.current = setTimeout(() => {
+      abort = fetchSchema(
+        schemaKey,
+        bridge.endpoint || "/",
+        bridge.method,
+        backend
+      );
+    }, 500);
 
-    schemaTimeout.current = setTimeout(
-      () =>
-        fetchSchema(schemaKey, bridge.endpoint || "/", bridge.method, backend),
-      400
-    );
+    return () => {
+      clearTimeout(schemaTimeout.current);
+      abort && abort();
+    };
   }, [schemaKey, bridge, backend]);
 
   return (
