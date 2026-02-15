@@ -5,7 +5,7 @@ Tags: erp, crm, api integration, automation, http api, odoo, dolibarr, holded, n
 Donate link: https://buymeacoffee.com/codeccoop
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
-Stable Tag: 4.4.1
+Stable Tag: 4.4.2
 Tested up to: 6.9
 
 Seamlessly connect WordPress forms to CRMs, ERPs, and APIs — no coding required. Automate data flow with field mappers, custom fields, and workflows.
@@ -163,6 +163,12 @@ You can get support from Còdec using the [Forms Bridge support forum](https://w
 
 == Changelog ==
 
+= 4.4.2 =
+* fix: open api expand fields schema loop
+* fix: api schema provider requests invalidations
+* fix: cache introspection transient names
+* fix: redirect_http_authorization header subscription on jwt authentications
+
 = 4.4.1 =
 * feat: introspection cache
 * feat: check dav modified on nextcloud table headers requests
@@ -171,13 +177,13 @@ You can get support from Còdec using the [Forms Bridge support forum](https://w
 * fix: nextcloud addon warnings
 
 = 4.4.0 =
-feat: improve addons introspection
-feat: nextcloud post bridge refactor
-feat: dropdown select with dynamic search
-feat: remove http url validations
-feat: fallback openapi json static files
-fix: nextcloud template endpoint field definition
-fix: brevo default endpoints list
+* feat: improve addons introspection
+* feat: nextcloud post bridge refactor
+* feat: dropdown select with dynamic search
+* feat: remove http url validations
+* feat: fallback openapi json static files
+* fix: nextcloud template endpoint field definition
+* fix: brevo default endpoints list
 
 = 4.3.2 =
 * feat: fetch endpoints in new bridge form
