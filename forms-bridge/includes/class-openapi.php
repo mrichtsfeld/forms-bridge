@@ -411,6 +411,10 @@ class OpenAPI {
 	private function body_to_params( $body ) {
 		$parameters = array();
 
+		if ( isset( $body['$ref'] ) ) {
+			$body = $this->expand_refs( $body );
+		}
+
 		foreach ( $body['content'] as $encoding => $obj ) {
 			$obj = $this->expand_refs( $obj );
 
@@ -459,7 +463,7 @@ class OpenAPI {
 		}
 
 		$path = strpos( $path, '/' ) !== 0 ? '/' . $path : $path;
-		return preg_replace( '/\/+$/', '', $path );
+		return rtrim( $path, '/' );
 	}
 
 	/**
@@ -467,56 +471,73 @@ class OpenAPI {
 	 * finger pointers as names.
 	 *
 	 * @param array $fields Array of API fields.
+	 * @param array $pointer Inherit json finger pointer keys.
 	 *
 	 * @return array
 	 */
-	public static function expand_fields_schema( $fields ) {
-		$schema = array();
-		foreach ( $fields as $field ) {
-			$finger = array( $field['name'] );
+	public static function expand_fields_schema( $fields, $pointer = array() ) {
+		if ( ! is_array( $pointer ) ) {
+			$pointer = array();
+		}
 
-			$type = $field['schema']['type'] ?? null;
+		$expansion = array();
+		foreach ( $fields as $field ) {
+			$field_pointer = array_merge( $pointer, array( $field['name'] ) );
+
+			$schema = $field['schema'] ?? null;
+			$type   = $schema['type'] ?? null;
+
 			if ( 'array' === $type && isset( $field['schema']['items']['type'] ) ) {
+				$is_item = true;
+
 				$field['schema']['type'] = $field['schema']['items']['type'] . '[]';
 
-				$finger[] = 0;
-				$schema[] = $field;
+				$field['name'] = JSON_Finger::pointer( $field_pointer );
+				$expansion[]   = $field;
 
+				$field_pointer[] = 0;
 				$field['schema'] = $field['schema']['items'];
+				$schema          = $field['schema'];
+				$type            = $schema['type'];
 			} else {
-				$schema[] = $field;
+				$is_item       = false;
+				$field['name'] = JSON_Finger::pointer( $field_pointer );
+
+				// capuzilla para representar correctamente el esquema de los campos many2one de Odoo.
+				$comment = $schema['$comment'] ?? null;
+				if ( 'many2one' === $comment ) {
+					$field['schema']['type'] = 'array';
+				}
+
+				$expansion[] = $field;
 			}
 
 			if ( 'object' === $type ) {
-				$props = $field['schema']['properties'] ?? array();
-				$queue = array();
-
-				if ( true === ( $field['schema']['additionalProperties'] ?? false ) ) {
-					$schema[] = array(
-						'name'   => JSON_Finger::pointer( array_merge( $finger, array( '*' ) ) ),
+				if ( true === ( $schema['additionalProperties'] ?? false ) ) {
+					$expansion[] = array(
+						'name'   => JSON_Finger::pointer( array_merge( $field_pointer, array( '*' ) ) ),
 						'schema' => array( 'type' => 'mixed' ),
 					);
 				}
 
-				while ( $props ) {
-					foreach ( $props as $key => $prop_schema ) {
-						$schema[] = array(
-							'name'   => JSON_Finger::pointer( array_merge( $finger, array( $key ) ) ),
-							'schema' => $prop_schema,
-						);
+				$object_fields = array();
+				$properties    = $schema['properties'] ?? array();
 
-						if ( 'object' === $prop_schema['type'] ) {
-							$finger[] = $key;
-							$queue[]  = $prop_schema['properties'];
-						}
-					}
-
-					$finger = array_slice( $finger, 0, -1 );
-					$props  = array_shift( $queue );
+				foreach ( $properties as $prop_name => $prop_schema ) {
+					$object_fields[] = array(
+						'name'   => $prop_name,
+						'schema' => $prop_schema,
+					);
 				}
+
+				$object_fields = self::expand_fields_schema( $object_fields, $field_pointer );
+				$expansion     = array_merge( $expansion, $object_fields );
+			} elseif ( $type && $is_item ) {
+				$field['name'] = JSON_Finger::pointer( $field_pointer );
+				$expansion[]   = $field;
 			}
 		}
 
-		return $schema;
+		return $expansion;
 	}
 }
