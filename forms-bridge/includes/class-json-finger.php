@@ -173,25 +173,24 @@ class JSON_Finger {
 			return '';
 		}
 
-		$pointer = array_reduce(
-			$keys,
-			static function ( $pointer, $key ) {
-				if ( INF === $key ) {
-					$key = '[]';
-				} elseif ( intval( $key ) == $key ) {
-					$key = "[{$key}]";
-				} else {
+		$pointer = '';
+		foreach ( $keys as $key ) {
+			if ( INF === $key ) {
+				$key = '[]';
+			} elseif ( intval( $key ) == $key ) {
+				$key = "[{$key}]";
+			} else {
+				if ( 1 < count( $keys ) ) {
 					$key = self::sanitize_key( $key );
-
-					if ( '[' !== $key[0] && strlen( $pointer ) > 0 ) {
-						$key = '.' . $key;
-					}
 				}
 
-				return $pointer . $key;
-			},
-			''
-		);
+				if ( '[' !== $key[0] && strlen( $pointer ) > 0 ) {
+					$key = '.' . $key;
+				}
+			}
+
+			$pointer .= $key;
+		}
 
 		if ( $is_conditional ) {
 			$pointer = '?' . $pointer;
