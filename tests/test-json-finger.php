@@ -39,7 +39,7 @@ class JsonFingerTest extends WP_UnitTestCase {
 			array( '["f oo"].bar', 2, array( 'f oo' => array( 'bar' => 'boofoo' ) ) ),
 			array( '[][].foo', 3, array( array( array( 'foo' => 'boofoo' ) ) ) ),
 			array( '[0][0].foo', 3, array( array( array( 'foo' => 'boofoo' ) ) ) ),
-			array( '["Hello World"]', 1, array( 'Hello World' => 'boofoo' ) ),
+			array( 'Hello World', 1, array( 'Hello World' => 'boofoo' ) ),
 			array( 'foo[].bar[]', 4, array( 'foo' => array( array( 'bar' => array( 'boofoo' ) ) ) ) ),
 			array( 'foo[0].bar[0]', 4, array( 'foo' => array( array( 'bar' => array( 'boofoo' ) ) ) ) ),
 		);

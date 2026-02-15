@@ -686,6 +686,6 @@ class GristTest extends WP_UnitTestCase {
 		$this->assertContains( 'name', $field_names );
 		$this->assertNotContains( 'formula_field', $field_names );
 		$this->assertNotContains( 'ref_field', $field_names );
-		$this->assertCount( 6, $schema );
+		$this->assertCount( 7, $schema );
 	}
 }

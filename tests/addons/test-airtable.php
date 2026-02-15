@@ -682,6 +682,6 @@ class AirtableTest extends WP_UnitTestCase {
 		$field_names = array_column( $schema, 'name' );
 		$this->assertContains( 'Name', $field_names );
 		$this->assertNotContains( 'Summary', $field_names );
-		$this->assertCount( 6, $schema );
+		$this->assertCount( 7, $schema );
 	}
 }
