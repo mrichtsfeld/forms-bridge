@@ -264,11 +264,14 @@ class Integration extends Singleton {
 					}
 				}
 
-				$woomode = in_array( 'woo', $integrations, true );
+				$woomode = 1 === count( $integrations ) && 'woo' === $integrations[0];
 
 				$filtered_templates = array();
 				foreach ( $templates as $template ) {
-					if ( ! isset( $template['integrations'] ) ) {
+					$template_integrations = $template['integrations'] ?? array();
+					if ( ! $template_integrations ) {
+						// File templates only declares integrations for woo templates.
+						// If $template_integrations is empty and only woo integration is enabled, then continue.
 						if ( $woomode ) {
 							continue;
 						}
