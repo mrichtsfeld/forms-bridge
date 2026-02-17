@@ -1,4 +1,9 @@
 <?php
+/**
+ * Listmonk addon hooks.
+ *
+ * @package formsbridge
+ */
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit();
@@ -7,7 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 add_filter(
 	'forms_bridge_template_defaults',
 	function ( $defaults, $addon, $schema ) {
-		if ( $addon !== 'listmonk' ) {
+		if ( 'listmonk' !== $addon ) {
 			return $defaults;
 		}
 
@@ -84,12 +89,7 @@ add_filter(
 					),
 				),
 				'bridge'     => array(
-					'backend'  => 'Listmonk API',
-					'endpoint' => '',
-					'method'   => 'POST',
-				),
-				'backend'    => array(
-					'name' => 'Listmonk',
+					'method' => 'POST',
 				),
 				'credential' => array(
 					'name'          => '',
@@ -115,13 +115,15 @@ add_filter(
 
 		$index = array_search(
 			'lists',
-			array_column( $data['bridge']['custom_fields'], 'name' )
+			array_column( $data['bridge']['custom_fields'], 'name' ),
+			true,
 		);
 
-		if ( $index !== false ) {
+		if ( false !== $index ) {
 			$field = &$data['bridge']['custom_fields'][ $index ];
 			if ( is_array( $field['value'] ) ) {
-				for ( $i = 0; $i < count( $field['value'] ); $i++ ) {
+				$l = count( $field['value'] );
+				for ( $i = 0; $i < $l; $i++ ) {
 					$data['bridge']['custom_fields'][] = array(
 						'name'  => "lists[{$i}]",
 						'value' => (int) $field['value'][ $i ],

@@ -61,10 +61,6 @@ return array(
 				'name'  => 'Content-Type',
 				'value' => 'application/json',
 			),
-			array(
-				'name'  => 'Accept',
-				'value' => 'application/json',
-			),
 		),
 	),
 	'bridge'      => array(
