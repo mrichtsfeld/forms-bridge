@@ -496,6 +496,82 @@ class RESTControllerTest extends WP_UnitTestCase {
 	}
 
 	/**
+	 * Test backend ping endpoint with temp credential.
+	 */
+	public function test_backend_ping_endpoint_with_temp_credential() {
+		// Test POST request to ping backend.
+		$request = new WP_REST_Request( 'POST', '/forms-bridge/v1/rest/backend/ping' );
+		$request->set_header( 'Content-Type', 'application/json' );
+		$request->set_body(
+			wp_json_encode(
+				array(
+					'backend'    => array(
+						'name'       => 'test-backend',
+						'base_url'   => 'https://example.coop',
+						'credential' => 'test-basic-temp',
+						'headers'    => array(
+							array(
+								'name'  => 'Content-Type',
+								'value' => 'application/json',
+							),
+						),
+					),
+					'credential' => array(
+						'name'          => 'test-basic-temp',
+						'schema'        => 'Basic',
+						'client_id'     => 'foo',
+						'client_secret' => 'bar',
+					),
+				),
+			),
+		);
+		$response = rest_do_request( $request );
+
+		$this->assertEquals( 200, $response->get_status() );
+		$data = $response->get_data();
+		$this->assertIsArray( $data );
+		$this->assertArrayHasKey( 'success', $data );
+	}
+
+	/**
+	 * Test backend endpoints endpoint with temp credential.
+	 */
+	public function test_backend_endpoints_endpoint_with_temp_credential() {
+		// Test POST request to get backend endpoints.
+		$request = new WP_REST_Request( 'POST', '/forms-bridge/v1/rest/backend/endpoints' );
+		$request->set_header( 'Content-Type', 'application/json' );
+		$request->set_body(
+			wp_json_encode(
+				array(
+					'backend'    => array(
+						'name'       => 'test-backend',
+						'base_url'   => 'https://example.coop',
+						'credential' => 'test-basic',
+						'headers'    => array(
+							array(
+								'name'  => 'Content-Type',
+								'value' => 'application/json',
+							),
+						),
+					),
+					'credential' => array(
+						'name'          => 'test-basic-temp',
+						'schema'        => 'Basic',
+						'client_id'     => 'foo',
+						'client_secret' => 'bar',
+					),
+					'method'     => 'GET',
+				),
+			),
+		);
+		$response = rest_do_request( $request );
+
+		$this->assertEquals( 200, $response->get_status() );
+		$data = $response->get_data();
+		$this->assertIsArray( $data );
+	}
+
+	/**
 	 * Test backend endpoints endpoint.
 	 */
 	public function test_backend_endpoints_endpoint() {
