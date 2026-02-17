@@ -490,16 +490,18 @@ class Form_Bridge_Template {
 	 *
 	 * @return array Template config data.
 	 */
-	private static function data_from_post( $post ) {
+	public static function data_from_post( $post ) {
+		$post_meta = get_post_meta( $post->ID );
 		return array(
-			'name'        => $post->post_name,
-			'title'       => $post->post_title,
-			'description' => $post->post_excerpt,
-			'fields'      => (array) ( get_post_meta( $post->ID, '_template-fields', true ) ?: array() ),
-			'form'        => (array) ( get_post_meta( $post->ID, '_template-form', true ) ?: array() ),
-			'bridge'      => (array) ( get_post_meta( $post->ID, '_template-bridge', true ) ?: array() ),
-			'backend'     => (array) ( get_post_meta( $post->ID, '_template-backend', true ) ?: array() ),
-			'credential'  => (array) ( get_post_meta( $post->ID, '_template-credential', true ) ?: array() ),
+			'name'         => $post->post_name,
+			'title'        => $post->post_title,
+			'description'  => $post->post_excerpt,
+			'fields'       => maybe_unserialize( $post_meta['_template-fields'][0] ?? array() ),
+			'form'         => maybe_unserialize( $post_meta['_template-form'][0] ?? array() ),
+			'bridge'       => maybe_unserialize( $post_meta['_template-bridge'][0] ?? array() ),
+			'backend'      => maybe_unserialize( $post_meta['_template-backend'][0] ?? array() ),
+			'credential'   => maybe_unserialize( $post_meta['_template-credential'][0] ?? array() ),
+			'integrations' => maybe_unserialize( $post_meta['_template-integrations'][0] ?? array() ),
 		);
 	}
 
@@ -633,6 +635,7 @@ class Form_Bridge_Template {
 			'post_name'    => $this->name,
 			'post_title'   => $this->title,
 			'post_excerpt' => $this->description,
+			'post_status'  => 'publish',
 		);
 
 		$post_id = $this->get_post_id();
@@ -644,11 +647,13 @@ class Form_Bridge_Template {
 		}
 
 		if ( ! is_wp_error( $post_id ) ) {
+			update_post_meta( $post_id, '_fb-addon', $this->addon );
 			update_post_meta( $post_id, '_template-fields', $this->fields );
 			update_post_meta( $post_id, '_template-form', $this->form );
 			update_post_meta( $post_id, '_template-bridge', $this->bridge );
 			update_post_meta( $post_id, '_template-backend', $this->backend );
 			update_post_meta( $post_id, '_template-credential', $this->credential );
+			update_post_meta( $post_id, '_template-integrations', $this->integrations );
 		}
 
 		return $post_id;

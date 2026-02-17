@@ -282,7 +282,7 @@ class FBAPI {
 		$templates = self::get_addon_templates( $addon );
 
 		foreach ( $templates as $template ) {
-			if ( $template->name === $name ) {
+			if ( $template->name === $name && $template->addon === $addon ) {
 				return $template;
 			}
 		}
@@ -294,13 +294,13 @@ class FBAPI {
 	 * @param array  $data Template data.
 	 * @param string $addon Addon name.
 	 *
-	 * @return integer|boolean Post ID or false.
+	 * @return integer|WP_Error Post ID or false.
 	 */
 	public static function save_template( $data, $addon ) {
 		$template = new Form_Bridge_Template( $data, $addon );
 
 		if ( ! $template->is_valid ) {
-			return false;
+			return $template->data;
 		}
 
 		return $template->save();

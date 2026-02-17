@@ -129,23 +129,15 @@ class REST_Settings_Controller extends Base_Controller {
 						'callback'            => static function ( $request ) use ( $addon ) {
 							return self::get_template( $addon, $request );
 						},
-						'permission_callback' => array(
-							self::class,
-							'permission_callback',
-						),
-						'args'                => array(
-							'name' => $args['name'],
-						),
+						'permission_callback' => array( self::class, 'permission_callback' ),
+						'args'                => array( 'name' => $args['name'] ),
 					),
 					array(
 						'methods'             => WP_REST_Server::EDITABLE,
 						'callback'            => static function ( $request ) use ( $addon ) {
 							return self::save_template( $addon, $request );
 						},
-						'permission_callback' => array(
-							self::class,
-							'permission_callback',
-						),
+						'permission_callback' => array( self::class, 'permission_callback' ),
 						'args'                => $args,
 					),
 					array(
@@ -153,13 +145,8 @@ class REST_Settings_Controller extends Base_Controller {
 						'callback'            => static function ( $request ) use ( $addon ) {
 							return self::reset_template( $addon, $request );
 						},
-						'permission_callback' => array(
-							self::class,
-							'permission_callback',
-						),
-						'args'                => array(
-							'name' => $args['name'],
-						),
+						'permission_callback' => array( self::class, 'permission_callback' ),
+						'args'                => array( 'name' => $args['name'] ),
 					),
 				)
 			);
@@ -172,10 +159,7 @@ class REST_Settings_Controller extends Base_Controller {
 					'callback'            => static function ( $request ) use ( $addon ) {
 						return self::use_template( $addon, $request );
 					},
-					'permission_callback' => array(
-						self::class,
-						'permission_callback',
-					),
+					'permission_callback' => array( self::class, 'permission_callback' ),
 					'args'                => array(
 						'name'        => $args['name'],
 						'integration' => array(
@@ -199,10 +183,7 @@ class REST_Settings_Controller extends Base_Controller {
 					'callback'            => static function ( $request ) use ( $addon ) {
 						return self::get_template_options( $addon, $request );
 					},
-					'permission_callback' => array(
-						self::class,
-						'permission_callback',
-					),
+					'permission_callback' => array( self::class, 'permission_callback' ),
 					'args'                => array(
 						'name'       => $args['name'],
 						'backend'    => FBAPI::get_backend_schema(),
@@ -270,23 +251,15 @@ class REST_Settings_Controller extends Base_Controller {
 						'callback'            => static function ( $request ) use ( $addon ) {
 							return self::get_job( $addon, $request );
 						},
-						'permission_callback' => array(
-							self::class,
-							'permission_callback',
-						),
-						'args'                => array(
-							'name' => $args['name'],
-						),
+						'permission_callback' => array( self::class, 'permission_callback' ),
+						'args'                => array( 'name' => $args['name'] ),
 					),
 					array(
 						'methods'             => WP_REST_Server::EDITABLE,
 						'callback'            => static function ( $request ) use ( $addon ) {
 							return self::save_job( $addon, $request );
 						},
-						'permission_callback' => array(
-							self::class,
-							'permission_callback',
-						),
+						'permission_callback' => array( self::class, 'permission_callback' ),
 						'args'                => $args,
 					),
 					array(
@@ -294,13 +267,8 @@ class REST_Settings_Controller extends Base_Controller {
 						'callback'            => static function ( $request ) use ( $addon ) {
 							return self::reset_job( $addon, $request );
 						},
-						'permission_callback' => array(
-							self::class,
-							'permission_callback',
-						),
-						'args'                => array(
-							'name' => $args['name'],
-						),
+						'permission_callback' => array( self::class, 'permission_callback' ),
+						'args'                => array( 'name' => $args['name'] ),
 					),
 				)
 			);
@@ -580,13 +548,13 @@ class REST_Settings_Controller extends Base_Controller {
 	 * Callback for DELETE requests to the template endpoint. Removes a template
 	 * from the database.
 	 *
-	 * @param string $addon Addon name.
-	 * @param string $name Template name.
+	 * @param string          $addon Addon name.
+	 * @param WP_REST_Request $request Current REST request instance.
 	 *
 	 * @return array|WP_Error
 	 */
-	private static function reset_template( $addon, $name ) {
-		$template = FBAPI::get_template( $name, $addon );
+	private static function reset_template( $addon, $request ) {
+		$template = FBAPI::get_template( $request['name'], $addon );
 
 		if ( ! $template ) {
 			return self::not_found();
@@ -598,7 +566,7 @@ class REST_Settings_Controller extends Base_Controller {
 			return self::internal_server_error();
 		}
 
-		$template = FBAPI::get_template( $name, $addon );
+		$template = FBAPI::get_template( $request['name'], $addon );
 		if ( $template ) {
 			return $template->data();
 		}
@@ -780,8 +748,6 @@ class REST_Settings_Controller extends Base_Controller {
 
 		$introspection_data = array( 'backend' => $backend );
 
-		Backend::temp_registration( $backend );
-
 		$credential = $request['credential'];
 		if ( ! empty( $credential ) ) {
 			$credential = wpct_plugin_sanitize_with_schema(
@@ -793,9 +759,8 @@ class REST_Settings_Controller extends Base_Controller {
 				return self::bad_request();
 			}
 
-			Credential::temp_registration( $credential );
-			$backend['credential'] = $credential['name'];
-
+			$backend['credential']            = $credential['name'];
+			$introspection_data['backend']    = $backend;
 			$introspection_data['credential'] = $credential;
 		} elseif ( ! empty( $backend['credential'] ) ) {
 			$credential = FBAPI::get_credential( $backend['credential'] );
@@ -804,6 +769,9 @@ class REST_Settings_Controller extends Base_Controller {
 				$introspection_data['credential'] = $credential->data();
 			}
 		}
+
+		Backend::temp_registration( $backend );
+		Credential::temp_registration( $credential );
 
 		self::$introspection_data = wp_json_encode( $introspection_data );
 		return array( $addon, $backend['name'] );

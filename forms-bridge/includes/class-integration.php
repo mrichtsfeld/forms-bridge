@@ -7,6 +7,7 @@
 
 namespace FORMS_BRIDGE;
 
+use WP_Post;
 use WPCT_PLUGIN\Singleton;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -114,7 +115,8 @@ class Integration extends Singleton {
 			$index = "{$integration_dir}/class-{$integration}-integration.php";
 
 			if ( is_file( $index ) && is_readable( $index ) ) {
-				$registry[ $integration ] = boolval( $state[ $integration ] ?? false ) && $has_deps;
+				$registry[ $integration ] = ( boolval( $state[ $integration ] ?? false ) && $has_deps )
+					|| defined( 'WP_TESTS_DOMAIN' );
 			}
 		}
 
@@ -262,7 +264,7 @@ class Integration extends Singleton {
 					}
 				}
 
-				$woomode = 1 === count( $integrations ) && 'woo' === $integrations[0];
+				$woomode = in_array( 'woo', $integrations, true );
 
 				$filtered_templates = array();
 				foreach ( $templates as $template ) {

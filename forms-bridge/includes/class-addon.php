@@ -743,20 +743,13 @@ class Addon extends Singleton {
 			}
 		}
 
-		foreach (
-			self::autoload_posts( 'fb-bridge-template', static::NAME )
-			as $template_post
-		) {
-			$template[ $template->post_name ] = $template_post;
+		foreach ( self::autoload_posts( Form_Bridge_Template::TYPE, static::NAME ) as $template_post ) {
+			$templates[ $template_post->post_name ] = Form_Bridge_Template::data_from_post( $template_post );
 		}
 
 		$templates = array_values( $templates );
 
-		$templates = apply_filters(
-			'forms_bridge_load_templates',
-			$templates,
-			static::NAME
-		);
+		$templates = apply_filters( 'forms_bridge_load_templates', $templates, static::NAME );
 
 		$loaded = array();
 		foreach ( $templates as $template ) {
